@@ -1,0 +1,67 @@
+#Unstructured Grid Data Server#
+This is the *very sparse* documentation for the unstructured grid python server.
+
+This server is designed to work with unstructured triangular meshes from ocean model output stored in compliant netcdf files, typically accessible through Opendap enabled by a Thredds data server. The goal is to do simple serverside computations like averages, regridding and subsetting, while returning data in a variety of formats including text, shapefile, kml and images.
+
+###Why?
+The server is designed for querying and processing on large unstructured datasets, so that clients receive only the data they are interested in a format that requires very little additional processing. Data can be averaged in time and vertical space over large windows, and geographic subsets of the unstructured grids can be made and returned to users. Data access to the source files is made in parallel and benefits from having multiple cores per cpu.
+
+There is a regridding module to convert the unstructured data into regularly gridded data, but it is experimental and very slow. 
+
+The server is setup to return data in text, mat, shp formats, as well as images in vectors, symbolized facets and kml overlays.
+
+*At the moment the server is only accessing u and v variables from an fvcom hindcast dataset and calculating magnitude from the two vectors. These variables are cell located variables. I am not considering the easier case of node variables, or a flexible request that considers variables at the moment.*
+
+###Django Webapplication Framework
+This webserver is is written in python and uses the *Django* framework. It is intended to be embedded in an Apache webserver installation running mod_python. This provides a robust and fast webserver for interacting with unstructured triangular grid data.
+
+###Requirements
+*Python*
+The server requires that the platform has:
+
++ Python 2.7
+    + numpy
+    + scipy
+    + matplotlib
+    + basemap
+    + django
+    + netcdf4-python
+	+ pyshp
+	+ parallelpython
+	+ markdown-python
+	
+*Apache*
+The server is intended to be used with Apache 2.x prefork mpw module and it is important that the mod_python plugin is installed.
+
+
+###Triangular Mesh Data Format
+As of this writing the data manager expects that the cell and node values are stored as 3d matrices of shape [time depth index], where index is the node or cell index. The length of index corresponds to the length of the geographic coordinate dimensions for the variable. *lonc*/*latc* are expected as the geographic coordinate variables for cell variable values and *lon*/*lat* are expected as the geographic coordinate variables for node located variable values.
+
+Topology and time variables are also needed by the server to do its job and for now the names of which are specified manually during the setup script execution. 
+
+###Web Server Requests
+There are a variety of implemented GET request templates. The root request template is easy to remember and useful if accessed by users(human people) directly through their browser's url window.
+
+~~~
+http://yourserver.org/?latmax=46&latmin=38&lonmin=-75&lonmax=-65&datestart=1980-1-1T00:00:00&dateend=1980-1-1T00:00:00&width=10&height=10&layer=1&actions=regrid,data,grid
+~~~
+
+The server also implements a WMS style GET request template to aid webmap clients in accessing the web map images of model data. In practice on a given WMS request a handler takes the incoming request and converts it to the root request template style and passes it along to the function that does the work for all requests.
+
+~~~
+http://localhost:8000/wms/?ELEVATION=5&LAYERS=facets&FORMAT=image%2Fpng&TRANSPARENT=TRUE&STYLES=CURRENTS_RAMP-Jet-False-1-True-0-2&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&TIME=1984-10-17T00:00:00&SRS=EPSG%3A3857&BBOX=-75,40,-70,44&WIDTH=1059&HEIGHT=954
+~~~
+
+On the todo list is an implementation of the OCG standards request for web processing.
+
+###To Do For the Unstructured Sura Implementation:
+
++ Implement model naive setup script that uses the data file to pull lat/lon and time.
+    + Then, setup server to do this everyday or on command by GET request/or admin screen.
++ Refactor the modules and actions in the main view into a unstructured server package of function sets
++ Implementation of the OCG standards request for web processing
++ Implement nodes
++ Implement variable selection
+
+
+

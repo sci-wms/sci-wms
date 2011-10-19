@@ -19,8 +19,26 @@ import pp
 
 
 
+def documentation (request):
+    import django.shortcuts as dshorts
+    f = open("C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/static/doc.txt")
+    text = f.read()
+    dict = { "textfile":text}
+    return dshorts.render_to_response('docs.html', dict)
 
+def test (request):
+    import django.shortcuts as dshorts
+    f = open("C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/static/test.txt")
+    text = f.read()
+    dict = { "textfile":text}
+    return dshorts.render_to_response('docs.html', dict)
 
+def wms (request):
+    import fvcom_compute.fvcom_stovepipe.wms_handler as wms
+    handler = wms.wms_handler(request)
+    action_request = handler.make_action_request(request)
+    response = fvDo(action_request)
+    return response
 
 def fvDo (request):
     '''
@@ -247,7 +265,7 @@ def fvDo (request):
             else: pass # will eventually add animations over time, instead of averages
 
             if "image" in actions:
-                fig = Plot.figure(dpi=400, facecolor='none', edgecolor='none')
+                fig = Plot.figure(dpi=150, facecolor='none', edgecolor='none')
                 fig.set_alpha(0)
                 #ax = fig.add_subplot(111)
                 projection = request.GET["projection"]
@@ -259,8 +277,8 @@ def fvDo (request):
                 #lonn, latn = m(lonn, latn)
                 m.ax = fig.add_axes([0, 0, 1, 1])
                 #fig.set_figsize_inches((20/m.aspect, 20.))
-                fig.set_figheight(20)
-                fig.set_figwidth(20/m.aspect)
+                fig.set_figheight(5)
+                fig.set_figwidth(5/m.aspect)
                 if "regrid" in actions:
                     import fvcom_compute.fvcom_stovepipe.regrid as regrid
                     wid = numpy.max((width, height))
@@ -349,6 +367,7 @@ def fvDo (request):
                 ax.set_position([0,0,1,1])
                 #Plot.yticks(visible=False)
                 #Plot.xticks(visible=False)
+                
                 #Plot.axis('off')
 
                 canvas = Plot.get_current_fig_manager().canvas
