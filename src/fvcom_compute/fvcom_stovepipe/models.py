@@ -9,6 +9,8 @@ class Node(models.Model):
     def dist(self, latin, lonin):
         pass
         return
+    def loadCoordSchema(self):
+        pass
     
     
 
@@ -23,10 +25,14 @@ class Cell(models.Model):
     def dist(self, latin, lonin):
         pass
         return
+    def loadCoordSchema(self):
+        pass
     
 class Time(models.Model):
     index = models.IntegerField()
     date = models.DateTimeField()
+    def loadTimeSchema(self):
+        pass
     
 
 class Level(models.Model):

@@ -13,25 +13,30 @@ The server is setup to return data in text, mat, shp formats, as well as images 
 *At the moment the server is only accessing u and v variables from an fvcom hindcast dataset and calculating magnitude from the two vectors. These variables are cell located variables. I am not considering the easier case of node variables, or a flexible request that considers variables at the moment.*
 
 ###Django Webapplication Framework
-This webserver is is written in python and uses the *Django* framework. It is intended to be embedded in an Apache webserver installation running mod_python. This provides a robust and fast webserver for interacting with unstructured triangular grid data.
+This webserver is is written in python and uses the *Django* framework. 
 
 ###Requirements
 *Python*
+
 The server requires that the platform has:
 
 + Python 2.7
     + numpy
     + scipy
     + matplotlib
-    + basemap
+    + matplotlib-basemap
     + django
     + netcdf4-python
-	+ pyshp
+	+ *pyshp*
 	+ parallelpython
 	+ markdown-python
+	+ *gunicorn*
+	+ *gevent*
+	+ *gridfields*
 	
-*Apache*
-The server is intended to be used with Apache 2.x prefork mpw module and it is important that the mod_python plugin is installed.
+*Web Server*
+
+The best way to deploy this unstructured web service server is to run all the django framework code in a gunicorn server(using gevent for asynchronous requests). We have deployed the server in a virtualenv with the dependencies installed including using gunicorn for the web server interface.
 
 
 ###Triangular Mesh Data Format
@@ -62,6 +67,7 @@ On the todo list is an implementation of the OCG standards request for web proce
 + Implementation of the OCG standards request for web processing
 + Implement nodes
 + Implement variable selection
++ Implement model selection
 
 
 
