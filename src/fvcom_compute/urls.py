@@ -11,6 +11,7 @@ urlpatterns = patterns('',
      url(r'^docs/', 'fvcom_stovepipe.views.documentation'),
      url(r'^test/', 'fvcom_stovepipe.views.test'),
      url(r'^wms/', 'fvcom_stovepipe.views.wms'),
+     url(r'^populate/', 'fvcom_stovepipe.views.populate'),
     # url(r'^fvcom_compute/', include('fvcom_compute.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

@@ -40,6 +40,41 @@ def wms (request):
     response = fvDo(action_request)
     return response
 
+def populate (request):
+    from netCDF4 import Dataset, num2date
+    url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
+    nc = Dataset(url)
+    lat = nc.variables['lat'][:]
+    lon = nc.variables['lon'][:]
+    latc = nc.variables['latc'][:]
+    lonc = nc.variables['lonc'][:]
+    nv = nc.variables['nv'][:,:]
+    times = nc.variables['time']
+    time = num2date(times[:], units=times.units)
+
+    nodes = Node.objects.all()
+    nodes.delete()
+    cells = Cell.objects.all()
+    cells.delete()
+    times = Time.objects.all()
+    times.delete()
+    for i,d in enumerate(time):
+        #d = datetime.datetime(int(time[i][0]), int(time[i][1]), int(time[i][2]),\
+        #    int(time[i][3]), int(time[i][4]), int(time[i][5]))
+        t = Time(date=d, index=i+1)
+        t.save()
+    
+    for i in range(len(lat)):
+        n = Node(index=i+1, lat=lat[i], lon=lon[i])
+        n.save()
+        
+    for i in range(len(latc)):
+        c = Cell(index=i+1, lat=latc[i], lon=lonc[i], node1=nv[0, i], node2=nv[1, i], node3=nv[2, i])
+        c.save()
+        
+    return "done!"
+
+
 def fvDo (request):
     '''
     Request a set of functionalities, any subset of the following:
@@ -176,7 +211,9 @@ def fvDo (request):
             lon = lon[ind]
             index = index[ind]
         
-        if ("facets" in actions) or ("regrid" in actions):
+        if ("facets" in actions) or \
+        ("regrid" in actions) or \
+        ("shp" in actions):
             from matplotlib.collections import PolyCollection
             import matplotlib.tri as Tri
             node1qs = geobb.values("node1")
@@ -486,19 +523,23 @@ def fvDo (request):
                         import zipfile
                         response = HttpResponse(content_type='application/x-zip')
                         response['Content-Disposition'] = 'attachment; filename=fvcom.zip'
-                        w = shapefile.Writer(shapefile.POINT)
+                        w = shapefile.Writer(shapefile.POLYGON)
                         w.field('mag','F')
-                        #w.field('v')
-                        #w.field('velocity')
                         mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
                         mag = numpy.sqrt(mag)
-                        for i,j in enumerate(lon):
-                            w.point(j, lat[i])
+                        
+                        #for i,j in enumerate(lon):
+                        #    w.point(j, lat[i])
+                        #    w.record(mag[i])
+                        for i,v in enumerate(index):
+                            w.poly(parts=[[[lonn[nv[i, 0]], latn[nv[i, 0]]], \
+                                           [lonn[nv[i, 1]], latn[nv[i, 1]]], \
+                                           [lonn[nv[i, 2]], latn[nv[i, 2]]]]])
                             w.record(mag[i])
+
                         shp = StringIO()
                         shx = StringIO()
                         dbf = StringIO()
-                        #zip = StringIO()
                         w.saveShp(shp)
                         w.saveShx(shx)
                         w.saveDbf(dbf)
@@ -507,9 +548,6 @@ def fvDo (request):
                         z.writestr("fvcom.shx", shx.getvalue())
                         z.writestr("fvcom.dbf", dbf.getvalue())
                         z.close()
-                        #dat = zip.getvalue()
-                        #zip.close()
-                        #response.write(z)
                     
         else: # for timeseries?
             timevalsqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("date")
