@@ -16,19 +16,21 @@ from StringIO import StringIO
 import scipy.io
 import math
 import pp
-
+import fvcom_compute.server_local_config as config
 
 
 def documentation (request):
     import django.shortcuts as dshorts
-    f = open("C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/static/doc.txt")
+    #import fvcom_compute.server_local_config as config
+    f = open(config.staticspath + "doc.txt")
     text = f.read()
     dict = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict)
 
 def test (request):
     import django.shortcuts as dshorts
-    f = open("C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/static/test.txt")
+    #import fvcom_compute.server_local_config as config
+    f = open(config.staticspath + "test.txt")
     text = f.read()
     dict = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict)
@@ -41,8 +43,9 @@ def wms (request):
     return response
 
 def populate (request):
+    
     from netCDF4 import Dataset, num2date
-    url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
+    url = config.datasetpath
     nc = Dataset(url)
     lat = nc.variables['lat'][:]
     lon = nc.variables['lon'][:]
@@ -127,11 +130,13 @@ def fvDo (request):
         for i in range(numsrow):
             grid.append(values[ (i * numscol):((i * numscol) + (numscol - 1)) ])
         return grid
-            
-     
-    #url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-    url = "E:\FVCOM\gom3_197802.nc"
-    #nc = netCDF4.Dataset(url)
+    
+    # direct the service to the dataset      
+    if config.localdataset:
+        url = config.localpath
+    else:
+        url = config.datasetpath
+        
     
     width = int(request.GET["width"])
     height = int(request.GET["height"])
