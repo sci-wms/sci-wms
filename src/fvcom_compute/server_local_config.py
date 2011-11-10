@@ -22,3 +22,5 @@ localdataset = True
 localpath = "E:\FVCOM\gom3_197802.nc"
 #localpath = "/home/acrosby/Development/Data/FVCOM/gom3_197802.nc"
 
+localhostip = "192.168.100.146:8000"
+

@@ -18,6 +18,100 @@ import math
 import pp
 import fvcom_compute.server_local_config as config
 
+def wmstest (request):
+    response = '''<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>OpenLayers Image Layer Example</title>
+    <link rel="stylesheet" href="http://openlayers.org/dev/theme/default/style.css" type="text/css">
+    <link rel="stylesheet" href="http://openlayers.org/dev/examples/style.css" type="text/css">
+
+    <style type="text/css">
+        p.caption {
+            width: 512px;
+        }
+    </style>
+    <script src="../lib/Firebug/firebug.js"></script>
+    <script src="http://openlayers.org/dev/OpenLayers.js"></script>
+    <script type="text/javascript">
+        var map;
+        function init(){
+            var options = {numZoomLevels: 100,
+                           };
+                           
+            map = new OpenLayers.Map('map', {
+                    
+                    
+                });
+
+            
+
+            layer = new OpenLayers.Layer.WMS( "OpenLayers WMS",
+                    "http://vmap0.tiles.osgeo.org/wms/vmap0", {layers: 'basic'} );
+            
+            
+    
+            var jpl_wms = new OpenLayers.Layer.WMS(
+                "Alex's FVCOM Facets",
+                "http://192.168.100.146:8000/wms/", 
+                {LAYERS: "facets,average",
+                    HEIGHT: "10",
+                    WIDTH: "10",
+                    ELEVATION: "1",
+                    TIME: "1984-10-17T00:00:00",
+                    FORMAT: "image%2Fpng"
+                },
+                {isBaseLayer: false,
+                singleTile: true}
+                );
+                
+            var vec_wms = new OpenLayers.Layer.WMS(
+                "Alex's FVCOM Vectors",
+                "http://''' + config.localhostip + '''/wms/", 
+                {LAYERS: "vectors,maximum",
+                    HEIGHT: "10",
+                    WIDTH: "10",
+                    ELEVATION: "1",
+                    TIME: "1984-10-17T00:00:00",
+                    FORMAT: "image%2Fpng"
+                },
+                {isBaseLayer: false,
+                singleTile: true}
+                );
+ 
+            map.addLayers([layer, jpl_wms, vec_wms]);
+            map.addControl(new OpenLayers.Control.LayerSwitcher());
+            map.setCenter(new OpenLayers.LonLat(-70, 42), 5);
+        }
+    </script>
+  </head>
+  <body onload="init()">
+    <h1 id="title">FVCOM WMS TEST</h1>
+
+    <div id="tags">
+        image, imagelayer
+    </div>
+
+    <p id="shortdesc">
+        Demonstrate a single non-tiled image as a selectable base layer.
+    </p>
+
+    <div id="map" class="smallmap"></div>
+
+    <div id="docs">
+
+        <p class="caption">
+            FVCOM TEST
+        </p>
+    </div>
+  </body>
+</html>
+'''
+    
+    return HttpResponse(response)
 
 def documentation (request):
     import django.shortcuts as dshorts
@@ -268,8 +362,8 @@ def fvDo (request):
             return nc.variables["v"][t, layer[0], :]
         appendu = pu.append
         appendv = pv.append
-        job_server = pp.Server(4, ppservers=())
-
+        job_server = pp.Server(16, ppservers=())
+        
 
         # This is looping through time to avoid trying to download too much data from the server at once
         # and its SO SLOOOW, i think due to the append calls, maybe use np.concatenate>?
@@ -295,15 +389,25 @@ def fvDo (request):
 
         if latmin != latmax:
             # This is averaging in time over all timesteps downloaded
-            if not "animate" in actions: 
-                if len(v.shape) > 2:
-                    v = v.mean(axis=0)
-                    u = u.mean(axis=0)
-                    v = v.mean(axis=0)
-                    u = u.mean(axis=0)
-                elif len(v.shape) > 1:
-                    v = v.mean(axis=0)
-                    u = u.mean(axis=0)
+            if not "animate" in actions:
+                if "average" in actions:
+                    if len(v.shape) > 2:
+                        v = v.mean(axis=0)
+                        u = u.mean(axis=0)
+                        v = v.mean(axis=0)
+                        u = u.mean(axis=0)
+                    elif len(v.shape) > 1:
+                        v = v.mean(axis=0)
+                        u = u.mean(axis=0)
+                if "maximum" in actions:
+                    if len(v.shape) > 2:
+                        v = v.max(axis=0)
+                        u = u.max(axis=0)
+                        v = v.max(axis=0)
+                        u = u.max(axis=0)
+                    elif len(v.shape) > 1:
+                        v = v.max(axis=0)
+                        u = u.max(axis=0)
             else: pass # will eventually add animations over time, instead of averages
 
             if "image" in actions:
