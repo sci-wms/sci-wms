@@ -18,6 +18,7 @@ The server requires that the platform has:
 ** netcdf4-python
 ** pyshp
 ** parallelpython
+** markdown-python
 ''Apache''
 The server is intended to be used with Apache 2.x prefork mpw module and it is important that the mod_python plugin is installed.
 
