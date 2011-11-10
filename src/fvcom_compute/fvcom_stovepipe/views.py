@@ -376,6 +376,7 @@ def fvDo (request):
         
         [v.append(resultv()) for resultv in pv]
         [u.append(resultu()) for resultu in pu]
+        job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
         v = numpy.asarray(v)
         u = numpy.asarray(u)
         index = numpy.asarray(index)
