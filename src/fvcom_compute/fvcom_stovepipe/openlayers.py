@@ -91,5 +91,3 @@ response = '''<!DOCTYPE html>
   </body>
 </html>
 '''
-
-return response

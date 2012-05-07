@@ -1,5 +1,7 @@
 from django.http import HttpResponse
 import numpy
+import matplotlib
+matplotlib.use("Agg")
 from matplotlib import pyplot as Plot ###
 from mpl_toolkits.basemap import Basemap ###
 #from StringIO import StringIO
@@ -7,6 +9,7 @@ from mpl_toolkits.basemap import Basemap ###
 #import netCDF4
 from matplotlib.collections import PolyCollection
 import matplotlib.tri as Tri
+from matplotlib.backends.backend_agg import FigureCanvasAgg
             
 def reorderArray(values, numsrow, numscol):
         grid = [];
@@ -14,7 +17,7 @@ def reorderArray(values, numsrow, numscol):
             grid.append(values[ (i * numscol):((i * numscol) + (numscol - 1)) ])
         return grid
 
-def __main__( request, actions, u, v, width, height, lonmax, lonmin, latmax, latmin, index, lon, lat, lonn, latn, nv):
+def do_request( request, actions, u, v, width, height, lonmax, lonmin, latmax, latmin, index, lon, lat, lonn, latn, nv):
     fig = Plot.figure(dpi=150, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
     #ax = fig.add_subplot(111)
@@ -121,8 +124,8 @@ def __main__( request, actions, u, v, width, height, lonmax, lonmin, latmax, lat
     
     #Plot.axis('off')
 
-    canvas = Plot.get_current_fig_manager().canvas
-
+    #canvas = Plot.get_current_fig_manager().canvas
+    canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)
                 

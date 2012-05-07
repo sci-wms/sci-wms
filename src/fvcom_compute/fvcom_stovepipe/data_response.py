@@ -6,7 +6,7 @@ from StringIO import StringIO
 import scipy.io ###
 import math
 
-def __main__( actions, u, v, width, height, lonmax, lonmin, latmax, latmin, index, lon, lat, lonn, latn, nv ):
+def do_request( actions, u, v, width, height, lonmax, lonmin, latmax, latmin, index, lon, lat, lonn, latn, nv ):
 
     if "regrid" in actions:
         #size = int(request.GET["size"])

@@ -105,7 +105,8 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'fvcom_compute.urls'
 
 TEMPLATE_DIRS = (
-    "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/"
+    server_local_config.staticspath,
+    "/home/acrosby/Development/Python/environments/unstructured_sura/lib/python2.7/site-packages/django/contrib/admin/templates/admin",
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

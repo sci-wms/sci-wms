@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^wms/', 'fvcom_stovepipe.views.wms'),
     url(r'^populate/', 'fvcom_stovepipe.views.populate'),
     url(r'^wmstest/', 'fvcom_stovepipe.views.wmstest'),
+    url(r'^crossdomain.xml', 'fvcom_stovepipe.views.crossdomain'),    
 
     # url(r'^fvcom_compute/', include('fvcom_compute.foo.urls')),
     
