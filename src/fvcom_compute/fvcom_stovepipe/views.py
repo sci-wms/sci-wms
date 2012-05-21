@@ -272,7 +272,7 @@ def fvDo (request):
         dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
         timesqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("index")
         #time = map(getVals, timesqs, numpy.ones(len(timesqs))*1) # commented out for testing of local speed
-        time = range(50)
+        time = range(50,51)
         pv = deque()
         pu = deque()
         def getuvar(url, t, layer):
