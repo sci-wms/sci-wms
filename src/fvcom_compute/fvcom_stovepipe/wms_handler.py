@@ -32,15 +32,24 @@ class wms_handler(object):
         lonmax = box[2]
         height = requestobj.GET["HEIGHT"]
         width = requestobj.GET["WIDTH"]
+        styles = requestobj.GET["STYLES"].split("_")
+        colormap = styles[2]
+        climits = styles[3:]
         
         class action_request:
             pass
+            
         action_request.GET = {u'latmax':latmax, u'lonmax':lonmax,
                           u'projection':u'merc', u'layer':levels,
                           u'datestart':timestart, u'dateend':timeend,
                           u'lonmin':lonmin, u'latmin':latmin,
                           u'height':height, u'width':width,
-                          u'actions':("image," + layers), }
+                          u'actions':("image," + \
+                          "," + styles[0] + "," + styles[1]),
+                          u'colormap': colormap,
+                          u'climits': climits,
+                          u'variables': layers,
+                          }
         return action_request
                 
         

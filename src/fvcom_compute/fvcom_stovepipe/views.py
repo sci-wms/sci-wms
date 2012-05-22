@@ -146,7 +146,8 @@ def fvDo (request):
             grid.append(values[ (i * numscol):((i * numscol) + (numscol - 1)) ])
         return grid
     
-    # direct the service to the dataset      
+    # direct the service to the dataset
+    # make changes to server_local_config.py 
     if config.localdataset:
         url = config.localpath
     else:
@@ -168,40 +169,20 @@ def fvDo (request):
     layer = numpy.asarray(layer)
     actions = request.GET["actions"]
     actions = set(actions.split(","))
+    
+    colormap = request.GET["colormap"].lower()
+    if request.GET["climits"][0] != "None":
+        climits = [float(lim) for lim in request.GET["climits"]]
+    else:
+        climits = ["None", "None"]
+        
+    variables = request.GET["variables"].split(",")
+    
     #if latmax == latmin:
     #    actions.append("timeseries")
+    
     if "kml" in actions:
-        actions.discard("kml")
-        where = request.get_full_path()
-        where = where.replace("kml,", "")
-        where = where.replace("kml", "")
-        where = where.replace("&", "&amp;")
-        kml = ('''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Folder>
-    <name>fvcom overlays</name>
-    <description>Requested plot of fvcom data</description>
-    <GroundOverlay>
-      <name>FVCOM</name>
-      <description>Display of processed fvcom data from requested kml.</description>
-      <Icon>
-        <href>http://localhost:8000''' + where + '''</href>
-      </Icon>
-      <LatLonBox>
-        <north>''' + str(latmax) + '''</north>
-        <south>''' + str(latmin) + '''</south>
-        <east>''' + str(lonmax) + '''</east>
-        <west>''' + str(lonmin) + '''</west>
-        
-      </LatLonBox>
-    </GroundOverlay>
-  </Folder>
-</kml>
-        ''')
-        
-        response = HttpResponse(content_type="application/vnd.google-earth.kml+xml")
-        response['Content-Disposition'] = 'filename=fvcom.kml'
-        response.write(kml)
+        pass
     else:
         if latmax != latmin:
             geobb = Cell.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
@@ -233,7 +214,8 @@ def fvDo (request):
         
         if ("facets" in actions) or \
         ("regrid" in actions) or \
-        ("shp" in actions):
+        ("shp" in actions) or \
+        ("contours" in actions):
             from matplotlib.collections import PolyCollection
             import matplotlib.tri as Tri
             node1qs = geobb.values("node1")
@@ -273,62 +255,88 @@ def fvDo (request):
         timesqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("index")
         #time = map(getVals, timesqs, numpy.ones(len(timesqs))*1) # commented out for testing of local speed
         time = range(50,51)
-        pv = deque()
-        pu = deque()
-        def getuvar(url, t, layer):
+        #pv = deque()
+        pvar = deque()
+        def getvar(url, t, layer, var):
             nc = netCDF4.Dataset(url, 'r')
-            return nc.variables["u"][t, layer[0], :]
-        def getvvar(url, t, layer):
-            nc = netCDF4.Dataset(url, 'r')
-            return nc.variables["v"][t, layer[0], :]
-        appendu = pu.append
-        appendv = pv.append
+            # Expects 3d cell variables.
+            return nc.variables[var][t, layer[0], :]
+
+        #def getvvar(url, t, layer):
+        #    nc = netCDF4.Dataset(url, 'r')
+        #    return nc.variables["v"][t, layer[0], :]
+        appendvar = pvar.append
+        #appendv = pv.append
         job_server = pp.Server(4, ppservers=()) 
 
         # This is looping through time to avoid trying to download too much data from the server at once
         # and its SO SLOOOW, i think due to the append calls, maybe use np.concatenate>?
-        for t in time:
-            appendu(job_server.submit(getuvar, (url, t, layer),(), ("netCDF4", "numpy",))) 
-            appendv(job_server.submit(getvvar, (url, t, layer),(), ("netCDF4", "numpy",)))
+        t = time
+        for var in variables:
+            appendvar(job_server.submit(getvar, (url, t, layer, var),(), ("netCDF4", "numpy",))) 
+            #appendv(job_server.submit(getvvar, (url, t, layer),(), ("netCDF4", "numpy",)))
         
-        u = deque()
-        v = deque()
+        varis = deque()
+        #v = deque()
         
-        [v.append(resultv()) for resultv in pv]
-        [u.append(resultu()) for resultu in pu]
+        #[v.append(resultv()) for resultv in pv]
+        #[u.append(resultu()) for resultu in pu]
+        [varis.append(result()) for result in pvar]
+        
         job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
-        v = numpy.asarray(v)
-        u = numpy.asarray(u)
+        
+        var1 = numpy.asarray(varis[0])
+        if len(varis) > 1:
+            var2 = numpy.asarray(varis[1])
+        
         index = numpy.asarray(index)
-        if len(v.shape) > 2:
-            v = v[:, :, index]
-            u = u[:, :, index]
-        elif len(v.shape) > 1:
-            v = v[:, index]
-            u = u[:, index]
+        if len(var1.shape) > 2:
+            var1 = var1[:, :, index]
+            try:
+                var2 = var2[:, :, index]
+            except:
+                pass
+        elif len(var1.shape) > 1:
+            var1 = var1[:, index]
+            try:
+                var2 = var2[:, index]
+            except:
+                pass
         else: pass # or 1 timestep geographic...?...
 
         if latmin != latmax:
             # This is averaging in time over all timesteps downloaded
             if not "animate" in actions:
                 if "average" in actions:
-                    if len(v.shape) > 2:
-                        v = v.mean(axis=0)
-                        u = u.mean(axis=0)
-                        v = v.mean(axis=0)
-                        u = u.mean(axis=0)
-                    elif len(v.shape) > 1:
-                        v = v.mean(axis=0)
-                        u = u.mean(axis=0)
+                    if len(var1.shape) > 2:
+                        var1 = var1.mean(axis=0)
+                        var1 = var1.mean(axis=0)
+                        try:
+                            var2 = var2.mean(axis=0)
+                            var2 = var2.mean(axis=0)
+                        except:
+                            pass
+                    elif len(var1.shape) > 1:
+                        var1 = var1.mean(axis=0)
+                        try:
+                            var2 = var2.mean(axis=0)
+                        except:
+                            pass
                 if "maximum" in actions:
-                    if len(v.shape) > 2:
-                        v = v.max(axis=0)
-                        u = u.max(axis=0)
-                        v = v.max(axis=0)
-                        u = u.max(axis=0)
+                    if len(var1.shape) > 2:
+                        var1 = var1.max(axis=0)
+                        var1 = var1.max(axis=0)
+                        try:
+                            var2 = var2.max(axis=0)
+                            var2 = var2.max(axis=0)
+                        except:
+                            pass
                     elif len(v.shape) > 1:
-                        v = v.max(axis=0)
-                        u = u.max(axis=0)
+                        var1 = var1.max(axis=0)
+                        try:
+                            var2 = var2.max(axis=0)
+                        except:
+                            pass
             else: pass # will eventually add animations over time, instead of averages
 
             if "image" in actions:
@@ -347,6 +355,7 @@ def fvDo (request):
                 #fig.set_figheight(5)
                 #fig.set_figwidth(5/m.aspect)
                 if "regrid" in actions:
+                    """
                     import fvcom_compute.fvcom_stovepipe.regrid as regrid
                     wid = numpy.max((width, height))
                     size = (lonmax - lonmin) / wid
@@ -379,26 +388,55 @@ def fvDo (request):
                         mag = numpy.sqrt(mag)
                         ax = fig.add_subplot(111)
                         ax.quiver(reglon, reglat, newu, newv, mag, pivot='mid')
+                    """
                 else:
                     if "vectors" in actions:
                         #fig.set_figheight(5)
                         fig.set_figwidth(height/80.0/m.aspect)
                         fig.set_figheight(height/80.0)
                         #fig.set_figwidth(width/80.0)
-                        mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
+
+                        mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+
                         mag = numpy.sqrt(mag)
                         #ax = fig.add_subplot(111)
                         #ax.quiver(lon, lat, u, v, mag, pivot='mid')
                         lon, lat = m(lon, lat)
-                        m.quiver(lon, lat, u, v, mag, pivot='mid', units='xy')
+                        if climits[0] == "None":
+                            CNorm = matplotlib.colors.Normalize()
+                        else:
+                            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                            vmax=climits[1],
+                                                            clip=True,
+                                                            )
+                        m.quiver(lon, lat, var1, var2, mag, 
+                            pivot='mid',
+                            units='xy',
+                            cmap=colormap,
+                            norm=CNorm,
+                            )
                         ax = Plot.gca()
                         #fig.set_figheight(height/80.0)
                         #fig.set_figwidth(width/80.0)
                     elif "contours" in actions:
-                        mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
+                        if len(variables) > 1:
+                            mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                        else:
+                            mag = var1
                         mag = numpy.sqrt(mag)
                         ax = fig.add_subplot(111)
-                        ax.tricontourf(lon, lat, mag)
+                        if climits[0] == "None":
+                            CNorm = matplotlib.colors.Normalize()
+                        else:
+                            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                            vmax=climits[1],
+                                                            clip=True,
+                                                            )
+                        tri = Tri.Triangulation(lonn,latn,triangles=nv)
+                        ax.tricontourf(tri, mag,
+                            cmap=colormap,
+                            norm=CNorm,
+                            )
                         
                     elif  "facets" in actions:
                         #projection = request.GET["projection"]
@@ -416,15 +454,32 @@ def fvDo (request):
                         #m.drawmeridians(numpy.arange(0,360,1), color='0.5',)
                         tri = Tri.Triangulation(lonn,latn,triangles=nv)
                         
-                        mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
-                        mag = numpy.sqrt(mag)
+                        if len(variables) > 1:
+                            mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
+                        else:
+                            mag = numpy.sqrt(var1**2)
+                            
+                        #mag = numpy.sqrt(mag)
+                        
                         #ax.tripcolor(lon, lat, mag, shading="")
                         #collection = PolyCollection(numpy.asarray([(lonn[node1],latn[node1]),(lonn[node2],latn[node2]),(lonn[node3],latn[node3])]))
                         verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                                                 tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
-                        collection = PolyCollection(verts)
+                        
+                        if climits[0] == "None":
+                            CNorm = matplotlib.colors.Normalize()
+                        else:
+                            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                            vmax=climits[1],
+                                                            clip=True,
+                                                            )
+                        collection = PolyCollection(verts,
+                                                    cmap=colormap, 
+                                                    norm=CNorm,
+                                                    )
                         collection.set_array(mag)
-                        collection.set_edgecolor('none') 
+                        collection.set_edgecolor('none')
+
                         
                         ax = Plot.gca()
                         
