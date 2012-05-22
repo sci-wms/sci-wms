@@ -23,23 +23,28 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import gc
 
 def wmstest (request):
-    return HttpResponse()
+    import django.shortcuts as dshorts
+    f = open(config.staticspath + "wms_openlayers_test.html")
+    text = f.read()
+    dict1 = { }
+    return dshorts.render_to_response('docs.html', dict1)
+
 
 def documentation (request):
     import django.shortcuts as dshorts
     #import fvcom_compute.server_local_config as config
     f = open(config.staticspath + "doc.txt")
     text = f.read()
-    dict = { "textfile":text}
-    return dshorts.render_to_response('docs.html', dict)
+    dict1 = { "textfile":text}
+    return dshorts.render_to_response('docs.html', dict1)
 
 def test (request):
     import django.shortcuts as dshorts
     #import fvcom_compute.server_local_config as config
     f = open(config.staticspath + "test.txt")
     text = f.read()
-    dict = { "textfile":text}
-    return dshorts.render_to_response('docs.html', dict)
+    dict1 = { "textfile":text}
+    return dshorts.render_to_response('docs.html', dict1)
 
 def wms (request):
     import fvcom_compute.fvcom_stovepipe.wms_handler as wms
@@ -175,6 +180,8 @@ def fvDo (request):
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
         climits = ["None", "None"]
+    magnitude = bool(request.GET["magnitude"])
+    topology_type = request.GET["topologytype"]
         
     variables = request.GET["variables"].split(",")
     
@@ -184,6 +191,7 @@ def fvDo (request):
     if "kml" in actions:
         pass
     else:
+        #if topology_type.lower() == "cell":
         if latmax != latmin:
             geobb = Cell.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
                 .filter(lon__lte=lonmax).filter(lon__gte=lonmin)
@@ -211,13 +219,25 @@ def fvDo (request):
             lat = lat[ind]
             lon = lon[ind]
             index = index[ind]
+        #else:
+        #    geobb = Node.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
+        #            .filter(lon__lte=lonmax).filter(lon__gte=lonmin)
+        #    indexqs = geobb.values("index")
+        #    latqs = geobb.values("lat")
+        #    lonqs = geobb.values("lon")
+        #   index = map(getVals, indexqs, numpy.ones(len(indexqs)))
+        #    latno = map(getVals, latqs, numpy.ones(len(indexqs))*2)
+        #    lonno = map(getVals, lonqs, numpy.ones(len(indexqs))*3)
         
         if ("facets" in actions) or \
         ("regrid" in actions) or \
         ("shp" in actions) or \
-        ("contours" in actions):
+        ("contours" in actions) or \
+        ("interpolate" in actions):
+            #if topology_type.lower() == "cell":
             from matplotlib.collections import PolyCollection
             import matplotlib.tri as Tri
+            
             node1qs = geobb.values("node1")
             node2qs = geobb.values("node2")
             node3qs = geobb.values("node3")
@@ -226,29 +246,20 @@ def fvDo (request):
             lonnqs = nodesqs.values("lon")
             latn = map(getVals, latnqs, numpy.ones(len(latnqs))*2)
             lonn = map(getVals, lonnqs, numpy.ones(len(latnqs))*3)
-            latn = numpy.asarray(latn)
-            lonn = numpy.asarray(lonn) 
+             
             node1 = map(getVals, node1qs, numpy.ones(len(indexqs))*5)
             node2 = map(getVals, node2qs, numpy.ones(len(indexqs))*6)
             node3 = map(getVals, node3qs, numpy.ones(len(indexqs))*7)
             nv = numpy.asarray([node1, node2, node3],'int64')
             nv = numpy.transpose(nv)
-            #if "facets" in actions:
-                #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                #                   urcrnrlon=lonmax, urcrnrlat=latmax,
-                #                    projection='tmerc', lat_0 =(latmax + latmin) / 2,
-                #                     lon_0 =(lonmax + lonmin) / 2)
-                #lonn, latn = m(lonn, latn)
-            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
+            if topology_type.lower() == "node":
+                index = range(len(latn))
+                latn = numpy.asarray(latn)
+                lonn = numpy.asarray(lonn)
+            else:
+                latn = numpy.asarray(latn)
+                lonn = numpy.asarray(lonn)
             
-        #for i, p in enumerate(indexqs): # remove 1:5 for full scale test, too slow?
-        #    index.append(int(p["index"]) - 1)
-        #    lat.append(latqs[i]["lat"])
-        #    lon.append(lonqs[i]["lon"])
-        #index = [i["index"] for i in indexqs] # too slow?
-        #lat = [i["lat"] for i in latqs]
-        #lon = [i["lon"] for i in lonqs]
-        
         #if date = 
         datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
         dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
@@ -260,8 +271,12 @@ def fvDo (request):
         def getvar(url, t, layer, var):
             nc = netCDF4.Dataset(url, 'r')
             # Expects 3d cell variables.
-            return nc.variables[var][t, layer[0], :]
-
+            if len(nc.variables[var].shape) == 3:
+                return nc.variables[var][t, layer[0], :]
+            elif len(nc.variables[var].shape) == 2:
+                return nc.variables[var][t, :]
+            elif len(nc.variables[var].shape) == 1:
+                return nc.variables[var][:]
         #def getvvar(url, t, layer):
         #    nc = netCDF4.Dataset(url, 'r')
         #    return nc.variables["v"][t, layer[0], :]
@@ -297,7 +312,7 @@ def fvDo (request):
             except:
                 pass
         elif len(var1.shape) > 1:
-            var1 = var1[:, index]
+            var1 = var1[:, index] 
             try:
                 var2 = var2[:, index]
             except:
@@ -331,7 +346,7 @@ def fvDo (request):
                             var2 = var2.max(axis=0)
                         except:
                             pass
-                    elif len(v.shape) > 1:
+                    elif len(var1.shape) > 1:
                         var1 = var1.max(axis=0)
                         try:
                             var2 = var2.max(axis=0)
@@ -390,12 +405,48 @@ def fvDo (request):
                         ax.quiver(reglon, reglat, newu, newv, mag, pivot='mid')
                     """
                 else:
+                    if "interpolate" in actions:
+                        
+                        fig.set_figheight(height/80.0)
+                        fig.set_figwidth(width/80.0)  
+
+                        lonn, latn = m(lonn, latn)
+                        
+                        tri = Tri.Triangulation(lonn,latn,triangles=nv)
+   
+                        if len(variables) > 1:
+                            mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
+                        else:
+                            if magnitude:
+                                mag = numpy.sqrt(var1**2)
+                            else:
+                                mag = var1
+
+                        #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
+                        #                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
+                        
+                        if climits[0] == "None":
+                            CNorm = matplotlib.colors.Normalize()
+                        else:
+                            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                            vmax=climits[1],
+                                                            clip=True,
+                                                            )
+                                                            
+                        m.ax.tripcolor(tri, mag,
+                                       shading="",
+                                       norm=CNorm,
+                                       cmap=colormap,
+                                       )
+
+                        ax = Plot.gca()
+                        
                     if "vectors" in actions:
                         #fig.set_figheight(5)
                         fig.set_figwidth(height/80.0/m.aspect)
                         fig.set_figheight(height/80.0)
                         #fig.set_figwidth(width/80.0)
-
+                        
                         mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
 
                         mag = numpy.sqrt(mag)
@@ -452,13 +503,16 @@ def fvDo (request):
                         #fig.set_figheight(20)
                         #fig.set_figwidth(20/m.aspect)
                         #m.drawmeridians(numpy.arange(0,360,1), color='0.5',)
+                        
                         tri = Tri.Triangulation(lonn,latn,triangles=nv)
                         
                         if len(variables) > 1:
                             mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
                         else:
-                            mag = numpy.sqrt(var1**2)
-                            
+                            if magnitude:
+                                mag = numpy.sqrt(var1**2)
+                            else:
+                                mag = var1
                         #mag = numpy.sqrt(mag)
                         
                         #ax.tripcolor(lon, lat, mag, shading="")

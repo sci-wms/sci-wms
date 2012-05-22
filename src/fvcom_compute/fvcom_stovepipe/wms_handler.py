@@ -33,8 +33,10 @@ class wms_handler(object):
         height = requestobj.GET["HEIGHT"]
         width = requestobj.GET["WIDTH"]
         styles = requestobj.GET["STYLES"].split("_")
-        colormap = styles[2]
-        climits = styles[3:]
+        colormap = styles[2].replace("-", "_")
+        climits = styles[3:5]
+        topology_type = styles[5]
+        magnitude_bool = styles[6]
         
         class action_request:
             pass
@@ -49,6 +51,8 @@ class wms_handler(object):
                           u'colormap': colormap,
                           u'climits': climits,
                           u'variables': layers,
+                          u'topologytype': topology_type,
+                          u'magnitude': magnitude_bool,
                           }
         return action_request
                 
