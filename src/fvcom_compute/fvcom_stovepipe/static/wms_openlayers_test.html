@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Full Screen Map</title>
+	<script src="openlayers/OpenLayers.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="openlayers/theme/default/style.css" />
+	<style type="text/css">
+		html, body, #map {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+	<script type="text/javascript">
+		var map, layer;
+			function init(){
+               
+				map = new OpenLayers.Map('map');
+				    
+				layer = new OpenLayers.Layer.OSM;
+				fvcomv = new OpenLayers.Layer.WMS("FVCOM Velocity",
+				                                "http://localhost:7000/wms/",
+				                                {
+				                                    layers:"u,v",
+				                                    transparent: true,
+				                                    styles: "facets_average_jet_0_1.5_cell_False",
+				                                    time: "1984-10-17T00:00:00",
+				                                    elevation: "5"
+				                                },
+				                                
+				                                {
+				                                    singleTile: false, 
+				                                    ratio: 1,
+				                                    isBaseLayer: true,
+				                                    units: 'degree'
+				                                }
+				                                );
+				fvcomt = new OpenLayers.Layer.WMS("FVCOM Temperature",
+				                                "http://localhost:7000/wms/",
+				                                {
+				                                    layers:"temp",
+				                                    transparent: true,
+				                                    styles: "interpolate_average_jet_None_None_node_False",
+				                                    time: "1984-10-17T00:00:00",
+				                                    elevation: "1"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: true,
+				                                    units: 'degree'
+				                                }
+				                                );
+				fvcomvec = new OpenLayers.Layer.WMS("FVCOM Velocity Vectors",
+				                                "http://localhost:7000/wms/",
+				                                {
+				                                    layers:"u,v",
+				                                    transparent: true,
+				                                    styles: "vectors_average_jet_None_None_cell_False",
+				                                    time: "1984-10-17T00:00:00",
+				                                    elevation: "5"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: true,
+				                                    units: 'degree'
+				                                }
+				                                );
+				
+				map.addLayer(fvcomv);
+				map.addLayer(fvcomt);
+				map.addLayer(fvcomvec);
+				
+				map.setCenter(
+					new OpenLayers.LonLat(-72, 41).transform(
+						new OpenLayers.Projection("EPSG:4326"),
+						map.getProjectionObject()
+					), 8
+				);
+				map.addControl(new OpenLayers.Control.LayerSwitcher());
+			}
+	</script>
+	
+</head>
+<body onload="init()">
+	<div id="map"></div>
+</body>
+</html>

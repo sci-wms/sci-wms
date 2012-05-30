@@ -10,7 +10,7 @@ import netCDF4
 from fvcom_compute.fvcom_stovepipe.models import Cell, Time, Node
 import matplotlib
 matplotlib.use("Agg")
-from matplotlib import pyplot as Plot
+#from matplotlib import pyplot as Plot
 from mpl_toolkits.basemap import Basemap
 import datetime
 from collections import deque
@@ -21,13 +21,23 @@ import pp
 import fvcom_compute.server_local_config as config
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import gc
+import time as timeobj
 
+def openlayers (request, filepath):
+
+    f = open(config.staticspath + "openlayers/" + filepath)
+    text = f.read()
+    dict1 = { }
+    #return dshorts.render_to_response(text, dict1)
+    return HttpResponse(text, content_type='text')
+    
 def wmstest (request):
     import django.shortcuts as dshorts
     f = open(config.staticspath + "wms_openlayers_test.html")
     text = f.read()
     dict1 = { }
-    return dshorts.render_to_response('docs.html', dict1)
+    #return dshorts.render_to_response(text, dict1)
+    return HttpResponse(text)
 
 
 def documentation (request):
@@ -108,7 +118,7 @@ def fvDo (request):
     '''
     
     
-
+    totaltimer = timeobj.time()
     def getVals(queryset, value):
         if value == 1:
             out = queryset["index"]
@@ -158,7 +168,7 @@ def fvDo (request):
     else:
         url = config.datasetpath
         
-    
+
     width = float(request.GET["width"])
     height = float(request.GET["height"])
     latmax = float(request.GET["latmax"])
@@ -184,17 +194,20 @@ def fvDo (request):
     topology_type = request.GET["topologytype"]
         
     variables = request.GET["variables"].split(",")
-    
+    print "request parse"
     #if latmax == latmin:
     #    actions.append("timeseries")
     
     if "kml" in actions:
         pass
     else:
+
         #if topology_type.lower() == "cell":
         if latmax != latmin:
-            geobb = Cell.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
-                .filter(lon__lte=lonmax).filter(lon__gte=lonmin)
+            #geobb = Cell.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
+            #    .filter(lon__lte=lonmax).filter(lon__gte=lonmin)
+            geobb = Cell.objects.filter(lat__lte=latmax+.18).filter(lat__gte=latmin-.18)\
+                .filter(lon__lte=lonmax+.18).filter(lon__gte=lonmin-.18)
             indexqs = geobb.values("index")
             latqs = geobb.values("lat")
             lonqs = geobb.values("lon")
@@ -228,15 +241,22 @@ def fvDo (request):
         #   index = map(getVals, indexqs, numpy.ones(len(indexqs)))
         #    latno = map(getVals, latqs, numpy.ones(len(indexqs))*2)
         #    lonno = map(getVals, lonqs, numpy.ones(len(indexqs))*3)
-        
+        job_server = pp.Server(4, ppservers=()) 
+        print "cell database"
         if ("facets" in actions) or \
         ("regrid" in actions) or \
         ("shp" in actions) or \
         ("contours" in actions) or \
         ("interpolate" in actions):
+
             #if topology_type.lower() == "cell":
             from matplotlib.collections import PolyCollection
             import matplotlib.tri as Tri
+            #def gettri(lonn, latn, nv):
+            #    
+            #    
+            #    tri = Tri.Triangulation(lonn,latn,triangles=nv)
+            #    return tri
             
             node1qs = geobb.values("node1")
             node2qs = geobb.values("node2")
@@ -259,13 +279,14 @@ def fvDo (request):
             else:
                 latn = numpy.asarray(latn)
                 lonn = numpy.asarray(lonn)
-            
+            #trijob = job_server.submit(gettri, (lonn, latn, nv),(), ("netCDF4", "numpy","matplotlib"))
+            print "nodes database"
         #if date = 
         datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
         dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
         timesqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("index")
         #time = map(getVals, timesqs, numpy.ones(len(timesqs))*1) # commented out for testing of local speed
-        time = range(50,51)
+        time = range(1)
         #pv = deque()
         pvar = deque()
         def getvar(url, t, layer, var):
@@ -282,11 +303,12 @@ def fvDo (request):
         #    return nc.variables["v"][t, layer[0], :]
         appendvar = pvar.append
         #appendv = pv.append
-        job_server = pp.Server(4, ppservers=()) 
-
+        #job_server = pp.Server(4, ppservers=()) 
+        
         # This is looping through time to avoid trying to download too much data from the server at once
         # and its SO SLOOOW, i think due to the append calls, maybe use np.concatenate>?
         t = time
+
         for var in variables:
             appendvar(job_server.submit(getvar, (url, t, layer, var),(), ("netCDF4", "numpy",))) 
             #appendv(job_server.submit(getvvar, (url, t, layer),(), ("netCDF4", "numpy",)))
@@ -298,7 +320,7 @@ def fvDo (request):
         #[u.append(resultu()) for resultu in pu]
         [varis.append(result()) for result in pvar]
         
-        job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
+        #job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
         
         var1 = numpy.asarray(varis[0])
         if len(varis) > 1:
@@ -318,8 +340,9 @@ def fvDo (request):
             except:
                 pass
         else: pass # or 1 timestep geographic...?...
-
+        print "print netcdf access"
         if latmin != latmax:
+
             # This is averaging in time over all timesteps downloaded
             if not "animate" in actions:
                 if "average" in actions:
@@ -353,9 +376,11 @@ def fvDo (request):
                         except:
                             pass
             else: pass # will eventually add animations over time, instead of averages
-
+            print "done math"
+        
             if "image" in actions:
-                fig = Plot.figure(dpi=80, facecolor='none', edgecolor='none')
+                from matplotlib.figure import Figure
+                fig = Figure(dpi=80, facecolor='none', edgecolor='none')
                 fig.set_alpha(0)
                 #ax = fig.add_subplot(111)
                 projection = request.GET["projection"]
@@ -369,6 +394,7 @@ def fvDo (request):
                 #fig.set_figsize_inches((20/m.aspect, 20.))
                 #fig.set_figheight(5)
                 #fig.set_figwidth(5/m.aspect)
+                print "createfig"
                 if "regrid" in actions:
                     """
                     import fvcom_compute.fvcom_stovepipe.regrid as regrid
@@ -411,8 +437,10 @@ def fvDo (request):
                         fig.set_figwidth(width/80.0)  
 
                         lonn, latn = m(lonn, latn)
-                        
+
                         tri = Tri.Triangulation(lonn,latn,triangles=nv)
+
+                        #tri = trijob()
    
                         if len(variables) > 1:
                             mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
@@ -439,7 +467,8 @@ def fvDo (request):
                                        cmap=colormap,
                                        )
 
-                        ax = Plot.gca()
+                        #ax = Plot.gca()
+                        #ax = m.ax
                         
                     if "vectors" in actions:
                         #fig.set_figheight(5)
@@ -466,7 +495,9 @@ def fvDo (request):
                             cmap=colormap,
                             norm=CNorm,
                             )
-                        ax = Plot.gca()
+                        #ax = Plot.gca()
+                        #ax = m.ax
+                        print "plot.gca"
                         #fig.set_figheight(height/80.0)
                         #fig.set_figwidth(width/80.0)
                     elif "contours" in actions:
@@ -503,9 +534,12 @@ def fvDo (request):
                         #fig.set_figheight(20)
                         #fig.set_figwidth(20/m.aspect)
                         #m.drawmeridians(numpy.arange(0,360,1), color='0.5',)
+                        #print trijob.__str__()
                         
                         tri = Tri.Triangulation(lonn,latn,triangles=nv)
                         
+                        #tri = trijob()
+                        #print tri.__str__()
                         if len(variables) > 1:
                             mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
                         else:
@@ -517,6 +551,9 @@ def fvDo (request):
                         
                         #ax.tripcolor(lon, lat, mag, shading="")
                         #collection = PolyCollection(numpy.asarray([(lonn[node1],latn[node1]),(lonn[node2],latn[node2]),(lonn[node3],latn[node3])]))
+                        
+                     
+                        
                         verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                                                 tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
                         
@@ -535,31 +572,37 @@ def fvDo (request):
                         collection.set_edgecolor('none')
 
                         
-                        ax = Plot.gca()
-                        
+                        #ax = Plot.gca()
+                        #ax = m.ax
+                        #print "plot.gca and verts"
                         #m.add_collection(collection)
                         #ax = Plot.gca()
                         #m2.ax.add_collection(collection)
-                        ax.add_collection(collection)
 
+                     
+                        m.ax.add_collection(collection)
+                        print "adding collection"
                 lonmax, latmax = m(lonmax, latmax)
                 lonmin, latmin = m(lonmin, latmin)
-                ax.set_xlim(lonmin, lonmax)
-                ax.set_ylim(latmin, latmax)
-                ax.set_frame_on(False)
-                ax.set_clip_on(False)
-                ax.set_position([0,0,1,1])
+                m.ax.set_xlim(lonmin, lonmax)
+                m.ax.set_ylim(latmin, latmax)
+                m.ax.set_frame_on(False)
+                m.ax.set_clip_on(False)
+                m.ax.set_position([0,0,1,1])
                 #Plot.yticks(visible=False)
                 #Plot.xticks(visible=False)
                 
                 #Plot.axis('off')
 
                 #canvas = Plot.get_current_fig_manager().canvas
+                
                 canvas = FigureCanvasAgg(fig)
                 response = HttpResponse(content_type='image/png')
+                #fig.savefig(response, format='png')
                 canvas.print_png(response)
+                print "print png"
                 fig.clf()
-                Plot.close()    
+                #Plot.close()    
             elif "data" in actions:
                 if "regrid" in actions:
                     #size = int(request.GET["size"])
@@ -750,8 +793,9 @@ def fvDo (request):
                     dat = buffer.getvalue()
                     buffer.close()
                     response.write(dat)
-
+    job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
     gc.collect()
+    print timeobj.time() - totaltimer
     return response
 
 def fvWps (request):
