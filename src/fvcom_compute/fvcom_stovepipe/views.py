@@ -27,17 +27,20 @@ def openlayers (request, filepath):
 
     f = open(config.staticspath + "openlayers/" + filepath)
     text = f.read()
-    dict1 = { }
+    f.close()
+    dict1 = { 'localsite':config.localhostip}
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(text, content_type='text')
     
 def wmstest (request):
     import django.shortcuts as dshorts
+    from django.template import Context, Template
     f = open(config.staticspath + "wms_openlayers_test.html")
     text = f.read()
-    dict1 = { }
+    f.close()
+    dict1 = Context({ 'localsite':config.localhostip})
     #return dshorts.render_to_response(text, dict1)
-    return HttpResponse(text)
+    return HttpResponse(Template(text).render(dict1))
 
 
 def documentation (request):
@@ -384,11 +387,19 @@ def fvDo (request):
                 fig.set_alpha(0)
                 #ax = fig.add_subplot(111)
                 projection = request.GET["projection"]
+                
                 m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                             #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
                             lat_ts = 0.0,
+                            suppress_ticks=True)
+                """
+                m = Basemap(llcrnrx=lonmin, llcrnry=latmin, 
+                            urcrnrx=lonmax, urcrnry=latmax, projection=projection,
+                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
+                            lat_ts = 0.0,
                             )
+                """
                 #lonn, latn = m(lonn, latn)
                 m.ax = fig.add_axes([0, 0, 1, 1])
                 #fig.set_figsize_inches((20/m.aspect, 20.))
