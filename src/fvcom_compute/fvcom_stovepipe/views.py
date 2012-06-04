@@ -421,7 +421,7 @@ def fvDo (request):
                                 )
                     """
                     #lonn, latn = m(lonn, latn)
-                    m.ax = fig.add_axes([0, 0, 1, 1])
+                    m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
                     #fig.set_figsize_inches((20/m.aspect, 20.))
                     #fig.set_figheight(5)
                     #fig.set_figwidth(5/m.aspect)
