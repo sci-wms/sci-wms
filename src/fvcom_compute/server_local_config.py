@@ -5,6 +5,7 @@
 
 # local path to database (doesn't include file name)
 dbpath = "/home/acrosby/Development/Python/unstructured_server/fvcom_wms/src/"
+topologypath = "/home/acrosby/Development/Python/unstructured_server/fvcom_wms/src/fvcom_compute/topology.nc"
 
 # local path to statics (doesn't include file name)
 staticspath = "/home/acrosby/Development/Python/unstructured_server/fvcom_wms/src/fvcom_compute/fvcom_stovepipe/static/"
@@ -21,5 +22,5 @@ localdataset = True
 #localpath = "gom3_197802.nc"
 localpath = "/home/acrosby/Development/Data/FVCOM/gom3_197802.nc"
 
-localhostip = "localhost:7000"
-
+localhostip = "192.168.100.146:7000"
+    

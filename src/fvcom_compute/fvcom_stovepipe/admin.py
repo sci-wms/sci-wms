@@ -33,6 +33,7 @@ def Update_Geographic_Grid(self, request, queryset):
     #def MakeTime(a, b):
     #    t = Time(date=a, index=b)
     #    t.save()
+    
     if queryset.model == Cell:
         queryset.delete()
     #    map(MakeCell, range(len(latc))+1, latc, lonc, nv[0, :], nv[1, :], nv[2, :])

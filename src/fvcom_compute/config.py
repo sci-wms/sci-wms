@@ -1,10 +1,10 @@
 import multiprocessing
-bind = "localhost:7000"
-workers = 12#multiprocessing.cpu_count()
+bind = "0.0.0.0:7000"
+workers = 6#multiprocessing.cpu_count()
 worker_class = "gevent"
 debug = True
-timeout = 15
-max_requests = 50
-backlog = 1000
+timeout = 50
+max_requests = 1
+backlog = 100
 
 #name = "unstructuredserver"
