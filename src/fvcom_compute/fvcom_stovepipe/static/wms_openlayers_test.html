@@ -87,7 +87,7 @@
 				                                },
 				                                
 				                                {
-				                                    singleTile: false, 
+				                                    singleTile: true, 
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
@@ -116,7 +116,7 @@
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
-				                                    styles: "vectors_average_jet_None_None_cell_False",
+				                                    styles: "vectors_average_jet_0_1.5_cell_False",
 				                                    time: "1984-10-17T00:00:00",
 				                                    elevation: "5"
 				                                },
@@ -182,13 +182,85 @@
 				                                }
 				                                }
 				                                );
+				                                
+		  fvcomfilled = new OpenLayers.Layer.WMS("FVCOM Velocity Filled Contours",
+				                                "http://{{localsite}}/wms/",
+				                                {
+				                                    layers:"u,v",
+				                                    transparent: true,
+				                                    styles: "filledcontours_average_jet_0_1.5_cell_False",
+				                                    time: "1984-10-17T00:00:00",
+				                                    elevation: "1"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: false,
+				                                    visibility: false
+				                                    ,getURL       : function (bounds) {
+        
+                                                    bounds = this.adjustBounds(bounds);
+                                                    //alert(bounds)
+                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
+                                                    //alert(bounds);
+                                                    var imageSize = this.getImageSize();
+                                                    var newParams = {};
+                                                    // WMS 1.3 introduced axis order
+                                                    var reverseAxisOrder = this.reverseAxisOrder();
+                                                    newParams.BBOX = this.encodeBBOX ?
+                                                        bounds.toBBOX(null, reverseAxisOrder) :
+                                                        bounds.toArray(reverseAxisOrder);
+                                                    newParams.WIDTH = imageSize.w;
+                                                    newParams.HEIGHT = imageSize.h;
+                                                    var requestString = this.getFullRequestString(newParams);
+                                                    return requestString;
+				                                }
+				                                }
+				                                );
 				
-				
+			fvcompcolor = new OpenLayers.Layer.WMS("FVCOM Velocity Interpolated",
+				                                "http://{{localsite}}/wms/",
+				                                {
+				                                    layers:"u,v",
+				                                    transparent: true,
+				                                    styles: "pcolor_average_jet_0_1.5_cell_False",
+				                                    time: "1984-10-17T00:00:00",
+				                                    elevation: "1"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: false,
+				                                    visibility: false
+				                                    ,getURL       : function (bounds) {
+        
+                                                    bounds = this.adjustBounds(bounds);
+                                                    //alert(bounds)
+                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
+                                                    //alert(bounds);
+                                                    var imageSize = this.getImageSize();
+                                                    var newParams = {};
+                                                    // WMS 1.3 introduced axis order
+                                                    var reverseAxisOrder = this.reverseAxisOrder();
+                                                    newParams.BBOX = this.encodeBBOX ?
+                                                        bounds.toBBOX(null, reverseAxisOrder) :
+                                                        bounds.toArray(reverseAxisOrder);
+                                                    newParams.WIDTH = imageSize.w;
+                                                    newParams.HEIGHT = imageSize.h;
+                                                    var requestString = this.getFullRequestString(newParams);
+                                                    return requestString;
+				                                }
+				                                }
+				                                );	
 				
 				map.addLayer(fvcomv);
 				map.addLayer(fvcomt);
 				map.addLayer(fvcomvec);
 				map.addLayer(fvcomcont);
+				map.addLayer(fvcomfilled);
+				map.addLayer(fvcompcolor);
 				
 				map.setCenter(
 					new OpenLayers.LonLat(-72, 41).transform(

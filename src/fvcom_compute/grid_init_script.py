@@ -13,7 +13,7 @@ nclocal = Dataset("topology.nc", "w")
 
 nclocal.createDimension('cell', 90415)
 nclocal.createDimension('node', 48451)
-nclocal.createDimension('time', None)
+nclocal.createDimension('time', 193104)
 nclocal.createDimension('corners', 3)
 
 lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=(48451,), zlib=False, complevel=0)
@@ -22,7 +22,7 @@ latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(90415,), zlib=
 lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(90415,), zlib=False, complevel=0)
 nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=(3, 90415,), zlib=False, complevel=0)
 
-time = nclocal.createVariable('time', 'f8', ('time',)) 
+time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=(193104,), zlib=False, complevel=0) 
 
 lat[:] = nc.variables['lat'][:]
 lon[:] = nc.variables['lon'][:]

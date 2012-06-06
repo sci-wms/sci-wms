@@ -12,14 +12,12 @@ staticspath = "/home/acrosby/Development/Python/unstructured_server/fvcom_wms/sr
 
 # local path to dataset (includes filename)
 datasetpath = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-#datasetpath = "http://localhost:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
 
 
 # if this is populated, the service will use the dataset above for schema/grid information
 # and the dataset below for actual data extraction.
 localdataset = True
 
-#localpath = "gom3_197802.nc"
 localpath = "/home/acrosby/Development/Data/FVCOM/gom3_197802.nc"
 
 localhostip = "192.168.100.146:7000"

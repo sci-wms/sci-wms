@@ -7,7 +7,7 @@ Created on Sep 1, 2011
 from django.http import HttpResponse
 import numpy
 import netCDF4
-from fvcom_compute.fvcom_stovepipe.models import Cell, Time, Node
+#from fvcom_compute.fvcom_stovepipe.models import Cell, Time, Node
 import matplotlib
 matplotlib.use("Agg")
 #from matplotlib import pyplot as Plot
@@ -15,13 +15,14 @@ from mpl_toolkits.basemap import Basemap
 import datetime
 from collections import deque
 from StringIO import StringIO
-import scipy.io
+#import scipy.io
 import math
 import pp
 import fvcom_compute.server_local_config as config
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import gc
 import time as timeobj
+import bisect
 
 def openlayers (request, filepath):
 
@@ -122,6 +123,7 @@ def fvDo (request):
     
     
     totaltimer = timeobj.time()
+    """
     def getVals(queryset, value):
         if value == 1:
             out = queryset["index"]
@@ -143,7 +145,7 @@ def fvDo (request):
             out = queryset["node3"]
             out = int(out)-1
         return out
-    
+    """
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -205,7 +207,7 @@ def fvDo (request):
         pass
     else:
         topology = netCDF4.Dataset(config.topologypath)
-
+        
         #if topology_type.lower() == "cell":
         if latmax != latmin:
             """
@@ -260,16 +262,13 @@ def fvDo (request):
             ("regrid" in actions) or \
             ("shp" in actions) or \
             ("contours" in actions) or \
-            ("interpolate" in actions):
+            ("interpolate" in actions) or \
+            ("filledcontours" in actions):
 
                 #if topology_type.lower() == "cell":
                 from matplotlib.collections import PolyCollection
                 import matplotlib.tri as Tri
-                #def gettri(lonn, latn, nv):
-                #    
-                #    
-                #    tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                #    return tri
+                
                 """
                 node1qs = geobb.values("node1")
                 node2qs = geobb.values("node2")
@@ -302,15 +301,26 @@ def fvDo (request):
                     index = range(len(latn))
                 
             
-            """
+            
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
-            dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
+            #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
+            """
             timesqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("index")
             #time = map(getVals, timesqs, numpy.ones(len(timesqs))*1) # commented out for testing of local speed
             """
-            time = range(1)
+            times = topology.variables['time'][:]
+            datestart = netCDF4.date2num(datestart,
+                units=topology.variables['time'].units)
+            #dateend = date2num(dateend, units=times.units)
+            #print times
+            #print datestart
+            time = bisect.bisect_right(times, datestart) - 1
+            if config.localdataset:
+                time = [1]
             
-            #pv = deque()
+               
+            #print time
+            
             pvar = deque()
             def getvar(url, t, layer, var):
                 nc = netCDF4.Dataset(url, 'r')
@@ -552,9 +562,74 @@ def fvDo (request):
                             #    cmap=colormap,
                             #    norm=CNorm,
                             #    )\
-                           
-                            m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm)
+                            levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
+                            m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
+                            
+                        elif "filledcontours" in actions:
+                            fig.set_figheight(height/80.0)
+                            fig.set_figwidth(width/80.0)  
+                            lon, lat = m(lon, lat)
+                            lonn, latn = m(lonn, latn)
+                            if len(variables) > 1:
+                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                            else:
+                                mag = var1
+                            mag = numpy.sqrt(mag)
+                            #ax = fig.add_subplot(111)
+                            if climits[0] == "None":
+                                CNorm = matplotlib.colors.Normalize()
+                            else:
+                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
+                                                                )
+                            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
 
+                            #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
+                            #                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
+                            
+                            #collection = PolyCollection(verts,
+                            #                            cmap=colormap, 
+                            #                            norm=CNorm,
+                            #                           )
+
+                            levs = numpy.arange(0, 11)*(climits[1]-climits[0])/10
+                            m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
+                            #paths = collection.get_paths()
+                            #m.ax.set_clip_path(paths[0])
+                            
+                        elif "pcolor" in actions:
+                            fig.set_figheight(height/80.0)
+                            fig.set_figwidth(width/80.0)  
+                            lon, lat = m(lon, lat)
+                            
+                            if len(variables) > 1:
+                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                            else:
+                                mag = var1
+                            mag = numpy.sqrt(mag)
+                            #ax = fig.add_subplot(111)
+                            if climits[0] == "None":
+                                CNorm = matplotlib.colors.Normalize()
+                            else:
+                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
+                                                                )
+                            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
+                            #ax.tricontourf(tri, mag,
+                            #    cmap=colormap,
+                            #    norm=CNorm,
+                            #    )\
+                           
+                            #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
+                            #xi = numpy.arange(lon.min(), lon.max(), 1000)
+                            #yi = numpy.arange(lon.min(), lat.max(), 1000)
+                            xi = numpy.arange(m.xmin, m.xmax, 1000)
+                            yi = numpy.arange(m.ymin, m.ymax, 1000)
+                            from matplotlib.mlab import griddata
+                            
+                            #nx = int((m.xmax-m.xmin)/5000.)+1
+                            #ny = int((m.ymax-m.ymin)/5000.)+1
+                            zi = griddata(lon, lat, mag, xi, yi, interp='nn')
+                            #dat = m.transform_scalar(mag, xi, yi, nx, ny)
+                            m.imshow(zi)
                             
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
