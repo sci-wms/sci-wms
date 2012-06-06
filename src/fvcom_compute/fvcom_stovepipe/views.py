@@ -317,7 +317,9 @@ def fvDo (request):
             time = bisect.bisect_right(times, datestart) - 1
             if config.localdataset:
                 time = [1]
-            
+            else:
+                time = [time]
+            print time
                
             #print time
             
