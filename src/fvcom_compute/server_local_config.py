@@ -16,7 +16,7 @@ datasetpath = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30
 
 # if this is populated, the service will use the dataset above for schema/grid information
 # and the dataset below for actual data extraction.
-localdataset = False
+localdataset = True
 
 localpath = "/home/acrosby/Development/Data/FVCOM/gom3_197802.nc"
 

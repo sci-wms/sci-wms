@@ -190,7 +190,7 @@ def fvDo (request):
     actions = request.GET["actions"]
     actions = set(actions.split(","))
     
-    colormap = request.GET["colormap"].lower()
+    colormap = request.GET["colormap"]#.lower()
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
@@ -582,9 +582,12 @@ def fvDo (request):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
-                                                                )
-                            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
-
+                                                                    )
+                            #import matplotlib.delaunay as Trid
+                            #trid = Trid.Triangulation(lon,lat)
+                            #tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                            #print dir(Trid.LinearInterpolator())
+                            #print dir(tri)
                             #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                             #                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
                             
@@ -592,11 +595,33 @@ def fvDo (request):
                             #                            cmap=colormap, 
                             #                            norm=CNorm,
                             #                           )
-
+                            #interp = tri.nn_interpolator(numpy.asarray(mag))
+                            #interp = Trid.NNInterpolator(tri, numpy.asarray(mag))
+                            #print dir(interp)
+                            #print interp.z
+                            #cent = trid.circumcenters
+                            #print dir(collection)
+                            #print collection.contains(cent[:,0], cent[:,1])
                             levs = numpy.arange(0, 11)*(climits[1]-climits[0])/10
                             m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
-                            #paths = collection.get_paths()
-                            #m.ax.set_clip_path(paths[0])
+                            #mag2 = []
+                            #for lonn1, latn1 in zip(lonn, latn):
+                                #print interp(lonn1+1j, latn1+1j)
+                                #print (lonn1+1j).__str__() + ' ' + latn1.__str__()
+                            #    mag2.append(interp(lonn1+1j, latn1+1j))
+                            #mag2 = numpy.asarray(mag2)
+                            #print mag2
+                            #tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                            #print dir(tri)
+                            #print tri.get_masked_triangles()
+                            #print tri.mask()
+                            #m.ax.tricontourf(tri, mag2, norm=CNorm, levels=levs, antialiased=True)
+                            #pprint dir(tri)
+
+                            #print dir(paths)
+                            #for i in paths:
+                            #    print i
+                            #m.ax.set_clip_path(i)
                             
                         elif "pcolor" in actions:
                             fig.set_figheight(height/80.0)
@@ -622,16 +647,29 @@ def fvDo (request):
                            
                             #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
-                            #yi = numpy.arange(lon.min(), lat.max(), 1000)
-                            xi = numpy.arange(m.xmin, m.xmax, 1000)
-                            yi = numpy.arange(m.ymin, m.ymax, 1000)
+                            #yi = numpy.arange(lat.min(), lat.max(), 1000)
+                            print "lon " + str(lonmax-lonmin)
+                            if lonmax-lonmin < 1:
+                                xi = numpy.arange(m.xmin, m.xmax, 120)
+                                yi = numpy.arange(m.ymin, m.ymax, 120)
+                            elif lonmax-lonmin < 3:
+                                xi = numpy.arange(m.xmin, m.xmax, 200)
+                                yi = numpy.arange(m.ymin, m.ymax, 200)
+                            elif lonmax-lonmin < 9:
+                                xi = numpy.arange(m.xmin, m.xmax, 1000)
+                                yi = numpy.arange(m.ymin, m.ymax, 1000)
+                            else:
+                                xi = numpy.arange(m.xmin, m.xmax, 2500)
+                                yi = numpy.arange(m.ymin, m.ymax, 2500)
+                            
+
                             from matplotlib.mlab import griddata
                             
                             #nx = int((m.xmax-m.xmin)/5000.)+1
                             #ny = int((m.ymax-m.ymin)/5000.)+1
                             zi = griddata(lon, lat, mag, xi, yi, interp='nn')
                             #dat = m.transform_scalar(mag, xi, yi, nx, ny)
-                            m.imshow(zi)
+                            m.imshow(zi, norm=CNorm, cmap=colormap)
                             
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
