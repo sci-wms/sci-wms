@@ -60,11 +60,11 @@ def test (request):
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
 
-def wms (request):
+def wms (request, dataset):
     import fvcom_compute.fvcom_stovepipe.wms_handler as wms
     handler = wms.wms_handler(request)
     action_request = handler.make_action_request(request)
-    response = fvDo(action_request)
+    response = fvDo(action_request, dataset)
     return response
 
 def crossdomain (request):
@@ -110,7 +110,7 @@ def populate (request):
     return "done!"
 
 
-def fvDo (request):
+def fvDo (request, dataset='30yr_gom3'):
     '''
     Request a set of functionalities, any subset of the following:
     1) WMS Style Image Request
@@ -169,9 +169,9 @@ def fvDo (request):
     # direct the service to the dataset
     # make changes to server_local_config.py 
     if config.localdataset:
-        url = config.localpath
+        url = config.localpath[dataset]
     else:
-        url = config.datasetpath
+        url = config.datasetpath[dataset]
         
 
     width = float(request.GET["width"])
@@ -199,14 +199,15 @@ def fvDo (request):
     topology_type = request.GET["topologytype"]
         
     variables = request.GET["variables"].split(",")
-    print "request parse"
+    #print "request parse"
     #if latmax == latmin:
     #    actions.append("timeseries")
     
     if "kml" in actions:
         pass
     else:
-        topology = netCDF4.Dataset(config.topologypath)
+        
+        topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
         
         #if topology_type.lower() == "cell":
         if latmax != latmin:
@@ -257,13 +258,14 @@ def fvDo (request):
         
         if len(index) > 0:
             job_server = pp.Server(4, ppservers=()) 
-            print "cell database"
+            #print "cell database"
             if ("facets" in actions) or \
             ("regrid" in actions) or \
             ("shp" in actions) or \
             ("contours" in actions) or \
             ("interpolate" in actions) or \
-            ("filledcontours" in actions):
+            ("filledcontours" in actions) or \
+            ("pcolor" in actions):
 
                 #if topology_type.lower() == "cell":
                 from matplotlib.collections import PolyCollection
@@ -319,9 +321,8 @@ def fvDo (request):
                 time = [1]
             else:
                 time = [time]
+            
             print time
-               
-            #print time
             
             pvar = deque()
             def getvar(url, t, layer, var):
@@ -375,7 +376,7 @@ def fvDo (request):
                 except:
                     pass
             else: pass # or 1 timestep geographic...?...
-            print "print netcdf access"
+            #print "print netcdf access"
             if latmin != latmax:
 
                 # This is averaging in time over all timesteps downloaded
@@ -411,7 +412,7 @@ def fvDo (request):
                             except:
                                 pass
                 else: pass # will eventually add animations over time, instead of averages
-                print "done math"
+                #print "done math"
         
                 if "image" in actions:
                     from matplotlib.figure import Figure
@@ -420,9 +421,35 @@ def fvDo (request):
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
                     
-                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                    
+                    if ('contours' in actions) or \
+                        ('filledcontours' in actions):
+                        if topology_type == 'cell':
+                            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                                 urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
+                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                resolution='c',
+                                lat_ts = 0.0,
+                                suppress_ticks=True)
+                        else:
+                            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                resolution=None,
+                                lat_ts = 0.0,
+                                suppress_ticks=True)
+                    elif ('pcolor' in actions):
+                        m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                resolution='c',
+                                lat_ts = 0.0,
+                                suppress_ticks=True)
+                    else:
+                        m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                resolution=None,
                                 lat_ts = 0.0,
                                 suppress_ticks=True)
                     """
@@ -437,7 +464,7 @@ def fvDo (request):
                     #fig.set_figsize_inches((20/m.aspect, 20.))
                     #fig.set_figheight(5)
                     #fig.set_figwidth(5/m.aspect)
-                    print "createfig"
+                    #print "createfig"
                     if "regrid" in actions:
                         """
                         import fvcom_compute.fvcom_stovepipe.regrid as regrid
@@ -474,6 +501,7 @@ def fvDo (request):
                             ax.quiver(reglon, reglat, newu, newv, mag, pivot='mid')
                         """
                     else:
+                        """
                         if "interpolate" in actions:
                             
                             fig.set_figheight(height/80.0)
@@ -496,7 +524,7 @@ def fvDo (request):
                             #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                             #                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
                             
-                            if climits[0] == "None":
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],
@@ -512,7 +540,7 @@ def fvDo (request):
 
                             #ax = Plot.gca()
                             #ax = m.ax
-                            
+                        """    
                         if "vectors" in actions:
                             #fig.set_figheight(5)
                             fig.set_figwidth(height/80.0/m.aspect)
@@ -525,7 +553,7 @@ def fvDo (request):
                             #ax = fig.add_subplot(111)
                             #ax.quiver(lon, lat, u, v, mag, pivot='mid')
                             lon, lat = m(lon, lat)
-                            if climits[0] == "None":
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],
@@ -540,52 +568,81 @@ def fvDo (request):
                                 )
                             #ax = Plot.gca()
                             #ax = m.ax
-                            print "plot.gca"
+                            #print "plot.gca"
                             #fig.set_figheight(height/80.0)
                             #fig.set_figwidth(width/80.0)
+                            
                         elif "contours" in actions:
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
-                            lon, lat = m(lon, lat)
-                            
+                            #lon, lat = m(lon, lat)
+                            #lonn, latn = m(lonn, latn)
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                                mag = numpy.sqrt(mag)
                             else:
-                                mag = var1
-                            mag = numpy.sqrt(mag)
+                                if magnitude:
+                                    mag = numpy.abs(var1)
+                                else:
+                                    mag = var1
+                            
                             #ax = fig.add_subplot(111)
-                            if climits[0] == "None":
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
+                                levs = None
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
                                                                 )
+                                levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
                             #tri = Tri.Triangulation(lonn,latn,triangles=nv)
                             #ax.tricontourf(tri, mag,
                             #    cmap=colormap,
                             #    norm=CNorm,
                             #    )\
-                            levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
-                            m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
+                            
+                            #m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
+                            if topology_type == 'cell':
+                                print dir(m)
+                                lon, lat = m(lon, lat)
+                                trid = Tri.Triangulation(lon, lat)
+                                mask = []
+                                for triangs in trid.triangles:
+                                    mask.append(m.is_land(
+                                    lon[triangs].mean(),
+                                    lat[triangs].mean()))
+                                trid.set_mask(mask)
+                                m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True)
+                                
+                                #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
+                            else:
+                                lonn, latn = m(lonn, latn)
+                                tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
                             
                         elif "filledcontours" in actions:
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
-                            lon, lat = m(lon, lat)
-                            lonn, latn = m(lonn, latn)
+                            
                             if len(variables) > 1:
-                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2) 
+                                mag = numpy.sqrt(mag)
                             else:
-                                mag = var1
-                            mag = numpy.sqrt(mag)
+                                if magnitude:
+                                    mag = numpy.abs(var1)
+                                else:
+                                    mag = var1
+                            
                             #ax = fig.add_subplot(111)
-                            if climits[0] == "None":
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
+                                levs = None
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
                                                                     )
+                                levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/9
                             #import matplotlib.delaunay as Trid
                             #trid = Trid.Triangulation(lon,lat)
-                            #tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                            
                             #print dir(Trid.LinearInterpolator())
                             #print dir(tri)
                             #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
@@ -602,26 +659,30 @@ def fvDo (request):
                             #cent = trid.circumcenters
                             #print dir(collection)
                             #print collection.contains(cent[:,0], cent[:,1])
-                            levs = numpy.arange(0, 11)*(climits[1]-climits[0])/10
-                            m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
-                            #mag2 = []
-                            #for lonn1, latn1 in zip(lonn, latn):
-                                #print interp(lonn1+1j, latn1+1j)
-                                #print (lonn1+1j).__str__() + ' ' + latn1.__str__()
-                            #    mag2.append(interp(lonn1+1j, latn1+1j))
-                            #mag2 = numpy.asarray(mag2)
-                            #print mag2
-                            #tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                            #print dir(tri)
-                            #print tri.get_masked_triangles()
-                            #print tri.mask()
-                            #m.ax.tricontourf(tri, mag2, norm=CNorm, levels=levs, antialiased=True)
-                            #pprint dir(tri)
-
-                            #print dir(paths)
-                            #for i in paths:
-                            #    print i
-                            #m.ax.set_clip_path(i)
+                            
+                            if topology_type == 'cell':
+                                #print dir(m)
+                                lon, lat = m(lon, lat)
+                                trid = Tri.Triangulation(lon, lat)
+                                #tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                                mask = []
+                                for triangs in trid.triangles:
+                                    mask.append(m.is_land(
+                                    lon[triangs].mean(),
+                                    lat[triangs].mean()))
+                                trid.set_mask(mask)
+                                m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=True)
+                                
+                                #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
+                            else:
+                                lonn, latn = m(lonn, latn)
+                                tri = Tri.Triangulation(lonn, latn, triangles=nv)
+                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
+                            #print dir(collection)
+                            #paths = collection.get_paths()
+                            #xrms = collection.get_transforms()
+                            #temp = []
+                            
                             
                         elif "pcolor" in actions:
                             fig.set_figheight(height/80.0)
@@ -630,11 +691,15 @@ def fvDo (request):
                             
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                                mag = numpy.sqrt(mag)
                             else:
-                                mag = var1
-                            mag = numpy.sqrt(mag)
+                                if magnitude:
+                                    mag = numpy.abs(var1)
+                                else:
+                                    mag = var1
+                            
                             #ax = fig.add_subplot(111)
-                            if climits[0] == "None":
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
@@ -648,7 +713,7 @@ def fvDo (request):
                             #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
                             #yi = numpy.arange(lat.min(), lat.max(), 1000)
-                            print "lon " + str(lonmax-lonmin)
+                            #print "lon " + str(lonmax-lonmin)
                             if lonmax-lonmin < 1:
                                 xi = numpy.arange(m.xmin, m.xmax, 120)
                                 yi = numpy.arange(m.ymin, m.ymax, 120)
@@ -667,8 +732,20 @@ def fvDo (request):
                             
                             #nx = int((m.xmax-m.xmin)/5000.)+1
                             #ny = int((m.ymax-m.ymin)/5000.)+1
+                            
+                            #if topology_type == 'cell':
                             zi = griddata(lon, lat, mag, xi, yi, interp='nn')
+                            #else:
+                            #    lon, lat = m(lonn, latn)
+                            #    zi = griddata(lon, lat, mag, xi, yi, interp='nn')
+                                #lonn, latn = m(lonn, latn)
+
                             #dat = m.transform_scalar(mag, xi, yi, nx, ny)
+                            #mask = numpy.ndarray(shape=zi.shape)
+                            for i,x in enumerate(xi):
+                                for j,y in enumerate(yi):
+                                    if m.is_land(x,y):
+                                        zi[j,i] = numpy.nan
                             m.imshow(zi, norm=CNorm, cmap=colormap)
                             
                         elif  "facets" in actions:
@@ -680,17 +757,7 @@ def fvDo (request):
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
                             lonn, latn = m(lonn, latn)
-                            #m.ax = fig.add_axes([0, 0, 1, 1])
-                            
-                            #fig.set_figheight(20)
-                            #fig.set_figwidth(20/m.aspect)
-                            #m.drawmeridians(numpy.arange(0,360,1), color='0.5',)
-                            #print trijob.__str__()
-                            
                             tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                            
-                            #tri = trijob()
-                            #print tri.__str__()
                             if len(variables) > 1:
                                 mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
                             else:
@@ -698,41 +765,36 @@ def fvDo (request):
                                     mag = numpy.sqrt(var1**2)
                                 else:
                                     mag = var1
-                            #mag = numpy.sqrt(mag)
-                            
-                            #ax.tripcolor(lon, lat, mag, shading="")
-                            #collection = PolyCollection(numpy.asarray([(lonn[node1],latn[node1]),(lonn[node2],latn[node2]),(lonn[node3],latn[node3])]))
-                            
-                         
-                            
-                            verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
-                                                    tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
-                            
-                            if climits[0] == "None":
+                                    
+                            if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
-                            collection = PolyCollection(verts,
-                                                        cmap=colormap, 
-                                                        norm=CNorm,
-                                                        )
-                            collection.set_array(mag)
-                            collection.set_edgecolor('none')
+                                                                    
+                            if topology_type == 'cell':
+                                verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
+                                                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
+                                
+                                
+                                collection = PolyCollection(verts,
+                                                            cmap=colormap, 
+                                                            norm=CNorm,
+                                                            )
+                                collection.set_array(mag)
+                                collection.set_edgecolor('none')
 
+                                m.ax.add_collection(collection)
+                                #print "adding collection"
+                            else:
+                                m.ax.tripcolor(tri, mag,
+                                               shading="",
+                                               norm=CNorm,
+                                               cmap=colormap,
+                                               )
                             
-                            #ax = Plot.gca()
-                            #ax = m.ax
-                            #print "plot.gca and verts"
-                            #m.add_collection(collection)
-                            #ax = Plot.gca()
-                            #m2.ax.add_collection(collection)
-
-                         
-                            m.ax.add_collection(collection)
-                            print "adding collection"
                     lonmax, latmax = m(lonmax, latmax)
                     lonmin, latmin = m(lonmin, latmin)
                     m.ax.set_xlim(lonmin, lonmax)
@@ -749,13 +811,14 @@ def fvDo (request):
                     
                     canvas = FigureCanvasAgg(fig)
                     response = HttpResponse(content_type='image/png')
-                    #response = HttpResponse(content_type='image/jpg')
-                    #fig.savefig(response, format='png')
+                    #response = HttpResponse(content_type="image/svg+xml")
+                    #fig.savefig(response, format='svg')
                     #canvas.print_figure(response, dpi=80, facecolor=None, edgecolor=None)
                     canvas.print_png(response)
-                    print "print png"
+                    #print "print png"
                     #fig.clf()
-                    #Plot.close()    
+                    #Plot.close()   
+                     
                 elif "data" in actions:
                     if "regrid" in actions:
                         #size = int(request.GET["size"])
@@ -869,7 +932,7 @@ def fvDo (request):
                             response['Content-Disposition'] = 'attachment; filename=fvcom.zip'
                             w = shapefile.Writer(shapefile.POLYGON)
                             w.field('mag','F')
-                            mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
+                            mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                             mag = numpy.sqrt(mag)
                             
                             #for i,j in enumerate(lon):
@@ -887,7 +950,8 @@ def fvDo (request):
                             w.saveShp(shp)
                             w.saveShx(shx)
                             w.saveDbf(dbf)
-                            z = zipfile.ZipFile(response, "w", zipfile.ZIP_STORED)
+                            #z = zipfile.ZipFile(response, "w", zipfile.ZIP_STORED)
+                            z = zipfile.ZipFile('/home/acrosby/alexsfvcomshape.zip', 'w', zipfile.ZIP_STORED)
                             z.writestr("fvcom.shp", shp.getvalue())
                             z.writestr("fvcom.shx", shx.getvalue())
                             z.writestr("fvcom.dbf", dbf.getvalue())
