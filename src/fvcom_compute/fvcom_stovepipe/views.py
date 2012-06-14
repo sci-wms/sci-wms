@@ -96,7 +96,9 @@ def getFeatureInfo(request, dataset):
         c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
         length = 6371 * c
         return length
-        
+    
+    job_server = pp.Server(4, ppservers=()) 
+       
     X = float(request.GET['X'])
     Y = float(request.GET['Y'])
     #VERSION = 
@@ -106,13 +108,14 @@ def getFeatureInfo(request, dataset):
     latmax = float(box[3])
     lonmin = float(box[0])
     lonmax = float(box[2])
-    height = request.GET["HEIGHT"]
-    width = request.GET["WIDTH"]
+    height = float(request.GET["HEIGHT"])
+    width = float(request.GET["WIDTH"])
     styles = request.GET["STYLES"].split("_")
     #LAYERS = request.GET['LAYERS']
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT = 
-    QUERY_LAYERS = request.GET['QUERY_LAYERS']
+    QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
+    QUERY_LAYERS.append("time")
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
@@ -144,40 +147,44 @@ def getFeatureInfo(request, dataset):
         lats = topology.variables['latc'][:]
         lons = topology.variables['lonc'][:]
     
-    lengths = map(haversine, numpy.ones(len(lon))*latmax, \
-                          numpy.ones(len(lon))*lonmax, lat, lon)
+    lengths = map(haversine, numpy.ones(len(lons))*lat, \
+                          numpy.ones(len(lons))*lon, lats, lons)
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
 
-    TIMES = TIME.split("/")
-    datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
-    dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
-    times = topology.variables['time'][:]
-    time_units = topology.variables['time'].units
-    datestart = netCDF4.date2num(datestart, units=time_units)
-    dateend = netCDF4.date2num(dateend, units=time_units)
-    time1 = bisect.bisect_right(times, datestart) - 1
-    time2 = bisect.bisect_right(times, dateend) - 1
+    
     if config.localdataset:
         time = [1]
     else:
+        TIMES = TIME.split("/")
+        datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
+        dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
+        times = topology.variables['time'][:]
+        time_units = topology.variables['time'].units
+        datestart = netCDF4.date2num(datestart, units=time_units)
+        dateend = netCDF4.date2num(dateend, units=time_units)
+        time1 = bisect.bisect_right(times, datestart) - 1
+        time2 = bisect.bisect_right(times, dateend) - 1
         time = range(time1, time2)
         
     pvar = deque()
     def getvar(url, t, layer, var, ind):
         nc = netCDF4.Dataset(url, 'r')
-        
-        # Expects 3d cell variables.
-        if len(nc.variables[var].shape) == 3:
-            return nc.variables[var][t, layer[0], ind]
-        elif len(nc.variables[var].shape) == 2:
-            return nc.variables[var][t, ind]
-        elif len(nc.variables[var].shape) == 1:
-            return nc.variables[var][ind]
+        if var == "time":
+            return nc.variables[var][t]
+        else:
+            # Expects 3d cell variables.
+            if len(nc.variables[var].shape) == 3:
+                return nc.variables[var][t, layer[0], ind]
+            elif len(nc.variables[var].shape) == 2:
+                return nc.variables[var][t, ind]
+            elif len(nc.variables[var].shape) == 1:
+                return nc.variables[var][ind]
+            
     if config.localdataset:
         url = config.localpath[dataset]
-        time = range(1,10)
+        time = range(1,30)
         elevation = [5]
     else:
         url = config.datasetpath[dataset]
@@ -186,21 +193,23 @@ def getFeatureInfo(request, dataset):
         appendvar(job_server.submit(getvar, (url, time, elevation, var, index),(), ("netCDF4", "numpy",))) 
     varis = deque()
     [varis.append(result()) for result in pvar]
-    var1 = numpy.asarray(varis[0])
-    if len(varis) > 1:
-        var2 = numpy.asarray(varis[1])
+    #var1 = numpy.asarray(varis[0])
+    #if len(varis) > 1:
+    #    var2 = numpy.asarray(varis[1])
         
-    response = HttpResponse(content_type='text/csv')
+    #response = HttpResponse(content_type='text/csv')
+    response = HttpResponse()
     #response['Content-Disposition'] = 'filename=fvcom.txt'
-    if len(varis) >1:
-        X = numpy.asarray([var1,var2])
-    else:
-        X = numpy.asarrray([var1])
+    #if len(varis) >1:
+    #    X = numpy.asarray([var1,var2])
+    #else:
+    #    X = numpy.asarrray([var1])
+    X = numpy.asarray([var for var in varis])
     X = numpy.transpose(X)
 
     buffer = StringIO()
 
-    numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
+    numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
 
     dat = buffer.getvalue()
     buffer.close()
