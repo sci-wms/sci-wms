@@ -837,9 +837,11 @@ def fvDo (request, dataset='30yr_gom3'):
                                 CNorm = matplotlib.colors.Normalize()
                                 levs = None
                             else:
-                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
+                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=False,
                                                                     )
-                                levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/9
+                                levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
+                                levs = numpy.hstack(([-99999], levs, [99999]))
+      
                             #import matplotlib.delaunay as Trid
                             #trid = Trid.Triangulation(lon,lat)
                             
