@@ -51,7 +51,7 @@ def documentation (request):
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
-
+"""
 def test (request):
     import django.shortcuts as dshorts
     #import fvcom_compute.server_local_config as config
@@ -59,7 +59,7 @@ def test (request):
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
-
+"""
 def wms (request, dataset):
     import fvcom_compute.fvcom_stovepipe.wms_handler as wms
     handler = wms.wms_handler(request)
@@ -73,7 +73,7 @@ def crossdomain (request):
     response = HttpResponse(content_type="text/xml")
     response.write(test)
     return response
-
+"""
 def populate (request):
     
     from netCDF4 import Dataset, num2date
@@ -108,7 +108,7 @@ def populate (request):
         c.save()
         
     return "done!"
-
+"""
 
 def fvDo (request, dataset='30yr_gom3'):
     '''
@@ -234,6 +234,7 @@ def fvDo (request, dataset='30yr_gom3'):
             
             lat = lat[index]
             lon = lon[index]
+
             
         else:
             pass
@@ -265,7 +266,8 @@ def fvDo (request, dataset='30yr_gom3'):
             ("contours" in actions) or \
             ("interpolate" in actions) or \
             ("filledcontours" in actions) or \
-            ("pcolor" in actions):
+            ("pcolor" in actions) or \
+            (topology_type.lower()=='node'):
 
                 #if topology_type.lower() == "cell":
                 from matplotlib.collections import PolyCollection
@@ -301,6 +303,7 @@ def fvDo (request, dataset='30yr_gom3'):
                 lonn = topology.variables['lon'][:]
                 if topology_type.lower() == "node":
                     index = range(len(latn))
+
                 
             
             
@@ -327,6 +330,7 @@ def fvDo (request, dataset='30yr_gom3'):
             pvar = deque()
             def getvar(url, t, layer, var):
                 nc = netCDF4.Dataset(url, 'r')
+                
                 # Expects 3d cell variables.
                 if len(nc.variables[var].shape) == 3:
                     return nc.variables[var][t, layer[0], :]
@@ -552,7 +556,11 @@ def fvDo (request, dataset='30yr_gom3'):
                             mag = numpy.sqrt(mag)
                             #ax = fig.add_subplot(111)
                             #ax.quiver(lon, lat, u, v, mag, pivot='mid')
-                            lon, lat = m(lon, lat)
+                            if topology_type == 'cell':
+                                lon, lat = m(lon, lat)
+                            else:
+                                lon, lat = m(lonn, latn)
+                                
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
@@ -566,11 +574,44 @@ def fvDo (request, dataset='30yr_gom3'):
                                 cmap=colormap,
                                 norm=CNorm,
                                 )
-                            #ax = Plot.gca()
-                            #ax = m.ax
-                            #print "plot.gca"
-                            #fig.set_figheight(height/80.0)
+
+                        if "barbs" in actions:
+                            #fig.set_figheight(5)
+                            fig.set_figwidth(height/80.0/m.aspect)
+                            fig.set_figheight(height/80.0)
                             #fig.set_figwidth(width/80.0)
+                            
+                            mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+
+                            mag = numpy.sqrt(mag)
+                            #ax = fig.add_subplot(111)
+                            #ax.quiver(lon, lat, u, v, mag, pivot='mid')
+                            if topology_type == 'cell':
+                                lon, lat = m(lon, lat)
+                            else:
+                                lon, lat = m(lonn, latn)
+                                
+                            if (climits[0] == "None") or (climits[1] == "None"):
+                                CNorm = matplotlib.colors.Normalize()
+                                full = 10.#.2
+                                flag = 50.#1.
+                            else:
+                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                                vmax=climits[1],
+                                                                clip=True,
+                                                                )
+                                full = climits[0]
+                                flag = climits[1]
+                                
+                            m.ax.barbs(lon, lat, var1, var2, mag,
+                                length=5.8,
+                                pivot='middle',
+                                barb_increments=dict(half=full/2., full=full, flag=flag),
+                                #units='xy',
+                                #cmap=colormap,
+                                #norm=CNorm,
+                                )
+
                             
                         elif "contours" in actions:
                             fig.set_figheight(height/80.0)

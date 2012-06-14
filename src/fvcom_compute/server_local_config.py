@@ -16,6 +16,10 @@ staticspath = "/home/acrosby/Development/Python/unstructured_server/fvcom_wms/sr
 # local path to dataset (includes filename) OR Opendap endpoint
 datasetpath = {
     '30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
+    'mass_bay':"http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc",
+    'necofs_wave' : "http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Forecasts/NECOFS_WAVE_FORECAST.nc",
+    'gom3_forecast' : "http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
+    'adcirc' : "http://testbedapps-dev.sura.org/thredds/dodsC/in/und/adcirc/ike/ultralite/lr/vardrag/nowave/3d",
     }
 
 # mostly the below is for testing purposes only:
@@ -25,6 +29,7 @@ localdataset = True
 
 localpath = {
     '30yr_gom3':"/home/acrosby/Development/Data/FVCOM/gom3_197802.nc",
+
     }
 
 
