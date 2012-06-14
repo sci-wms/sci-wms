@@ -393,7 +393,27 @@
                                                     return requestString;
 				                                }
 				                                }
-				                                );                                
+				                                );  
+				info = new OpenLayers.Control.WMSGetFeatureInfo({
+                    url: 'http://{{localsite}}/wms/30yr_gom3/', 
+                    title: 'Identify features by clicking',
+                    queryVisible: true,
+                    //TIME = "1984-10-17T00:00:00/1984-10-18T00:00:00",
+                    //ELEVATION = "5",
+                    
+                    eventListeners: {
+                        getfeatureinfo: function(event) {
+                            map.addPopup(new OpenLayers.Popup.FramedCloud(
+                                "chicken", 
+                                map.getLonLatFromPixel(event.xy),
+                                null,
+                                event.text,
+                                null,
+                                true
+                            ));
+                        }
+                    }
+                });                              
 				
 				map.addLayer(fvcomv);
 				map.addLayer(fvcomt);
@@ -411,6 +431,8 @@
 						map.getProjectionObject()
 					), 8
 				);
+				map.addControl(info);
+				info.activate();
 				map.addControl(new OpenLayers.Control.LayerSwitcher());
 			}
 	</script>

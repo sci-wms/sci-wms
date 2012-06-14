@@ -37,6 +37,7 @@ class wms_handler(object):
         climits = styles[3:5]
         topology_type = styles[5]
         magnitude_bool = styles[6]
+        #reqtype = requestobj.GET["REQUEST"]
         
         class action_request:
             pass
