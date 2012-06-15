@@ -30,6 +30,7 @@ class wms_handler(object):
         latmax = box[3]
         lonmin = box[0]
         lonmax = box[2]
+        
         height = requestobj.GET["HEIGHT"]
         width = requestobj.GET["WIDTH"]
         styles = requestobj.GET["STYLES"].split("_")
@@ -55,6 +56,9 @@ class wms_handler(object):
                           u'topologytype': topology_type,
                           u'magnitude': magnitude_bool,
                           }
+        if float(lonmax)-float(lonmin) < .0001:
+            action_request == None
+            
         return action_request
                 
         

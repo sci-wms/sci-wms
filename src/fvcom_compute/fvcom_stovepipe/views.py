@@ -66,7 +66,10 @@ def wms (request, dataset):
         import fvcom_compute.fvcom_stovepipe.wms_handler as wms
         handler = wms.wms_handler(request)
         action_request = handler.make_action_request(request)
-        response = fvDo(action_request, dataset)
+        if action_request is not None:
+            response = fvDo(action_request, dataset)
+        else:
+            response = HttpResponse()
     elif reqtype.lower() == 'getfeatureinfo':
         response =  getFeatureInfo(request, dataset)
     elif reqtype == 'getLegendGraphic':
