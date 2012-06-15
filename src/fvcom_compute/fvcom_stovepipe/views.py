@@ -96,9 +96,7 @@ def getFeatureInfo(request, dataset):
         c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
         length = 6371 * c
         return length
-    
-    job_server = pp.Server(4, ppservers=()) 
-       
+
     X = float(request.GET['X'])
     Y = float(request.GET['Y'])
     #VERSION = 
@@ -115,7 +113,6 @@ def getFeatureInfo(request, dataset):
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT = 
     QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
-    QUERY_LAYERS.append("time")
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
@@ -169,8 +166,8 @@ def getFeatureInfo(request, dataset):
         time = range(time1, time2)
         
     pvar = deque()
-    def getvar(url, t, layer, var, ind):
-        nc = netCDF4.Dataset(url, 'r')
+    def getvar(nc, t, layer, var, ind):
+        #nc = netCDF4.Dataset(url, 'r')
         if var == "time":
             return nc.variables[var][t]
         else:
@@ -188,22 +185,14 @@ def getFeatureInfo(request, dataset):
         elevation = [5]
     else:
         url = config.datasetpath[dataset]
-    appendvar = pvar.append
-    for var in QUERY_LAYERS:
-        appendvar(job_server.submit(getvar, (url, time, elevation, var, index),(), ("netCDF4", "numpy",))) 
+
     varis = deque()
-    [varis.append(result()) for result in pvar]
-    #var1 = numpy.asarray(varis[0])
-    #if len(varis) > 1:
-    #    var2 = numpy.asarray(varis[1])
-        
-    #response = HttpResponse(content_type='text/csv')
+    varis.append(getvar(datasetnc, time, elevation, "time", index))
+    for var in QUERY_LAYERS:
+        varis.append(getvar(datasetnc, time, elevation, var, index))
+
     response = HttpResponse()
-    #response['Content-Disposition'] = 'filename=fvcom.txt'
-    #if len(varis) >1:
-    #    X = numpy.asarray([var1,var2])
-    #else:
-    #    X = numpy.asarrray([var1])
+
     X = numpy.asarray([var for var in varis])
     X = numpy.transpose(X)
 
@@ -352,6 +341,7 @@ def fvDo (request, dataset='30yr_gom3'):
     else:
         
         topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
+        datasetnc = netCDF4.Dataset(url)
         
         #if topology_type.lower() == "cell":
         if latmax != latmin:
@@ -402,7 +392,7 @@ def fvDo (request, dataset='30yr_gom3'):
             """
         
         if len(index) > 0:
-            job_server = pp.Server(4, ppservers=()) 
+            #job_server = pp.Server(4, ppservers=()) 
             #print "cell database"
             if ("facets" in actions) or \
             ("regrid" in actions) or \
@@ -475,10 +465,9 @@ def fvDo (request, dataset='30yr_gom3'):
             
             print time
             
-            pvar = deque()
-            def getvar(url, t, layer, var):
-                nc = netCDF4.Dataset(url, 'r')
-                
+            #pvar = deque()
+            def getvar(nc, t, layer, var):
+                #nc = netCDF4.Dataset(url, 'r')
                 # Expects 3d cell variables.
                 if len(nc.variables[var].shape) == 3:
                     return nc.variables[var][t, layer[0], :]
@@ -489,7 +478,7 @@ def fvDo (request, dataset='30yr_gom3'):
             #def getvvar(url, t, layer):
             #    nc = netCDF4.Dataset(url, 'r')
             #    return nc.variables["v"][t, layer[0], :]
-            appendvar = pvar.append
+            #appendvar = pvar.append
             #appendv = pv.append
             #job_server = pp.Server(4, ppservers=()) 
             
@@ -497,22 +486,25 @@ def fvDo (request, dataset='30yr_gom3'):
             # and its SO SLOOOW, i think due to the append calls, maybe use np.concatenate>?
             t = time
 
-            for var in variables:
-                appendvar(job_server.submit(getvar, (url, t, layer, var),(), ("netCDF4", "numpy",))) 
+            #for var in variables:
+            #    appendvar(job_server.submit(getvar, (url, t, layer, var),(), ("netCDF4", "numpy",))) 
                 #appendv(job_server.submit(getvvar, (url, t, layer),(), ("netCDF4", "numpy",)))
-            
-            varis = deque()
+            var1 = getvar(datasetnc, t, layer, variables[0])
+            if len(variables) > 1:
+                var2 = getvar(datasetnc, t, layer, variables[1])
+
+            #varis = deque()
             #v = deque()
             
             #[v.append(resultv()) for resultv in pv]
             #[u.append(resultu()) for resultu in pu]
-            [varis.append(result()) for result in pvar]
+            #[varis.append(result()) for result in pvar]
             
             #job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
             
-            var1 = numpy.asarray(varis[0])
-            if len(varis) > 1:
-                var2 = numpy.asarray(varis[1])
+            #var1 = numpy.asarray(varis[0])
+            #if len(varis) > 1:
+            #    var2 = numpy.asarray(varis[1])
             
             index = numpy.asarray(index)
             if len(var1.shape) > 2:
@@ -898,7 +890,10 @@ def fvDo (request, dataset='30yr_gom3'):
                         elif "pcolor" in actions:
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
-                            lon, lat = m(lon, lat)
+                            if topology_type.lower() == "cell":
+                                lon, lat = m(lon, lat)
+                            else:
+                                lon, lat = m(lonn, latn)
                             
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
@@ -945,7 +940,11 @@ def fvDo (request, dataset='30yr_gom3'):
                             #ny = int((m.ymax-m.ymin)/5000.)+1
                             
                             #if topology_type == 'cell':
-                            zi = griddata(lon, lat, mag, xi, yi, interp='nn')
+                            if nv is not None:
+                                n = numpy.unique(nv)
+                                zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
+                            else:
+                                zi = griddata(lon, lat, mag, xi, yi, interp='nn')
                             #else:
                             #    lon, lat = m(lonn, latn)
                             #    zi = griddata(lon, lat, mag, xi, yi, interp='nn')
@@ -1221,7 +1220,7 @@ def fvDo (request, dataset='30yr_gom3'):
                         dat = buffer.getvalue()
                         buffer.close()
                         response.write(dat)
-            job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
+            #job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
                         
         else:
             from matplotlib.figure import Figure
