@@ -61,6 +61,8 @@ def test (request):
     return dshorts.render_to_response('docs.html', dict1)
 """
 def wms (request, dataset):
+    import fvcom_compute.grid_init_script as grid
+    grid.check_topology_age()
     reqtype = request.GET['REQUEST']
     if reqtype.lower() == 'getmap':
         import fvcom_compute.fvcom_stovepipe.wms_handler as wms
@@ -895,8 +897,11 @@ def fvDo (request, dataset='30yr_gom3'):
                             fig.set_figwidth(width/80.0)  
                             if topology_type.lower() == "cell":
                                 lon, lat = m(lon, lat)
+                                lonn, latn = m(lonn, latn)
                             else:
                                 lon, lat = m(lonn, latn)
+                                lonn, latn = lon, lat
+                                
                             
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
@@ -913,7 +918,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
                                                                 )
-                            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
+                            tri = Tri.Triangulation(lonn,latn,triangles=nv)
                             #ax.tricontourf(tri, mag,
                             #    cmap=colormap,
                             #    norm=CNorm,
@@ -943,7 +948,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             #ny = int((m.ymax-m.ymin)/5000.)+1
                             
                             #if topology_type == 'cell':
-                            if nv is not None:
+                            if topology_type == "node":
                                 n = numpy.unique(nv)
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
@@ -955,12 +960,25 @@ def fvDo (request, dataset='30yr_gom3'):
 
                             #dat = m.transform_scalar(mag, xi, yi, nx, ny)
                             #mask = numpy.ndarray(shape=zi.shape)
+                            '''
                             for i,x in enumerate(xi):
                                 for j,y in enumerate(yi):
                                     if m.is_land(x,y):
                                         zi[j,i] = numpy.nan
-                            m.imshow(zi, norm=CNorm, cmap=colormap)
+                            '''
+                            coll = m.imshow(zi, norm=CNorm, cmap=colormap)
+                            import matplotlib.patches as patches
+                            from perimeter import get_perimeter
                             
+                            peri = get_perimeter(topology.variables['nv'][:,:].T-1)
+                            print numpy.asarray(peri).shape
+                            #for triangs in tri.triangles:
+                                #print numpy.vstack((lonn[triangs].T,latn[triangs].T,)).T
+                            p = patches.Polygon(numpy.vstack((lonn[peri].T,latn[peri].T,)).T)#np.asarray(poly).T)
+                            p.set_color('None')
+                            m.ax.add_patch(p)
+                            coll.set_clip_path(p)
+                                
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
                             #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 

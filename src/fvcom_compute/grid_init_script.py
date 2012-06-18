@@ -5,8 +5,13 @@ Created on Sep 6, 2011
 '''
 from netCDF4 import Dataset, num2date
 import sys
+from datetime import datetime
+import pp
 
 def create_topology(datasetname, url):
+    from netCDF4 import Dataset, num2date
+    import sys
+    from datetime import datetime
     nc = Dataset(url)
     nclocal = Dataset(datasetname+".nc", "w")
     
@@ -67,6 +72,50 @@ def create_topology(datasetname, url):
     
     
     nclocal.sync()
+    now = datetime.now()
+    #print dir(now)
+    f = open('last_grid_init.pywms', 'w')
+    f.write(now.__str__())
+    f.close()
+    
+def create_topology_from_config():
+    """
+    Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
+    """    
+    import server_local_config
+
+    paths = server_local_config.datasetpath #dict
+    for dataset in paths.viewkeys():
+        print "Adding: " + paths[dataset]
+        create_topology(dataset, paths[dataset])
+    
+    """
+    #url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
+    datasetname = sys.argv[1]
+    try:
+        url = sys.argv[2]
+    except:
+        url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
+        
+    create_topology(datasetname, url)
+    """
+
+def check_topology_age():
+
+    from datetime import datetime
+    f = open('last_grid_init.pywms', 'r')
+    last = f.readline().replace('\n', "")
+    last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
+    f.close()
+    if (datetime.now() - last).seconds > 3*3600:
+         job_server = pp.Server(4, ppservers=())
+         import server_local_config
+
+         paths = server_local_config.datasetpath #dict
+         arrayj = []
+         for dataset in paths.viewkeys():
+             print "Updating: " + paths[dataset]
+             arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(create_topology,),("netCDF4","numpy", "datetime")))
     
 if __name__ == '__main__':
     """
