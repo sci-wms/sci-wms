@@ -4,10 +4,13 @@ fvcom_wms
 To Start With Django Development Server:
 
 $cd fvcom_wms/src/fvcom_compute
+
 $python manage.py runserver 0.0.0.0:7000
 
 To Start With Production WSGI Server:
+
 $cd fvcom_wms/src/fvcom_compute
+
 $gunicorn_django -c config.py
 
 
