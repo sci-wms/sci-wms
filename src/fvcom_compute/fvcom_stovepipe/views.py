@@ -597,7 +597,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 lat_ts = 0.0,
                                 suppress_ticks=True)
                     else:
-                    """"
+                    """
                     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                             #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
