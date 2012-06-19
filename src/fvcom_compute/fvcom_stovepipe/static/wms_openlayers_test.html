@@ -54,24 +54,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }}
+				                                   }
 				                                );
 				fvcomt = new OpenLayers.Layer.WMS("FVCOM Temperature",
 				                                "http://{{localsite}}/wms/30yr_gom3/",
@@ -88,24 +71,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );
 				fvcomvec = new OpenLayers.Layer.WMS("FVCOM Velocity Vectors",
@@ -123,24 +89,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: true
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                   
 				                                }
 				                                );
 				                                
@@ -159,24 +108,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                   
 				                                }
 				                                );
 				                                
@@ -195,24 +127,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );
 				
@@ -232,24 +147,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );	
 				                                
@@ -268,24 +166,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );
 				fvcomnode = new OpenLayers.Layer.WMS("FVCOM Temperature (Contours)",
@@ -303,24 +184,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );
 				                                
@@ -339,24 +203,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );
 				adcirctest = new OpenLayers.Layer.WMS("ADCIRC TEST",
@@ -374,24 +221,7 @@
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
-				                                    ,getURL       : function (bounds) {
-        
-                                                    bounds = this.adjustBounds(bounds);
-                                                    //alert(bounds)
-                                                    bounds.transform(new OpenLayers.Projection("EPSG:3857"),new OpenLayers.Projection("EPSG:4326"));
-                                                    //alert(bounds);
-                                                    var imageSize = this.getImageSize();
-                                                    var newParams = {};
-                                                    // WMS 1.3 introduced axis order
-                                                    var reverseAxisOrder = this.reverseAxisOrder();
-                                                    newParams.BBOX = this.encodeBBOX ?
-                                                        bounds.toBBOX(null, reverseAxisOrder) :
-                                                        bounds.toArray(reverseAxisOrder);
-                                                    newParams.WIDTH = imageSize.w;
-                                                    newParams.HEIGHT = imageSize.h;
-                                                    var requestString = this.getFullRequestString(newParams);
-                                                    return requestString;
-				                                }
+				                                    
 				                                }
 				                                );  
 				info = new OpenLayers.Control.WMSGetFeatureInfo({

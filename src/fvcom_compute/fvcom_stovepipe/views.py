@@ -320,6 +320,25 @@ def fvDo (request, dataset='30yr_gom3'):
     latmin = float(request.GET["latmin"])
     lonmax = float(request.GET["lonmax"])
     lonmin = float(request.GET["lonmin"])
+    
+    from mpl_toolkits.basemap import pyproj
+    """
+    mi = Basemap(projection=request.GET["projection"],
+                resolution=None,
+                lat_ts = 0.0,
+                suppress_ticks=True,
+                lon_0=0.,
+                lat_0=0.,
+                )
+    """
+    mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
+    lonmin, latmin = mi(lonmin, latmin, inverse=True)
+    lonmax, latmax = mi(lonmax, latmax, inverse=True)
+    #print lonmin, latmin
+    #print lonmax, latmax
+    
+    
+    
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
     layer = request.GET["layer"]
@@ -598,12 +617,14 @@ def fvDo (request, dataset='30yr_gom3'):
                                 suppress_ticks=True)
                     else:
                     """
+                    
                     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                             #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
                             resolution=None,
                             lat_ts = 0.0,
                             suppress_ticks=True)
+                            
                     """
                     m = Basemap(llcrnrx=lonmin, llcrnry=latmin, 
                                 urcrnrx=lonmax, urcrnry=latmax, projection=projection,
