@@ -74,9 +74,9 @@ def wms (request, dataset):
             response = HttpResponse()
     elif reqtype.lower() == 'getfeatureinfo':
         response =  getFeatureInfo(request, dataset)
-    elif reqtype == 'getLegendGraphic':
+    elif reqtype.lower() == 'getlegendgraphic':
         response = HttpResponse()
-    elif reqtype == 'getCapabilities':
+    elif reqtype.lower() == 'getcapabilities':
         response = HttpResponse()
     return response
 
@@ -713,7 +713,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
-                            if nv is not None:
+                            if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
                                 m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n], 
                                     pivot='mid',
@@ -756,7 +756,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                                 )
                                 full = climits[0]
                                 flag = climits[1]
-                            if nv is not None:
+                            if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
                                 m.ax.barbs(lon[n], lat[n], var1[n], var2[n], mag[n],
                                     length=5.8,
@@ -966,18 +966,22 @@ def fvDo (request, dataset='30yr_gom3'):
                                     if m.is_land(x,y):
                                         zi[j,i] = numpy.nan
                             '''
-                            coll = m.imshow(zi, norm=CNorm, cmap=colormap)
-                            import matplotlib.patches as patches
-                            from perimeter import get_perimeter
                             
-                            peri = get_perimeter(topology.variables['nv'][:,:].T-1)
-                            print numpy.asarray(peri).shape
-                            #for triangs in tri.triangles:
+                            #m.imshow(zi, norm=CNorm, cmap=colormap)
+                            import matplotlib.patches as patches
+                            #from perimeter import get_perimeter
+                            
+                            #peri = get_perimeter(topology.variables['nv'][:,:].T-1)
+                            #print numpy.asarray(peri).shape
+                            
+                            for triangs in tri.triangles:
                                 #print numpy.vstack((lonn[triangs].T,latn[triangs].T,)).T
-                            p = patches.Polygon(numpy.vstack((lonn[peri].T,latn[peri].T,)).T)#np.asarray(poly).T)
-                            p.set_color('None')
-                            m.ax.add_patch(p)
-                            coll.set_clip_path(p)
+                                p = patches.Polygon(numpy.vstack((lonn[triangs].T,latn[triangs].T,)).T)#np.asarray(poly).T)
+                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                
+                            #p.set_color('None')
+                            #m.ax.add_patch(p)
+                            #coll.set_clip_path(p)
                                 
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]

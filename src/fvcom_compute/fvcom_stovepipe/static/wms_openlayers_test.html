@@ -325,12 +325,12 @@
 				                                );
 				                                
 				fvcombarb = new OpenLayers.Layer.WMS("FVCOM Velocity Barbs",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
+				                                "http://{{localsite}}/wms/necofs_wave/",
 				                                {
-				                                    layers:"u,v",
+				                                    layers:"uwind_speed,vwind_speed",
 				                                    transparent: true,
-				                                    styles: "barbs_average_jet_0.2_1.0_cell_False",
-				                                    time: "1984-10-17T00:00:00",
+				                                    styles: "barbs_average_jet_None_None_cell_False",
+				                                    time: "2012-06-19T00:00:00",
 				                                    elevation: "5"
 				                                },
 				                                
