@@ -572,7 +572,7 @@ def fvDo (request, dataset='30yr_gom3'):
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
                     
-                    
+                    """
                     if ('contours' in actions) or \
                         ('filledcontours' in actions):
                         if topology_type.lower() == 'cell':
@@ -597,12 +597,13 @@ def fvDo (request, dataset='30yr_gom3'):
                                 lat_ts = 0.0,
                                 suppress_ticks=True)
                     else:
-                        m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
-                                resolution=None,
-                                lat_ts = 0.0,
-                                suppress_ticks=True)
+                    """"
+                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                            resolution=None,
+                            lat_ts = 0.0,
+                            suppress_ticks=True)
                     """
                     m = Basemap(llcrnrx=lonmin, llcrnry=latmin, 
                                 urcrnrx=lonmax, urcrnry=latmax, projection=projection,
