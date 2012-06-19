@@ -767,7 +767,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     #units='xy',
                                     cmap=colormap,
                                     #norm=CNorm,
-                                    clim=climits,
+                                    #clim=climits,
                                     )
                             else:
                                 m.ax.barbs(lon, lat, var1, var2, mag,
@@ -777,7 +777,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     #units='xy',
                                     cmap=colormap,
                                     #norm=CNorm,
-                                    clim=climits,
+                                    #clim=climits,
                                     )   
                             
 
