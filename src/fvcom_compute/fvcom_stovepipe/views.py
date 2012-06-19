@@ -23,9 +23,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import gc
 import time as timeobj
 import bisect
+import fvcom_compute.grid_init_script as grid
 
 def openlayers (request, filepath):
-
     f = open(config.staticspath + "openlayers/" + filepath)
     text = f.read()
     f.close()
@@ -34,6 +34,7 @@ def openlayers (request, filepath):
     return HttpResponse(text, content_type='text')
     
 def wmstest (request):
+    grid.check_topology_age()
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(config.staticspath + "wms_openlayers_test.html")
@@ -45,6 +46,7 @@ def wmstest (request):
 
 
 def documentation (request):
+    grid.check_topology_age()
     import django.shortcuts as dshorts
     #import fvcom_compute.server_local_config as config
     f = open(config.staticspath + "doc.txt")
@@ -61,7 +63,6 @@ def test (request):
     return dshorts.render_to_response('docs.html', dict1)
 """
 def wms (request, dataset):
-    import fvcom_compute.grid_init_script as grid
     grid.check_topology_age()
     reqtype = request.GET['REQUEST']
     if reqtype.lower() == 'getmap':
@@ -88,6 +89,7 @@ def crossdomain (request):
     return response
     
 def getFeatureInfo(request, dataset):
+    grid.check_topology_age()
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -573,7 +575,7 @@ def fvDo (request, dataset='30yr_gom3'):
                     
                     if ('contours' in actions) or \
                         ('filledcontours' in actions):
-                        if topology_type == 'cell':
+                        if topology_type.lower() == 'cell':
                             m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                                 urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                                 #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
@@ -740,7 +742,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             mag = numpy.sqrt(mag)
                             #ax = fig.add_subplot(111)
                             #ax.quiver(lon, lat, u, v, mag, pivot='mid')
-                            if topology_type == 'cell':
+                            if topology_type.lower() == 'cell':
                                 lon, lat = m(lon, lat)
                             else:
                                 lon, lat = m(lonn, latn)
@@ -807,7 +809,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             #    )\
                             
                             #m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
-                            if topology_type == 'cell':
+                            if topology_type.lower() == 'cell':
                                 print dir(m)
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
@@ -868,7 +870,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             #print dir(collection)
                             #print collection.contains(cent[:,0], cent[:,1])
                             
-                            if topology_type == 'cell':
+                            if topology_type.lower() == 'cell':
                                 #print dir(m)
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
@@ -948,7 +950,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             #ny = int((m.ymax-m.ymin)/5000.)+1
                             
                             #if topology_type == 'cell':
-                            if topology_type == "node":
+                            if topology_type.lower() == "node":
                                 n = numpy.unique(nv)
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
@@ -969,15 +971,20 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                             #m.imshow(zi, norm=CNorm, cmap=colormap)
                             import matplotlib.patches as patches
+                            from shapely.geometry import MultiPolygon, Polygon
                             #from perimeter import get_perimeter
                             
                             #peri = get_perimeter(topology.variables['nv'][:,:].T-1)
                             #print numpy.asarray(peri).shape
+                            p = []
                             
                             for triangs in tri.triangles:
-                                #print numpy.vstack((lonn[triangs].T,latn[triangs].T,)).T
-                                p = patches.Polygon(numpy.vstack((lonn[triangs].T,latn[triangs].T,)).T)#np.asarray(poly).T)
-                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                closed_triangle = numpy.hstack((triangs, numpy.asarray((triangs[0],)),))
+                                p.append(Polygon(numpy.vstack((lonn[closed_triangle].T,latn[closed_triangle].T,)).T))
+                            print p
+                            surface = MultiPolygon(p)
+                            dir(surface)    
+                            m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                 
                             #p.set_color('None')
                             #m.ax.add_patch(p)
@@ -1009,7 +1016,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                                 clip=True,
                                                                 )
                                                                     
-                            if topology_type == 'cell':
+                            if topology_type.lower() == 'cell':
                                 verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                                                         tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
                                 
