@@ -765,8 +765,9 @@ def fvDo (request, dataset='30yr_gom3'):
                                     pivot='middle',
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
-                                    #cmap=colormap,
+                                    cmap=colormap,
                                     #norm=CNorm,
+                                    clim=climits,
                                     )
                             else:
                                 m.ax.barbs(lon, lat, var1, var2, mag,
@@ -774,8 +775,9 @@ def fvDo (request, dataset='30yr_gom3'):
                                     pivot='middle',
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
-                                    #cmap=colormap,
+                                    cmap=colormap,
                                     #norm=CNorm,
+                                    clim=climits,
                                     )   
                             
 
@@ -870,28 +872,24 @@ def fvDo (request, dataset='30yr_gom3'):
                             #print dir(collection)
                             #print collection.contains(cent[:,0], cent[:,1])
                             
+                            
                             if topology_type.lower() == 'cell':
                                 #print dir(m)
                                 lon, lat = m(lon, lat)
-                                trid = Tri.Triangulation(lon, lat)
+                                #lonn, latn = m(lonn, latn)
                                 #tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                mask = []
-                                for triangs in trid.triangles:
-                                    mask.append(m.is_land(
-                                    lon[triangs].mean(),
-                                    lat[triangs].mean()))
-                                trid.set_mask(mask)
+                                trid = Tri.Triangulation(lon, lat)
+                                
                                 m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=True)
+                                        
+                                
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
-                            #print dir(collection)
-                            #paths = collection.get_paths()
-                            #xrms = collection.get_transforms()
-                            #temp = []
+                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=True)   
+                                
                             
                             
                         elif "pcolor" in actions:
@@ -980,16 +978,67 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                             for triangs in tri.triangles:
                                 closed_triangle = numpy.hstack((triangs, numpy.asarray((triangs[0],)),))
-                                p.append(Polygon(numpy.vstack((lonn[closed_triangle].T,latn[closed_triangle].T,)).T))
-                            print p
-                            surface = MultiPolygon(p)
-                            dir(surface)    
-                            m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                 
-                            #p.set_color('None')
-                            #m.ax.add_patch(p)
-                            #coll.set_clip_path(p)
+                                nowpoly = [(lonn[closed_triangle][0], latn[closed_triangle][0]),
+                                           (lonn[closed_triangle][1], latn[closed_triangle][1]),
+                                           (lonn[closed_triangle][2], latn[closed_triangle][2]),
+                                           (lonn[closed_triangle][3], latn[closed_triangle][3]),
+                                          ]
+                                p.append(Polygon(nowpoly))
+                            '''
+                            #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+                            #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
+                            #multi1 = MultiPolygon([[a, []], [b, []]])
+                            '''
+                            
+                            #domain = MultiPolygon(p)
+                            from shapely.ops import cascaded_union
+                            
+                            domain = cascaded_union(p)
+                            
+                            
+                            if domain.geom_type == "Polygon":
+                                x, y = domain.exterior.xy
+                                #print numpy.asarray((x,y)).T
+                                #print patches.Polygon(numpy.asarray((x,y)).T)
+                                p = patches.Polygon(numpy.asarray((x,y)).T)
+                                m.ax.add_patch(p)
+                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                p.set_color('none')
+                                try:
+                                    for hole in domain.interiors:
+                                        print hole
+                                        x, y = hole.xy
+                                        p = patches.Polygon(numpy.asarray((x,y)).T)
+                                        print p
+                                        m.ax.add_patch(p)
+                                        m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                        p.set_color('w')
+                                except:
+                                    print "passing"
                                 
+                                
+                                #coll.set_clip_path(p)
+                            elif domain.geom_type == "MultiPolygon":
+                                for part in domain.geoms:
+                                    x, y = part.exterior.xy
+                                    #print numpy.asarray((x,y)).T
+                                    #print patches.Polygon(numpy.asarray((x,y)).T)
+                                    p = patches.Polygon(numpy.asarray((x,y)).T)
+                                    m.ax.add_patch(p)
+                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                    p.set_color('none')
+                                    try:
+                                        for hole in domain.interiors:
+                                            print hole
+                                            x, y = hole.xy
+                                            p = patches.Polygon(numpy.asarray((x,y)).T)
+                                            print p 
+                                            m.ax.add_patch(p)
+                                            m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                            p.set_color('w')
+                                    except:
+                                        print "passing"
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
                             #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
