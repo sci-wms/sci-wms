@@ -1,6 +1,5 @@
 import multiprocessing
 
-
 bind = "0.0.0.0:7000"
 workers = 12#multiprocessing.cpu_count()
 worker_class = "gevent"

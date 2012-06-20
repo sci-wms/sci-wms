@@ -76,7 +76,7 @@ def wms (request, dataset):
     elif reqtype.lower() == 'getfeatureinfo':
         response =  getFeatureInfo(request, dataset)
     elif reqtype.lower() == 'getlegendgraphic':
-        response = HttpResponse()
+        response =  getLegendGraphic(request, dataset)
     elif reqtype.lower() == 'getcapabilities':
         response = HttpResponse()
     return response
@@ -88,6 +88,96 @@ def crossdomain (request):
     response.write(test)
     return response
     
+def getLegendGraphic(request, dataset):
+    """
+    Parse parameters from request that looks like this:
+    
+    http://webserver.smast.umassd.edu:8000/wms/NecofsWave?
+    ELEVATION=1
+    &LAYERS=hs
+    &TRANSPARENT=TRUE
+    &STYLES=facets_average_jet_0_0.5_node_False
+    &SERVICE=WMS
+    &VERSION=1.1.1
+    &REQUEST=GetLegendGraphic
+    &FORMAT=image%2Fpng
+    &TIME=2012-06-20T18%3A00%3A00
+    &SRS=EPSG%3A3857
+    &LAYER=hs
+    """
+    styles = request.GET["STYLES"].split("_")
+    climits = (styles[3], styles[4])
+    datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
+    level = request.GET["ELEVATION"]
+    level = level.split(",")
+    for i,l in enumerate(level):
+        level[i] = int(l)-1
+    variables = request.GET["LAYER"].split(",")
+    topology_type = styles[5]
+    plot_type = styles[0]
+    #magnitudebool = styles[6]
+    colormap = styles[2]
+    
+    # direct the service to the dataset
+    # make changes to server_local_config.py 
+    if config.localdataset:
+        url = config.localpath[dataset]
+    else:
+        url = config.datasetpath[dataset]
+    nc = netCDF4.Dataset(url)
+    
+    
+    """
+    Create figure and axes for small legend image
+    """
+    from matplotlib.figure import Figure
+    fig = Figure(dpi=100., facecolor='none', edgecolor='none')
+    fig.set_alpha(0)
+    ax = fig.add_axes([.01, .25, .2, .6])#, xticks=[], yticks=[])
+    fig.set_figwidth(1.5)
+    fig.set_figheight(2.5)
+    
+                            
+    """
+    Create the colorbar or legend and add to axis
+    """
+    if plot_type not in ["contours", "filledcontours",]:# "barbs", "vectors"]:
+        if climits[0] is "None" or climits[1] is "None":
+            #going to have to get the data here to figure out bounds
+            #need elevation, bbox, time, magnitudebool
+            CNorm=None
+            
+        else:
+            #use limits described by the style
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                vmax=climits[1],
+                                                clip=False,
+                                                )
+            cb = matplotlib.colorbar.ColorbarBase(ax,
+                                                  cmap=colormap,
+                                                  norm=CNorm,
+                                                  orientation='vertical',
+                                                  )
+            cb.set_label(nc.variables[variables[0]].units)
+    #elif plot_type in ["barbs", "vectors"]:
+    #    if plot_type == "barbs":
+    #        ax.barbs(
+    #    elif plot_type == "vectors":
+    #        pass
+    else:#plot type somekind of contour
+        if plot_type == "contours":
+            #this should perhaps be a legend...
+            pass
+        elif plot_type == "filledcontours":
+            #colorbar is OK here
+            pass
+    
+    canvas = FigureCanvasAgg(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
+        
+        
 def getFeatureInfo(request, dataset):
     grid.check_topology_age()
     def haversine(lat1, lon1, lat2, lon2):
@@ -123,23 +213,22 @@ def getFeatureInfo(request, dataset):
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
-    elevation = request.GET['ELEVATION']
+    elevation = [int(request.GET['ELEVATION'])]
+    print elevation
     
-    from matplotlib.figure import Figure
-    fig = Figure(dpi=80, facecolor='none', edgecolor='none')
-    fig.set_alpha(0)
-
-    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                urcrnrlon=lonmax, urcrnrlat=latmax,
-                projection=projection,                             
-                resolution=None,
-                lat_ts = 0.0,
-                suppress_ticks=True)
-    m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-    fig.set_figheight(height/80.0)
-    fig.set_figwidth(width/80.0) 
-    
-    lon, lat = m(X, Y, inverse=True)
+    from mpl_toolkits.basemap import pyproj
+    mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
+    lonmin, latmin = mi(lonmin, latmin, inverse=True)
+    lonmax, latmax = mi(lonmax, latmax, inverse=True)
+    lon, lat = mi(lonmin+(lonmax-lonmin)*(X/width),
+                            latmin+(latmax-latmin)*(Y/height),
+                            inverse=True)
+    #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+    #            urcrnrlon=lonmax, urcrnrlat=latmax,
+    #            projection=projection,                             
+    #            resolution=None,
+    #            lat_ts = 0.0,
+    #            suppress_ticks=True)
     
     topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
 
@@ -157,20 +246,29 @@ def getFeatureInfo(request, dataset):
     min = numpy.min(min)
     index = lengths.index(min)
 
-    
     if config.localdataset:
         time = [1]
     else:
         TIMES = TIME.split("/")
-        datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
-        dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
-        times = topology.variables['time'][:]
-        time_units = topology.variables['time'].units
-        datestart = netCDF4.date2num(datestart, units=time_units)
-        dateend = netCDF4.date2num(dateend, units=time_units)
-        time1 = bisect.bisect_right(times, datestart) - 1
-        time2 = bisect.bisect_right(times, dateend) - 1
-        time = range(time1, time2)
+        print TIMES
+        print TIME
+        if len(TIMES) > 1:
+            datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
+            dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
+            times = topology.variables['time'][:]
+            time_units = topology.variables['time'].units
+            datestart = netCDF4.date2num(datestart, units=time_units)
+            dateend = netCDF4.date2num(dateend, units=time_units)
+            time1 = bisect.bisect_right(times, datestart) - 1
+            time2 = bisect.bisect_right(times, dateend) - 1
+            time = range(time1, time2)
+        else:
+            datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
+            times = topology.variables['time'][:]
+            time_units = topology.variables['time'].units
+            datestart = netCDF4.date2num(datestart, units=time_units)
+            time1 = bisect.bisect_right(times, datestart) - 1
+            time = [time1]
         
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
@@ -185,70 +283,34 @@ def getFeatureInfo(request, dataset):
                 return nc.variables[var][t, ind]
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
-            
+    
     if config.localdataset:
         url = config.localpath[dataset]
         time = range(1,30)
         elevation = [5]
     else:
         url = config.datasetpath[dataset]
-
+    datasetnc = netCDF4.Dataset(url)
+    print time
     varis = deque()
     varis.append(getvar(datasetnc, time, elevation, "time", index))
     for var in QUERY_LAYERS:
         varis.append(getvar(datasetnc, time, elevation, var, index))
 
     response = HttpResponse()
-
+    
+    #varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
     X = numpy.transpose(X)
 
     buffer = StringIO()
-
+    buffer.write(time_units+u'\n')
     numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
 
     dat = buffer.getvalue()
     buffer.close()
     response.write(dat)
     return response
-        
-        
-"""
-def populate (request):
-    
-    from netCDF4 import Dataset, num2date
-    url = config.datasetpath
-    nc = Dataset(url)
-    lat = nc.variables['lat'][:]
-    lon = nc.variables['lon'][:]
-    latc = nc.variables['latc'][:]
-    lonc = nc.variables['lonc'][:]
-    nv = nc.variables['nv'][:,:]
-    times = nc.variables['time']
-    time = num2date(times[:], units=times.units)
-
-    nodes = Node.objects.all()
-    nodes.delete()
-    cells = Cell.objects.all()
-    cells.delete()
-    times = Time.objects.all()
-    times.delete()
-    for i,d in enumerate(time):
-        #d = datetime.datetime(int(time[i][0]), int(time[i][1]), int(time[i][2]),\
-        #    int(time[i][3]), int(time[i][4]), int(time[i][5]))
-        t = Time(date=d, index=i+1)
-        t.save()
-    
-    for i in range(len(lat)):
-        n = Node(index=i+1, lat=lat[i], lon=lon[i])
-        n.save()
-        
-    for i in range(len(latc)):
-        c = Cell(index=i+1, lat=latc[i], lon=lonc[i], node1=nv[0, i], node2=nv[1, i], node3=nv[2, i])
-        c.save()
-        
-    return "done!"
-"""
 
 def fvDo (request, dataset='30yr_gom3'):
     '''
@@ -263,29 +325,7 @@ def fvDo (request, dataset='30yr_gom3'):
     
     
     totaltimer = timeobj.time()
-    """
-    def getVals(queryset, value):
-        if value == 1:
-            out = queryset["index"]
-            out = int(out)-1
-        elif value == 2:
-            out = queryset["lat"]
-        elif value == 3:
-            out = queryset["lon"]
-        elif value == 4:
-            out = queryset["date"]
-            #out = int(out)-1
-        elif value ==5:
-            out = queryset["node1"]
-            out = int(out)-1
-        elif value ==6:
-            out = queryset["node2"]
-            out = int(out)-1
-        elif value ==7:
-            out = queryset["node3"]
-            out = int(out)-1
-        return out
-    """
+
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -322,15 +362,6 @@ def fvDo (request, dataset='30yr_gom3'):
     lonmin = float(request.GET["lonmin"])
     
     from mpl_toolkits.basemap import pyproj
-    """
-    mi = Basemap(projection=request.GET["projection"],
-                resolution=None,
-                lat_ts = 0.0,
-                suppress_ticks=True,
-                lon_0=0.,
-                lat_0=0.,
-                )
-    """
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
@@ -354,7 +385,10 @@ def fvDo (request, dataset='30yr_gom3'):
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
         climits = ["None", "None"]
-    magnitude = bool(request.GET["magnitude"])
+    
+    magnitude = request.GET["magnitude"]
+        
+
     topology_type = request.GET["topologytype"]
         
     variables = request.GET["variables"].split(",")
@@ -369,24 +403,10 @@ def fvDo (request, dataset='30yr_gom3'):
         topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
         datasetnc = netCDF4.Dataset(url)
         
-        #if topology_type.lower() == "cell":
+        
         if latmax != latmin:
-            """
-            #geobb = Cell.objects.filter(lat__lte=latmax).filter(lat__gte=latmin)\
-            #    .filter(lon__lte=lonmax).filter(lon__gte=lonmin)
-            geobb = Cell.objects.filter(lat__lte=latmax+.18).filter(lat__gte=latmin-.18)\
-                .filter(lon__lte=lonmax+.18).filter(lon__gte=lonmin-.18)
-            indexqs = geobb.values("index")
-            latqs = geobb.values("lat")
-            lonqs = geobb.values("lon")
-            
-            index = map(getVals, indexqs, numpy.ones(len(indexqs)))
-            lat = map(getVals, latqs, numpy.ones(len(indexqs))*2)
-            lon = map(getVals, lonqs, numpy.ones(len(indexqs))*3)
-            """
             lat = topology.variables['latc'][:]
             lon = topology.variables['lonc'][:]
-            
 
             index = numpy.asarray(numpy.where(
                 (lat <= latmax+.18) & (lat >= latmin-.18) &
@@ -398,24 +418,6 @@ def fvDo (request, dataset='30yr_gom3'):
             
         else:
             pass
-            """
-            geobb = Cell.objects.filter(lat__lte=latmax+.1).filter(lat__gte=latmin-.1)\
-                .filter(lon__lte=lonmax+.1).filter(lon__gte=lonmin-.1)
-            indexqs = geobb.values("index")
-            latqs = geobb.values("lat")
-            lonqs = geobb.values("lon")
-            index = map(getVals, indexqs, numpy.ones(len(indexqs))*1)
-            lat = map(getVals, latqs, numpy.ones(len(indexqs))*2)
-            lon = map(getVals, lonqs, numpy.ones(len(indexqs))*3)
-            lengths = map(haversine, numpy.ones(len(lon))*latmax, \
-                          numpy.ones(len(lon))*lonmax, lat, lon)
-            min = numpy.asarray(lengths)
-            min = numpy.min(min)
-            ind = lengths.index(min)
-            lat = lat[ind]
-            lon = lon[ind]
-            index = index[ind]
-            """
         
         if len(index) > 0:
             #job_server = pp.Server(4, ppservers=()) 
@@ -433,31 +435,6 @@ def fvDo (request, dataset='30yr_gom3'):
                 from matplotlib.collections import PolyCollection
                 import matplotlib.tri as Tri
                 
-                """
-                node1qs = geobb.values("node1")
-                node2qs = geobb.values("node2")
-                node3qs = geobb.values("node3")
-                nodesqs = Node.objects.all().values()
-                latnqs = nodesqs.values("lat")
-                lonnqs = nodesqs.values("lon")
-                latn = map(getVals, latnqs, numpy.ones(len(latnqs))*2)
-                lonn = map(getVals, lonnqs, numpy.ones(len(latnqs))*3)
-                 
-                node1 = map(getVals, node1qs, numpy.ones(len(indexqs))*5)
-                node2 = map(getVals, node2qs, numpy.ones(len(indexqs))*6)
-                node3 = map(getVals, node3qs, numpy.ones(len(indexqs))*7)
-                nv = numpy.asarray([node1, node2, node3],'int64')
-                nv = numpy.transpose(nv)
-                if topology_type.lower() == "node":
-                    index = range(len(latn))
-                    latn = numpy.asarray(latn)
-                    lonn = numpy.asarray(lonn)
-                else:
-                    latn = numpy.asarray(latn)
-                    lonn = numpy.asarray(lonn)
-                #trijob = job_server.submit(gettri, (lonn, latn, nv),(), ("netCDF4", "numpy","matplotlib"))
-                """
-                
                 #nv = topology.variables['nv'][:,index].T-1
                 nvtemp = topology.variables['nv'][:,:]#.T-1
                 nv = nvtemp[:,index].T-1
@@ -468,9 +445,7 @@ def fvDo (request, dataset='30yr_gom3'):
             else:
                 nv = None
 
-                
-            
-            
+
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
             #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
             """
@@ -501,37 +476,13 @@ def fvDo (request, dataset='30yr_gom3'):
                     return nc.variables[var][t, :]
                 elif len(nc.variables[var].shape) == 1:
                     return nc.variables[var][:]
-            #def getvvar(url, t, layer):
-            #    nc = netCDF4.Dataset(url, 'r')
-            #    return nc.variables["v"][t, layer[0], :]
-            #appendvar = pvar.append
-            #appendv = pv.append
-            #job_server = pp.Server(4, ppservers=()) 
-            
-            # This is looping through time to avoid trying to download too much data from the server at once
-            # and its SO SLOOOW, i think due to the append calls, maybe use np.concatenate>?
+
             t = time
 
-            #for var in variables:
-            #    appendvar(job_server.submit(getvar, (url, t, layer, var),(), ("netCDF4", "numpy",))) 
-                #appendv(job_server.submit(getvvar, (url, t, layer),(), ("netCDF4", "numpy",)))
             var1 = getvar(datasetnc, t, layer, variables[0])
             if len(variables) > 1:
                 var2 = getvar(datasetnc, t, layer, variables[1])
 
-            #varis = deque()
-            #v = deque()
-            
-            #[v.append(resultv()) for resultv in pv]
-            #[u.append(resultu()) for resultu in pu]
-            #[varis.append(result()) for result in pvar]
-            
-            #job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
-            
-            #var1 = numpy.asarray(varis[0])
-            #if len(varis) > 1:
-            #    var2 = numpy.asarray(varis[1])
-            
             index = numpy.asarray(index)
             if len(var1.shape) > 2:
                 var1 = var1[:, :, index]
@@ -548,7 +499,6 @@ def fvDo (request, dataset='30yr_gom3'):
             else: pass # or 1 timestep geographic...?...
             #print "print netcdf access"
             if latmin != latmax:
-
                 # This is averaging in time over all timesteps downloaded
                 if not "animate" in actions:
                     if "average" in actions:
@@ -591,32 +541,6 @@ def fvDo (request, dataset='30yr_gom3'):
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
                     
-                    """
-                    if ('contours' in actions) or \
-                        ('filledcontours' in actions):
-                        if topology_type.lower() == 'cell':
-                            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
-                                resolution='c',
-                                lat_ts = 0.0,
-                                suppress_ticks=True)
-                        else:
-                            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
-                                resolution=None,
-                                lat_ts = 0.0,
-                                suppress_ticks=True)
-                    elif ('pcolor' in actions):
-                        m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
-                                resolution='c',
-                                lat_ts = 0.0,
-                                suppress_ticks=True)
-                    else:
-                    """
                     
                     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
@@ -625,19 +549,8 @@ def fvDo (request, dataset='30yr_gom3'):
                             lat_ts = 0.0,
                             suppress_ticks=True)
                             
-                    """
-                    m = Basemap(llcrnrx=lonmin, llcrnry=latmin, 
-                                urcrnrx=lonmax, urcrnry=latmax, projection=projection,
-                                #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
-                                lat_ts = 0.0,
-                                )
-                    """
-                    #lonn, latn = m(lonn, latn)
                     m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-                    #fig.set_figsize_inches((20/m.aspect, 20.))
-                    #fig.set_figheight(5)
-                    #fig.set_figwidth(5/m.aspect)
-                    #print "createfig"
+
                     if "regrid" in actions:
                         """
                         import fvcom_compute.fvcom_stovepipe.regrid as regrid
@@ -737,20 +650,38 @@ def fvDo (request, dataset='30yr_gom3'):
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
+                            
+                                                                
+                            if magnitude == "True":
+                                arrowsize = None
+                            elif magnitude == "False":
+                                arrowsize = 2.
+                            elif magnitdue == "None":
+                                arrowsize = None
+                            else:
+                                arrowsize = magnitude
+                                
+                               
                             if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
                                 m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n], 
                                     pivot='mid',
-                                    units='xy',
+                                    units='xy', #xy
                                     cmap=colormap,
                                     norm=CNorm,
+                                    minlength=.5,
+                                    scale=arrowsize,
+                                    scale_units='inches',
                                     )
                             else:
                                 m.quiver(lon, lat, var1, var2, mag, 
                                     pivot='mid',
-                                    units='xy',
+                                    units='xy', #xy
                                     cmap=colormap,
                                     norm=CNorm,
+                                    minlength=.5,
+                                    scale=arrowsize,
+                                    scale_units='inches',
                                     )
 
                         if "barbs" in actions:
@@ -813,7 +744,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                                 mag = numpy.sqrt(mag)
                             else:
-                                if magnitude:
+                                if magnitude == "True":
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
@@ -859,7 +790,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2) 
                                 mag = numpy.sqrt(mag)
                             else:
-                                if magnitude:
+                                if magnitude == "True":
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
@@ -929,7 +860,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                                 mag = numpy.sqrt(mag)
                             else:
-                                if magnitude:
+                                if magnitude == "True":
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
@@ -1074,7 +1005,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             if len(variables) > 1:
                                 mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
                             else:
-                                if magnitude:
+                                if magnitude == "True":
                                     mag = numpy.sqrt(var1**2)
                                 else:
                                     mag = var1

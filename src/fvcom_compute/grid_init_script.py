@@ -83,7 +83,6 @@ def create_topology_from_config():
     Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
     """    
     import server_local_config
-
     paths = server_local_config.datasetpath #dict
     for dataset in paths.viewkeys():
         print "Adding: " + paths[dataset]
@@ -107,15 +106,16 @@ def check_topology_age():
     last = f.readline().replace('\n', "")
     last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
     f.close()
-    if (datetime.now() - last).seconds > 3*3600:
-         job_server = pp.Server(1, ppservers=())
-         import server_local_config
-
-         paths = server_local_config.datasetpath #dict
-         arrayj = []
-         for dataset in paths.viewkeys():
-             print "Updating: " + paths[dataset]
-             arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(create_topology,),("netCDF4","numpy", "datetime")))
+    if (datetime.now() - last).seconds > 3*3600 or (datetime.now() - last).days > 1:
+        job_server = pp.Server(1, ppservers=())
+        import server_local_config
+        paths = server_local_config.datasetpath #dict
+        arrayj = []
+        for dataset in paths.viewkeys():
+            print "Updating: " + paths[dataset]
+            arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(create_topology,),("netCDF4","numpy", "datetime")))
+            
+    return None
     
 if __name__ == '__main__':
     """

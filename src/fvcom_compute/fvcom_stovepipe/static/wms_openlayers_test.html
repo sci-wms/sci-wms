@@ -79,7 +79,7 @@
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
-				                                    styles: "vectors_average_jet_0_1.5_cell_False",
+				                                    styles: "vectors_average_jet_0_1.5_cell_True",
 				                                    time: "1984-10-17T00:00:00",
 				                                    elevation: "5"
 				                                },
@@ -228,8 +228,6 @@
                     url: 'http://{{localsite}}/wms/30yr_gom3/', 
                     title: 'Identify features by clicking',
                     queryVisible: true,
-                    //TIME = "1984-10-17T00:00:00/1984-10-18T00:00:00",
-                    //ELEVATION = "5",
                     
                     eventListeners: {
                         getfeatureinfo: function(event) {
