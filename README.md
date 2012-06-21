@@ -3,7 +3,7 @@ pywms
 
 ##Install
 
-###If you have the standard enthought python distribution (epd):
+####If you have the standard enthought python distribution (epd):
 
 Install the remaining dependencies:
 
@@ -17,7 +17,7 @@ You also must install a netCDF4-python (preferrably opendap enabled):
 
 https://code.google.com/p/netcdf4-python/
 
-###If are not using the enthought python distribution:
+####If are not using the enthought python distribution:
 
 You must have the following installed:
 
@@ -34,18 +34,25 @@ You must have the following installed:
 
 pywms works with both pip and virtualenv quite happily.
 
+##Setup
+
+Add the local ip or domain for the service in the **server_local_config.py**
+file so that the /wmstest/ page works.
+
+The service comes with a sample dataset setup, but you can remove and add your own
+local files or OpenDAP endpoints.
 
 ##Run
 
-###To Start With Django Development Server:
+####To Start With Django Development Server:
 
-$cd fvcom_wms/src/fvcom_compute
+$cd project_folder/src/pywms
 
 $python manage.py runserver 0.0.0.0:7000
 
-###To Start With Production WSGI Server:
+####To Start With Production WSGI Server:
 
-$cd fvcom_wms/src/fvcom_compute
+$cd project_folder/src/pywms
 
 $gunicorn_django -c config.py
 
@@ -54,10 +61,3 @@ Can also be run with mod_wsgi in Apache. I prefer to proxypass
 in Apache to the gunicorn server because I think its better setup
 to handle the kinds of requests the server sees.
 
-
-Notes:
-______
-For the server to work correctly, you must edit the 
-server_local_config.py file. Add the full paths to YOUR
-installation of the service, and edit the list of datasets
-to include an id and path or opendap link to your dataset.
