@@ -50,6 +50,11 @@ $cd fvcom_wms/src/fvcom_compute
 $gunicorn_django -c config.py
 
 
+Can also be run with mod_wsgi in Apache. I prefer to proxypass
+in Apache to the gunicorn server because I think its better setup
+to handle the kinds of requests the server sees.
+
+
 Notes:
 ______
 For the server to work correctly, you must edit the 

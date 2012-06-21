@@ -45,7 +45,6 @@ def wmstest (request):
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(Template(text).render(dict1))
 
-
 def documentation (request):
     jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
@@ -55,6 +54,7 @@ def documentation (request):
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
+    
 """
 def test (request):
     import django.shortcuts as dshorts
@@ -64,6 +64,7 @@ def test (request):
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
 """
+
 def wms (request, dataset):
     jobsarray = grid.check_topology_age()
     reqtype = request.GET['REQUEST']
