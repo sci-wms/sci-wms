@@ -1,8 +1,8 @@
 fvcom_wms
 =========
 
-Install
-_______
+##Install
+
 ###If you have the standard enthought python distribution (epd):
 
 Install the remaining dependencies:
@@ -31,8 +31,8 @@ You must have the following installed:
 - pp (parallelpython)
 
 
-Run
-___
+##Run
+
 ###To Start With Django Development Server:
 
 $cd fvcom_wms/src/fvcom_compute
