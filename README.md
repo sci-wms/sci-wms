@@ -32,7 +32,19 @@ You must have the following installed:
 - shapely
 - pp (parallelpython)
 
-pywms works with both pip and virtualenv quite happily.
+pywms works with both pip and virtualenv quite happily. If you
+have pip installed you can use:
+
+    $pip install package
+    
+for many of the dependent modules. Similarly if you have setup_tools
+installed you can use:
+
+    $easy_install package
+    
+If you are using virtualenv, just make sure you have the environment
+activated before you try to install the packages or point to the environment
+with pip on the install command.
 
 ##Setup
 
