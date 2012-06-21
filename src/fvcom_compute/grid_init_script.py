@@ -100,7 +100,7 @@ def create_topology_from_config():
     """
 
 def check_topology_age():
-
+    arrayj = []
     from datetime import datetime
     f = open('last_grid_init.pywms', 'r')
     last = f.readline().replace('\n', "")
@@ -110,12 +110,12 @@ def check_topology_age():
         job_server = pp.Server(1, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
-        arrayj = []
+        
         for dataset in paths.viewkeys():
             print "Updating: " + paths[dataset]
             arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(create_topology,),("netCDF4","numpy", "datetime")))
             
-    return None
+    return arrayj
     
 if __name__ == '__main__':
     """

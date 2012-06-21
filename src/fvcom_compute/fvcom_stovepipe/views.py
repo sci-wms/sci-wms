@@ -34,7 +34,8 @@ def openlayers (request, filepath):
     return HttpResponse(text, content_type='text')
     
 def wmstest (request):
-    grid.check_topology_age()
+    #grid.check_topology_age()
+   
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(config.staticspath + "wms_openlayers_test.html")
@@ -46,7 +47,7 @@ def wmstest (request):
 
 
 def documentation (request):
-    grid.check_topology_age()
+    jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
     #import fvcom_compute.server_local_config as config
     f = open(config.staticspath + "doc.txt")
@@ -63,7 +64,7 @@ def test (request):
     return dshorts.render_to_response('docs.html', dict1)
 """
 def wms (request, dataset):
-    grid.check_topology_age()
+    jobsarray = grid.check_topology_age()
     reqtype = request.GET['REQUEST']
     if reqtype.lower() == 'getmap':
         import fvcom_compute.fvcom_stovepipe.wms_handler as wms
@@ -179,7 +180,6 @@ def getLegendGraphic(request, dataset):
         
         
 def getFeatureInfo(request, dataset):
-    grid.check_topology_age()
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -218,11 +218,12 @@ def getFeatureInfo(request, dataset):
     
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
-    lonmin, latmin = mi(lonmin, latmin, inverse=True)
-    lonmax, latmax = mi(lonmax, latmax, inverse=True)
     lon, lat = mi(lonmin+(lonmax-lonmin)*(X/width),
                             latmin+(latmax-latmin)*(Y/height),
                             inverse=True)
+    lonmin, latmin = mi(lonmin, latmin, inverse=True)
+    lonmax, latmax = mi(lonmax, latmax, inverse=True)
+
     #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
     #            urcrnrlon=lonmax, urcrnrlat=latmax,
     #            projection=projection,                             
@@ -248,10 +249,9 @@ def getFeatureInfo(request, dataset):
 
     if config.localdataset:
         time = [1]
+        time_units = topology.variables['time'].units
     else:
         TIMES = TIME.split("/")
-        print TIMES
-        print TIME
         if len(TIMES) > 1:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
             dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
@@ -291,7 +291,7 @@ def getFeatureInfo(request, dataset):
     else:
         url = config.datasetpath[dataset]
     datasetnc = netCDF4.Dataset(url)
-    print time
+   
     varis = deque()
     varis.append(getvar(datasetnc, time, elevation, "time", index))
     for var in QUERY_LAYERS:
@@ -299,14 +299,30 @@ def getFeatureInfo(request, dataset):
 
     response = HttpResponse()
     
-    #varis[0] = netCDF4.num2date(varis[0], units=time_units)
+    varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
     X = numpy.transpose(X)
 
+    """
+    if datasetnc.variables["time"].time_zone == "UTC":
+        time_zone_offset = ZERO
+    else:
+        time_zone_offset = None
+    """    
+    import csv
     buffer = StringIO()
-    buffer.write(time_units+u'\n')
-    numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
-
+    #buffer.write(lat.__str__() + " , " + lon.__str__())
+    #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
+    c = csv.writer(buffer)
+    header = ["time"]
+    for var in QUERY_LAYERS:
+        header.append(var + "[" + datasetnc.variables[var].units + "]")
+    c.writerow(header)
+    for i, thistime in enumerate(varis[0]):
+        thisline = [thistime.strftime("%Y%m%dT%H%M%SZ")]
+        for k in range(1, len(varis)):
+            thisline.append(varis[k][i])
+        c.writerow(thisline)         
     dat = buffer.getvalue()
     buffer.close()
     response.write(dat)
