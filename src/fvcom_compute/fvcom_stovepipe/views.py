@@ -49,8 +49,9 @@ def wmstest (request):
 def documentation (request):
     jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
+    import os
     #import fvcom_compute.server_local_config as config
-    f = open(config.staticspath + "doc.txt")
+    f = open(os.path.abspath("../..") + "/README.md")
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)

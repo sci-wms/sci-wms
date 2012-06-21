@@ -1,4 +1,4 @@
-fvcom_wms
+pywms
 =========
 
 ##Install
@@ -31,6 +31,8 @@ You must have the following installed:
 - netCDF4-python
 - shapely
 - pp (parallelpython)
+
+pywms works with both pip and virtualenv quite happily.
 
 
 ##Run
