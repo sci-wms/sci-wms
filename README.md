@@ -23,6 +23,8 @@ You must have the following installed:
 
 - django
 - gunicorn
+- greenlet
+- gevent or eventlet
 - numpy
 - matplotlib
 - matplotlib-basemap
