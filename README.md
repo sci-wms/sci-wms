@@ -60,14 +60,16 @@ local files or OpenDAP endpoints.
 
 $cd project_folder/src/pywms
 
-$python manage.py runserver 0.0.0.0:7000
+$python manage.py runserver 0.0.0.0:7000   # for local use "localhost:7000"
 
 ####To Start With Production WSGI Server:
 
 $cd project_folder/src/pywms
 
-$gunicorn_django -c config.py
+$gunicorn_django -c config_public.py       # for local use config_local.py
 
+You can edit the gunicorn config file to specify the port and other
+gunicorn settings.
 
 Can also be run with mod_wsgi in Apache. I prefer to proxypass
 in Apache to the gunicorn server because I think its better setup
