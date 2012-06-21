@@ -731,23 +731,29 @@ def fvDo (request, dataset='30yr_gom3'):
                             if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
                                 m.ax.barbs(lon[n], lat[n], var1[n], var2[n], mag[n],
-                                    length=5.8,
+                                    length=7.,
                                     pivot='middle',
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
                                     cmap=colormap,
                                     #norm=CNorm,
                                     #clim=climits,
+                                    linewidth=2.,
+                                    sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
+                                    #antialiased=True,
                                     )
                             else:
                                 m.ax.barbs(lon, lat, var1, var2, mag,
-                                    length=5.8,
+                                    length=7.,
                                     pivot='middle',
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
                                     cmap=colormap,
                                     #norm=CNorm,
                                     #clim=climits,
+                                    linewidth=2.,
+                                    sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
+                                    #antialiased=True,
                                     )   
                             
 
