@@ -20,4 +20,3 @@ max_requests = 1
 backlog = 100
 #preload = True
 
-name = "pywms"
