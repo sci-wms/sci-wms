@@ -106,7 +106,7 @@ def check_topology_age():
     last = f.readline().replace('\n', "")
     last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
     f.close()
-    if (datetime.now() - last).seconds > 3*3600 or (datetime.now() - last).days > 1:
+    if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
         job_server = pp.Server(1, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
