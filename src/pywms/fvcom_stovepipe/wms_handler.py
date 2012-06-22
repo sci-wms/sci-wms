@@ -33,7 +33,7 @@ class wms_handler(object):
         
         height = requestobj.GET["HEIGHT"]
         width = requestobj.GET["WIDTH"]
-        styles = requestobj.GET["STYLES"].split("_")
+        styles = requestobj.GET["STYLES"].split(",")[0].split("_")
         colormap = styles[2].replace("-", "_")
         climits = styles[3:5]
         topology_type = styles[5]

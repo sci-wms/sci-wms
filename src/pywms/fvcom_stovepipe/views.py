@@ -207,7 +207,7 @@ def getFeatureInfo(request, dataset):
     lonmax = float(box[2])
     height = float(request.GET["HEIGHT"])
     width = float(request.GET["WIDTH"])
-    styles = request.GET["STYLES"].split("_")
+    styles = request.GET["STYLES"].split(",")[0].split("_")
     #LAYERS = request.GET['LAYERS']
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT = 
@@ -225,7 +225,6 @@ def getFeatureInfo(request, dataset):
                             inverse=True)
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-
 
     #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
     #            urcrnrlon=lonmax, urcrnrlat=latmax,
@@ -249,7 +248,7 @@ def getFeatureInfo(request, dataset):
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
-
+    
     if config.localdataset:
         time = [1]
         time_units = topology.variables['time'].units
