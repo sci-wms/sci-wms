@@ -225,6 +225,7 @@ def getFeatureInfo(request, dataset):
                             inverse=True)
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
+    print lon, lat
 
     #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
     #            urcrnrlon=lonmax, urcrnrlat=latmax,
@@ -248,7 +249,7 @@ def getFeatureInfo(request, dataset):
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
-
+    print lons[index], lats[index]
     if config.localdataset:
         time = [1]
         time_units = topology.variables['time'].units
@@ -737,7 +738,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
                                     cmap=colormap,
-                                    #norm=CNorm,
+                                    norm=CNorm,
                                     #clim=climits,
                                     linewidth=2.,
                                     sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
@@ -750,7 +751,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     barb_increments=dict(half=full/2., full=full, flag=flag),
                                     #units='xy',
                                     cmap=colormap,
-                                    #norm=CNorm,
+                                    norm=CNorm,
                                     #clim=climits,
                                     linewidth=2.,
                                     sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
