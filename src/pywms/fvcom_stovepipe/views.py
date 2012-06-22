@@ -136,9 +136,9 @@ def getLegendGraphic(request, dataset):
     from matplotlib.figure import Figure
     fig = Figure(dpi=100., facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    ax = fig.add_axes([.01, .25, .2, .6])#, xticks=[], yticks=[])
-    fig.set_figwidth(1.5)
-    fig.set_figheight(2.5)
+    ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
+    fig.set_figwidth(1*1.3)
+    fig.set_figheight(1.5*1.3)
     
                             
     """
@@ -152,8 +152,8 @@ def getLegendGraphic(request, dataset):
             
         else:
             #use limits described by the style
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                vmax=climits[1],
+            CNorm = matplotlib.colors.Normalize(vmin=float(climits[0]),
+                                                vmax=float(climits[1]),
                                                 clip=False,
                                                 )
             cb = matplotlib.colorbar.ColorbarBase(ax,
@@ -740,7 +740,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     cmap=colormap,
                                     norm=CNorm,
                                     #clim=climits,
-                                    linewidth=2.,
+                                    linewidth=1.7,
                                     sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
                                     #antialiased=True,
                                     )
@@ -753,7 +753,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     cmap=colormap,
                                     norm=CNorm,
                                     #clim=climits,
-                                    linewidth=2.,
+                                    linewidth=1.7,
                                     sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
                                     #antialiased=True,
                                     )   
