@@ -225,7 +225,7 @@ def getFeatureInfo(request, dataset):
                             inverse=True)
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    print lon, lat
+
 
     #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
     #            urcrnrlon=lonmax, urcrnrlat=latmax,
@@ -249,7 +249,7 @@ def getFeatureInfo(request, dataset):
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
-    print lons[index], lats[index]
+
     if config.localdataset:
         time = [1]
         time_units = topology.variables['time'].units
