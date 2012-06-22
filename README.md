@@ -58,15 +58,15 @@ local files or OpenDAP endpoints.
 
 ####To Start With Django Development Server:
 
-$cd project_folder/src/pywms
+    $cd project_folder/src/pywms
 
-$python manage.py runserver 0.0.0.0:7000   # for local use "localhost:7000"
+    $python manage.py runserver 0.0.0.0:7000   # for local use "localhost:7000"
 
 ####To Start With Production WSGI Server:
 
-$cd project_folder/src/pywms
+    $cd project_folder/src/pywms
 
-$gunicorn_django -c config_public.py       # for local use config_local.py
+    $gunicorn_django -c config_public.py       # for local use config_local.py
 
 You can edit the gunicorn config file to specify the port and other
 gunicorn settings.
