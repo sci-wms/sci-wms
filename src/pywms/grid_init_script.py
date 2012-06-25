@@ -23,7 +23,7 @@ def create_topology(datasetname, url):
         os.path.join(
             config.topologypath, datasetname+".nc"
             )
-        , "w")
+        , "w", format='NETCDF4')
     
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
@@ -31,18 +31,20 @@ def create_topology(datasetname, url):
         nclocal.createDimension('timedim', nc.variables['time'].shape[0])
         nclocal.createDimension('corners', nc.variables['nv'].shape[0])
         
-        nc.sync()
+        nclocal.sync()
         
         lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
-        nc.sync()
         
-        time = nclocal.createVariable('time', 'f8', ('timedim',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
+        nclocal.sync()
         
-        nc.sync()
+        time = nclocal.createVariable('time', 'f8', ('timedim',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d 
+        
+        nclocal.sync()
+        
         lat[:] = nc.variables['lat'][:]
         lon[:] = nc.variables['lon'][:]
         latc[:] = nc.variables['latc'][:]
@@ -54,7 +56,7 @@ def create_topology(datasetname, url):
 
         #print nclocal.variables['latc'].dtype
         #print nc.variables['latc'].dtype
-    """
+    
     elif nc.variables.has_key("element"):
         nclocal.createDimension('node', nc.variables['x'].shape[0])
         nclocal.createDimension('cell', nc.variables['element'].shape[0])
@@ -83,7 +85,7 @@ def create_topology(datasetname, url):
         nv[:,:] = nc.variables['element'][:,:].T
         time[:] = nc.variables['time'][:]
         time.units = nc.variables['time'].units
-    """
+    
     
     
     nclocal.sync()
@@ -145,14 +147,15 @@ def check_topology_age():
 if __name__ == '__main__':
     """
     Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
-    """    
+       
     import server_local_config
 
     paths = server_local_config.datasetpath #dict
     for dataset in paths.viewkeys():
         print "Adding: " + paths[dataset]
         create_topology(dataset, paths[dataset])
-    
+    """
+    create_topology_from_config()
     
 
 
