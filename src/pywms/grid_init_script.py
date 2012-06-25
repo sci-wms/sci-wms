@@ -30,15 +30,19 @@ def create_topology(datasetname, url):
         nclocal.createDimension('node', nc.variables['lat'].shape[0])
         nclocal.createDimension('timedim', nc.variables['time'].shape[0])
         nclocal.createDimension('corners', nc.variables['nv'].shape[0])
-
+        
+        nc.sync()
+        
         lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
-
+        nc.sync()
+        
         time = nclocal.createVariable('time', 'f8', ('timedim',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
-
+        
+        nc.sync()
         lat[:] = nc.variables['lat'][:]
         lon[:] = nc.variables['lon'][:]
         latc[:] = nc.variables['latc'][:]
