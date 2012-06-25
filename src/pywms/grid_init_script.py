@@ -14,9 +14,9 @@ import os
 
 
 def create_topology(datasetname, url):
-    from netCDF4 import Dataset, num2date
-    import sys
-    from datetime import datetime
+    #from netCDF4 import Dataset, num2date
+    #import sys
+    #from datetime import datetime
     import server_local_config as config
     nc = Dataset(url)
     nclocal = Dataset(
@@ -28,7 +28,7 @@ def create_topology(datasetname, url):
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
         nclocal.createDimension('node', nc.variables['lat'].shape[0])
-        nclocal.createDimension('time', nc.variables['time'].shape[0])
+        nclocal.createDimension('timedim', nc.variables['time'].shape[0])
         nclocal.createDimension('corners', nc.variables['nv'].shape[0])
 
         lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
@@ -37,7 +37,7 @@ def create_topology(datasetname, url):
         lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
 
-        time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
+        time = nclocal.createVariable('time', 'f8', ('timedim',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
 
         lat[:] = nc.variables['lat'][:]
         lon[:] = nc.variables['lon'][:]
@@ -84,13 +84,13 @@ def create_topology(datasetname, url):
     
     nclocal.sync()
     nclocal.close()
+    nc.close()
     #now = datetime.now()
     #print dir(now)
     #f = open(last_grid_init_path, 'w')
     #f.write(now.__str__())
     #f.close()
-    
-    return None
+
     
 def create_topology_from_config():
     """
