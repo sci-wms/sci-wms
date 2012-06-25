@@ -21,9 +21,6 @@ localhostip = "192.168.100.146:7000" # the ip or domain and port
 datasetpath = {
     '30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
     'forecast' : "http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
-    'NecofsWave':"http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_WAVE_FORECAST.nc",
-
-    'MassBay':"http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc",
 
     # "dataset_id":"path or OpenDAP endpoint",
     # "dataset_id2":"path or OpenDAP endpoint",
