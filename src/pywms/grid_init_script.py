@@ -50,6 +50,7 @@ def create_topology(datasetname, url):
 
         #print nclocal.variables['latc'].dtype
         #print nc.variables['latc'].dtype
+    """
     elif nc.variables.has_key("element"):
         nclocal.createDimension('node', nc.variables['x'].shape[0])
         nclocal.createDimension('cell', nc.variables['element'].shape[0])
@@ -78,7 +79,7 @@ def create_topology(datasetname, url):
         nv[:,:] = nc.variables['element'][:,:].T
         time[:] = nc.variables['time'][:]
         time.units = nc.variables['time'].units
-    
+    """
     
     
     nclocal.sync()
@@ -111,7 +112,7 @@ def check_topology_age():
     #f.close()
     #if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
     if True:
-        job_server = pp.Server(1, ppservers=())
+        job_server = pp.Server(2, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
         for dataset in paths.viewkeys():
