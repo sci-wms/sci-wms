@@ -7,13 +7,23 @@ from netCDF4 import Dataset, num2date
 import sys
 from datetime import datetime
 import pp
+import os
+
+
+#last_grid_init_path = 'last_grid_init.pywms'
+
 
 def create_topology(datasetname, url):
     from netCDF4 import Dataset, num2date
     import sys
     from datetime import datetime
+    import server_local_config as config
     nc = Dataset(url)
-    nclocal = Dataset(datasetname+".nc", "w")
+    nclocal = Dataset(
+        os.path.join(
+            config.topologypath, datasetname+".nc"
+            )
+        , "w")
     
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
@@ -72,11 +82,14 @@ def create_topology(datasetname, url):
     
     
     nclocal.sync()
-    now = datetime.now()
+    nclocal.close()
+    #now = datetime.now()
     #print dir(now)
-    f = open('last_grid_init.pywms', 'w')
-    f.write(now.__str__())
-    f.close()
+    #f = open(last_grid_init_path, 'w')
+    #f.write(now.__str__())
+    #f.close()
+    
+    return None
     
 def create_topology_from_config():
     """
@@ -87,33 +100,34 @@ def create_topology_from_config():
     for dataset in paths.viewkeys():
         print "Adding: " + paths[dataset]
         create_topology(dataset, paths[dataset])
-    
-    """
-    #url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-    datasetname = sys.argv[1]
-    try:
-        url = sys.argv[2]
-    except:
-        url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-        
-    create_topology(datasetname, url)
-    """
+
 
 def check_topology_age():
     arrayj = []
     from datetime import datetime
-    f = open('last_grid_init.pywms', 'r')
-    last = f.readline().replace('\n', "")
-    last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
-    f.close()
-    if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
+    #f = open(last_grid_init_path, 'r')
+    #last = f.readline().replace('\n', "")
+    #last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
+    #f.close()
+    #if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
+    if True:
         job_server = pp.Server(1, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
-        
         for dataset in paths.viewkeys():
-            print "Updating: " + paths[dataset]
-            arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(create_topology,),("netCDF4","numpy", "datetime")))
+            try:
+                filemtime = datetime.fromtimestamp(
+                    os.path.getmtime(
+                    os.path.join(
+                    server_local_config.topologypath, dataset + ".nc"
+                    )))
+                difference = datetime.now() - filemtime
+                if difference.seconds > .25*3600 or difference.days > 0:
+                    print "Updating: " + paths[dataset]
+                    arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+            except:
+                print "Initializing: " + paths[dataset]
+                arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
             
     return arrayj
     
@@ -128,16 +142,6 @@ if __name__ == '__main__':
         print "Adding: " + paths[dataset]
         create_topology(dataset, paths[dataset])
     
-    """
-    #url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-    datasetname = sys.argv[1]
-    try:
-        url = sys.argv[2]
-    except:
-        url = "http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3"
-        
-    create_topology(datasetname, url)
-    """
     
 
 

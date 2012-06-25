@@ -182,6 +182,7 @@ def getLegendGraphic(request, dataset):
         
         
 def getFeatureInfo(request, dataset):
+    #print "in"
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -198,6 +199,7 @@ def getFeatureInfo(request, dataset):
 
     X = float(request.GET['X'])
     Y = float(request.GET['Y'])
+    #print X, Y
     #VERSION = 
     box = request.GET["BBOX"]
     box = box.split(",")
@@ -208,6 +210,7 @@ def getFeatureInfo(request, dataset):
     height = float(request.GET["HEIGHT"])
     width = float(request.GET["WIDTH"])
     styles = request.GET["STYLES"].split(",")[0].split("_")
+    #print styles
     #LAYERS = request.GET['LAYERS']
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT = 
@@ -216,7 +219,7 @@ def getFeatureInfo(request, dataset):
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
     elevation = [int(request.GET['ELEVATION'])]
-    print elevation
+    #print elevation
     
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
@@ -328,6 +331,7 @@ def getFeatureInfo(request, dataset):
     dat = buffer.getvalue()
     buffer.close()
     response.write(dat)
+    topology.close()
     return response
 
 def fvDo (request, dataset='30yr_gom3'):
@@ -1302,7 +1306,7 @@ def fvDo (request, dataset='30yr_gom3'):
             response = HttpResponse(content_type='image/png')
             canvas.print_png(response)
             
-    
+    topology.close()
     gc.collect()
     print timeobj.time() - totaltimer
     return response
