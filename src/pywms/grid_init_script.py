@@ -6,7 +6,7 @@ Created on Sep 6, 2011
 from netCDF4 import Dataset, num2date
 import sys
 from datetime import datetime
-import pp
+#import pp
 import os
 
 
@@ -125,10 +125,12 @@ def check_topology_age():
                 difference = datetime.now() - filemtime
                 if difference.seconds > .25*3600 or difference.days > 0:
                     print "Updating: " + paths[dataset]
-                    arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                    create_topology(dataset, paths[dataset])
             except:
                 print "Initializing: " + paths[dataset]
-                arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                create_topology(dataset, paths[dataset])
             
     return arrayj
     
