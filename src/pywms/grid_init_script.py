@@ -112,7 +112,7 @@ def check_topology_age():
     #f.close()
     #if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
     if True:
-        job_server = pp.Server(2, ppservers=())
+        #job_server = pp.Server(2, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
         for dataset in paths.viewkeys():
@@ -124,9 +124,13 @@ def check_topology_age():
                     )))
                 difference = datetime.now() - filemtime
                 if difference.seconds > .25*3600 or difference.days > 0:
-                    print "Updating: " + paths[dataset]
-                    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-                    create_topology(dataset, paths[dataset])
+                    nc = Dataset(paths[dataset])
+                    topo = Dataset(os.path.join(
+                        server_local_config.topologypath, dataset + ".nc"))
+                    if topo.variables['time'][-1] != nc.variables['time'][-1]:    
+                        print "Updating: " + paths[dataset]
+                        #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                        create_topology(dataset, paths[dataset])
             except:
                 print "Initializing: " + paths[dataset]
                 #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
