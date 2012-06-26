@@ -20,11 +20,9 @@ def create_topology(datasetname, url):
     #from datetime import datetime
     import server_local_config as config
     nc = Dataset(url)
-    nclocal = Dataset(
-        os.path.join(
-            config.topologypath, datasetname+".nc"
-            )
-        , "w")
+    nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
+    #print nclocalpath
+    nclocal = Dataset(nclocalpath, mode="w", clobber=True)
     
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
@@ -123,12 +121,7 @@ def create_topology_from_config():
 def check_topology_age():
     arrayj = []
     from datetime import datetime
-    #f = open(last_grid_init_path, 'r')
-    #last = f.readline().replace('\n', "")
-    #last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
-    #f.close()
-    #print (datetime.now() - last).seconds > 0.1*3600 or (datetime.now() - last).days > 0
-    #if (datetime.now() - last).seconds > 0.1*3600 or (datetime.now() - last).days > 0:
+
     if True:
         #job_server = pp.Server(2, ppservers=())
         import server_local_config
@@ -137,30 +130,36 @@ def check_topology_age():
         #print paths
         for dataset in paths.viewkeys():
             #print dataset
-            #try:
+            try:
                 #get_lock()
-            filemtime = datetime.fromtimestamp(
-                os.path.getmtime(
-                os.path.join(
-                server_local_config.topologypath, dataset + ".nc"
-                )))
-            #print filemtime
-            difference = datetime.now() - filemtime
-            if difference.seconds > 0*3600 or difference.days > 0:
-                
-                nc = Dataset(paths[dataset])
-                topo = Dataset(os.path.join(
-                    server_local_config.topologypath, dataset + ".nc"))
-                #if topo.variables['time'][-1] != nc.variables['time'][-1]:    
-                print "Updating: " + paths[dataset]
-                #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-                create_topology(dataset, paths[dataset])
-                #release_lock()
-            #except:
-            #    print "Initializing: " + paths[dataset]
+                filemtime = datetime.fromtimestamp(
+                    os.path.getmtime(
+                    os.path.join(
+                    server_local_config.topologypath, dataset + ".nc"
+                    )))
+                #print filemtime
+                difference = datetime.now() - filemtime
+                if difference.seconds > .5*3600 or difference.days > 0:
+                    
+                    nc = Dataset(paths[dataset])
+                    topo = Dataset(os.path.join(
+                        server_local_config.topologypath, dataset + ".nc"))
+                        
+                    time1 = nc.variables['time'][-1]
+                    time2 = topo.variables['time'][-1]
+                    
+                    nc.close()
+                    topo.close()
+                    if time1 != time2:    
+                        print "Updating: " + paths[dataset]
+                        #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                        create_topology(dataset, paths[dataset])
+                        #release_lock()
+            except:
+                print "Initializing: " + paths[dataset]
             ##    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
             #    #get_lock()
-            #    create_topology(dataset, paths[dataset])
+                create_topology(dataset, paths[dataset])
             #    #release_lock()
     try:
         nc.close()
