@@ -16,7 +16,7 @@ workers = 12#multiprocessing.cpu_count()
 worker_class = worker
 debug = True
 timeout = 1000
-max_requests = 1
+max_requests = 16
 backlog = 100
 #preload = True
 

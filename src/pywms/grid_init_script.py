@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 #import pp
 import os
+import numpy as np
 
 
 #last_grid_init_path = 'last_grid_init.pywms'
@@ -23,15 +24,15 @@ def create_topology(datasetname, url):
         os.path.join(
             config.topologypath, datasetname+".nc"
             )
-        , "w", format='NETCDF4')
+        , "w")
     
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
         nclocal.createDimension('node', nc.variables['lat'].shape[0])
-        nclocal.createDimension('timedim', nc.variables['time'].shape[0])
+        nclocal.createDimension('time', nc.variables['time'].shape[0])
         nclocal.createDimension('corners', nc.variables['nv'].shape[0])
         
-        nclocal.sync()
+        
         
         lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
@@ -39,16 +40,21 @@ def create_topology(datasetname, url):
         lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
         
-        nclocal.sync()
         
-        time = nclocal.createVariable('time', 'f8', ('timedim',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d 
         
-        nclocal.sync()
+        time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d 
         
+        lontemp = nc.variables['lon'][:]
+        if max(lontemp) > 180:
+            lon[:] = np.asarray(lontemp) - 360
+            lonc[:] = np.asarray(nc.variables['lonc'][:] - 360)
+        else:
+            lon[:] = lontemp
+            lonc[:] = nc.variables['lonc'][:]
+                
         lat[:] = nc.variables['lat'][:]
-        lon[:] = nc.variables['lon'][:]
         latc[:] = nc.variables['latc'][:]
-        lonc[:] = nc.variables['lonc'][:]
+        
         nv[:,:] = nc.variables['nv'][:,:]
         time[:] = nc.variables['time'][:]
         time.units = nc.variables['time'].units
@@ -121,27 +127,35 @@ def check_topology_age():
         #job_server = pp.Server(2, ppservers=())
         import server_local_config
         paths = server_local_config.datasetpath #dict
+        #print paths
         for dataset in paths.viewkeys():
+            #print dataset
             try:
                 filemtime = datetime.fromtimestamp(
                     os.path.getmtime(
                     os.path.join(
                     server_local_config.topologypath, dataset + ".nc"
                     )))
+                #print filemtime
                 difference = datetime.now() - filemtime
-                if difference.seconds > .25*3600 or difference.days > 0:
+                if difference.seconds > 24*3600 or difference.days > 0:
+                    
                     nc = Dataset(paths[dataset])
                     topo = Dataset(os.path.join(
                         server_local_config.topologypath, dataset + ".nc"))
-                    if topo.variables['time'][-1] != nc.variables['time'][-1]:    
-                        print "Updating: " + paths[dataset]
-                        #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-                        create_topology(dataset, paths[dataset])
+                    #if topo.variables['time'][-1] != nc.variables['time'][-1]:    
+                    print "Updating: " + paths[dataset]
+                    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+                    create_topology(dataset, paths[dataset])
             except:
                 print "Initializing: " + paths[dataset]
-                #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+            #    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
                 create_topology(dataset, paths[dataset])
-            
+    try:
+        nc.close()
+        topo.close()
+    except:
+        pass
     return arrayj
     
 if __name__ == '__main__':
