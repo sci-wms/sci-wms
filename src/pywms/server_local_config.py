@@ -19,9 +19,8 @@ localhostip = "localhost:7000"#"192.168.100.146:7000" # the ip or domain and por
                                      
 # Where are the datasets that you want to serve?
 datasetpath = {
-    '30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
-    'forecast' : "http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
-    'ncom':"http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201206/nos.ngofs.fields.nowcast.20120625.t15z.nc",
+    '30yr_gom3a':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
+    'forecasta' : "http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
 
     # "dataset_id":"path or OpenDAP endpoint",
     # "dataset_id2":"path or OpenDAP endpoint",

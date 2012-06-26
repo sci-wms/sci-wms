@@ -77,15 +77,20 @@ def create_topology(datasetname, url):
 
         time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
         
-        lat[:] = nc.variables['y'][:]
-        lon[:] = nc.variables['x'][:]
+        
+        lattemp = nc.variables['y'][:]
+        lontemp = nc.variables['x'][:]
+        lat[:] = lattemp
+        if max(lontemp) > 180:
+            lontemp = np.asarray(lontemp) - 360
+        
+        lon[:] = lontemp
         import matplotlib.tri as Tri
-        tri = Tri.Triangulation(nc.variables['x'][:], 
-                                nc.variables['y'][:],
+        tri = Tri.Triangulation(lontemp, 
+                                lattemp,
                                 nc.variables['element'][:,:]-1
                                 )
-        lontemp = lon[:]
-        lattemp = lat[:]
+        
         lonc[:] = lontemp[tri.triangles].mean(axis=1)
         latc[:] = lattemp[tri.triangles].mean(axis=1)
         nv[:,:] = nc.variables['element'][:,:].T
@@ -122,35 +127,41 @@ def check_topology_age():
     #last = f.readline().replace('\n', "")
     #last = datetime.strptime(last, "%Y-%m-%d %H:%M:%S.%f")
     #f.close()
-    #if (datetime.now() - last).seconds > 0.5*3600 or (datetime.now() - last).days > 0.5:
+    #print (datetime.now() - last).seconds > 0.1*3600 or (datetime.now() - last).days > 0
+    #if (datetime.now() - last).seconds > 0.1*3600 or (datetime.now() - last).days > 0:
     if True:
         #job_server = pp.Server(2, ppservers=())
         import server_local_config
+        from fvcom_stovepipe.parallellock import get_lock, release_lock
         paths = server_local_config.datasetpath #dict
         #print paths
         for dataset in paths.viewkeys():
             #print dataset
-            try:
-                filemtime = datetime.fromtimestamp(
-                    os.path.getmtime(
-                    os.path.join(
-                    server_local_config.topologypath, dataset + ".nc"
-                    )))
-                #print filemtime
-                difference = datetime.now() - filemtime
-                if difference.seconds > 24*3600 or difference.days > 0:
-                    
-                    nc = Dataset(paths[dataset])
-                    topo = Dataset(os.path.join(
-                        server_local_config.topologypath, dataset + ".nc"))
-                    #if topo.variables['time'][-1] != nc.variables['time'][-1]:    
-                    print "Updating: " + paths[dataset]
-                    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-                    create_topology(dataset, paths[dataset])
-            except:
-                print "Initializing: " + paths[dataset]
-            #    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+            #try:
+                #get_lock()
+            filemtime = datetime.fromtimestamp(
+                os.path.getmtime(
+                os.path.join(
+                server_local_config.topologypath, dataset + ".nc"
+                )))
+            #print filemtime
+            difference = datetime.now() - filemtime
+            if difference.seconds > 0*3600 or difference.days > 0:
+                
+                nc = Dataset(paths[dataset])
+                topo = Dataset(os.path.join(
+                    server_local_config.topologypath, dataset + ".nc"))
+                #if topo.variables['time'][-1] != nc.variables['time'][-1]:    
+                print "Updating: " + paths[dataset]
+                #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
                 create_topology(dataset, paths[dataset])
+                #release_lock()
+            #except:
+            #    print "Initializing: " + paths[dataset]
+            ##    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
+            #    #get_lock()
+            #    create_topology(dataset, paths[dataset])
+            #    #release_lock()
     try:
         nc.close()
         topo.close()

@@ -387,8 +387,8 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    print lonmin, latmin
-    print lonmax, latmax
+    #print lonmin, latmin
+    #print lonmax, latmax
     
     
     
