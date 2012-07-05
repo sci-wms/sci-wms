@@ -72,6 +72,6 @@ You can edit the gunicorn config file to specify the port and other
 gunicorn settings.
 
 Can also be run with mod_wsgi in Apache. I prefer to proxypass
-in Apache to the gunicorn server because I think its better setup
+in Apache or nginx to the gunicorn server because I think its better setup
 to handle the kinds of requests the server sees.
 

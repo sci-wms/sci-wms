@@ -40,7 +40,7 @@
                                        });
 
 				fvcomv = new OpenLayers.Layer.WMS("FVCOM Velocity",
-				                                "http://{{localsite}}/wms/global/",
+				                                "http://{{localsite}}/wms/30yr_gom3/",
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
@@ -50,7 +50,7 @@
 				                                },
 				                                
 				                                {
-				                                    singleTile: true, 
+				                                    singleTile: false, 
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
@@ -75,7 +75,7 @@
 				                                }
 				                                );
 				fvcomvec = new OpenLayers.Layer.WMS("FVCOM Velocity Vectors",
-				                                "http://{{localsite}}/wms/global/",
+				                                "http://{{localsite}}/wms/30yr_gom3/",
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
@@ -170,7 +170,7 @@
 				                                }
 				                                );
 				fvcomnode = new OpenLayers.Layer.WMS("FVCOM Temperature (Contours)",
-				                                "http://{{localsite}}/wms/global/",
+				                                "http://{{localsite}}/wms/30yr_gom3/",
 				                                {
 				                                    layers:"temp",
 				                                    transparent: true,
