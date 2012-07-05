@@ -36,9 +36,13 @@ pywms works with both pip and virtualenv quite happily. If you
 have pip installed you can use:
 
     $pip install package
+
+Or you can install the required packages (with the versions we develop
+the wms on) with the requirements file:
+
+    $pip install requirements.txt
     
-for many of the dependent modules. Similarly if you have setup_tools
-installed you can use:
+Similarly if you have setup_tools installed you can use:
 
     $easy_install package
     
