@@ -50,7 +50,7 @@ def documentation (request):
     import django.shortcuts as dshorts
     import os
     #import pywms.server_local_config as config
-    f = open(os.path.abspath("../..") + "/README.md")
+    f = open(os.path.join(config.fullpath_to_wms, "README.md"))
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
@@ -387,8 +387,7 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    #print lonmin, latmin
-    #print lonmax, latmax
+
     
     
     
@@ -463,7 +462,6 @@ def fvDo (request, dataset='30yr_gom3'):
                     index = range(len(latn))
             else:
                 nv = None
-
 
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
             #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
@@ -559,7 +557,6 @@ def fvDo (request, dataset='30yr_gom3'):
                     fig.set_alpha(0)
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
-                    
                     
                     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,

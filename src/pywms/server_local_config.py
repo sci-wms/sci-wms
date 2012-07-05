@@ -19,8 +19,9 @@ localhostip = "192.168.100.146:7000" # the ip or domain and port
                                      
 # Where are the datasets that you want to serve?
 datasetpath = {
-    '30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
-    'forecast' : "http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
+    #'30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
+    #'forecast' : "http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc",
+    'global': "http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/GLOBAL/GLOB_1977_08.nc",
 
     # "dataset_id":"path or OpenDAP endpoint",
     # "dataset_id2":"path or OpenDAP endpoint",
@@ -38,7 +39,7 @@ datasetpath = {
 import os
 
 # Where did you put me:
-fullpath_to_wms = os.path.abspath("../..")
+fullpath_to_wms = os.path.abspath(os.path.join(os.path.dirname(__file__),"../.."))
 
 # local path to database (doesn't include file name)
 topologypath = os.path.join(fullpath_to_wms,

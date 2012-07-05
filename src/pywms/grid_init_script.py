@@ -43,10 +43,19 @@ def create_topology(datasetname, url):
         time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d 
         
         lontemp = nc.variables['lon'][:]
-        if max(lontemp) > 180:
-            lon[:] = np.asarray(lontemp) - 360
-            lonc[:] = np.asarray(nc.variables['lonc'][:] - 360)
+        if np.max(lontemp) > 180:
+            #print "greaterthan"
+            lonctemp = nc.variables['lonc'][:]
+            lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
+            lonctemp[lonctemp > 180] = lonctemp[lonctemp > 180] -360
+            lon[:] = np.asarray(lontemp)
+            lonc[:] = np.asarray(lonctemp)
+        #elif np.min(lontemp) < -180:
+        #    print "lessthan"
+        #    lon[:] = np.asarray(lontemp) + 360
+        #    lonc[:] = np.asarray(nc.variables['lonc'][:] + 360)
         else:
+        #    print "nochange"
             lon[:] = lontemp
             lonc[:] = nc.variables['lonc'][:]
                 

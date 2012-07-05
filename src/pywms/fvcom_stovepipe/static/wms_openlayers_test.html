@@ -40,7 +40,7 @@
                                        });
 
 				fvcomv = new OpenLayers.Layer.WMS("FVCOM Velocity",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
+				                                "http://{{localsite}}/wms/global/",
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
@@ -50,7 +50,7 @@
 				                                },
 				                                
 				                                {
-				                                    singleTile: false, 
+				                                    singleTile: true, 
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
@@ -75,7 +75,7 @@
 				                                }
 				                                );
 				fvcomvec = new OpenLayers.Layer.WMS("FVCOM Velocity Vectors",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
+				                                "http://{{localsite}}/wms/global/",
 				                                {
 				                                    layers:"u,v",
 				                                    transparent: true,
@@ -170,12 +170,12 @@
 				                                }
 				                                );
 				fvcomnode = new OpenLayers.Layer.WMS("FVCOM Temperature (Contours)",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
+				                                "http://{{localsite}}/wms/global/",
 				                                {
 				                                    layers:"temp",
 				                                    transparent: true,
 				                                    styles: "contours_average_jet_None_None_node_False",
-				                                    time: "1984-10-17T00:00:00",
+				                                    time: "2013-10-17T00:00:00",
 				                                    elevation: "1"
 				                                },
 				                                
