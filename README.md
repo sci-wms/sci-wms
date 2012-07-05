@@ -40,7 +40,7 @@ have pip installed you can use:
 Or you can install the required packages (with the versions we develop
 the wms on) with the requirements file:
 
-    $pip install requirements.txt
+    $pip install -r requirements.txt
     
 Similarly if you have setup_tools installed you can use:
 
