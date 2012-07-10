@@ -26,8 +26,8 @@ You must have the following installed:
 - greenlet
 - gevent or eventlet
 - numpy
-- matplotlib
-- matplotlib basemap (versions 1.0.2+ require mpl-toolkit axisgrid to be installed as well)
+- matplotlib (1.1.0 preferred)
+- matplotlib basemap (versions 1.0.2+ require mpl-toolkit axisgrid to be installed as well, but perhaps only if you are using mpl 1.1.0...)
 - netCDF4-python (netCDF4)
 - shapely
 - pp (parallelpython)

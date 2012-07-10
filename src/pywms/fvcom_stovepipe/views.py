@@ -388,8 +388,8 @@ def fvDo (request, dataset='30yr_gom3'):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    
-    
+    if lonmin > lonmax:
+        lonmax = lonmax + 360
     
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
@@ -460,6 +460,9 @@ def fvDo (request, dataset='30yr_gom3'):
                 lonn = topology.variables['lon'][:]
                 if topology_type.lower() == "node":
                     index = range(len(latn))
+                    
+                uu = numpy.unique(nv)
+                print numpy.min(uu), numpy.max(uu)
             else:
                 nv = None
 
