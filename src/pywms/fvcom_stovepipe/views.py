@@ -410,9 +410,7 @@ def fvDo (request, dataset='30yr_gom3'):
     topology_type = request.GET["topologytype"]
         
     variables = request.GET["variables"].split(",")
-    #print "request parse"
-    #if latmax == latmin:
-    #    actions.append("timeseries")
+    continuous = False
     
     if "kml" in actions:
         pass
@@ -433,6 +431,7 @@ def fvDo (request, dataset='30yr_gom3'):
             lon = lon[index]
             if lonmin > lonmax:
                 lonmax = lonmax + 360
+                continuous = True
         else:
             pass
             
@@ -605,46 +604,6 @@ def fvDo (request, dataset='30yr_gom3'):
                             ax.quiver(reglon, reglat, newu, newv, mag, pivot='mid')
                         """
                     else:
-                        """
-                        if "interpolate" in actions:
-                            
-                            fig.set_figheight(height/80.0)
-                            fig.set_figwidth(width/80.0)  
-
-                            lonn, latn = m(lonn, latn)
-
-                            tri = Tri.Triangulation(lonn,latn,triangles=nv)
-
-                            #tri = trijob()
-       
-                            if len(variables) > 1:
-                                mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
-                            else:
-                                if magnitude:
-                                    mag = numpy.sqrt(var1**2)
-                                else:
-                                    mag = var1
-
-                            #verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
-                            #                        tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
-                            
-                            if (climits[0] == "None") or (climits[1] == "None"):
-                                CNorm = matplotlib.colors.Normalize()
-                            else:
-                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                                vmax=climits[1],
-                                                                clip=True,
-                                                                )
-                                                                
-                            m.ax.tripcolor(tri, mag,
-                                           shading="",
-                                           norm=CNorm,
-                                           cmap=colormap,
-                                           )
-
-                            #ax = Plot.gca()
-                            #ax = m.ax
-                        """    
                         if "vectors" in actions:
                             #fig.set_figheight(5)
                             fig.set_figwidth(height/80.0/m.aspect)
@@ -656,11 +615,16 @@ def fvDo (request, dataset='30yr_gom3'):
                             mag = numpy.sqrt(mag)
                             #ax = fig.add_subplot(111)
                             #ax.quiver(lon, lat, u, v, mag, pivot='mid')
-                            if topology_type == 'cell':
-                                lon, lat = m(lon, lat)
+                            if topology_type.lower() == 'cell':
+                                pass
                             else:
-                                lon, lat = m(lonn, latn)
+                                lon, lat = lonn, latn
                                 
+                            if continuous is True:
+                                lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+
+                            lon, lat = m(lon, lat)
+
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
@@ -668,8 +632,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
-                            
-                                                                
+                                       
                             if magnitude == "True":
                                 arrowsize = None
                             elif magnitude == "False":
@@ -714,10 +677,16 @@ def fvDo (request, dataset='30yr_gom3'):
                             #ax = fig.add_subplot(111)
                             #ax.quiver(lon, lat, u, v, mag, pivot='mid')
                             if topology_type.lower() == 'cell':
-                                lon, lat = m(lon, lat)
+                                pass
                             else:
-                                lon, lat = m(lonn, latn)
+                                lon, lat = lonn, latn
                                 
+                                
+                            if continuous is True:
+                                lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+                            
+                            lon, lat = m(lon, lat)
+                             
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                                 full = 10.#.2
@@ -789,7 +758,9 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                             #m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
                             if topology_type.lower() == 'cell':
-                                print dir(m)
+                                if continuous is True:
+                                    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+                            
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
                                 mask = []
@@ -802,6 +773,9 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
+                                if continuous is True:
+                                    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
+                            
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
                                 m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
@@ -852,6 +826,9 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                             if topology_type.lower() == 'cell':
                                 #print dir(m)
+                                if continuous is True:
+                                    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+                            
                                 lon, lat = m(lon, lat)
                                 #lonn, latn = m(lonn, latn)
                                 #tri = Tri.Triangulation(lonn, latn, triangles=nv)
@@ -863,6 +840,9 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
+                                if continuous is True:
+                                    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
+                            
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
                                 m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=True)   
@@ -873,13 +853,17 @@ def fvDo (request, dataset='30yr_gom3'):
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
                             if topology_type.lower() == "cell":
+                                if continuous is True:
+                                    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+                                    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
                                 lon, lat = m(lon, lat)
                                 lonn, latn = m(lonn, latn)
                             else:
+                                if continuous is True:
+                                    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
                                 lon, lat = m(lonn, latn)
                                 lonn, latn = lon, lat
                                 
-                            
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                                 mag = numpy.sqrt(mag)
@@ -1023,7 +1007,9 @@ def fvDo (request, dataset='30yr_gom3'):
                             #            lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
                             #            )
                             fig.set_figheight(height/80.0)
-                            fig.set_figwidth(width/80.0)  
+                            fig.set_figwidth(width/80.0)
+                            if continuous is True:
+                                lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
                             lonn, latn = m(lonn, latn)
                             tri = Tri.Triangulation(lonn,latn,triangles=nv)
                             if len(variables) > 1:
