@@ -387,8 +387,7 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    print lonmin, latmin
-    print lonmax, latmax
+
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
     layer = request.GET["layer"]
@@ -424,8 +423,6 @@ def fvDo (request, dataset='30yr_gom3'):
             if lonmin > lonmax:
                 lonmax = lonmax + 360
                 continuous = True
-                print lonmin, latmin
-                print lonmax, latmax
                 lon = topology.variables['lonc'][:]
                 wher = numpy.where(lon<0)
                 lon[wher] = lon[wher] + 360
@@ -629,8 +626,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                             #if continuous is True:
                             #    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
-                            print "arrows", lon.min(), lat.min()
-                            print "arrows", lon.max(), lat.max()
+
                             lon, lat = m(lon, lat)
 
                             if (climits[0] == "None") or (climits[1] == "None"):
