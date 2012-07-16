@@ -387,7 +387,8 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    
+    print lonmin, latmin
+    print lonmax, latmax
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
     layer = request.GET["layer"]
@@ -420,21 +421,27 @@ def fvDo (request, dataset='30yr_gom3'):
         datasetnc = netCDF4.Dataset(url)
 
         if latmax != latmin:
+            if lonmin > lonmax:
+                lonmax = lonmax + 360
+                continuous = True
+                print lonmin, latmin
+                print lonmax, latmax
+                lon = topology.variables['lonc'][:]
+                wher = numpy.where(lon<0)
+                lon[wher] = lon[wher] + 360
+            else:
+                lon = topology.variables['lonc'][:]
             lat = topology.variables['latc'][:]
-            lon = topology.variables['lonc'][:]
-
             index = numpy.asarray(numpy.where(
                 (lat <= latmax+.18) & (lat >= latmin-.18) &
                 (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
 
             lat = lat[index]
             lon = lon[index]
-            if lonmin > lonmax:
-                lonmax = lonmax + 360
-                continuous = True
+            
         else:
             pass
-            
+        print "index", len(index)
         if len(index) > 0:
             #job_server = pp.Server(4, ppservers=()) 
             #print "cell database"
@@ -558,7 +565,7 @@ def fvDo (request, dataset='30yr_gom3'):
                     fig.set_alpha(0)
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
-                    
+
                     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                             #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
@@ -620,9 +627,10 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 lon, lat = lonn, latn
                                 
-                            if continuous is True:
-                                lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
-
+                            #if continuous is True:
+                            #    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
+                            print "arrows", lon.min(), lat.min()
+                            print "arrows", lon.max(), lat.max()
                             lon, lat = m(lon, lat)
 
                             if (climits[0] == "None") or (climits[1] == "None"):
@@ -642,7 +650,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 arrowsize = magnitude
                                 
-                               
+                            
                             if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
                                 m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n], 

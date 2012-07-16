@@ -20,7 +20,7 @@ localhostip = "192.168.100.146:7000" # the ip or domain and port
 # Where are the datasets that you want to serve?
 datasetpath = {
     '30yr_gom3':"http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3",
-
+    'global' : "http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/GLOBAL/GLOB_1977_08.nc"
     # "dataset_id":"path or OpenDAP endpoint",
     # "dataset_id2":"path or OpenDAP endpoint",
     # "dataset_id3":"path or OpenDAP endpoint",
@@ -50,7 +50,7 @@ staticspath = os.path.join(fullpath_to_wms,
 # mostly the below is for testing purposes only:
 # if this is populated, the service will use the dataset above for schema/grid information
 # and the dataset below for actual data extraction.
-localdataset = True
+localdataset = False
 localpath = {
     '30yr_gom3':"/home/acrosby/Development/Data/FVCOM/gom3_197802.nc",
 

@@ -33,7 +33,7 @@ You must have the following installed:
 - pp (parallelpython)
 
 pywms works with both pip and virtualenv quite happily. If you
-have pip installed you can use:
+have pip installed you can use the following to install many (but not all) of the required modules:
 
     $pip install package
 
