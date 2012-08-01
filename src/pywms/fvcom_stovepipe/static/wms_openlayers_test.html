@@ -206,7 +206,7 @@
 				                                    
 				                                }
 				                                );
-				adcirctest = new OpenLayers.Layer.WMS("ADCIRC TEST",
+				globaltest = new OpenLayers.Layer.WMS("GLOBAL TEST",
 				                                "http://{{localsite}}/wms/global/",
 				                                {
 				                                    layers:"u,v",
@@ -225,6 +225,25 @@
 				                                }
 				                                );
 				                                  
+				adcirctest = new OpenLayers.Layer.WMS("ADCIRC TEST",
+				                                "http://{{localsite}}/wms/adcirc/",
+				                                {
+				                                    layers:"zeta",
+				                                    transparent: true,
+				                                    styles: "facets_average_jet_0_.5_node_False",
+				                                    time: "2012-07-01T12:00:00",
+				                                    elevation: "5"
+				                                },
+				                                
+				                                {
+				                                    singleTile: false, 
+				                                    ratio: 1,
+				                                    isBaseLayer: false,
+				                                    visibility: false
+				                                    
+				                                }
+				                                );
+				                                
 				info = new OpenLayers.Control.WMSGetFeatureInfo({
                     url: 'http://{{localsite}}/wms/30yr_gom3/', 
                     title: 'Identify features by clicking',
@@ -254,6 +273,7 @@
 				map.addLayer(fvcomnode);
 				map.addLayer(fvcombarb);
 				map.addLayer(adcirctest);
+				map.addLayer(globaltest);
 				map.setCenter(
 					new OpenLayers.LonLat(-72, 41).transform(
 						new OpenLayers.Projection("EPSG:4326"),

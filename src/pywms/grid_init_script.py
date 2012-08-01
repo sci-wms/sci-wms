@@ -128,7 +128,7 @@ def create_topology_from_config():
 
 
 def check_topology_age():
-    arrayj = []
+    #arrayj = []
     from datetime import datetime
 
     if True:
@@ -136,9 +136,9 @@ def check_topology_age():
         import server_local_config
         #from fvcom_stovepipe.parallellock import get_lock, release_lock
         paths = server_local_config.datasetpath #dict
-        #print paths
+        print paths
         for dataset in paths.viewkeys():
-            #print dataset
+            print dataset
             try:
                 #get_lock()
                 filemtime = datetime.fromtimestamp(
@@ -175,7 +175,7 @@ def check_topology_age():
         topo.close()
     except:
         pass
-    return arrayj
+    
     
 if __name__ == '__main__':
     """

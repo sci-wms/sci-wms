@@ -1,4 +1,4 @@
-pywms
+sci-wms
 =========
 
 ##Install

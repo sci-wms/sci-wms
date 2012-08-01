@@ -34,7 +34,7 @@ def openlayers (request, filepath):
     return HttpResponse(text, content_type='text')
     
 def wmstest (request):
-    #grid.check_topology_age()
+    grid.check_topology_age()
    
     import django.shortcuts as dshorts
     from django.template import Context, Template
@@ -46,7 +46,7 @@ def wmstest (request):
     return HttpResponse(Template(text).render(dict1))
 
 def documentation (request):
-    jobsarray = grid.check_topology_age()
+    #jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
     import os
     #import pywms.server_local_config as config
@@ -66,7 +66,7 @@ def test (request):
 """
 
 def wms (request, dataset):
-    jobsarray = grid.check_topology_age()
+    #jobsarray = grid.check_topology_age()
     reqtype = request.GET['REQUEST']
     if reqtype.lower() == 'getmap':
         import pywms.fvcom_stovepipe.wms_handler as wms
@@ -387,6 +387,7 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
+    print "ll", lonmin, latmin, "ur", lonmax, latmax
 
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
@@ -478,11 +479,11 @@ def fvDo (request, dataset='30yr_gom3'):
             datestart = netCDF4.date2num(datestart,
                 units=topology.variables['time'].units)
             #dateend = date2num(dateend, units=times.units)
-            #print times
-            #print datestart
             time = bisect.bisect_right(times, datestart) - 1
             if config.localdataset:
                 time = [1]
+            elif time == -1:
+                time = [0]
             else:
                 time = [time]
             
@@ -626,7 +627,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                             #if continuous is True:
                             #    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
-
+                            print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
                             lon, lat = m(lon, lat)
 
                             if (climits[0] == "None") or (climits[1] == "None"):
