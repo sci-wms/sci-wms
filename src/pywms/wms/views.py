@@ -7,7 +7,8 @@ Created on Sep 1, 2011
 from django.http import HttpResponse
 import numpy
 import netCDF4
-#from pywms.wms.models import Cell, Time, Node
+from pywms.wms.models import Dataset
+from django.contrib.sites.models import Site
 import matplotlib
 matplotlib.use("Agg")
 #from matplotlib import pyplot as Plot
@@ -26,11 +27,19 @@ import bisect
 import pywms.grid_init_script as grid
 import os
 
+def testdb(request):
+    print dir(Dataset.objects.get(name='necofs'))
+    return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
+    
+def index(request):
+    return HttpResponse(str(Dataset.objects.values()), content_type='text')
+
 def openlayers (request, filepath):
     f = open(os.path.join(config.staticspath, "openlayers", filepath))
     text = f.read()
     f.close()
-    dict1 = { 'localsite':config.localhostip}
+    sites = Site.objects.values()
+    dict1 = { 'localsite':sites[0]['domain']}
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(text, content_type='text')
     
@@ -42,7 +51,8 @@ def wmstest (request):
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
     text = f.read()
     f.close()
-    dict1 = Context({ 'localsite':config.localhostip})
+    sites = Site.objects.values()
+    dict1 = Context({ 'localsite':sites[0]['domain']})
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(Template(text).render(dict1))
 
@@ -127,7 +137,7 @@ def getLegendGraphic(request, dataset):
     if config.localdataset:
         url = config.localpath[dataset]
     else:
-        url = config.datasetpath[dataset]
+        url = Dataset.objects.get(name=dataset).uri
     nc = netCDF4.Dataset(url)
     
     
@@ -237,7 +247,7 @@ def getFeatureInfo(request, dataset):
     #            lat_ts = 0.0,
     #            suppress_ticks=True)
     
-    topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
+    topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
 
     if 'node' in styles:
         #nv = topology.variables['nv'][:,index].T-1
@@ -295,7 +305,7 @@ def getFeatureInfo(request, dataset):
         time = range(1,30)
         elevation = [5]
     else:
-        url = config.datasetpath[dataset]
+        url = Dataset.objects.get(name=dataset).uri
     datasetnc = netCDF4.Dataset(url)
    
     varis = deque()
@@ -374,7 +384,7 @@ def fvDo (request, dataset='30yr_gom3'):
     if config.localdataset:
         url = config.localpath[dataset]
     else:
-        url = config.datasetpath[dataset]
+        url = Dataset.objects.get(name=dataset).uri
         
 
     width = float(request.GET["width"])
@@ -418,7 +428,7 @@ def fvDo (request, dataset='30yr_gom3'):
         pass
     else:
         
-        topology = netCDF4.Dataset(config.topologypath + dataset + '.nc')
+        topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
         datasetnc = netCDF4.Dataset(url)
 
         if latmax != latmin:

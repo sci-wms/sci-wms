@@ -5,18 +5,13 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    # Examples:
     url(r'^$', 'wms.views.fvDo'),
-     
-    url(r'^docs/', 'wms.views.documentation'),
-    #url(r'^test/', 'wms.views.test'),
+    url(r'^doc', 'wms.views.documentation'),
     url(r'^wms/(?P<dataset>.*)/', 'wms.views.wms'),
-    #url(r'^populate/', 'wms.views.populate'),
     url(r'^wmstest/$', 'wms.views.wmstest'),
     url(r'^wmstest/openlayers/(?P<filepath>.*)', 'wms.views.openlayers'),
-    url(r'^crossdomain.xml', 'wms.views.crossdomain'),    
-
-    # url(r'^fvcom_compute/', include('fvcom_compute.foo.urls')),
+    url(r'^crossdomain.xml', 'wms.views.crossdomain'),
+    url(r'^testdb', 'wms.views.testdb'),
     
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

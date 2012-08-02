@@ -3,43 +3,33 @@ Created on Sep 6, 2011
 
 @author: ACrosby
 '''
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset as ncDataset
+from netCDF4 import num2date
 import sys
 from datetime import datetime
-#import pp
 import os
 import numpy as np
-
-
-#last_grid_init_path = 'last_grid_init.pywms'
-
+from pywms.wms.models import Dataset
+import server_local_config
 
 def create_topology(datasetname, url):
-    #from netCDF4 import Dataset, num2date
-    #import sys
-    #from datetime import datetime
     import server_local_config as config
-    nc = Dataset(url)
+    nc = ncDataset(url)
     nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
-    #print nclocalpath
-    nclocal = Dataset(nclocalpath, mode="w", clobber=True)
+    nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
     
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
         nclocal.createDimension('node', nc.variables['lat'].shape[0])
         nclocal.createDimension('time', nc.variables['time'].shape[0])
         nclocal.createDimension('corners', nc.variables['nv'].shape[0])
-        
-        
-        
+ 
         lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=nc.variables['lat'].shape, zlib=False, complevel=0)
         latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
-        
-        
-        
+
         time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d 
         
         lontemp = nc.variables['lon'][:]
@@ -65,10 +55,6 @@ def create_topology(datasetname, url):
         nv[:,:] = nc.variables['nv'][:,:]
         time[:] = nc.variables['time'][:]
         time.units = nc.variables['time'].units
-        #time = num2date(times[:], units=times.units)
-
-        #print nclocal.variables['latc'].dtype
-        #print nc.variables['latc'].dtype
     
     elif nc.variables.has_key("element"):
         nclocal.createDimension('node', nc.variables['x'].shape[0])
@@ -83,7 +69,6 @@ def create_topology(datasetname, url):
         nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape[::-1], zlib=False, complevel=0)
 
         time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) 
-        
         
         lattemp = nc.variables['y'][:]
         lontemp = nc.variables['x'][:]
@@ -109,50 +94,38 @@ def create_topology(datasetname, url):
     nclocal.sync()
     nclocal.close()
     nc.close()
-    #now = datetime.now()
-    #print dir(now)
-    #f = open(last_grid_init_path, 'w')
-    #f.write(now.__str__())
-    #f.close()
 
-    
 def create_topology_from_config():
     """
     Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
     """    
-    import server_local_config
-    paths = server_local_config.datasetpath #dict
-    for dataset in paths.viewkeys():
-        print "Adding: " + paths[dataset]
-        create_topology(dataset, paths[dataset])
+    datasets = Dataset.objects.values()
+    for dataset in datasets:
+        print "Adding: " + dataset["name"]
+        create_topology(dataset["name"], dataset["uri"])
 
 
 def check_topology_age():
-    #arrayj = []
     from datetime import datetime
-
     if True:
-        #job_server = pp.Server(2, ppservers=())
-        import server_local_config
-        #from wms.parallellock import get_lock, release_lock
-        paths = server_local_config.datasetpath #dict
-        print paths
-        for dataset in paths.viewkeys():
+        datasets = Dataset.objects.values()
+        for dataset in datasets:
             print dataset
+            name = dataset["name"]
             try:
                 #get_lock()
                 filemtime = datetime.fromtimestamp(
                     os.path.getmtime(
                     os.path.join(
-                    server_local_config.topologypath, dataset + ".nc"
+                    server_local_config.topologypath, name + ".nc"
                     )))
                 #print filemtime
                 difference = datetime.now() - filemtime
                 if difference.seconds > .5*3600 or difference.days > 0:
                     
-                    nc = Dataset(paths[dataset])
+                    nc = ncDataset(dataset["uri"])
                     topo = Dataset(os.path.join(
-                        server_local_config.topologypath, dataset + ".nc"))
+                        server_local_config.topologypath, name + ".nc"))
                         
                     time1 = nc.variables['time'][-1]
                     time2 = topo.variables['time'][-1]
@@ -160,16 +133,12 @@ def check_topology_age():
                     nc.close()
                     topo.close()
                     if time1 != time2:    
-                        print "Updating: " + paths[dataset]
-                        #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-                        create_topology(dataset, paths[dataset])
-                        #release_lock()
+                        print "Updating: " + dataset["uri"]
+                        create_topology(name, dataset["uri"])
+
             except:
-                print "Initializing: " + paths[dataset]
-            ##    #arrayj.append(job_server.submit(create_topology, (dataset, paths[dataset],),(),("netCDF4","numpy", "datetime")))
-            #    #get_lock()
-                create_topology(dataset, paths[dataset])
-            #    #release_lock()
+                print "Initializing: " + dataset["uri"]
+                create_topology(name, dataset["uri"])
     try:
         nc.close()
         topo.close()
