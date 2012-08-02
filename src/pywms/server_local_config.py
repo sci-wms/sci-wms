@@ -44,7 +44,7 @@ topologypath = os.path.join(fullpath_to_wms,
 
 # local path to statics (doesn't include file name)
 staticspath = os.path.join(fullpath_to_wms,
-    "src/pywms/fvcom_stovepipe/static")
+    "src/pywms/wms/static")
 
 # mostly the below is for testing purposes only:
 # if this is populated, the service will use the dataset above for schema/grid information

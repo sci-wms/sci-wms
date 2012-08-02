@@ -7,7 +7,7 @@ Created on Sep 1, 2011
 from django.http import HttpResponse
 import numpy
 import netCDF4
-#from pywms.fvcom_stovepipe.models import Cell, Time, Node
+#from pywms.wms.models import Cell, Time, Node
 import matplotlib
 matplotlib.use("Agg")
 #from matplotlib import pyplot as Plot
@@ -69,7 +69,7 @@ def wms (request, dataset):
     #jobsarray = grid.check_topology_age()
     reqtype = request.GET['REQUEST']
     if reqtype.lower() == 'getmap':
-        import pywms.fvcom_stovepipe.wms_handler as wms
+        import pywms.wms.wms_handler as wms
         handler = wms.wms_handler(request)
         action_request = handler.make_action_request(request)
         if action_request is not None:
@@ -575,7 +575,7 @@ def fvDo (request, dataset='30yr_gom3'):
 
                     if "regrid" in actions:
                         """
-                        import pywms.fvcom_stovepipe.regrid as regrid
+                        import pywms.wms.regrid as regrid
                         wid = numpy.max((width, height))
                         size = (lonmax - lonmin) / wid
                         hi = (latmax - latmin) / size
@@ -1086,7 +1086,7 @@ def fvDo (request, dataset='30yr_gom3'):
                         hi = (latmax - latmin) / size
                         hi = math.ceil(hi)
                         if "grid" in actions:
-                            import pywms.fvcom_stovepipe.regrid as regrid
+                            import pywms.wms.regrid as regrid
                             
                             response = HttpResponse(content_type='text/plain')
                             response['Content-Disposition'] = 'attachment; filename=fvcom.grd'

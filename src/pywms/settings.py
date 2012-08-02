@@ -58,7 +58,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/"
+STATIC_ROOT = "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/wms/"
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -71,7 +71,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/fvcom_stovepipe/static/",
+    "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/wms/static/",
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -123,7 +123,7 @@ INSTALLED_APPS = (
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
      'django.contrib.admindocs',
-     'fvcom_stovepipe',
+     'wms',
      'django.contrib.markup'
 )
 

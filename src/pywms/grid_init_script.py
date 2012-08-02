@@ -134,7 +134,7 @@ def check_topology_age():
     if True:
         #job_server = pp.Server(2, ppservers=())
         import server_local_config
-        #from fvcom_stovepipe.parallellock import get_lock, release_lock
+        #from wms.parallellock import get_lock, release_lock
         paths = server_local_config.datasetpath #dict
         print paths
         for dataset in paths.viewkeys():

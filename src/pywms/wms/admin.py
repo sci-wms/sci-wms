@@ -3,11 +3,11 @@ Created on Sep 6, 2011
 
 @author: ACrosby
 '''
-#from fvcom_compute.fvcom_stovepipe.models import Node, Cell, Time, Level
-#import fvcom_compute.fvcom_stovepipe.grid_init_script as gridinit
+#from fvcom_compute.wms.models import Node, Cell, Time, Level
+#import fvcom_compute.wms.grid_init_script as gridinit
 from django.contrib import admin
 #from django.db import models
-from pywms.fvcom_stovepipe.models import Dataset
+from pywms.wms.models import Dataset
 
 class DatasetAdmin(admin.ModelAdmin):
     list_display = ('name', 'keep_up_to_date')
