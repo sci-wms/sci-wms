@@ -24,9 +24,10 @@ import gc
 import time as timeobj
 import bisect
 import pywms.grid_init_script as grid
+import os
 
 def openlayers (request, filepath):
-    f = open(config.staticspath + "openlayers/" + filepath)
+    f = open(os.path.join(config.staticspath, "openlayers", filepath))
     text = f.read()
     f.close()
     dict1 = { 'localsite':config.localhostip}
@@ -38,7 +39,7 @@ def wmstest (request):
    
     import django.shortcuts as dshorts
     from django.template import Context, Template
-    f = open(config.staticspath + "wms_openlayers_test.html")
+    f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
     text = f.read()
     f.close()
     dict1 = Context({ 'localsite':config.localhostip})
