@@ -224,6 +224,24 @@
 				                                    
 				                                }
 				                                );
+				globaltest2 = new OpenLayers.Layer.WMS("GLOBAL TEST",
+				                                "http://{{localsite}}/wms/global/",
+				                                {
+				                                    layers:"temp",
+				                                    transparent: true,
+				                                    styles: "facets_average_jet_None_None_node_False",
+				                                    time: "2008-09-08T00:00:00",
+				                                    elevation: "5"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: false,
+				                                    visibility: false
+				                                    
+				                                }
+				                                );
 				                                  
 				adcirctest = new OpenLayers.Layer.WMS("ADCIRC TEST",
 				                                "http://{{localsite}}/wms/adcirc/",
@@ -295,6 +313,7 @@
 				map.addLayer(fvcombarb);
 				map.addLayer(adcirctest);
 				map.addLayer(globaltest);
+				map.addLayer(globaltest2);
 				map.addLayer(ice);
 				
 				

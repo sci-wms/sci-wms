@@ -110,7 +110,7 @@ def check_topology_age():
     if True:
         datasets = Dataset.objects.values()
         for dataset in datasets:
-            print dataset
+            #print dataset
             name = dataset["name"]
             try:
                 #get_lock()
@@ -124,7 +124,7 @@ def check_topology_age():
                 if difference.seconds > .5*3600 or difference.days > 0:
                     
                     nc = ncDataset(dataset["uri"])
-                    topo = Dataset(os.path.join(
+                    topo = ncDataset(os.path.join(
                         server_local_config.topologypath, name + ".nc"))
                         
                     time1 = nc.variables['time'][-1]
