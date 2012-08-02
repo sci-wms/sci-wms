@@ -1,0 +1,27 @@
+### Unstructured Server Test
+
+*Data*
+
+[Return Text (Csv)](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=data,text,average)
+
+[Return Matlab (Mat)](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=data,mat,average)
+
+[Return Shapefile (Shp)](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=data,shp,average)
+
+*Images*
+
+[Return Vector Image](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=image,vectors,average&projection=merc)
+
+[Return Faceted Image](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=image,facets,average&projection=merc)
+
+[Return Kml Overlay of Vectors](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=image,kml,vectors,average&projection=merc)
+
+[Return Kml Overlay of Facets](http://localhost:8000/?latmax=40&latmin=38&lonmin=-70&lonmax=-68&datestart=1980-1-1T00:00:00&dateend=1980-2-1T00:00:00&width=10&height=10&layer=1&actions=image,kml,facets,average&projection=merc)
+
+*WMS*
+
+[Return Facets WMS Request](http://localhost:8000/wms/?ELEVATION=5&LAYERS=facets,average&FORMAT=image%2Fpng&TRANSPARENT=TRUE&STYLES=CURRENTS_RAMP-Jet-False-1-True-0-2&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&TIME=1984-10-17T00:00:00&SRS=EPSG%3A3857&BBOX=-75,40,-70,44&WIDTH=1059&HEIGHT=954) 
+
+*Documentation*
+
+[Documentation Page](http://localhost:8000/docs/) 
