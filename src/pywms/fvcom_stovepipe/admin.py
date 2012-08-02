@@ -7,6 +7,12 @@ Created on Sep 6, 2011
 #import fvcom_compute.fvcom_stovepipe.grid_init_script as gridinit
 from django.contrib import admin
 #from django.db import models
+from pywms.fvcom_stovepipe.models import Dataset
+
+class DatasetAdmin(admin.ModelAdmin):
+    list_display = ('name', 'keep_up_to_date')
+    list_filter = ('keep_up_to_date',)
+admin.site.register(Dataset, DatasetAdmin)
 
 """
 def Update_Geographic_Grid(self, request, queryset):        

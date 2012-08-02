@@ -244,6 +244,27 @@
 				                                }
 				                                );
 				                                
+				ice = new OpenLayers.Layer.WMS("ICE",
+				                                "http://{{localsite}}/wms/ice/",
+				                                {
+				                                    layers:"vice",
+				                                    transparent: true,
+				                                    styles: "facets_average_jet_None_None_cell_False",
+				                                    time: "2012-07-01T12:00:00",
+				                                    elevation: "5"
+				                                },
+				                                
+				                                {
+				                                    singleTile: true, 
+				                                    ratio: 1,
+				                                    isBaseLayer: false,
+				                                    visibility: false
+				                                    
+				                                }
+				                                );
+				                                
+				
+				                                
 				info = new OpenLayers.Control.WMSGetFeatureInfo({
                     url: 'http://{{localsite}}/wms/30yr_gom3/', 
                     title: 'Identify features by clicking',
@@ -274,6 +295,9 @@
 				map.addLayer(fvcombarb);
 				map.addLayer(adcirctest);
 				map.addLayer(globaltest);
+				map.addLayer(ice);
+				
+				
 				map.setCenter(
 					new OpenLayers.LonLat(-72, 41).transform(
 						new OpenLayers.Projection("EPSG:4326"),

@@ -14,7 +14,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(os.path.abspath(".."),'test.db'),                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(os.path.dirname(__file__),"../",'wms.db'),                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -107,7 +107,6 @@ ROOT_URLCONF = 'pywms.urls'
 
 TEMPLATE_DIRS = (
     server_local_config.staticspath,
-    "/home/acrosby/Development/Python/environments/unstructured_sura/lib/python2.7/site-packages/django/contrib/admin/templates/admin",
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
