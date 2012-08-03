@@ -1,22 +1,4 @@
-# Please edit the following parameters to setup your pywms
-# server.
-# 
-# Example:
-#
-#  localhostip = "mydomain.org:8080"
-# 
-#---------------------------------------------------------
-                              
-#localhostip = "192.168.100.146:7000" # the ip or domain and port
-                                     # that you are trying to bind
-                                     # the service to
-                                     # this is used for the "wmstest" page
 
-#---------------------------------------------------------
-    
-    
-    
-    
 #--------------------------------------
 #You shouldn't have to edit the below:
 #--------------------------------------
@@ -38,7 +20,7 @@ staticspath = os.path.join(fullpath_to_wms,
 # and the dataset below for actual data extraction.
 localdataset = False
 localpath = {
-    '30yr_gom3':"/home/acrosby/Development/Data/FVCOM/gom3_197802.nc",
+    '30yr_gom3':"/home/user/Data/FVCOM/gom3_197802.nc",
 
     }
 

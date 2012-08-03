@@ -40,10 +40,15 @@ def openlayers (request, filepath):
     f = open(os.path.join(config.staticspath, "openlayers", filepath))
     text = f.read()
     f.close()
-    sites = Site.objects.values()
-    dict1 = { 'localsite':sites[0]['domain']}
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(text, content_type='text')
+
+def static (request, filepath):
+    f = open(os.path.join(config.staticspath, filepath))
+    text = f.read()
+    f.close()
+    #return dshorts.render_to_response(text, dict1)
+    return HttpResponse(text, content_type='text/css')
     
 def wmstest (request):
     grid.check_topology_age()
@@ -54,7 +59,8 @@ def wmstest (request):
     text = f.read()
     f.close()
     sites = Site.objects.values()
-    dict1 = Context({ 'localsite':sites[0]['domain']})
+    dict1 = Context({ 'localsite':sites[0]['domain'],
+                      'datasets':Dataset.objects.values()})
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(Template(text).render(dict1))
 

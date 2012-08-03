@@ -31,7 +31,8 @@
                                                           ,attribution       : "GEBCO, NOAA, National Geographic, AND data by <a href='http://www.arcgis.com/home/item.html?id=6348e67824504fc9a62976434bf0d8d5'>ESRI</a>"
                                                           }
                                                                                    ),
-                                                         new OpenLayers.Layer.OSM()
+                                                         new OpenLayers.Layer.OSM(),
+                                                         
                                                         ]
                                             ,projection        : "EPSG:3857"
                                             ,displayProjection : "EPSG:4326"
@@ -39,250 +40,29 @@
                                             ,maxExtent         : new OpenLayers.Bounds(-20037508,-20037508,20037508,20037508.34)
                                        });
 
-				fvcomv = new OpenLayers.Layer.WMS("FVCOM Velocity",
-				                                "http://{{localsite}}/wms/necofs/",
+                {% for dataset in datasets %}
+  
+				{{dataset.name}} = new OpenLayers.Layer.WMS("{{dataset.name}}",
+				                                "http://{{localsite}}/wms/{{dataset.name}}/",
 				                                {
-				                                    layers:"u,v",
+				                                    layers:"{{dataset.test_layer}}",
 				                                    transparent: true,
-				                                    styles: "facets_average_jet_0_1.5_cell_False",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: false, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                   }
-				                                );
-				fvcomt = new OpenLayers.Layer.WMS("FVCOM Temperature",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"temp",
-				                                    transparent: true,
-				                                    styles: "facets_average_jet_0_18_node_False",
-				                                    time: "1984-10-17T00:00:00",
+				                                    styles: "{{dataset.test_style}}",
+				                                    time: "{{dataset.test_date}}",
 				                                    elevation: "1"
 				                                },
 				                                
 				                                {
 				                                    singleTile: false, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				fvcomvec = new OpenLayers.Layer.WMS("FVCOM Velocity Vectors",
-				                                "http://{{localsite}}/wms/necofs/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "vectors_average_jet_.1_1.5_cell_True",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: true
-				                                   
-				                                }
-				                                );
-				                                
-		     fvcomcont = new OpenLayers.Layer.WMS("FVCOM Velocity Contours",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "contours_average_jet_0_1.5_cell_False",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "1"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
 				                                    visibility: false
 				                                   
 				                                }
 				                                );
-				                                
-		  fvcomfilled = new OpenLayers.Layer.WMS("FVCOM Velocity Filled Contours",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "filledcontours_average_jet_0_1.5_cell_False",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "1"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				
-				
-			fvcompcolor = new OpenLayers.Layer.WMS("FVCOM Velocity Interpolated Psuedocolor",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "pcolor_average_jet_0_1.5_cell_False",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "1"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );	
-				                                
-	       fvcomfillednode = new OpenLayers.Layer.WMS("FVCOM Salinity (Filled Contours)",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"salinity",
-				                                    transparent: true,
-				                                    styles: "filledcontours_average_jet_None_None_node_False",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "1"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				fvcomnode = new OpenLayers.Layer.WMS("FVCOM Temperature (Contours)",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"temp",
-				                                    transparent: true,
-				                                    styles: "contours_average_jet_None_None_node_False",
-				                                    time: "2013-10-17T00:00:00",
-				                                    elevation: "1"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				                                
-				fvcombarb = new OpenLayers.Layer.WMS("FVCOM Velocity Barbs",
-				                                "http://{{localsite}}/wms/30yr_gom3/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "barbs_average_jet_0.1_1.5_cell_True",
-				                                    time: "1984-10-17T00:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				globaltest = new OpenLayers.Layer.WMS("GLOBAL TEST",
-				                                "http://{{localsite}}/wms/global/",
-				                                {
-				                                    layers:"u,v",
-				                                    transparent: true,
-				                                    styles: "vectors_average_jet_None_None_cell_False",
-				                                    time: "2008-09-08T00:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				globaltest2 = new OpenLayers.Layer.WMS("GLOBAL TEST",
-				                                "http://{{localsite}}/wms/global/",
-				                                {
-				                                    layers:"temp",
-				                                    transparent: true,
-				                                    styles: "facets_average_jet_None_None_node_False",
-				                                    time: "2008-09-08T00:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				                                  
-				adcirctest = new OpenLayers.Layer.WMS("ADCIRC TEST",
-				                                "http://{{localsite}}/wms/adcirc/",
-				                                {
-				                                    layers:"zeta",
-				                                    transparent: true,
-				                                    styles: "facets_average_jet_0_.5_node_False",
-				                                    time: "2012-07-01T12:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: false, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				                                
-				ice = new OpenLayers.Layer.WMS("ICE",
-				                                "http://{{localsite}}/wms/ice/",
-				                                {
-				                                    layers:"vice",
-				                                    transparent: true,
-				                                    styles: "facets_average_jet_None_None_cell_False",
-				                                    time: "2012-07-01T12:00:00",
-				                                    elevation: "5"
-				                                },
-				                                
-				                                {
-				                                    singleTile: true, 
-				                                    ratio: 1,
-				                                    isBaseLayer: false,
-				                                    visibility: false
-				                                    
-				                                }
-				                                );
-				                                
-				
-				                                
+				map.addLayer({{dataset.name}});
+				{% endfor %}
+             
 				info = new OpenLayers.Control.WMSGetFeatureInfo({
                     url: 'http://{{localsite}}/wms/30yr_gom3/', 
                     title: 'Identify features by clicking',
@@ -302,19 +82,6 @@
                     }
                 });                              
 				
-				map.addLayer(fvcomv);
-				map.addLayer(fvcomt);
-				map.addLayer(fvcomvec);
-				map.addLayer(fvcomcont);
-				map.addLayer(fvcomfilled);
-				map.addLayer(fvcompcolor);
-				map.addLayer(fvcomfillednode);
-				map.addLayer(fvcomnode);
-				map.addLayer(fvcombarb);
-				map.addLayer(adcirctest);
-				map.addLayer(globaltest);
-				map.addLayer(globaltest2);
-				map.addLayer(ice);
 				
 				
 				map.setCenter(
@@ -331,6 +98,8 @@
 	
 </head>
 <body onload="init()">
-	<div id="map"></div>
+	<div id="map"> 
+</div>
+	
 </body>
 </html>
