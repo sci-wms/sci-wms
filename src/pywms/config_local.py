@@ -18,5 +18,18 @@ debug = True
 timeout = 1000
 max_requests = 16
 backlog = 100
-#preload = True
 
+
+def on_starting(server):
+    #print os.environ
+    #print os.getcwd()
+    #import server_local_config
+    #from grid_init_script import check_topology_age
+    print '\n    ##################################################\n' +\
+          '    #                                                #\n' +\
+          '    #  Starting sci-wms...                           #\n' +\
+          '    #  A wms server for unstructured scientific data #\n' +\
+          '    #                                                #\n' +\
+          '    ##################################################\n'
+    #p = multiprocessing.Process(target=check_topology_age)
+    #p.start()

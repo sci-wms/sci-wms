@@ -21,11 +21,11 @@ except:
 bind = "0.0.0.0:7000"
 workers = multiprocessing.cpu_count() * 4
 worker_class = worker
-debug = True
-timeout = 1000
+debug = False
+timeout = 30
 max_requests = 16
 backlog = 100
-#preload = True
+
 
 def on_starting(server):
     #print os.environ

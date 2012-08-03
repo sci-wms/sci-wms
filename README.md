@@ -71,6 +71,12 @@ local files or OpenDAP endpoints.
     $cd project_folder/src/pywms
 
     $gunicorn_django -c config_public.py       # for local use config_local.py
+    
+or
+
+    $cd project_folder
+    $./start_server.sh    # this starts the public server
+    $./stop_server.sh     # this stops the public server (actually ALL gunicorn_django processes)
 
 You can edit the gunicorn config file to specify the port and other
 gunicorn settings.
