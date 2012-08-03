@@ -659,10 +659,10 @@ def fvDo (request, dataset='30yr_gom3'):
                                 arrowsize = None
                             elif magnitude == "False":
                                 arrowsize = 2.
-                            elif magnitdue == "None":
+                            elif magnitude == "None":
                                 arrowsize = None
                             else:
-                                arrowsize = magnitude
+                                arrowsize = float(magnitude)
                                 
                             
                             if topology_type.lower() == 'node':

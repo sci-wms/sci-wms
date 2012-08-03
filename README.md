@@ -79,6 +79,15 @@ Can also be run with mod_wsgi in Apache. I prefer to proxypass
 in Apache or nginx to the gunicorn server because I think its better setup
 to handle the kinds of requests the server sees.
 
+###Change password for default user:
+
+The default username is "*sciwmsuser*" and its password is "*sciwmspassword*". So,
+the first thing you should do is login to the administration utility
+and change the password or remove the default user and create a new one
+for yourself. 
+
+The admin page can be found here:   http://server:port/admin
+
 
 ##Description of Styles Parameter:
 
