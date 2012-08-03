@@ -400,7 +400,7 @@ def fvDo (request, dataset='30yr_gom3'):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    print "ll", lonmin, latmin, "ur", lonmax, latmax
+    #print "ll", lonmin, latmin, "ur", lonmax, latmax
 
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
@@ -475,7 +475,12 @@ def fvDo (request, dataset='30yr_gom3'):
                 lonn = topology.variables['lon'][:]
                 if topology_type.lower() == "node":
                     index = range(len(latn))
-                    
+                if continuous is True:
+                    if lonmin < 0:
+                        lonn[numpy.where(lonn > 0)] = lonn[numpy.where(lonn > 0)] - 360
+                        lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
+                    else:
+                        lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                 uu = numpy.unique(nv)
                 print numpy.min(uu), numpy.max(uu)
             else:
@@ -483,10 +488,6 @@ def fvDo (request, dataset='30yr_gom3'):
 
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
             #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
-            """
-            timesqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("index")
-            #time = map(getVals, timesqs, numpy.ones(len(timesqs))*1) # commented out for testing of local speed
-            """
             times = topology.variables['time'][:]
             datestart = netCDF4.date2num(datestart,
                 units=topology.variables['time'].units)
@@ -637,9 +638,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 lon, lat = lonn, latn
                                 
-                            #if continuous is True:
-                            #    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
-                            print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
+                            #print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
                             lon, lat = m(lon, lat)
 
                             if (climits[0] == "None") or (climits[1] == "None"):
@@ -697,11 +696,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 pass
                             else:
                                 lon, lat = lonn, latn
-                                
-                                
-                            #if continuous is True:
-                            #    lon[np.where(lon < lonmin)] = lon[np.where(lon < lonmin)] + 360
-                            
+
                             lon, lat = m(lon, lat)
                              
                             if (climits[0] == "None") or (climits[1] == "None"):
@@ -790,9 +785,6 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
-                                #if continuous is True:
-                                #    lonn[np.where(lonn < lonmin)] = lonn[np.where(lonn < lonmin)] + 360
-                            
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
                                 m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
@@ -843,9 +835,6 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                             if topology_type.lower() == 'cell':
                                 #print dir(m)
-                                #if continuous is True:
-                                #    lon[np.where(lon < lonmin)] = lon[np.where(lon < lonmin)] + 360
-                            
                                 lon, lat = m(lon, lat)
                                 #lonn, latn = m(lonn, latn)
                                 #tri = Tri.Triangulation(lonn, latn, triangles=nv)
@@ -857,9 +846,6 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
-                                #if continuous is True:
-                                #    lonn[np.where(lonn < lonmin)] = lonn[np.where(lonn < lonmin)] + 360
-                            
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
                                 m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=True)   
@@ -870,14 +856,9 @@ def fvDo (request, dataset='30yr_gom3'):
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
                             if topology_type.lower() == "cell":
-                                #if continuous is True:
-                                #    lon[np.where(lon < 0)] = lon[np.where(lon < 0)] + 360
-                                #    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
                                 lon, lat = m(lon, lat)
                                 lonn, latn = m(lonn, latn)
                             else:
-                                #if continuous is True:
-                                #    lonn[np.where(lonn < 0)] = lonn[np.where(lonn < 0)] + 360
                                 lon, lat = m(lonn, latn)
                                 lonn, latn = lon, lat
                                 
@@ -1026,9 +1007,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)
                             
-                            #if continuous is True:
-                            #    lonn[np.where(lonn < lonmin)] = lonn[np.where(lonn < lonmin)] + 360
-                            #print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
+                            #print "points ll", numpy.min(lonn), numpy.min(latn), "ur", numpy.max(lonn), numpy.max(latn)
                             lonn, latn = m(lonn, latn)
                             tri = Tri.Triangulation(lonn,latn,triangles=nv)
                             if len(variables) > 1:
