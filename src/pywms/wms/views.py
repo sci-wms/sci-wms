@@ -51,8 +51,10 @@ def static (request, filepath):
     return HttpResponse(text, content_type='text/css')
     
 def wmstest (request):
-    grid.check_topology_age()
-   
+    import multiprocessing
+    p = multiprocessing.Process(target=grid.check_topology_age)
+    #p.daemon = True
+    p.start()
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))

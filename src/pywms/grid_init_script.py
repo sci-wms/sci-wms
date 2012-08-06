@@ -11,6 +11,7 @@ import os
 import numpy as np
 from pywms.wms.models import Dataset
 import server_local_config
+import multiprocessing
 
 def create_topology(datasetname, url):
     import server_local_config as config
@@ -109,36 +110,43 @@ def check_topology_age():
     from datetime import datetime
     if True:
         datasets = Dataset.objects.values()
+        jobs = []
         for dataset in datasets:
             #print dataset
             name = dataset["name"]
-            try:
-                #get_lock()
-                filemtime = datetime.fromtimestamp(
-                    os.path.getmtime(
-                    os.path.join(
-                    server_local_config.topologypath, name + ".nc"
-                    )))
-                #print filemtime
-                difference = datetime.now() - filemtime
-                if difference.seconds > .5*3600 or difference.days > 0:
+            p = multiprocessing.Process(target=do, args=(name,dataset,))
+            p.start()
+            jobs.append(p)
+    
+def do(name, dataset):
+    try:
+        #get_lock()
+        filemtime = datetime.fromtimestamp(
+            os.path.getmtime(
+            os.path.join(
+            server_local_config.topologypath, name + ".nc"
+            )))
+        #print filemtime
+        difference = datetime.now() - filemtime
+        if dataset["keep_up_to_date"]:
+            if difference.seconds > .5*3600 or difference.days > 0:
+                
+                nc = ncDataset(dataset["uri"])
+                topo = ncDataset(os.path.join(
+                    server_local_config.topologypath, name + ".nc"))
                     
-                    nc = ncDataset(dataset["uri"])
-                    topo = ncDataset(os.path.join(
-                        server_local_config.topologypath, name + ".nc"))
-                        
-                    time1 = nc.variables['time'][-1]
-                    time2 = topo.variables['time'][-1]
-                    
-                    nc.close()
-                    topo.close()
-                    if time1 != time2:    
-                        print "Updating: " + dataset["uri"]
-                        create_topology(name, dataset["uri"])
+                time1 = nc.variables['time'][-1]
+                time2 = topo.variables['time'][-1]
+                
+                nc.close()
+                topo.close()
+                if time1 != time2:    
+                    print "Updating: " + dataset["uri"]
+                    create_topology(name, dataset["uri"])
 
-            except:
-                print "Initializing: " + dataset["uri"]
-                create_topology(name, dataset["uri"])
+    except:
+        print "Initializing: " + dataset["uri"]
+        create_topology(name, dataset["uri"])
     try:
         nc.close()
         topo.close()
