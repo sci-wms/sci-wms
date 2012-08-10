@@ -53,17 +53,17 @@ with pip on the install command.
 
 ##Run
 
-####To Start With Django Development Server:
+####To Start With Django Development Server (on port 7000 for example):
 
     $cd project_folder/src/pywms
 
     $python manage.py runserver 0.0.0.0:7000   # for local use "localhost:7000"
 
-####To Start With Production WSGI Server:
+####Run with Gunicorn Production WSGI Server:
 
     $cd project_folder/src/pywms
 
-    $gunicorn_django -c config_public.py       # for local use config_local.py
+    $gunicorn_django -c config_public.py       # for local use config_local.py (configs use port 7000 by default)
     
 or
 
@@ -71,8 +71,8 @@ or
     $./start_server.sh    # this starts the public server
     $./stop_server.sh     # this stops the public server (actually ALL gunicorn_django processes)
 
-You can edit the gunicorn config file to specify the port and other
-gunicorn settings.
+You can edit the gunicorn config file (config_public.py and config_local.py) to specify the port and other
+gunicorn server settings.
 
 Can also be run with mod_wsgi in Apache. I prefer to proxypass
 in Apache or nginx to the gunicorn server because I think its better setup
