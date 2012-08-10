@@ -50,13 +50,6 @@ If you are using virtualenv, just make sure you have the environment
 activated before you try to install the packages or point to the environment
 with pip on the install command.
 
-##Setup
-
-Add the local ip or domain for the service in the **server_local_config.py**
-file so that the /wmstest/ page works.
-
-The service comes with a sample dataset setup, but you can remove and add your own
-local files or OpenDAP endpoints.
 
 ##Run
 
@@ -85,6 +78,8 @@ Can also be run with mod_wsgi in Apache. I prefer to proxypass
 in Apache or nginx to the gunicorn server because I think its better setup
 to handle the kinds of requests the server sees.
 
+##Setup
+
 ###Change password for default user:
 
 The default username is "*sciwmsuser*" and its password is "*sciwmspassword*". So,
@@ -93,6 +88,10 @@ and change the password or remove the default user and create a new one
 for yourself. 
 
 The admin page can be found here:   http://server:port/admin
+
+This admin site is how you will add and remove datasets for the wms server.
+
+In order for the wmstest page to work you need to add your site (and port) url to the sites list and remove all others.
 
 
 ##Description of Styles Parameter:
