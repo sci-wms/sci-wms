@@ -62,28 +62,7 @@
 				                                );
 				map.addLayer({{dataset.name}});
 				{% endfor %}
-             
-				info = new OpenLayers.Control.WMSGetFeatureInfo({
-                    url: 'http://{{localsite}}/wms/30yr_gom3/', 
-                    title: 'Identify features by clicking',
-                    queryVisible: true,
-                    
-                    eventListeners: {
-                        getfeatureinfo: function(event) {
-                            map.addPopup(new OpenLayers.Popup.FramedCloud(
-                                "chicken", 
-                                map.getLonLatFromPixel(event.xy),
-                                null,
-                                event.text,
-                                null,
-                                true
-                            ));
-                        }
-                    }
-                });                              
-				
-				
-				
+
 				map.setCenter(
 					new OpenLayers.LonLat(-72, 41).transform(
 						new OpenLayers.Projection("EPSG:4326"),
@@ -91,7 +70,6 @@
 					), 8
 				);
 				map.addControl(info);
-				info.activate();
 				map.addControl(new OpenLayers.Control.LayerSwitcher());
 			}
 	</script>
