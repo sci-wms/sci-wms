@@ -287,6 +287,8 @@ def getFeatureInfo(request, dataset):
             dateend = netCDF4.date2num(dateend, units=time_units)
             time1 = bisect.bisect_right(times, datestart) - 1
             time2 = bisect.bisect_right(times, dateend) - 1
+            if time1 == -1:
+                time1 = 0
             time = range(time1, time2)
         else:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
@@ -294,7 +296,10 @@ def getFeatureInfo(request, dataset):
             time_units = topology.variables['time'].units
             datestart = netCDF4.date2num(datestart, units=time_units)
             time1 = bisect.bisect_right(times, datestart) - 1
-            time = [time1]
+            if time1 == -1:
+                time = [0]
+            else:
+                time = [time1]
         
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
