@@ -327,7 +327,10 @@ def getFeatureInfo(request, dataset):
     varis.append(getvar(datasetnc, time, elevation, "time", index))
     for var in QUERY_LAYERS:
         varis.append(getvar(datasetnc, time, elevation, var, index))
-
+        try:
+            units = datasetnc.variables[var].units
+        except:
+            units = ""
     response = HttpResponse()
     
     varis[0] = netCDF4.num2date(varis[0], units=time_units)
@@ -340,11 +343,12 @@ def getFeatureInfo(request, dataset):
     else:
         time_zone_offset = None
     """   
-    if request.GET["data_format"] == "image/png":
+    if request.GET["INFO_FORMAT"].lower() == "image/png":
         from matplotlib.figure import Figure
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.plot(varis[0],varis[1])
+        ax.set_ylabel = QUERY_LAYERS[0] + "(" + units + ")"
     else: 
         import csv
         buffer = StringIO()
