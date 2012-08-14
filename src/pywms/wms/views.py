@@ -344,7 +344,7 @@ def getFeatureInfo(request, dataset):
         from matplotlib.figure import Figure
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.plot(X)
+        ax.plot(varis[0],varis[1])
     else: 
         import csv
         buffer = StringIO()
