@@ -339,25 +339,31 @@ def getFeatureInfo(request, dataset):
         time_zone_offset = ZERO
     else:
         time_zone_offset = None
-    """    
-    import csv
-    buffer = StringIO()
-    #buffer.write(lat.__str__() + " , " + lon.__str__())
-    #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
-    c = csv.writer(buffer)
-    header = ["time"]
-    for var in QUERY_LAYERS:
-        header.append(var + "[" + datasetnc.variables[var].units + "]")
-    c.writerow(header)
-    for i, thistime in enumerate(varis[0]):
-        thisline = [thistime.strftime("%Y%m%dT%H%M%SZ")]
-        for k in range(1, len(varis)):
-            thisline.append(varis[k][i])
-        c.writerow(thisline)         
-    dat = buffer.getvalue()
-    buffer.close()
-    response.write(dat)
-    topology.close()
+    """   
+    if request.GET["data_format"] == "image/png":
+        from matplotlib.figure import Figure
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.plot(X)
+    else: 
+        import csv
+        buffer = StringIO()
+        #buffer.write(lat.__str__() + " , " + lon.__str__())
+        #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
+        c = csv.writer(buffer)
+        header = ["time"]
+        for var in QUERY_LAYERS:
+            header.append(var + "[" + datasetnc.variables[var].units + "]")
+        c.writerow(header)
+        for i, thistime in enumerate(varis[0]):
+            thisline = [thistime.strftime("%Y%m%dT%H%M%SZ")]
+            for k in range(1, len(varis)):
+                thisline.append(varis[k][i])
+            c.writerow(thisline)         
+        dat = buffer.getvalue()
+        buffer.close()
+        response.write(dat)
+        topology.close()
     return response
 
 def fvDo (request, dataset='30yr_gom3'):
