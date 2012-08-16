@@ -291,7 +291,10 @@ def getFeatureInfo(request, dataset):
             time2 = bisect.bisect_right(times, dateend) - 1
             if time1 == -1:
                 time1 = 0
+            if time2 == -1:
+                time2 = len(times)
             time = range(time1, time2)
+
         else:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
             times = topology.variables['time'][:]
@@ -302,7 +305,7 @@ def getFeatureInfo(request, dataset):
                 time = [0]
             else:
                 time = [time1]
-        
+    
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
         #nc = netCDF4.Dataset(url, 'r')
@@ -333,7 +336,7 @@ def getFeatureInfo(request, dataset):
             units = datasetnc.variables[var].units
         except:
             units = ""
-    response = HttpResponse()
+    
     
     varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
@@ -345,14 +348,19 @@ def getFeatureInfo(request, dataset):
     else:
         time_zone_offset = None
     """   
+    print request.GET["INFO_FORMAT"]
     if request.GET["INFO_FORMAT"].lower() == "image/png":
+        response = HttpResponse(content_type=request.GET["INFO_FORMAT"].lower())
         from matplotlib.figure import Figure
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.plot(varis[0],varis[1])
-        ax.set_ylabel = QUERY_LAYERS[0] + "(" + units + ")"
+        ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_png(response)
     else: 
         import csv
+        response = HttpResponse()
         buffer = StringIO()
         #buffer.write(lat.__str__() + " , " + lon.__str__())
         #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
