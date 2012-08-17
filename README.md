@@ -11,11 +11,6 @@ Install the remaining dependencies:
     $easy_install greenlet
     $easy_install gevent              # or easy_install eventlet
     $easy_install django
-    $easy_install pp                  # http://www.parallelpython.com
-
-You also must install a netCDF4-python (preferrably opendap enabled):
-
-https://code.google.com/p/netcdf4-python/
 
 ####If are not using the enthought python distribution:
 
@@ -30,7 +25,6 @@ You must have the following installed:
 - matplotlib basemap (versions 1.0.2+ require mpl-toolkit axisgrid to be installed as well, but perhaps only if you are using mpl 1.1.0...)
 - netCDF4-python (netCDF4)
 - shapely
-- pp (parallelpython)
 
 pywms works with both pip and virtualenv quite happily. If you
 have pip installed you can use the following to install many (but not all) of the required modules:
@@ -50,6 +44,10 @@ If you are using virtualenv, just make sure you have the environment
 activated before you try to install the packages or point to the environment
 with pip on the install command.
 
+You also need to ensure that you have basemap matplotlib toolkit installed:
+
+    $wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.1/basemap-1.0.1.tar.gz/download
+    $pip install basemap-1.0.1.tar.gz
 
 ##Run
 
