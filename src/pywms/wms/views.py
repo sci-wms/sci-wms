@@ -908,18 +908,17 @@ def fvDo (request, dataset='30yr_gom3'):
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
-                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
-                                                                )
-                            tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                            #ax.tricontourf(tri, mag,
-                            #    cmap=colormap,
-                            #    norm=CNorm,
-                            #    )\
+                                CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                                    vmax=climits[1],
+                                                                    clip=True,
+                                                                   )
+                                                                   
+                            #tri = Tri.Triangulation(lonn,latn,triangles=nv)
                            
                             #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
                             #yi = numpy.arange(lat.min(), lat.max(), 1000)
-                            #print "lon " + str(lonmax-lonmin)
+                            #print "lon " + str(lonmax-lonmin), lonmax, lonmin
                             if lonmax-lonmin < 1:
                                 xi = numpy.arange(m.xmin, m.xmax, 120)
                                 yi = numpy.arange(m.ymin, m.ymax, 120)
@@ -935,59 +934,40 @@ def fvDo (request, dataset='30yr_gom3'):
                             
 
                             from matplotlib.mlab import griddata
-                            
-                            #nx = int((m.xmax-m.xmin)/5000.)+1
-                            #ny = int((m.ymax-m.ymin)/5000.)+1
-                            
-                            #if topology_type == 'cell':
+
                             if topology_type.lower() == "node":
                                 n = numpy.unique(nv)
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
                                 zi = griddata(lon, lat, mag, xi, yi, interp='nn')
-                            #else:
-                            #    lon, lat = m(lonn, latn)
-                            #    zi = griddata(lon, lat, mag, xi, yi, interp='nn')
-                                #lonn, latn = m(lonn, latn)
-
-                            #dat = m.transform_scalar(mag, xi, yi, nx, ny)
-                            #mask = numpy.ndarray(shape=zi.shape)
-                            '''
-                            for i,x in enumerate(xi):
-                                for j,y in enumerate(yi):
-                                    if m.is_land(x,y):
-                                        zi[j,i] = numpy.nan
-                            '''
                             
                             #m.imshow(zi, norm=CNorm, cmap=colormap)
                             import matplotlib.patches as patches
                             from shapely.geometry import MultiPolygon, Polygon
-                            #from perimeter import get_perimeter
                             
-                            #peri = get_perimeter(topology.variables['nv'][:,:].T-1)
-                            #print numpy.asarray(peri).shape
-                            p = []
-                            
-                            for triangs in tri.triangles:
-                                closed_triangle = numpy.hstack((triangs, numpy.asarray((triangs[0],)),))
-                                
-                                nowpoly = [(lonn[closed_triangle][0], latn[closed_triangle][0]),
-                                           (lonn[closed_triangle][1], latn[closed_triangle][1]),
-                                           (lonn[closed_triangle][2], latn[closed_triangle][2]),
-                                           (lonn[closed_triangle][3], latn[closed_triangle][3]),
-                                          ]
-                                p.append(Polygon(nowpoly))
-                            '''
+                            p = deque()
+                            p_add = p.append
+                            #for i, triangs in enumerate(tri.triangles):
+                            for i in range(len(nv[:,0])):
+                                    #closed_triangle = numpy.hstack((triangs, numpy.asarray((triangs[0],)),))
+                                    #nowpoly = [(lonn[closed_triangle][0], latn[closed_triangle][0]),
+                                    #           (lonn[closed_triangle][1], latn[closed_triangle][1]),
+                                    #           (lonn[closed_triangle][2], latn[closed_triangle][2]),
+                                    #           (lonn[closed_triangle][3], latn[closed_triangle][3]),
+                                    #          ]
+                                    flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+                                    p_add(Polygon(((flon, flat),
+                                                  (lonn[nv[i,1]], latn[nv[i,1]]),
+                                                  (lonn[nv[i,2]], latn[nv[i,2]]),
+                                                  (flon, flat),)))
+
                             #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
                             #multi1 = MultiPolygon([[a, []], [b, []]])
-                            '''
-                            
-                            #domain = MultiPolygon(p)
+                            print timeobj.time() - totaltimer
                             from shapely.ops import cascaded_union
-                            
                             domain = cascaded_union(p)
-                            
+                            print timeobj.time() - totaltimer
                             
                             if domain.geom_type == "Polygon":
                                 x, y = domain.exterior.xy
@@ -1009,8 +989,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 except:
                                     print "passing"
                                 
-                                
-                                #coll.set_clip_path(p)
+
                             elif domain.geom_type == "MultiPolygon":
                                 for part in domain.geoms:
                                     x, y = part.exterior.xy
@@ -1031,6 +1010,8 @@ def fvDo (request, dataset='30yr_gom3'):
                                             p.set_color('w')
                                     except:
                                         print "passing"
+
+                            
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
                             #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
