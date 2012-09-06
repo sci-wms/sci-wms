@@ -939,6 +939,8 @@ def fvDo (request, dataset='30yr_gom3'):
 
                             if topology_type.lower() == "node":
                                 n = numpy.unique(nv)
+                                print "lon " , lon[n].min(), lon[n].max()
+                                print "xi", xi.min(), xi.max()
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
                                 zi = griddata(lon, lat, mag, xi, yi, interp='nn')
@@ -953,9 +955,33 @@ def fvDo (request, dataset='30yr_gom3'):
                             f = open(os.path.join(config.topologypath, dataset + '.domain'))
                             domain = pickle.load(f)
                             f.close()
+                            import shapely.geometry
+                            if continuous is True:
+                                if lonmin < 0:
+                                    #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                    #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
+                                                                         shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
+                                else:
+                                    box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
+                                                                         shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
+                            else:
+                                box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
+                            domain = domain.intersection(box)
+                            print lonmin, latmin, lonmax, latmax
+                            print timeobj.time() - totaltimer
                             
                             if domain.geom_type == "Polygon":
                                 x, y = domain.exterior.xy
+                                x = numpy.asarray(x)
+                                if continuous is True:
+                                    if lonmin < 0:
+                                        x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                        x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    else:
+                                        #print x.min(), x.max()
+                                        #print x[numpy.where(x < lonmax-359)]
+                                        x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                 x, y = m(x, y)
                                 #print numpy.asarray((x,y)).T
                                 #print patches.Polygon(numpy.asarray((x,y)).T)
@@ -967,6 +993,13 @@ def fvDo (request, dataset='30yr_gom3'):
                                     for hole in domain.interiors:
                                         #print hole
                                         x, y = hole.xy
+                                        x = numpy.asarray(x)
+                                        if continuous is True:
+                                            if lonmin < 0:
+                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                            else:
+                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                         x, y = m(x, y)
                                         p = patches.Polygon(numpy.asarray((x,y)).T)
                                         #print p
@@ -980,6 +1013,13 @@ def fvDo (request, dataset='30yr_gom3'):
                             elif domain.geom_type == "MultiPolygon":
                                 for part in domain.geoms:
                                     x, y = part.exterior.xy
+                                    x = numpy.asarray(x)
+                                    if continuous is True:
+                                        if lonmin < 0:
+                                            x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                        else:
+                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                     x, y = m(x, y)
                                     #print numpy.asarray((x,y)).T
                                     #print patches.Polygon(numpy.asarray((x,y)).T)
@@ -991,6 +1031,13 @@ def fvDo (request, dataset='30yr_gom3'):
                                         for hole in domain.interiors:
                                             #print hole
                                             x, y = hole.xy
+                                            x = numpy.asarray(x)
+                                            if continuous is True:
+                                                if lonmin < 0:
+                                                    x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                                else:
+                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                             x, y = m(x, y)
                                             p = patches.Polygon(numpy.asarray((x,y)).T)
                                             #print p 
@@ -999,7 +1046,6 @@ def fvDo (request, dataset='30yr_gom3'):
                                             p.set_color('w')
                                     except:
                                         print "passing"
-
                             
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
