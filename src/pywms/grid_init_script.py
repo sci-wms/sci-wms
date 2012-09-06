@@ -5,15 +5,14 @@ Created on Sep 6, 2011
 '''
 from netCDF4 import Dataset as ncDataset
 from netCDF4 import num2date
-import sys
+import sys, os, numpy
 from datetime import datetime
-import os
 import numpy as np
 from pywms.wms.models import Dataset
 import server_local_config
 import multiprocessing
 from collections import deque
-import pickle
+import cPickle as pickle
 
 def create_topology(datasetname, url):
     import server_local_config as config
@@ -76,8 +75,7 @@ def create_topology(datasetname, url):
         lattemp = nc.variables['y'][:]
         lontemp = nc.variables['x'][:]
         lat[:] = lattemp
-        if max(lontemp) > 180:
-            lontemp = np.asarray(lontemp) - 360
+        lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
         
         lon[:] = lontemp
         import matplotlib.tri as Tri
@@ -118,8 +116,10 @@ def check_topology_age():
             #print dataset
             name = dataset["name"]
             p = multiprocessing.Process(target=do, args=(name,dataset,))
+            p.daemon = True
             p.start()
             jobs.append(p)
+            #do(name, dataset)
     
 def do(name, dataset):
     try:
@@ -166,24 +166,68 @@ def create_domain_polygon(filename):
     nv = nc.variables['nv'][:, :].T-1
     latn = nc.variables['lat'][:]
     lonn = nc.variables['lon'][:]
-    p = deque()
-    p_add = p.append
-    for i in range(len(nv[:,0])):
+    lon = nc.variables['lonc'][:]
+    lat = nc.variables['latc'][:]
+    index_pos = numpy.asarray(numpy.where(
+            (lat <= 90) & (lat >= -90) &
+            (lon <= 180) & (lon > 0),)).squeeze()
+    index_neg = numpy.asarray(numpy.where(
+            (lat <= 90) & (lat >= -90) &
+            (lon < 0) & (lon >= -180),)).squeeze()
+    if len(index_pos) > 0:       
+        p = deque()
+        p_add = p.append
+        for i in index_pos:
             flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]] 
+            if flon < -90:
+                flon = flon + 360
+            if lon1 < -90:
+                lon1 = lon1 + 360
+            if lon2 < -90:
+                lon2 = lon2 + 360
             p_add(Polygon(((flon, flat),
-                          (lonn[nv[i,1]], latn[nv[i,1]]),
-                          (lonn[nv[i,2]], latn[nv[i,2]]),
-                          (flon, flat),)))
-    #p = [Polygon((lonn[nv[i,0]], latn[nv[i,0]]),
-    #             (lonn[nv[i,1]], latn[nv[i,1]]),
-    #             (lonn[nv[i,2]], latn[nv[i,2]]),
-    #             (lonn[nv[i,0]], latn[nv[i,0]]))]
-    domain = cascaded_union(p)
+                           (lon1, lat1),
+                           (lon2, lat2),
+                           (flon, flat),)))
+        domain_pos = cascaded_union(p)  
+    if len(index_neg) > 0: 
+        p = deque()
+        p_add = p.append
+        for i in index_neg:
+            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
+            if flon > 90:
+                flon = flon - 360
+            if lon1 > 90:
+                lon1 = lon1 - 360
+            if lon2 > 90:
+                lon2 = lon2 - 360
+            p_add(Polygon(((flon, flat),
+                           (lon1, lat1),
+                           (lon2, lat2),
+                           (flon, flat),)))
+        domain_neg = cascaded_union(p)
+    if len(index_neg) > 0 and len(index_pos) > 0:
+        domain = cascaded_union((domain_neg, domain_pos,))
+    elif len(index_neg) > 0:
+        domain = domain_neg
+    elif len(index_pos) > 0:
+        domain = domain_pos
+    else:
+        raise ValueError("No data in file")
+
     f = open(filename[:-3] + '.domain', 'w')
     pickle.dump(domain, f)
     f.close()
+
     nc.close()
-    
+
+## Cannot be called as a script any more because of the 
+## dependence on the django framework/database stuff
+'''    
 if __name__ == '__main__':
     """
     Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
@@ -196,7 +240,7 @@ if __name__ == '__main__':
         create_topology(dataset, paths[dataset])
     """
     create_topology_from_config()
-    
+''' 
 
 
 

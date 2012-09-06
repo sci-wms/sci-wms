@@ -26,7 +26,7 @@ import time as timeobj
 import bisect
 import pywms.grid_init_script as grid
 import os
-import pickle
+import cPickle as pickle
 
 def testdb(request):
     print dir(Dataset.objects.get(name='necofs'))
@@ -53,9 +53,10 @@ def static (request, filepath):
     
 def wmstest (request):
     import multiprocessing
-    p = multiprocessing.Process(target=grid.check_topology_age)
+    #p = multiprocessing.Process(target=grid.check_topology_age)
     #p.daemon = True
-    p.start()
+    #p.start()
+    grid.check_topology_age()
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
