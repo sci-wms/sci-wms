@@ -12,6 +12,8 @@ import numpy as np
 from pywms.wms.models import Dataset
 import server_local_config
 import multiprocessing
+from collections import deque
+import pickle
 
 def create_topology(datasetname, url):
     import server_local_config as config
@@ -95,6 +97,7 @@ def create_topology(datasetname, url):
     nclocal.sync()
     nclocal.close()
     nc.close()
+    create_domain_polygon(nclocalpath)
 
 def create_topology_from_config():
     """
@@ -156,6 +159,30 @@ def do(name, dataset):
     except:
         pass
     
+def create_domain_polygon(filename):
+    from shapely.geometry import Polygon
+    from shapely.ops import cascaded_union
+    nc = ncDataset(filename)
+    nv = nc.variables['nv'][:, :].T-1
+    latn = nc.variables['lat'][:]
+    lonn = nc.variables['lon'][:]
+    p = deque()
+    p_add = p.append
+    for i in range(len(nv[:,0])):
+            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+            p_add(Polygon(((flon, flat),
+                          (lonn[nv[i,1]], latn[nv[i,1]]),
+                          (lonn[nv[i,2]], latn[nv[i,2]]),
+                          (flon, flat),)))
+    #p = [Polygon((lonn[nv[i,0]], latn[nv[i,0]]),
+    #             (lonn[nv[i,1]], latn[nv[i,1]]),
+    #             (lonn[nv[i,2]], latn[nv[i,2]]),
+    #             (lonn[nv[i,0]], latn[nv[i,0]]))]
+    domain = cascaded_union(p)
+    f = open(filename[:-3] + '.domain', 'w')
+    pickle.dump(domain, f)
+    f.close()
+    nc.close()
     
 if __name__ == '__main__':
     """

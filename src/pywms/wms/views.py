@@ -26,6 +26,7 @@ import time as timeobj
 import bisect
 import pywms.grid_init_script as grid
 import os
+import pickle
 
 def testdb(request):
     print dir(Dataset.objects.get(name='necofs'))
@@ -940,37 +941,21 @@ def fvDo (request, dataset='30yr_gom3'):
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
                                 zi = griddata(lon, lat, mag, xi, yi, interp='nn')
-                            
-                            #m.imshow(zi, norm=CNorm, cmap=colormap)
+
                             import matplotlib.patches as patches
-                            from shapely.geometry import MultiPolygon, Polygon
-                            
-                            p = deque()
-                            p_add = p.append
-                            #for i, triangs in enumerate(tri.triangles):
-                            for i in range(len(nv[:,0])):
-                                    #closed_triangle = numpy.hstack((triangs, numpy.asarray((triangs[0],)),))
-                                    #nowpoly = [(lonn[closed_triangle][0], latn[closed_triangle][0]),
-                                    #           (lonn[closed_triangle][1], latn[closed_triangle][1]),
-                                    #           (lonn[closed_triangle][2], latn[closed_triangle][2]),
-                                    #           (lonn[closed_triangle][3], latn[closed_triangle][3]),
-                                    #          ]
-                                    flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
-                                    p_add(Polygon(((flon, flat),
-                                                  (lonn[nv[i,1]], latn[nv[i,1]]),
-                                                  (lonn[nv[i,2]], latn[nv[i,2]]),
-                                                  (flon, flat),)))
 
                             #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
                             #multi1 = MultiPolygon([[a, []], [b, []]])
                             print timeobj.time() - totaltimer
-                            from shapely.ops import cascaded_union
-                            domain = cascaded_union(p)
-                            print timeobj.time() - totaltimer
+                            
+                            f = open(os.path.join(config.topologypath, dataset + '.domain'))
+                            domain = pickle.load(f)
+                            f.close()
                             
                             if domain.geom_type == "Polygon":
                                 x, y = domain.exterior.xy
+                                x, y = m(x, y)
                                 #print numpy.asarray((x,y)).T
                                 #print patches.Polygon(numpy.asarray((x,y)).T)
                                 p = patches.Polygon(numpy.asarray((x,y)).T)
@@ -979,10 +964,11 @@ def fvDo (request, dataset='30yr_gom3'):
                                 p.set_color('none')
                                 try:
                                     for hole in domain.interiors:
-                                        print hole
+                                        #print hole
                                         x, y = hole.xy
+                                        x, y = m(x, y)
                                         p = patches.Polygon(numpy.asarray((x,y)).T)
-                                        print p
+                                        #print p
                                         m.ax.add_patch(p)
                                         m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                         p.set_color('w')
@@ -993,6 +979,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             elif domain.geom_type == "MultiPolygon":
                                 for part in domain.geoms:
                                     x, y = part.exterior.xy
+                                    x, y = m(x, y)
                                     #print numpy.asarray((x,y)).T
                                     #print patches.Polygon(numpy.asarray((x,y)).T)
                                     p = patches.Polygon(numpy.asarray((x,y)).T)
@@ -1001,10 +988,11 @@ def fvDo (request, dataset='30yr_gom3'):
                                     p.set_color('none')
                                     try:
                                         for hole in domain.interiors:
-                                            print hole
+                                            #print hole
                                             x, y = hole.xy
+                                            x, y = m(x, y)
                                             p = patches.Polygon(numpy.asarray((x,y)).T)
-                                            print p 
+                                            #print p 
                                             m.ax.add_patch(p)
                                             m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                             p.set_color('w')

@@ -98,9 +98,9 @@ STYLES=position1_position2_position3_position4_position5_position6_position7
 
 ###Position 1
 This is the type of image to return.
-For node variables the options are: pcolor, facets, contours, filledcontours, interpolate
+For node variables the options are: pcolor, facets, contours, filledcontours, (vectors or barbs if specifying two variables like LAYERS=u,v)
 
-For cell variables the options are: pcolor, facets, contours, filledcontours, (vectors if specifying two variables like LAYERS=u,v)
+For cell variables the options are: pcolor, facets, contours, filledcontours, (vectors or barbs if specifying two variables like LAYERS=u,v)
 
 ###Position 2
 This is the type of processing to do if the request has a time range specified instead of one time. (Probably won’t be needed for this project, but) The options are either: average or maximum
