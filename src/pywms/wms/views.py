@@ -960,8 +960,8 @@ def fvDo (request, dataset='30yr_gom3'):
                                 if lonmin < 0:
                                     #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
                                     #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                    box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
-                                                                         shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
+                                    box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 0, latmax),
+                                                                         shapely.geometry.box(0, latmin, lonmax, latmax)))
                                 else:
                                     box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
                                                                          shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
