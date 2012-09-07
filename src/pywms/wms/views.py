@@ -954,19 +954,17 @@ def fvDo (request, dataset='30yr_gom3'):
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
                             #yi = numpy.arange(lat.min(), lat.max(), 1000)
                             #print "lon " + str(lonmax-lonmin), lonmax, lonmin
-                            if lonmax-lonmin < 1:
-                                xi = numpy.arange(m.xmin, m.xmax, 120)
-                                yi = numpy.arange(m.ymin, m.ymax, 120)
-                            elif lonmax-lonmin < 3:
-                                xi = numpy.arange(m.xmin, m.xmax, 200)
-                                yi = numpy.arange(m.ymin, m.ymax, 200)
+                            if lonmax-lonmin < 3:
+                                num = 300
+                            elif lonmax-lonmin < 5:
+                                num = 500
                             elif lonmax-lonmin < 9:
-                                xi = numpy.arange(m.xmin, m.xmax, 1000)
-                                yi = numpy.arange(m.ymin, m.ymax, 1000)
+                                num = 900
                             else:
-                                xi = numpy.arange(m.xmin, m.xmax, 2500)
-                                yi = numpy.arange(m.ymin, m.ymax, 2500)
-                            
+                                num = 2500
+                            #num = int( (lonmax - lonmin) *  100 )
+                            xi = numpy.arange(m.xmin, m.xmax, num)
+                            yi = numpy.arange(m.ymin, m.ymax, num)
 
                             from matplotlib.mlab import griddata
 
@@ -1020,7 +1018,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 #print patches.Polygon(numpy.asarray((x,y)).T)
                                 p = patches.Polygon(numpy.asarray((x,y)).T)
                                 m.ax.add_patch(p)
-                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p, interpolation="nearest")
                                 p.set_color('none')
                                 try:
                                     for hole in domain.interiors:
@@ -1037,7 +1035,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                         p = patches.Polygon(numpy.asarray((x,y)).T)
                                         #print p
                                         m.ax.add_patch(p)
-                                        m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                         p.set_color('w')
                                 except:
                                     print "passing"
@@ -1058,7 +1056,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                     #print patches.Polygon(numpy.asarray((x,y)).T)
                                     p = patches.Polygon(numpy.asarray((x,y)).T)
                                     m.ax.add_patch(p)
-                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p, interpolation="nearest")
                                     p.set_color('none')
                                     try:
                                         for hole in domain.interiors:
@@ -1075,7 +1073,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                             p = patches.Polygon(numpy.asarray((x,y)).T)
                                             #print p 
                                             m.ax.add_patch(p)
-                                            m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                            #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                             p.set_color('w')
                                     except:
                                         print "passing"
