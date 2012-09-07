@@ -350,13 +350,46 @@ def getFeatureInfo(request, dataset):
     else:
         time_zone_offset = None
     """   
-    print request.GET["INFO_FORMAT"]
+    #print request.GET["INFO_FORMAT"]
     if request.GET["INFO_FORMAT"].lower() == "image/png":
+        import matplotlib.dates as mdates
         response = HttpResponse(content_type=request.GET["INFO_FORMAT"].lower())
         from matplotlib.figure import Figure
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.plot(varis[0],varis[1])
+        ax.plot(varis[0],varis[1]) # Actually make line plot
+        tdelta = varis[0][-1]-varis[0][0]
+        if tdelta.total_seconds()/3600. <= 36:
+            if tdelta.total_seconds()/3600. <= 12:
+                interval = 2
+            elif tdelta.total_seconds()/3600. <= 24:
+                interval = 4
+            elif tdelta.total_seconds()/3600. <= 36:
+                interval = 6
+            ax.xaxis.set_minor_locator(matplotlib.dates.HourLocator())
+            ax.xaxis.set_major_locator(matplotlib.dates.HourLocator(interval=interval))
+            ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y/%m/%d\n%H:%M'))
+        if tdelta.total_seconds()/3600. <= 96:
+            #if tdelta.total_seconds()/3600. <= 48:
+            interval = 12
+            #elif tdelta.total_seconds()/3600. <= 60:
+            #    interval = 14
+            #elif tdelta.total_seconds()/3600. <= 72:
+            #    interval = 16
+            ax.xaxis.set_minor_locator(matplotlib.dates.HourLocator())
+            ax.xaxis.set_major_locator(matplotlib.dates.HourLocator(interval=interval))
+            ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y/%m/%d\n%H:%M'))
+        if tdelta.total_seconds()/3600. <= 120:
+            interval = 1
+            ax.xaxis.set_minor_locator(matplotlib.dates.HourLocator())
+            ax.xaxis.set_major_locator(matplotlib.dates.DayLocator(interval=interval))
+            ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y/%m/%d'))
+        if tdelta.total_seconds()/3600. <= 240:
+            interval = 2
+            ax.xaxis.set_minor_locator(matplotlib.dates.HourLocator())
+            ax.xaxis.set_major_locator(matplotlib.dates.DayLocator(interval=interval))
+            ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y/%m/%d'))
+        ax.grid(True)
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
