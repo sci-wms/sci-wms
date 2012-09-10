@@ -843,13 +843,13 @@ def fvDo (request, dataset='30yr_gom3'):
                             
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
-                                mask = []
-                                for triangs in trid.triangles:
-                                    mask.append(m.is_land(
-                                    lon[triangs].mean(),
-                                    lat[triangs].mean()))
-                                trid.set_mask(mask)
-                                m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True)
+                                #mask = []
+                                #for triangs in trid.triangles:
+                                #    mask.append(m.is_land(
+                                #    lon[triangs].mean(),
+                                #    lat[triangs].mean()))
+                                #trid.set_mask(mask)
+                                m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2)
                                 
                                 import shapely.geometry
                                 import matplotlib.patches as patches
