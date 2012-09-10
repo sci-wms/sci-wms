@@ -851,6 +851,129 @@ def fvDo (request, dataset='30yr_gom3'):
                                 trid.set_mask(mask)
                                 m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True)
                                 
+                                import shapely.geometry
+                                import matplotlib.patches as patches
+
+                                f = open(os.path.join(config.topologypath, dataset + '.domain'))
+                                domain = pickle.load(f)
+                                f.close()
+                                if continuous is True:
+                                    if lonmin < 0:
+                                        #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                        #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                        box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 0, latmax),
+                                                                             shapely.geometry.box(0, latmin, lonmax, latmax)))
+                                    else:
+                                        box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
+                                                                             shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
+                                else:
+                                    box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
+                                
+                                domain = domain.intersection(box)
+                                
+                                buffer = StringIO()
+                            
+                                lonmax1, latmax1 = m(lonmax, latmax)
+                                lonmin1, latmin1 = m(lonmin, latmin)
+                                m.ax.set_xlim(lonmin1, lonmax1)
+                                m.ax.set_ylim(latmin1, latmax1)
+                                m.ax.set_frame_on(False)
+                                m.ax.set_clip_on(False)
+                                m.ax.set_position([0,0,1,1])
+                    
+                                canvas = FigureCanvasAgg(fig)
+                                canvas.print_png("temp.png")
+                                im = matplotlib.image.imread("temp.png")#[-1:0:-1,:,:]
+                                buffer.close()
+                                fig = Figure(dpi=80, facecolor='none', edgecolor='none')
+                                fig.set_alpha(0)
+                                fig.set_figheight(height/80.0)
+                                fig.set_figwidth(width/80.0) 
+                                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                        urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                                        #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                        resolution=None,
+                                        lat_ts = 0.0,
+                                        suppress_ticks=True)
+                                m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
+                                if domain.geom_type == "Polygon":
+                                    x, y = domain.exterior.xy
+                                    x = numpy.asarray(x)
+                                    if continuous is True:
+                                        if lonmin < 0:
+                                            x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                        else:
+                                            #print x.min(), x.max()
+                                            #print x[numpy.where(x < lonmax-359)]
+                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    x, y = m(x, y)
+                                    #print numpy.asarray((x,y)).T
+                                    #print patches.Polygon(numpy.asarray((x,y)).T)
+                                    p = patches.Polygon(numpy.asarray((x,y)).T)
+                                    m.ax.add_patch(p)
+                                    #m.imshow(im, clip_path=p)
+                                    fig.figimage(im, clip_path=p)
+                                    p.set_color('none')
+                                    try:
+                                        for hole in domain.interiors:
+                                            #print hole
+                                            x, y = hole.xy
+                                            x = numpy.asarray(x)
+                                            if continuous is True:
+                                                if lonmin < 0:
+                                                    x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                                else:
+                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                            x, y = m(x, y)
+                                            p = patches.Polygon(numpy.asarray((x,y)).T)
+                                            #print p
+                                            m.ax.add_patch(p)
+                                            #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                            p.set_color('w')
+                                    except:
+                                        print "passing"
+                                    
+
+                                elif domain.geom_type == "MultiPolygon":
+                                    for part in domain.geoms:
+                                        x, y = part.exterior.xy
+                                        x = numpy.asarray(x)
+                                        if continuous is True:
+                                            if lonmin < 0:
+                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                            else:
+                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                        x, y = m(x, y)
+                                        #print numpy.asarray((x,y)).T
+                                        #print patches.Polygon(numpy.asarray((x,y)).T)
+                                        p = patches.Polygon(numpy.asarray((x,y)).T)
+                                        m.ax.add_patch(p)
+                                        #m.imshow(im, clip_path=p)
+                                        fig.figimage(im, clip_path=p)
+                                        p.set_color('none')
+                                        try:
+                                            for hole in domain.interiors:
+                                                #print hole
+                                                x, y = hole.xy
+                                                x = numpy.asarray(x)
+                                                if continuous is True:
+                                                    if lonmin < 0:
+                                                        x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                                        x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                                    else:
+                                                        x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                                x, y = m(x, y)
+                                                p = patches.Polygon(numpy.asarray((x,y)).T)
+                                                #print p 
+                                                m.ax.add_patch(p)
+                                                #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                                p.set_color('w')
+                                        except:
+                                            print "passing"
+                                            
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
                                 lonn, latn = m(lonn, latn)
@@ -908,7 +1031,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
-                                m.ax.tricontourf(trid, mag)#, norm=CNorm, levels=levs, antialiased=False, linewidth=0)
+                                m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0)
                                 
                                 f = open(os.path.join(config.topologypath, dataset + '.domain'))
                                 domain = pickle.load(f)
