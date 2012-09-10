@@ -908,7 +908,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
-                                m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0)
+                                m.ax.tricontourf(trid, mag)#, norm=CNorm, levels=levs, antialiased=False, linewidth=0)
                                 
                                 f = open(os.path.join(config.topologypath, dataset + '.domain'))
                                 domain = pickle.load(f)
@@ -928,10 +928,18 @@ def fvDo (request, dataset='30yr_gom3'):
                                 domain = domain.intersection(box)
                                 
                                 buffer = StringIO()
-                                
+                            
+                                lonmax1, latmax1 = m(lonmax, latmax)
+                                lonmin1, latmin1 = m(lonmin, latmin)
+                                m.ax.set_xlim(lonmin1, lonmax1)
+                                m.ax.set_ylim(latmin1, latmax1)
+                                m.ax.set_frame_on(False)
+                                m.ax.set_clip_on(False)
+                                m.ax.set_position([0,0,1,1])
+                    
                                 canvas = FigureCanvasAgg(fig)
                                 canvas.print_png("temp.png")
-                                im = matplotlib.image.imread("temp.png")[-1:0:-1,:,:]
+                                im = matplotlib.image.imread("temp.png")#[-1:0:-1,:,:]
                                 buffer.close()
                                 fig = Figure(dpi=80, facecolor='none', edgecolor='none')
                                 fig.set_alpha(0)
@@ -960,8 +968,8 @@ def fvDo (request, dataset='30yr_gom3'):
                                     #print patches.Polygon(numpy.asarray((x,y)).T)
                                     p = patches.Polygon(numpy.asarray((x,y)).T)
                                     m.ax.add_patch(p)
-                                    m.imshow(im, clip_path=p)
-                                    #fig.figimage(im)
+                                    #m.imshow(im, clip_path=p)
+                                    fig.figimage(im, clip_path=p)
                                     p.set_color('none')
                                     try:
                                         for hole in domain.interiors:
@@ -999,8 +1007,8 @@ def fvDo (request, dataset='30yr_gom3'):
                                         #print patches.Polygon(numpy.asarray((x,y)).T)
                                         p = patches.Polygon(numpy.asarray((x,y)).T)
                                         m.ax.add_patch(p)
-                                        m.imshow(im, clip_path=p)
-                                        #fig.figimage(im)
+                                        #m.imshow(im, clip_path=p)
+                                        fig.figimage(im, clip_path=p)
                                         p.set_color('none')
                                         try:
                                             for hole in domain.interiors:
@@ -1021,7 +1029,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                 p.set_color('w')
                                         except:
                                             print "passing"
-                    
+                                
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
                                 lonn, latn = m(lonn, latn)
