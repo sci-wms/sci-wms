@@ -5,7 +5,7 @@ class Dataset(models.Model):
     uri             = models.CharField(max_length=1000)
     name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('-','_','0123456789' are allowed).")
     title           = models.CharField(max_length=200, help_text="Human Readable Title")
-    abstract        = moeels.CharField(max_length=200, help_text="Short Description of Dataset")
+    abstract        = models.CharField(max_length=200, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField()
     test_date       = models.CharField(max_length=200, help_text="Optional (YYYY-MM-DDTHH:mm:ss)", blank=True)
     test_layer      = models.CharField(max_length=200, help_text="Optional", blank=True)
