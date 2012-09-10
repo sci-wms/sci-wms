@@ -978,7 +978,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True)           
+                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2)           
                             
                         elif "filledcontours" in actions:
                             fig.set_figheight(height/80.0)
