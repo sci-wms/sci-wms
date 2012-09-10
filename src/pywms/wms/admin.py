@@ -7,12 +7,13 @@ Created on Sep 6, 2011
 #import fvcom_compute.wms.grid_init_script as gridinit
 from django.contrib import admin
 #from django.db import models
-from pywms.wms.models import Dataset
+from pywms.wms.models import Dataset, Server
 
 class DatasetAdmin(admin.ModelAdmin):
     list_display = ('name', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
 admin.site.register(Dataset, DatasetAdmin)
+admin.site.register(Server)
 
 """
 def Update_Geographic_Grid(self, request, queryset):        
