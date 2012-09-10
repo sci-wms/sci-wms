@@ -11,12 +11,10 @@ from pywms.wms.models import Dataset
 from django.contrib.sites.models import Site
 import matplotlib
 matplotlib.use("Agg")
-#from matplotlib import pyplot as Plot
 from mpl_toolkits.basemap import Basemap
 import datetime
 from collections import deque
-from StringIO import StringIO
-#import scipy.io
+from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
 import math
 import pp
 import pywms.server_local_config as config
@@ -78,15 +76,12 @@ def documentation (request):
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
     
-"""
-def test (request):
-    import django.shortcuts as dshorts
-    #import pywms.server_local_config as config
-    f = open(config.staticspath + "test.txt")
-    text = f.read()
-    dict1 = { "textfile":text}
-    return dshorts.render_to_response('docs.html', dict1)
-"""
+def crossdomain (request):
+    f = open(config.staticspath + "crossdomain.xml")
+    test = f.read()
+    response = HttpResponse(content_type="text/xml")
+    response.write(test)
+    return response
 
 def wms (request, dataset):
     #jobsarray = grid.check_topology_age()
@@ -104,15 +99,38 @@ def wms (request, dataset):
     elif reqtype.lower() == 'getlegendgraphic':
         response =  getLegendGraphic(request, dataset)
     elif reqtype.lower() == 'getcapabilities':
+        #response = getCapabilities(request, dataset)
         response = HttpResponse()
     return response
 
-def crossdomain (request):
-    f = open(config.staticspath + "crossdomain.xml")
-    test = f.read()
+def getCapabilities(request, dataset):
+    """
+    get capabilities document based on this getcaps:
+    
+    
+    http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
+
+    
+    """
+    # Load pickled dictionary object
+    f = open(os.path.join(config.topologypath, dataset + '.capabilities'))
+    datasetcaps = pickle.load(f)
+    f.close()
+    
+    # Plug into your generic implentation of sciwms template
+    f = open(os.path.join(config.topologypath, 'wms.capabilities'))
+    generalwms = pickle.load(f)
+    f.close()
+    
+    # Add dataset layers to the server template
+    
+    # Return the response
     response = HttpResponse(content_type="text/xml")
     response.write(test)
-    return response
+    pass #return response
+    
+    
+    
     
 def getLegendGraphic(request, dataset):
     """
