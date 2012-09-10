@@ -12,8 +12,12 @@ from pywms.wms.models import Dataset, Server
 class DatasetAdmin(admin.ModelAdmin):
     list_display = ('name', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
+    
+class ServerAdmin(admin.ModelAdmin):
+    list_display = ('title', 'keywords', 'contact_person', 'contact_email')
+
 admin.site.register(Dataset, DatasetAdmin)
-admin.site.register(Server)
+admin.site.register(Server, ServerAdmin)
 
 """
 def Update_Geographic_Grid(self, request, queryset):        
