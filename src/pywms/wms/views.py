@@ -264,7 +264,7 @@ def getCapabilities(request, dataset):
         llbbox.attrib["maxy"] = "90"
         if nc.variables[variable].ndim > 2:
             try:
-                ET.SubElement(layer1, "DepthLayers").text = nc.variables["siglay"].shape[0]
+                ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
             except:
                 ET.SubElement(layer1, "DepthLayers").text = ""
             try:
@@ -327,7 +327,7 @@ def getCapabilities(request, dataset):
             llbbox.attrib["maxy"] = "90"
             if nc.variables[variable].ndim > 2:
                 try:
-                    ET.SubElement(layer1, "DepthLayers").text = nc.variables["siglay"].shape[0]
+                    ET.SubElement(layer1, "DepthLayers").text =  str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
                 except:
                     ET.SubElement(layer1, "DepthLayers").text = ""
                 try:
