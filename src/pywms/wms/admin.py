@@ -10,7 +10,7 @@ from django.contrib import admin
 from pywms.wms.models import Dataset, Server
 
 class DatasetAdmin(admin.ModelAdmin):
-    list_display = ('name', 'keep_up_to_date')
+    list_display = ('name', 'title', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
     
 class ServerAdmin(admin.ModelAdmin):
