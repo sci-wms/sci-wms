@@ -122,7 +122,6 @@ def getCapabilities(request, dataset):
     
     http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
 
-    
     """
     # Create the object to be encoded to xml later
     root = ET.Element('WMT_MS_Capabilities')
@@ -144,7 +143,7 @@ def getCapabilities(request, dataset):
         ET.SubElement(keywordlist, "Keyword").text = keyword
     onlineresource = ET.SubElement(service, "OnlineResource")
     onlineresource.attrib["xlink:type"] = "simple"
-    onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+    onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     #Contact Information
     contactinformation = ET.SubElement(service, "ContactInformation")
     primarycontact = ET.SubElement(contactinformation, "ContactPersonPrimary")
@@ -174,7 +173,7 @@ def getCapabilities(request, dataset):
     getcaps_onlineresource = ET.SubElement(getcaps_get, "OnlineResource")
     getcaps_onlineresource.attrib["xlink:type"] = "simple"
     getcaps_onlineresource.attrib["xlink:href"] = href
-    getcaps_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+    getcaps_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     # GetMap
     getmap = ET.SubElement(request, "GetMap")
     ET.SubElement(getmap, "Format").text = "image/png"
@@ -188,7 +187,7 @@ def getCapabilities(request, dataset):
     getmap_onlineresource = ET.SubElement(getmap_get, "OnlineResource")
     getmap_onlineresource.attrib["xlink:type"] = "simple"
     getmap_onlineresource.attrib["xlink:href"] = href
-    getmap_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+    getmap_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     # GetFeatureInfo
     gfi = ET.SubElement(request, "GetFeatureInfo")
     ET.SubElement(gfi, "Format").text = "image/png"
@@ -202,7 +201,7 @@ def getCapabilities(request, dataset):
     gfi_onlineresource = ET.SubElement(gfi_get, "OnlineResource")
     gfi_onlineresource.attrib["xlink:type"] = "simple"
     gfi_onlineresource.attrib["xlink:href"] = href
-    gfi_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+    gfi_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     # GetLegendGraphic
     getlegend = ET.SubElement(request, "GetLegendGraphic")
     ET.SubElement(getlegend, "Format").text = "image/png"
@@ -212,13 +211,13 @@ def getCapabilities(request, dataset):
     getlegend_onlineresource = ET.SubElement(getlegend_get, "OnlineResource")
     getlegend_onlineresource.attrib["xlink:type"] = "simple"
     getlegend_onlineresource.attrib["xlink:href"] = href
-    getlegend_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+    getlegend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     #Exception
     exception = ET.SubElement(capability, "Exception")
     ET.SubElement(exception, "Format").text = "text/html"
    
     # Pull layer description directly from database
-    onlineresource.attrib["xlink:href"] = href
+    onlineresource.attrib["href"] = href
     # Layers
     layer = ET.SubElement(capability, "Layer") 
     ET.SubElement(layer, "Title").text =  Dataset.objects.get(name=dataset).title
@@ -293,7 +292,7 @@ def getCapabilities(request, dataset):
             legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
             legend_onlineresource.attrib["xlink:type"] = "simple"
             legend_onlineresource.attrib["xlink:href"] = href
-            legend_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+            legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
         if variable == "u" or variable == "u-vel" or variable == "ua":
             style_code = "vectors_average_jet_None_None_" + location + "_False"
             if variable == "u":
@@ -354,7 +353,7 @@ def getCapabilities(request, dataset):
             legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
             legend_onlineresource.attrib["xlink:type"] = "simple"
             legend_onlineresource.attrib["xlink:href"] = href
-            legend_onlineresource.attrib["xlink:xlink"] = "http://www.w3.org/1999/xlink"
+            legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
     tree = ET.ElementTree(root)
     # Return the response
     response = HttpResponse(content_type="text/plain")
