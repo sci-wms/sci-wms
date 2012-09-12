@@ -24,6 +24,9 @@ import time as timeobj
 import bisect
 import pywms.grid_init_script as grid
 import os
+import matplotlib.pyplot as plt
+from matplotlib.pylab import *
+            
 try:
     import cPickle as pickle
 except ImportError:
@@ -382,7 +385,7 @@ def getLegendGraphic(request, dataset):
     &LAYER=hs
     """
     styles = request.GET["STYLES"].split("_")
-    climits = (styles[3], styles[4])
+    climits = (float(styles[3]), float(styles[4]))
     datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
     level = request.GET["ELEVATION"]
     level = level.split(",")
@@ -409,24 +412,22 @@ def getLegendGraphic(request, dataset):
     from matplotlib.figure import Figure
     fig = Figure(dpi=100., facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
     fig.set_figwidth(1*1.3)
     fig.set_figheight(1.5*1.3)
-    
                             
     """
     Create the colorbar or legend and add to axis
     """
-    if plot_type not in ["contours", "filledcontours",]:# "barbs", "vectors"]:
-        if climits[0] is "None" or climits[1] is "None":
+    if plot_type not in ["contours", "filledcontours",]:
+        if climits[0] is "None" or climits[1] is "None": # TODO: NOT SUPPORTED RESPONSE
             #going to have to get the data here to figure out bounds
             #need elevation, bbox, time, magnitudebool
             CNorm=None
-            
         else:
             #use limits described by the style
-            CNorm = matplotlib.colors.Normalize(vmin=float(climits[0]),
-                                                vmax=float(climits[1]),
+            ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                vmax=climits[1],
                                                 clip=False,
                                                 )
             cb = matplotlib.colorbar.ColorbarBase(ax,
@@ -435,18 +436,61 @@ def getLegendGraphic(request, dataset):
                                                   orientation='vertical',
                                                   )
             cb.set_label(nc.variables[variables[0]].units)
-    #elif plot_type in ["barbs", "vectors"]:
-    #    if plot_type == "barbs":
-    #        ax.barbs(
-    #    elif plot_type == "vectors":
-    #        pass
     else:#plot type somekind of contour
         if plot_type == "contours":
             #this should perhaps be a legend...
-            pass
+            #ax = fig.add_axes([0,0,1,1])
+            fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
+            ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=True)
+            levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
+            
+            x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
+            cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
+
+            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0]) 
+                for pc in cs.collections]
+
+            fig.legend(proxy, levs,
+                       #bbox_to_anchor = (0, 0, 1, 1), 
+                       #bbox_transform = fig.transFigure, 
+                       loc = 6,
+                       title = nc.variables[variables[0]].units, 
+                       prop = {'size':8},
+                       frameon = False,
+                       )
         elif plot_type == "filledcontours":
-            #colorbar is OK here
-            pass
+            #this should perhaps be a legend...
+            #ax = fig.add_axes([0,0,1,1])
+            fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
+            ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=False,)
+            levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
+            levs = numpy.hstack(([-99999], levs, [99999]))
+            
+            x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
+            cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
+
+            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0]) 
+                for pc in cs.collections]
+ 
+            levels = []
+            for i, value in enumerate(levs):
+                #if i == 0:
+                #    levels[i] = "<" + str(value)
+                if i == len(levs)-1:
+                    levels.append(">" + str(value))
+                else:
+                    levels.append(str(value) + "-" + str(levs[i+1]))
+            print levels, levs
+            fig.legend(proxy, levels,
+                       #bbox_to_anchor = (0, 0, 1, 1), 
+                       #bbox_transform = fig.transFigure, 
+                       loc = 6,
+                       title = nc.variables[variables[0]].units, 
+                       prop = {'size':6},
+                       frameon = False,
+                       )
     
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
@@ -1229,7 +1273,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
                                 m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2)           
-                            
+
                         elif "filledcontours" in actions:
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)  
