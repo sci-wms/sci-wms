@@ -228,6 +228,7 @@ def getCapabilities(request, dataset):
     ET.SubElement(layer, "SRS").text =  "EPSG:3857"
     ET.SubElement(layer, "SRS").text =  "MERCATOR"
     nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).uri)
+    topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
     for variable in nc.variables.keys():
         try:
             location = nc.variables[variable].location
@@ -328,6 +329,16 @@ def getCapabilities(request, dataset):
             llbbox.attrib["miny"] = "-90"
             llbbox.attrib["maxx"] = "180"
             llbbox.attrib["maxy"] = "90"
+            time_dimension = ET.SubElement(layer1, "Dimension")
+            time_dimension.attrib["name"] = "time"
+            time_dimension.attrib["time"] = "ISO8601"
+            time_extent = ET.SubElement(layer1, "Extent")
+            time_extent.attrib["name"] = "time"
+            try:
+                units = topology.variables["time"].units
+                time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+            except:
+                time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
             if nc.variables[variable].ndim > 2:
                 try:
                     ET.SubElement(layer1, "DepthLayers").text =  str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
@@ -363,9 +374,6 @@ def getCapabilities(request, dataset):
     response.write(r'<?xml version="1.0" encoding="utf-8"?>')
     tree.write(response)
     return response
-    
-    
-    
     
 def getLegendGraphic(request, dataset):
     """
