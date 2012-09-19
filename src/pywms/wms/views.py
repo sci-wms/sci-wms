@@ -373,8 +373,8 @@ def getCapabilities(request, dataset):
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            except:
-                pass
+        except:
+            pass
     tree = ET.ElementTree(root)
     # Return the response
     response = HttpResponse(content_type="text/plain")

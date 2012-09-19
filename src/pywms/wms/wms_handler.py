@@ -3,6 +3,7 @@ Created on Oct 17, 2011
 
 @author: ACrosby
 '''
+from datetime import datetime
 
 class wms_handler(object):
     '''
@@ -10,13 +11,19 @@ class wms_handler(object):
     '''
 
     def make_action_request(self, requestobj):
-
         layers = requestobj.GET["LAYERS"]
-        levels = requestobj.GET["ELEVATION"]
+        try:
+            levels = requestobj.GET["ELEVATION"]
+        except:
+            levels = "0"
         '''
         Implement more styles and things here
         '''
-        time = requestobj.GET["TIME"]
+        try:
+            time = requestobj.GET["TIME"]
+        except:
+            now = datetime.now().isoformat()
+            time = now + "/" + now
         time = time.split("/")
         if len(time) > 1: 
             timestart = time[0]
