@@ -291,10 +291,10 @@ def getCapabilities(request, dataset):
                         ET.SubElement(layer1, "DepthDirection").text = ""
                 except:
                     ET.SubElement(layer1, "DepthDirection").text = ""
-                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
             else:
                 ET.SubElement(layer1, "DepthLayers").text = "0"
                 ET.SubElement(layer1, "DepthDirection").text = "Down"
+                elev_extent.text = "0"
             for style in ["filledcontours", "contours", "pcolor", "facets"]:
                 style_code = style + "_average_jet_None_None_" + location + "_False"
                 style = ET.SubElement(layer1, "Style")
@@ -371,7 +371,7 @@ def getCapabilities(request, dataset):
                         ET.SubElement(layer1, "DepthDirection").text = ""
                 else:
                     ET.SubElement(layer1, "DepthLayers").text = "0"
-                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
+                    elev_extent.text = "0"
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
                 style = ET.SubElement(layer1, "Style")
                 ET.SubElement(style, "Name").text = style_code
