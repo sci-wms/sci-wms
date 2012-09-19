@@ -3,7 +3,7 @@ Created on Oct 17, 2011
 
 @author: ACrosby
 '''
-from datetime import datetime
+from datetime import date
 
 class wms_handler(object):
     '''
@@ -14,6 +14,8 @@ class wms_handler(object):
         layers = requestobj.GET["LAYERS"]
         try:
             levels = requestobj.GET["ELEVATION"]
+            if levels == "":
+                levels = "0"
         except:
             levels = "0"
         '''
@@ -21,9 +23,13 @@ class wms_handler(object):
         '''
         try:
             time = requestobj.GET["TIME"]
+            if time == "":
+                now = date.today().isoformat()
+                time = now + "T00:00:00"#
         except:
-            now = datetime.now().isoformat()
-            time = now + "/" + now
+            now = date.today().isoformat()
+            time = now + "T00:00:00"#
+        print time
         time = time.split("/")
         if len(time) > 1: 
             timestart = time[0]
