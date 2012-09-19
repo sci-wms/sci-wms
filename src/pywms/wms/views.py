@@ -400,12 +400,15 @@ def getLegendGraphic(request, dataset):
     &LAYER=hs
     """
     styles = request.GET["STYLES"].split("_")
-    climits = (float(styles[3]), float(styles[4]))
+    try:
+        climits = (float(styles[3]), float(styles[4]))
+    except:
+        climits = (None, None)
     datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
-    level = request.GET["ELEVATION"]
-    level = level.split(",")
-    for i,l in enumerate(level):
-        level[i] = int(l)-1
+    #level = request.GET["ELEVATION"]
+    #level = level.split(",")
+    #for i,l in enumerate(level):
+    #    level[i] = int(l)-1
     variables = request.GET["LAYER"].split(",")
     topology_type = styles[5]
     plot_type = styles[0]
@@ -433,24 +436,26 @@ def getLegendGraphic(request, dataset):
     """
     Create the colorbar or legend and add to axis
     """
-    if plot_type not in ["contours", "filledcontours",]:
-        if climits[0] is "None" or climits[1] is "None": # TODO: NOT SUPPORTED RESPONSE
+    if climits[0] is None or climits[1] is None: # TODO: NOT SUPPORTED RESPONSE
             #going to have to get the data here to figure out bounds
             #need elevation, bbox, time, magnitudebool
             CNorm=None
-        else:
-            #use limits described by the style
-            ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                vmax=climits[1],
-                                                clip=False,
-                                                )
-            cb = matplotlib.colorbar.ColorbarBase(ax,
-                                                  cmap=colormap,
-                                                  norm=CNorm,
-                                                  orientation='vertical',
-                                                  )
-            cb.set_label(nc.variables[variables[0]].units)
+            ax = fig.add_axes([0, 0, 1, 1])
+            ax.grid(False)
+            ax.text(.5,.5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
+    elif plot_type not in ["contours", "filledcontours",]:
+        #use limits described by the style
+        ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
+        CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                            vmax=climits[1],
+                                            clip=False,
+                                            )
+        cb = matplotlib.colorbar.ColorbarBase(ax,
+                                              cmap=colormap,
+                                              norm=CNorm,
+                                              orientation='vertical',
+                                              )
+        cb.set_label(nc.variables[variables[0]].units)
     else:#plot type somekind of contour
         if plot_type == "contours":
             #this should perhaps be a legend...

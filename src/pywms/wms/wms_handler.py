@@ -29,7 +29,6 @@ class wms_handler(object):
         except:
             now = date.today().isoformat()
             time = now + "T00:00:00"#
-        print time
         time = time.split("/")
         if len(time) > 1: 
             timestart = time[0]
