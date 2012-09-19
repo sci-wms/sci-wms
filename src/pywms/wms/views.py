@@ -265,7 +265,10 @@ def getCapabilities(request, dataset):
             llbbox.attrib["maxy"] = "90"
             time_dimension = ET.SubElement(layer1, "Dimension")
             time_dimension.attrib["name"] = "time"
-            time_dimension.attrib["time"] = "ISO8601"
+            time_dimension.attrib["units"] = "ISO8601"
+            elev_dimension = ET.SubElement(layer1, "Dimension")
+            elev_dimension.attrib["name"] = "elevation"
+            elev_dimension.attrib["units"] = "EPSG:5030"
             time_extent = ET.SubElement(layer1, "Extent")
             time_extent.attrib["name"] = "time"
             elev_extent = ET.SubElement(layer1, "Extent")
@@ -343,7 +346,10 @@ def getCapabilities(request, dataset):
                 llbbox.attrib["maxy"] = "90"
                 time_dimension = ET.SubElement(layer1, "Dimension")
                 time_dimension.attrib["name"] = "time"
-                time_dimension.attrib["time"] = "ISO8601"
+                time_dimension.attrib["units"] = "ISO8601"
+                elev_dimension = ET.SubElement(layer1, "Dimension")
+                elev_dimension.attrib["name"] = "elevation"
+                elev_dimension.attrib["units"] = "EPSG:5030"
                 time_extent = ET.SubElement(layer1, "Extent")
                 time_extent.attrib["name"] = "time"
                 elev_extent = ET.SubElement(layer1, "Extent")
