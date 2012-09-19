@@ -291,6 +291,7 @@ def getCapabilities(request, dataset):
                         ET.SubElement(layer1, "DepthDirection").text = ""
                 except:
                     ET.SubElement(layer1, "DepthDirection").text = ""
+                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
             else:
                 ET.SubElement(layer1, "DepthLayers").text = "0"
                 ET.SubElement(layer1, "DepthDirection").text = "Down"
@@ -370,6 +371,7 @@ def getCapabilities(request, dataset):
                         ET.SubElement(layer1, "DepthDirection").text = ""
                 else:
                     ET.SubElement(layer1, "DepthLayers").text = "0"
+                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
                 style = ET.SubElement(layer1, "Style")
                 ET.SubElement(style, "Name").text = style_code
