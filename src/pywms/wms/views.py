@@ -5,27 +5,21 @@ Created on Sep 1, 2011
 '''
 # Create your views here.
 from django.http import HttpResponse
-import numpy
-import netCDF4
 from pywms.wms.models import Dataset, Server
 from django.contrib.sites.models import Site
 import matplotlib
 matplotlib.use("Agg")
 from mpl_toolkits.basemap import Basemap
-import datetime
 from collections import deque
 from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
-import math
 import pywms.server_local_config as config
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-import gc
 import time as timeobj
-import bisect
 import pywms.grid_init_script as grid
-import os
 import matplotlib.pyplot as plt
 from matplotlib.pylab import get_cmap
-            
+#from pywms.wms.logging.multi_process_logging import EasyLogger
+import os, gc, bisect, math, datetime, numpy, netCDF4
 try:
     import cPickle as pickle
 except ImportError:
@@ -96,6 +90,8 @@ def crossdomain (request):
 
 def wms (request, dataset):
     #jobsarray = grid.check_topology_age()
+    #c  = EasyLogger('my_new_log.log')
+    #c.logger.info(str(request.GET))
     try:
         reqtype = request.GET['REQUEST']
     except:
@@ -236,7 +232,7 @@ def getCapabilities(request, dataset):
         if location == "face":
             location = "cell"
         try:
-            nc.variables[variable].location
+            #nc.variables[variable].location
             layer1 = ET.SubElement(layer, "Layer")
             layer1.attrib["queryable"] = "1"
             layer1.attrib["opaque"] = "0"
@@ -267,9 +263,23 @@ def getCapabilities(request, dataset):
             llbbox.attrib["miny"] = "-90"
             llbbox.attrib["maxx"] = "180"
             llbbox.attrib["maxy"] = "90"
+            time_dimension = ET.SubElement(layer1, "Dimension")
+            time_dimension.attrib["name"] = "time"
+            time_dimension.attrib["time"] = "ISO8601"
+            time_extent = ET.SubElement(layer1, "Extent")
+            time_extent.attrib["name"] = "time"
+            elev_extent = ET.SubElement(layer1, "Extent")
+            elev_extent.attrib["name"] = "elevation"
+            elev_extent.attrib["default"] = "0"
+            try:
+                units = topology.variables["time"].units
+                time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+            except:
+                time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
             if nc.variables[variable].ndim > 2:
                 try:
                     ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
+                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
                 except:
                     ET.SubElement(layer1, "DepthLayers").text = ""
                 try:
@@ -377,7 +387,7 @@ def getCapabilities(request, dataset):
             pass
     tree = ET.ElementTree(root)
     # Return the response
-    response = HttpResponse(content_type="text/plain")
+    response = HttpResponse(content_type="text/xml")
     response.write(r'<?xml version="1.0" encoding="utf-8"?>')
     tree.write(response)
     return response
