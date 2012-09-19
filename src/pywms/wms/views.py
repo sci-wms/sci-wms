@@ -16,7 +16,6 @@ import datetime
 from collections import deque
 from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
 import math
-import pp
 import pywms.server_local_config as config
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import gc
@@ -336,6 +335,9 @@ def getCapabilities(request, dataset):
                 time_dimension.attrib["time"] = "ISO8601"
                 time_extent = ET.SubElement(layer1, "Extent")
                 time_extent.attrib["name"] = "time"
+                elev_extent = ET.SubElement(layer1, "Extent")
+                elev_extent.attrib["name"] = "elevation"
+                elev_extent.attrib["default"] = "0"
                 try:
                     units = topology.variables["time"].units
                     time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
@@ -344,6 +346,7 @@ def getCapabilities(request, dataset):
                 if nc.variables[variable].ndim > 2:
                     try:
                         ET.SubElement(layer1, "DepthLayers").text =  str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
+                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
                     except:
                         ET.SubElement(layer1, "DepthLayers").text = ""
                     try:
@@ -366,10 +369,10 @@ def getCapabilities(request, dataset):
                 legendurl.attrib["width"] = "50"
                 legendurl.attrib["height"] = "80"
                 ET.SubElement(legendurl, "Format").text = "image/png"
-                legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
-                legend_onlineresource.attrib["xlink:type"] = "simple"
-                legend_onlineresource.attrib["xlink:href"] = href
-                legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
+                #legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
+                #legend_onlineresource.attrib["xlink:type"] = "simple"
+                #legend_onlineresource.attrib["xlink:href"] = href
+                #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
             except:
                 pass
     tree = ET.ElementTree(root)
