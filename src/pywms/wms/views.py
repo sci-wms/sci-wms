@@ -293,10 +293,10 @@ def getCapabilities(request, dataset):
             legendurl.attrib["width"] = "50"
             legendurl.attrib["height"] = "80"
             ET.SubElement(legendurl, "Format").text = "image/png"
-            legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
-            legend_onlineresource.attrib["xlink:type"] = "simple"
-            legend_onlineresource.attrib["xlink:href"] = href
-            legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
+            #legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
+            #legend_onlineresource.attrib["xlink:type"] = "simple"
+            #legend_onlineresource.attrib["xlink:href"] = href
+            #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
         if variable == "u" or variable == "u-vel" or variable == "ua":
             style_code = "vectors_average_jet_None_None_" + location + "_False"
             if variable == "u":
