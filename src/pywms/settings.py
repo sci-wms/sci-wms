@@ -1,13 +1,19 @@
 # Django settings for fvcom_compute project.
 import server_local_config
-import os
+import os, logging
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    #('Your Name', 'youremail@domain.com'),
 )
+
+#EMAIL_HOST = ''
+#EMAIL_HOST_USER = ''
+#EMAIL_PORT = ''
+#EMAIL_HOST_PASSWORD = ''
+#EMAIL_SUBJECT_PREFIX = '[SCIWMS MESSAGE]'
 
 MANAGERS = ADMINS
 
@@ -71,7 +77,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    "C:/Documents and Settings/ACrosby/My Documents/Eclipse/unstructured_sura/src/fvcom_compute/wms/static/",
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -123,13 +128,14 @@ INSTALLED_APPS = (
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
      'django.contrib.admindocs',
-     'wms',
      'django.contrib.markup',
      #'gunicorn',
+     'wms',
+     #'wps',
 )
 
 # A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
+# performed by this configuration is to send an to
 # the site admins on every HTTP 500 error.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
@@ -140,7 +146,17 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        #'console':{
+        #    'level': 'INFO',
+        #    'class': 'logging.StreamHandler',
+        #    #'formatter': 'simple'
+        #},
+        #'wmsfile':{
+        #    'level': 'INFO',
+        #    'class': 'log.multi_process_logging.MultiProcessingLogHandler',
+        #    'name': 'sciwms_wms.log',
+        #},
     },
     'loggers': {
         'django.request': {
@@ -148,5 +164,10 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        #'sciwms': {
+        #    'handlers': ['mail_admins', 'console', 'wmsfile'],
+        #    'level': 'INFO',
+        #    'propagate': True,
+        #},
     }
 }

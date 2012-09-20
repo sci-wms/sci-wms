@@ -18,8 +18,8 @@ import time as timeobj
 import pywms.grid_init_script as grid
 import matplotlib.pyplot as plt
 from matplotlib.pylab import get_cmap
-#from pywms.wms.logging.multi_process_logging import EasyLogger
-import os, gc, bisect, math, datetime, numpy, netCDF4
+from pywms.log.multi_process_logging import MultiProcessingLogHandler
+import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
 try:
     import cPickle as pickle
 except ImportError:
@@ -29,10 +29,10 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-
+output_path = 'sciwms_wms'
 
 def testdb(request):
-    print dir(Dataset.objects.get(name='necofs'))
+    #print dir(Dataset.objects.get(name='necofs'))
     return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
     
 def index(request):
@@ -90,30 +90,44 @@ def crossdomain (request):
 
 def wms (request, dataset):
     #jobsarray = grid.check_topology_age()
-    #c  = EasyLogger('my_new_log.log')
-    #c.logger.info(str(request.GET))
+    
+    # Set up Logger
+    logger = multiprocessing.get_logger()
+    logger.setLevel(logging.INFO)
+    handler = MultiProcessingLogHandler('%s.log' % output_path)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(name)s - %(processName)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     try:
-        reqtype = request.GET['REQUEST']
-    except:
-        reqtype = request.GET['request']
-    if reqtype.lower() == 'getmap':
-        import pywms.wms.wms_handler as wms
-        handler = wms.wms_handler(request)
-        action_request = handler.make_action_request(request)
-        if action_request is not None:
-            response = fvDo(action_request, dataset)
-        else:
-            response = HttpResponse()
-    elif reqtype.lower() == 'getfeatureinfo':
-        response =  getFeatureInfo(request, dataset)
-    elif reqtype.lower() == 'getlegendgraphic':
-        response =  getLegendGraphic(request, dataset)
-    elif reqtype.lower() == 'getcapabilities':
-        response = getCapabilities(request, dataset)
-        #response = HttpResponse()
-    return response
+        try:
+            reqtype = request.GET['REQUEST']
+        except:
+            reqtype = request.GET['request']
+        logger.info(str(request.GET))
+        if reqtype.lower() == 'getmap':
+            import pywms.wms.wms_handler as wms
+            handler = wms.wms_handler(request)
+            action_request = handler.make_action_request(request)
+            if action_request is not None:
+                response = fvDo(action_request, dataset, logger)
+            else:
+                response = HttpResponse()
+        elif reqtype.lower() == 'getfeatureinfo':
+            response =  getFeatureInfo(request, dataset, logger)
+        elif reqtype.lower() == 'getlegendgraphic':
+            response =  getLegendGraphic(request, dataset, logger)
+        elif reqtype.lower() == 'getcapabilities':
+            response = getCapabilities(request, dataset, logger)
+        return response
+    except Exception as detail:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("Status 500 Error: " +\
+                     repr(traceback.format_exception(exc_type, exc_value,
+                                  exc_traceback)) + '\n' + str(request))
+        return HttpResponse(status=500)
 
-def getCapabilities(request, dataset):
+def getCapabilities(request, dataset, logger):
     """
     get capabilities document based on this getcaps:
     
@@ -400,7 +414,7 @@ def getCapabilities(request, dataset):
     tree.write(response)
     return response
     
-def getLegendGraphic(request, dataset):
+def getLegendGraphic(request, dataset, logger):
     """
     Parse parameters from request that looks like this:
     
@@ -520,7 +534,7 @@ def getLegendGraphic(request, dataset):
                     levels.append(">" + str(value))
                 else:
                     levels.append(str(value) + "-" + str(levs[i+1]))
-            print levels, levs
+            logger.info( str((levels, levs)) )
             fig.legend(proxy, levels,
                        #bbox_to_anchor = (0, 0, 1, 1), 
                        #bbox_transform = fig.transFigure, 
@@ -536,7 +550,7 @@ def getLegendGraphic(request, dataset):
     return response
         
         
-def getFeatureInfo(request, dataset):
+def getFeatureInfo(request, dataset, logger):
     """
      /wms/GOM3/?ELEVATION=1&LAYERS=temp&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=facets_average_jet_0_32_node_False&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:3857&BBOX=-7949675.196111,5078194.822174,-7934884.63114,5088628.476533&X=387&Y=196&INFO_FORMAT=text/csv&WIDTH=774&HEIGHT=546&QUERY_LAYERS=salinity&TIME=2012-08-14T00:00:00/2012-08-16T00:00:00
     """
@@ -747,7 +761,7 @@ def getFeatureInfo(request, dataset):
         topology.close()
     return response
 
-def fvDo (request, dataset='30yr_gom3'):
+def fvDo (request, dataset, logger):
     '''
     Request a set of functionalities, any subset of the following:
     1) WMS Style Image Request
@@ -851,10 +865,8 @@ def fvDo (request, dataset='30yr_gom3'):
             
         else:
             pass
-        print "index", len(index)
+        logger.info("index " + str(len(index)))
         if len(index) > 0:
-            #job_server = pp.Server(4, ppservers=()) 
-            #print "cell database"
             if ("facets" in actions) or \
             ("regrid" in actions) or \
             ("shp" in actions) or \
@@ -863,11 +875,8 @@ def fvDo (request, dataset='30yr_gom3'):
             ("filledcontours" in actions) or \
             ("pcolor" in actions) or \
             (topology_type.lower()=='node'):
-
-                #if topology_type.lower() == "cell":
                 from matplotlib.collections import PolyCollection
                 import matplotlib.tri as Tri
-                
                 #nv = topology.variables['nv'][:,index].T-1
                 nvtemp = topology.variables['nv'][:,:]#.T-1
                 nv = nvtemp[:,index].T-1
@@ -882,7 +891,7 @@ def fvDo (request, dataset='30yr_gom3'):
                     else:
                         lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                 uu = numpy.unique(nv)
-                print numpy.min(uu), numpy.max(uu)
+                logger.info("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
             else:
                 nv = None
 
@@ -900,7 +909,7 @@ def fvDo (request, dataset='30yr_gom3'):
             else:
                 time = [time]
             
-            print time
+            logger.info('time index requested ' + str(time))
             
             #pvar = deque()
             def getvar(nc, t, layer, var):
@@ -933,7 +942,6 @@ def fvDo (request, dataset='30yr_gom3'):
                 except:
                     pass
             else: pass # or 1 timestep geographic...?...
-            #print "print netcdf access"
             if latmin != latmax:
                 # This is averaging in time over all timesteps downloaded
                 if not "animate" in actions:
@@ -968,7 +976,6 @@ def fvDo (request, dataset='30yr_gom3'):
                             except:
                                 pass
                 else: pass # will eventually add animations over time, instead of averages
-                #print "done math"
         
                 if "image" in actions:
                     from matplotlib.figure import Figure
@@ -1265,7 +1272,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                             #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                             p.set_color('w')
                                     except:
-                                        print "passing"
+                                        logger.warning('failure to add hole in domain.interiors of a Polygon')
                                     
 
                                 elif domain.geom_type == "MultiPolygon":
@@ -1304,7 +1311,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                 #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                                 p.set_color('w')
                                         except:
-                                            print "passing"
+                                            logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
                                             
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
@@ -1444,7 +1451,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                             #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                             p.set_color('w')
                                     except:
-                                        print "passing"
+                                        logger.warning('failure to add hole in domain.interiors of a Polygon')
                                     
 
                                 elif domain.geom_type == "MultiPolygon":
@@ -1483,7 +1490,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                                 #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                                 p.set_color('w')
                                         except:
-                                            print "passing"
+                                            logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
@@ -1543,8 +1550,8 @@ def fvDo (request, dataset='30yr_gom3'):
 
                             if topology_type.lower() == "node":
                                 n = numpy.unique(nv)
-                                print "lon " , lon[n].min(), lon[n].max()
-                                print "xi", xi.min(), xi.max()
+                                #print "lon " , lon[n].min(), lon[n].max()
+                                #print "xi", xi.min(), xi.max()
                                 zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
                             else:
                                 zi = griddata(lon, lat, mag, xi, yi, interp='nn')
@@ -1554,7 +1561,7 @@ def fvDo (request, dataset='30yr_gom3'):
                             #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
                             #multi1 = MultiPolygon([[a, []], [b, []]])
-                            print timeobj.time() - totaltimer
+                            logger.info("time to before domain open " + str(timeobj.time() - totaltimer))
                             
                             f = open(os.path.join(config.topologypath, dataset + '.domain'))
                             domain = pickle.load(f)
@@ -1572,9 +1579,8 @@ def fvDo (request, dataset='30yr_gom3'):
                             else:
                                 box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
                             domain = domain.intersection(box)
-                            print lonmin, latmin, lonmax, latmax
-                            print timeobj.time() - totaltimer
-                            
+                            #print lonmin, latmin, lonmax, latmax
+                            logger.info("time to after domain intersection " + str(timeobj.time() - totaltimer))
                             if domain.geom_type == "Polygon":
                                 x, y = domain.exterior.xy
                                 x = numpy.asarray(x)
@@ -1611,9 +1617,8 @@ def fvDo (request, dataset='30yr_gom3'):
                                         #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                         p.set_color('w')
                                 except:
-                                    print "passing"
+                                    logger.warning('failure to add hole in domain.interiors of a Polygon')
                                 
-
                             elif domain.geom_type == "MultiPolygon":
                                 for part in domain.geoms:
                                     x, y = part.exterior.xy
@@ -1649,7 +1654,7 @@ def fvDo (request, dataset='30yr_gom3'):
                                             #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
                                             p.set_color('w')
                                     except:
-                                        print "passing"
+                                        logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
                             
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
@@ -1941,9 +1946,5 @@ def fvDo (request, dataset='30yr_gom3'):
             
     topology.close()
     gc.collect()
-    print timeobj.time() - totaltimer
+    logger.info('final time to complete request ' + str(timeobj.time() - totaltimer))
     return response
-
-def fvWps (request):
-    pass
-    return HttpResponse
