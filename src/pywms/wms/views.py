@@ -30,7 +30,14 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 output_path = 'sciwms_wms'
-
+# Set up Logger
+logger = multiprocessing.get_logger()
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('%s.log' % output_path)
+formatter = logging.Formatter(fmt='[%(asctime)s] - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+    
 def testdb(request):
     #print dir(Dataset.objects.get(name='necofs'))
     return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
@@ -89,22 +96,11 @@ def crossdomain (request):
     return response
 
 def wms (request, dataset):
-    #jobsarray = grid.check_topology_age()
-    
-    # Set up Logger
-    logger = multiprocessing.get_logger()
-    logger.setLevel(logging.INFO)
-    handler = MultiProcessingLogHandler('%s.log' % output_path)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(name)s - %(processName)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
     try:
         try:
             reqtype = request.GET['REQUEST']
         except:
             reqtype = request.GET['request']
-        logger.info(str(request.GET))
         if reqtype.lower() == 'getmap':
             import pywms.wms.wms_handler as wms
             handler = wms.wms_handler(request)
@@ -119,6 +115,7 @@ def wms (request, dataset):
             response =  getLegendGraphic(request, dataset, logger)
         elif reqtype.lower() == 'getcapabilities':
             response = getCapabilities(request, dataset, logger)
+        logger.info(str(request.GET))
         return response
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -774,7 +771,7 @@ def fvDo (request, dataset, logger):
     
     
     totaltimer = timeobj.time()
-
+    loglist = []
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -865,7 +862,7 @@ def fvDo (request, dataset, logger):
             
         else:
             pass
-        logger.info("index " + str(len(index)))
+        loglist.append("index " + str(len(index)))
         if len(index) > 0:
             if ("facets" in actions) or \
             ("regrid" in actions) or \
@@ -891,7 +888,7 @@ def fvDo (request, dataset, logger):
                     else:
                         lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                 uu = numpy.unique(nv)
-                logger.info("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
+                loglist.append("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
             else:
                 nv = None
 
@@ -909,7 +906,7 @@ def fvDo (request, dataset, logger):
             else:
                 time = [time]
             
-            logger.info('time index requested ' + str(time))
+            loglist.append('time index requested ' + str(time))
             
             #pvar = deque()
             def getvar(nc, t, layer, var):
@@ -1273,6 +1270,7 @@ def fvDo (request, dataset, logger):
                                             p.set_color('w')
                                     except:
                                         logger.warning('failure to add hole in domain.interiors of a Polygon')
+                                        loglist.append('failure to add hole in domain.interiors of a Polygon')
                                     
 
                                 elif domain.geom_type == "MultiPolygon":
@@ -1312,6 +1310,7 @@ def fvDo (request, dataset, logger):
                                                 p.set_color('w')
                                         except:
                                             logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
+                                            loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
                                             
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
@@ -1452,6 +1451,7 @@ def fvDo (request, dataset, logger):
                                             p.set_color('w')
                                     except:
                                         logger.warning('failure to add hole in domain.interiors of a Polygon')
+                                        loglist.append('failure to add hole in domain.interiors of a Polygon')
                                     
 
                                 elif domain.geom_type == "MultiPolygon":
@@ -1491,6 +1491,7 @@ def fvDo (request, dataset, logger):
                                                 p.set_color('w')
                                         except:
                                             logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
+                                            loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
                                 
                                 #qq = m.contourf(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs, antialiased=True)
                             else:
@@ -1561,7 +1562,7 @@ def fvDo (request, dataset, logger):
                             #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
                             #multi1 = MultiPolygon([[a, []], [b, []]])
-                            logger.info("time to before domain open " + str(timeobj.time() - totaltimer))
+                            loglist.append("time to before domain open " + str(timeobj.time() - totaltimer))
                             
                             f = open(os.path.join(config.topologypath, dataset + '.domain'))
                             domain = pickle.load(f)
@@ -1580,7 +1581,7 @@ def fvDo (request, dataset, logger):
                                 box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
                             domain = domain.intersection(box)
                             #print lonmin, latmin, lonmax, latmax
-                            logger.info("time to after domain intersection " + str(timeobj.time() - totaltimer))
+                            loglist.append("time to after domain intersection " + str(timeobj.time() - totaltimer))
                             if domain.geom_type == "Polygon":
                                 x, y = domain.exterior.xy
                                 x = numpy.asarray(x)
@@ -1618,6 +1619,7 @@ def fvDo (request, dataset, logger):
                                         p.set_color('w')
                                 except:
                                     logger.warning('failure to add hole in domain.interiors of a Polygon')
+                                    loglist.append('failure to add hole in domain.interiors of a Polygon')
                                 
                             elif domain.geom_type == "MultiPolygon":
                                 for part in domain.geoms:
@@ -1655,6 +1657,7 @@ def fvDo (request, dataset, logger):
                                             p.set_color('w')
                                     except:
                                         logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
+                                        loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
                             
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
@@ -1946,5 +1949,8 @@ def fvDo (request, dataset, logger):
             
     topology.close()
     gc.collect()
-    logger.info('final time to complete request ' + str(timeobj.time() - totaltimer))
+    loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
+    logger.info(str(loglist))
     return response
+    
+    

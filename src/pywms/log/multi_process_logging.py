@@ -4,8 +4,10 @@ import multiprocessing, logging, sys, traceback
 class MultiProcessingLogHandler(logging.Handler):
     def __init__(self, name):
         logging.Handler.__init__(self)
+        
         self._handler = FileHandler(name)
         self.queue = multiprocessing.Queue(-1)
+        
         t = multiprocessing.Process(target=self.receive)
         t.daemon = True
         t.start()
