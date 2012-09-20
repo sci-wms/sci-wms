@@ -18,7 +18,6 @@ import time as timeobj
 import pywms.grid_init_script as grid
 import matplotlib.pyplot as plt
 from matplotlib.pylab import get_cmap
-from pywms.log.multi_process_logging import MultiProcessingLogHandler
 import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
 try:
     import cPickle as pickle
