@@ -33,7 +33,7 @@ output_path = 'sciwms_wms'
 logger = multiprocessing.get_logger()
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler('%s.log' % output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - %(levelname)s - %(message)s')
+formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
     
@@ -1556,7 +1556,8 @@ def fvDo (request, dataset, logger):
                             else:
                                 zi = griddata(lon, lat, mag, xi, yi, interp='nn')
 
-                            import matplotlib.patches as patches
+                            import matplotlib.patches as mpatches
+                            import matplotlib.path as mpath
 
                             #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
@@ -1592,13 +1593,23 @@ def fvDo (request, dataset, logger):
                                         #print x.min(), x.max()
                                         #print x[numpy.where(x < lonmax-359)]
                                         x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                
                                 x, y = m(x, y)
+                                #x = list(x).append(x[0])
+                                #y = list(y).append(y[0])
+                                x = numpy.hstack((numpy.asarray(x),x[0]))
+                                y = numpy.hstack((numpy.asarray(y),y[0]))
                                 #print numpy.asarray((x,y)).T
                                 #print patches.Polygon(numpy.asarray((x,y)).T)
-                                p = patches.Polygon(numpy.asarray((x,y)).T)
-                                m.ax.add_patch(p)
-                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p, interpolation="nearest")
-                                p.set_color('none')
+                                #p = patches.Polygon(numpy.asarray((x,y)).T)
+                                allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
+                                allcodes[0] = mpath.Path.MOVETO
+                                allcodes[-1] = mpath.Path.CLOSEPOLY
+                                p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
+                                patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
+                                m.ax.add_patch(patch1)
+                                m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
+                                patch1.set_color('none')
                                 try:
                                     for hole in domain.interiors:
                                         #print hole
@@ -1630,13 +1641,23 @@ def fvDo (request, dataset, logger):
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                         else:
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    
                                     x, y = m(x, y)
+                                    #x = list(x).append(x[0])
+                                    #y = list(y).append(y[0])
+                                    x = numpy.hstack((numpy.asarray(x),x[0]))
+                                    y = numpy.hstack((numpy.asarray(y),y[0]))
                                     #print numpy.asarray((x,y)).T
                                     #print patches.Polygon(numpy.asarray((x,y)).T)
-                                    p = patches.Polygon(numpy.asarray((x,y)).T)
-                                    m.ax.add_patch(p)
-                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p, interpolation="nearest")
-                                    p.set_color('none')
+                                    #p = patches.Polygon(numpy.asarray((x,y)).T)
+                                    allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
+                                    allcodes[0] = mpath.Path.MOVETO
+                                    allcodes[-1] = mpath.Path.CLOSEPOLY
+                                    p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
+                                    patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
+                                    m.ax.add_patch(patch1)
+                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
+                                    patch1.set_color('none')
                                     try:
                                         for hole in domain.interiors:
                                             #print hole
