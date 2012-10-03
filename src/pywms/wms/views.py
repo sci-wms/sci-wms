@@ -1207,7 +1207,7 @@ def fvDo (request, dataset, logger):
                                 
                                 domain = domain.intersection(box)
                                 
-                                buffer = StringIO()
+                                buf = StringIO()
                             
                                 lonmax1, latmax1 = m(lonmax, latmax)
                                 lonmin1, latmin1 = m(lonmin, latmin)
@@ -1218,9 +1218,10 @@ def fvDo (request, dataset, logger):
                                 m.ax.set_position([0,0,1,1])
                     
                                 canvas = FigureCanvasAgg(fig)
-                                canvas.print_png("temp.png")
-                                im = matplotlib.image.imread("temp.png")#[-1:0:-1,:,:]
-                                buffer.close()
+                                canvas.print_png(buf)#("temp.png")
+                                buf.seek(0)
+                                im = matplotlib.image.imread(buf)#"temp.png")#[-1:0:-1,:,:]
+                                buf.close()
                                 fig = Figure(dpi=80, facecolor='none', edgecolor='none')
                                 fig.set_alpha(0)
                                 fig.set_figheight(height/80.0)
@@ -1375,7 +1376,7 @@ def fvDo (request, dataset, logger):
                                 
                                 domain = domain.intersection(box)
                                 
-                                buffer = StringIO()
+                                buf = StringIO()
                             
                                 lonmax1, latmax1 = m(lonmax, latmax)
                                 lonmin1, latmin1 = m(lonmin, latmin)
@@ -1386,9 +1387,10 @@ def fvDo (request, dataset, logger):
                                 m.ax.set_position([0,0,1,1])
                     
                                 canvas = FigureCanvasAgg(fig)
-                                canvas.print_png("temp.png")
-                                im = matplotlib.image.imread("temp.png")#[-1:0:-1,:,:]
-                                buffer.close()
+                                canvas.print_png(buf)#("temp.png")
+                                buf.seek(0)
+                                im = matplotlib.image.imread(buf)#("temp.png")#[-1:0:-1,:,:]
+                                buf.close()
                                 fig = Figure(dpi=80, facecolor='none', edgecolor='none')
                                 fig.set_alpha(0)
                                 fig.set_figheight(height/80.0)
