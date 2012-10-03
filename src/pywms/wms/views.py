@@ -735,6 +735,8 @@ def getFeatureInfo(request, dataset, logger):
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
+    elif request.GET["INFO_FORMAT"].lower() == "application/json" || request.GET["INFO_FORMAT"].lower() == "application/jsonp":
+        pass
     else: 
         import csv
         response = HttpResponse()
@@ -1708,7 +1710,7 @@ def fvDo (request, dataset, logger):
                             import seeded_flow
                             js = seeded_flow.js_container(xi,yi,u,v)
                             #html = seeded_flow.html5_canvas(js)
-                            jsonresponse = HttpResponse(content_type='application/javascript')
+                            jsonresponse = HttpResponse(content_type='application/json')
                             jsonresponse.write(js)
                                 
                         elif  "facets" in actions:
