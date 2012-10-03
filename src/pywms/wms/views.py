@@ -1605,34 +1605,52 @@ def fvDo (request, dataset, logger):
                                 allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
                                 allcodes[0] = mpath.Path.MOVETO
                                 allcodes[-1] = mpath.Path.CLOSEPOLY
+                                for hole in domain.interiors:
+                                    holex, holey = hole.xy
+                                    holex = numpy.asarray(holex)
+                                    if continuous is True:
+                                        if lonmin < 0:
+                                            holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
+                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
+                                        else:
+                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
+                                    holex, holey = m(holex, holey)
+                                    newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
+                                    newcodes[0] = mpath.Path.MOVETO
+                                    newcodes[-1] = mpath.Path.CLOSEPOLY
+                                    allcodes = numpy.concatenate((allcodes, newcodes))
+                                    x = numpy.concatenate((x, holex))
+                                    y = numpy.concatenate((y, holey))
+                                     
                                 p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
                                 patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
                                 m.ax.add_patch(patch1)
                                 m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                 patch1.set_color('none')
-                                try:
-                                    for hole in domain.interiors:
-                                        #print hole
-                                        x, y = hole.xy
-                                        x = numpy.asarray(x)
-                                        if continuous is True:
-                                            if lonmin < 0:
-                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            else:
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                        x, y = m(x, y)
-                                        p = patches.Polygon(numpy.asarray((x,y)).T)
-                                        #print p
-                                        m.ax.add_patch(p)
-                                        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
-                                        p.set_color('w')
-                                except:
-                                    logger.warning('failure to add hole in domain.interiors of a Polygon')
-                                    loglist.append('failure to add hole in domain.interiors of a Polygon')
+                                #try:
+                                #    for hole in domain.interiors:
+                                #        #print hole
+                                #        x, y = hole.xy
+                                #        x = numpy.asarray(x)
+                                #        if continuous is True:
+                                #            if lonmin < 0:
+                                #                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                #                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                #            else:
+                                #                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                #        x, y = m(x, y)
+                                #        p = patches.Polygon(numpy.asarray((x,y)).T)
+                                #        #print p
+                                #        m.ax.add_patch(p)
+                                #        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                #        p.set_color('w')
+                                #except:
+                                #    logger.warning('failure to add hole in domain.interiors of a Polygon')
+                                #    loglist.append('failure to add hole in domain.interiors of a Polygon')
                                 
                             elif domain.geom_type == "MultiPolygon":
-                                for part in domain.geoms:
+                                for i, part in enumerate(domain.geoms):
+                                    #if i == 0:
                                     x, y = part.exterior.xy
                                     x = numpy.asarray(x)
                                     if continuous is True:
@@ -1653,32 +1671,103 @@ def fvDo (request, dataset, logger):
                                     allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
                                     allcodes[0] = mpath.Path.MOVETO
                                     allcodes[-1] = mpath.Path.CLOSEPOLY
+                                    #else:
+                                    try:
+                                        for hole in part.interiors:
+                                            holex, holey = hole.xy
+                                            holex = numpy.asarray(holex)
+                                            if continuous is True:
+                                                if lonmin < 0:
+                                                    holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
+                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
+                                                else:
+                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
+                                            holex, holey = m(holex, holey)
+                                            newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
+                                            newcodes[0] = mpath.Path.MOVETO
+                                            newcodes[-1] = mpath.Path.CLOSEPOLY
+                                            allcodes = numpy.concatenate((allcodes, newcodes))
+                                            x = numpy.concatenate((x, holex))
+                                            y = numpy.concatenate((y, holey))
+                                    except:
+                                        logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
+                                        loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
+                                        #logger.warning('MultiPolygon only has :' + str(dir(part)))
                                     p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
                                     patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
                                     m.ax.add_patch(patch1)
                                     m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                     patch1.set_color('none')
-                                    try:
-                                        for hole in domain.interiors:
-                                            #print hole
-                                            x, y = hole.xy
-                                            x = numpy.asarray(x)
-                                            if continuous is True:
-                                                if lonmin < 0:
-                                                    x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                                else:
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            x, y = m(x, y)
-                                            p = patches.Polygon(numpy.asarray((x,y)).T)
-                                            #print p 
-                                            m.ax.add_patch(p)
-                                            #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
-                                            p.set_color('w')
-                                    except:
-                                        logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
-                                        loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
+                                    #try:
+                                    #    for hole in domain.interiors:
+                                    #        #print hole
+                                    #        x, y = hole.xy
+                                    #        x = numpy.asarray(x)
+                                    #        if continuous is True:
+                                    #            if lonmin < 0:
+                                    #                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
+                                    #                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    #            else:
+                                    #                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
+                                    #        x, y = m(x, y)
+                                    #        p = patches.Polygon(numpy.asarray((x,y)).T)
+                                    #        #print p 
+                                    #        m.ax.add_patch(p)
+                                    #        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=p)
+                                    #        p.set_color('w')
+                                    #except:
+                                    #    logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
+                                    #    loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
+                        
+                        elif "flow" in actions:
+                            #fig.set_figheight(height/80.0)
+                            #fig.set_figwidth(width/80.0)  
+                            if topology_type.lower() == "cell":
+                                lon, lat = lon, lat
+                                lonn, latn = lonn, latn
+                            else:
+                                lon, lat = lonn, latn
+                                lonn, latn = lon, lat
+
+                            if lonmax-lonmin < 3:
+                                num = 300
+                            elif lonmax-lonmin < 5:
+                                num = 500
+                            elif lonmax-lonmin < 9:
+                                num = 900
+                            else:
+                                num = 2500
+
+                            xi = numpy.arange(lonmin, lonmax, num)
+                            yi = numpy.arange(latmin, latmax, num)
+
+                            from matplotlib.mlab import griddata
+
+                            f = open(os.path.join(config.topologypath, dataset + '.domain'))
+                            domain = pickle.load(f)
+                            f.close()
+                            import shapely.geometry
                             
+                            if topology_type.lower() == "node":
+                                n = numpy.unique(nv)
+                                u = griddata(lon[n], lat[n], var1[n], xi, yi, interp='nn')
+                                v = griddata(lon[n], lat[n], var2[n], xi, yi, interp='nn')
+                            else:
+                                u = griddata(lon, lat, var1, xi, yi, interp='nn')
+                                v = griddata(lon, lat, var2, xi, yi, interp='nn')
+                            xi = xi.flatten()
+                            yi = yi.flatten()
+                            cont = domain.overlaps(shapely.geometry.MultiPoint(numpy.asarray((xi,yi)).T))
+                            
+                            u.flatten()[cont==False] = 0
+                            v.flatten()[cont==False] = 0
+                            
+                            import seeded_flow
+                            js = seeded_flow.js_container(xi,yi,u,v)
+                            #html = seeded_flow.html5_canvas(js)
+                            jsonresponse = HttpResponse(content_type='application/javascript')
+                            jsonresponse.write(js)
+                                
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
                             #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
@@ -1971,6 +2060,9 @@ def fvDo (request, dataset, logger):
     gc.collect()
     loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
-    return response
+    if "flow" in actions:
+        return html5canvas
+    else:
+        return response
     
     
