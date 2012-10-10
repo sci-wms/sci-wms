@@ -115,49 +115,51 @@ def check_topology_age():
         for dataset in datasets:
             #print dataset
             name = dataset["name"]
-            p = multiprocessing.Process(target=do, args=(name,dataset,))
+            s = multiprocessing.Semaphore(2)
+            p = multiprocessing.Process(target=do, args=(name,dataset,s))
             p.daemon = True
             p.start()
             jobs.append(p)
             #do(name, dataset)
     
-def do(name, dataset):
-    try:
+def do(name, dataset, s):
+    with s:
         try:
-            #get_lock()
-            filemtime = datetime.fromtimestamp(
-                os.path.getmtime(
-                os.path.join(
-                server_local_config.topologypath, name + ".nc"
-                )))
-            #print filemtime
-            difference = datetime.now() - filemtime
-            if dataset["keep_up_to_date"]:
-                if difference.seconds > .5*3600 or difference.days > 0:
-                    
-                    nc = ncDataset(dataset["uri"])
-                    topo = ncDataset(os.path.join(
-                        server_local_config.topologypath, name + ".nc"))
+            try:
+                #get_lock()
+                filemtime = datetime.fromtimestamp(
+                    os.path.getmtime(
+                    os.path.join(
+                    server_local_config.topologypath, name + ".nc"
+                    )))
+                #print filemtime
+                difference = datetime.now() - filemtime
+                if dataset["keep_up_to_date"]:
+                    if difference.seconds > .5*3600 or difference.days > 0:
                         
-                    time1 = nc.variables['time'][-1]
-                    time2 = topo.variables['time'][-1]
-                    
-                    nc.close()
-                    topo.close()
-                    if time1 != time2:    
-                        print "Updating: " + dataset["uri"]
-                        create_topology(name, dataset["uri"])
+                        nc = ncDataset(dataset["uri"])
+                        topo = ncDataset(os.path.join(
+                            server_local_config.topologypath, name + ".nc"))
+                            
+                        time1 = nc.variables['time'][-1]
+                        time2 = topo.variables['time'][-1]
+                        
+                        nc.close()
+                        topo.close()
+                        if time1 != time2:    
+                            print "Updating: " + dataset["uri"]
+                            create_topology(name, dataset["uri"])
 
-        except:
-            print "Initializing: " + dataset["uri"]
-            create_topology(name, dataset["uri"])
-        try:
-            nc.close()
-            topo.close()
+            except:
+                print "Initializing: " + dataset["uri"]
+                create_topology(name, dataset["uri"])
+            try:
+                nc.close()
+                topo.close()
+            except:
+                pass
         except:
             pass
-    except:
-        pass
     
 def create_domain_polygon(filename):
     from shapely.geometry import Polygon

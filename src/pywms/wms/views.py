@@ -735,7 +735,7 @@ def getFeatureInfo(request, dataset, logger):
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
-    elif request.GET["INFO_FORMAT"].lower() == "application/json" || request.GET["INFO_FORMAT"].lower() == "application/jsonp":
+    elif request.GET["INFO_FORMAT"].lower() == "application/json" or request.GET["INFO_FORMAT"].lower() == "application/jsonp":
         pass
     else: 
         import csv
@@ -867,7 +867,7 @@ def fvDo (request, dataset, logger):
         if len(index) > 0:
             if ("facets" in actions) or \
             ("regrid" in actions) or \
-            ("shp" in actions) or \
+            ("shape" in actions) or \
             ("contours" in actions) or \
             ("interpolate" in actions) or \
             ("filledcontours" in actions) or \
@@ -892,13 +892,13 @@ def fvDo (request, dataset, logger):
                 loglist.append("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
             else:
                 nv = None
-
+            
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
             #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
             times = topology.variables['time'][:]
             datestart = netCDF4.date2num(datestart,
                 units=topology.variables['time'].units)
-            #dateend = date2num(dateend, units=times.units)
+            #dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)
             time = bisect.bisect_right(times, datestart) - 1
             if config.localdataset:
                 time = [1]
@@ -906,13 +906,20 @@ def fvDo (request, dataset, logger):
                 time = [0]
             else:
                 time = [time]
-            
+            if dateend != datestart:
+                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
+                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)
+                time.append(bisect.bisect_right(times, dateend) - 1)
+                if config.localdataset:
+                    time[1] = 1
+                elif time[1] == -1:
+                    time[1] = 0
+                else:
+                    time[1] = time[1]
+                time = range(time[0], time[1]+1)
             loglist.append('time index requested ' + str(time))
             
-            #pvar = deque()
             def getvar(nc, t, layer, var):
-                #nc = netCDF4.Dataset(url, 'r')
-                # Expects 3d cell variables.
                 if len(nc.variables[var].shape) == 3:
                     return nc.variables[var][t, layer[0], :]
                 elif len(nc.variables[var].shape) == 2:
@@ -960,17 +967,17 @@ def fvDo (request, dataset, logger):
                                 pass
                     if "maximum" in actions:
                         if len(var1.shape) > 2:
-                            var1 = var1.max(axis=0)
-                            var1 = var1.max(axis=0)
+                            var1 = numpy.abs(var1).max(axis=0)
+                            var1 = numpy.abs(var1).max(axis=0)
                             try:
-                                var2 = var2.max(axis=0)
-                                var2 = var2.max(axis=0)
+                                var2 = numpy.abs(var2).max(axis=0)
+                                var2 = numpy.abs(var2).max(axis=0)
                             except:
                                 pass
                         elif len(var1.shape) > 1:
-                            var1 = var1.max(axis=0)
+                            var1 = numpy.abs(var1).max(axis=0)
                             try:
-                                var2 = var2.max(axis=0)
+                                var2 = numpy.abs(var2).max(axis=0)
                             except:
                                 pass
                 else: pass # will eventually add animations over time, instead of averages
@@ -1710,8 +1717,37 @@ def fvDo (request, dataset, logger):
                             import seeded_flow
                             js = seeded_flow.js_container(xi,yi,u,v)
                             #html = seeded_flow.html5_canvas(js)
-                            jsonresponse = HttpResponse(content_type='application/json')
-                            jsonresponse.write(js)
+                            dataresponse = HttpResponse(content_type='application/json')
+                            dataresponse.write(js)
+                            
+                        elif "shape" in actions:
+                            import shapefile
+                            import zipfile
+                            dataresponse = HttpResponse(content_type='application/x-zip')
+                            dataresponse['Content-Disposition'] = 'attachment; filename=fvcom.zip'
+                            w = shapefile.Writer(shapefile.POLYGON)
+                            w.field('mag','F')
+                            mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                            mag = numpy.sqrt(mag)
+                            
+                            for i,v in enumerate(index):
+                                w.poly(parts=[[[lonn[nv[i, 0]], latn[nv[i, 0]]], \
+                                               [lonn[nv[i, 1]], latn[nv[i, 1]]], \
+                                               [lonn[nv[i, 2]], latn[nv[i, 2]]]]])
+                                w.record(mag[i])
+
+                            shp = StringIO()
+                            shx = StringIO()
+                            dbf = StringIO()
+                            w.saveShp(shp)
+                            w.saveShx(shx)
+                            w.saveDbf(dbf)
+                            z = zipfile.ZipFile(dataresponse, "w", zipfile.ZIP_STORED)
+                            #z = zipfile.ZipFile('/home/acrosby/alexsfvcomshape.zip', 'w', zipfile.ZIP_STORED)
+                            z.writestr("fvcom.shp", shp.getvalue())
+                            z.writestr("fvcom.shx", shx.getvalue())
+                            z.writestr("fvcom.dbf", dbf.getvalue())
+                            z.close()
                                 
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
@@ -1785,7 +1821,7 @@ def fvDo (request, dataset, logger):
                     #print "print png"
                     #fig.clf()
                     #Plot.close()   
-                     
+                """     
                 elif "data" in actions:
                     if "regrid" in actions:
                         #size = int(request.GET["size"])
@@ -1923,74 +1959,12 @@ def fvDo (request, dataset, logger):
                             z.writestr("fvcom.shx", shx.getvalue())
                             z.writestr("fvcom.dbf", dbf.getvalue())
                             z.close()
-                        
-            else: # for timeseries?
-                timevalsqs = Time.objects.filter(date__gte=datestart).filter(date__lte=dateend).values("date")
-                timevals = map(getVals, timevalsqs, numpy.ones(len(timesqs))*4)
-                
-                if "image" in actions:
-                    fig = Plot.figure()
-                    fig.set_alpha(0)
-                    ax = fig.add_subplot(111)
-
-                    #for direction in ["left", "right", "bottom", "top"]:
-                    #ax.set_frame_on(False)
-                    #ax.set_clip_on(False)
-                    #ax.set_position([0,0,1,1])
-                    #Plot.yticks(visible=False)
-                    #Plot.xticks(visible=False)
-                
-                    #ax.set_xlim()
-                    #ax.set_ylim()
-                    
-                    canvas = Plot.get_current_fig_manager().canvas
-                
-                    response = HttpResponse(content_type='image/png')
-                    canvas.print_png(response)
-                elif "data" in actions:
-                    if "nc" in actions:
-                        pass
-                    elif "text" in actions:
-                        response = HttpResponse(content_type='text/csv')
-                        response['Content-Disposition'] = 'filename=fvcom.txt'
-                        X = numpy.asarray((u,v))
-                        X = numpy.transpose(X)
-                  
-                        buffer = StringIO()
-            
-                        numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
-            
-                        dat = buffer.getvalue()
-                        buffer.close()
-                        response.write(dat)
-                    elif "mat" in actions:
-                        response = HttpResponse(content_type='application/matlab-mat')
-                        response['Content-Disposition'] = 'attachment; filename=fvcom.mat'
-                        X = numpy.asarray((u,v))
-                        X = numpy.transpose(X)
-                  
-                        buffer = StringIO()
-            
-                        scipy.io.savemat(buffer, { 'data' : X })
-                        #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
-            
-                        dat = buffer.getvalue()
-                        buffer.close()
-                        response.write(dat)
-            #job_server.destroy() # important so that we dont keep spwaning workers on every call, real messy...
-                        
+                """        
         else:
             from matplotlib.figure import Figure
             fig = Figure(dpi=5, facecolor='none', edgecolor='none')
             fig.set_alpha(0)
             projection = request.GET["projection"]
-            """
-            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
-                        urcrnrlon=lonmax, urcrnrlat=latmax,
-                        projection=projection,
-                        lat_ts = 0.0,
-                        suppress_ticks=True)
-            """ 
             ax = fig.add_axes([0, 0, 1, 1])
             fig.set_figheight(height/5.0)
             fig.set_figwidth(width/5.0)
@@ -2005,8 +1979,8 @@ def fvDo (request, dataset, logger):
     gc.collect()
     loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
-    if "flow" in actions:
-        return html5canvas
+    if "flow" in actions or "shape" in actions:
+        return dataresponse
     else:
         return response
     

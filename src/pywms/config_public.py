@@ -22,7 +22,7 @@ bind = "0.0.0.0:7000"
 workers = multiprocessing.cpu_count() * 4
 worker_class = worker
 debug = False
-timeout = 30
+timeout = 3600
 max_requests = 16
 backlog = 100
 
