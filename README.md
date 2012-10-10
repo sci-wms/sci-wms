@@ -1,6 +1,12 @@
 sci-wms
 =========
 
+##System Requirements
+
+- >= 4GB RAM
+- > 2 CPU (> 4 CPU Best)
+- Python > Version 2.6
+
 ##Install
 
 ####If you have the standard enthought python distribution (epd):
@@ -22,7 +28,7 @@ You must have the following installed:
 - gevent or eventlet
 - numpy
 - matplotlib (1.1.0 preferred)
-- matplotlib basemap (versions 1.0.2+ require mpl-toolkit axisgrid to be installed as well, but perhaps only if you are using mpl 1.1.0...)
+- matplotlib basemap (versions 1.0.1)
 - netCDF4-python (netCDF4)
 - shapely
 
@@ -72,7 +78,7 @@ or
 You can edit the gunicorn config file (config_public.py and config_local.py) to specify the port and other
 gunicorn server settings.
 
-Can also be run with mod_wsgi in Apache. I prefer to proxypass
+Can also be run with mod_wsgi/mod_python/etc in Apache. I prefer to proxypass
 in Apache or nginx to the gunicorn server because I think its better setup
 to handle the kinds of requests the server sees.
 
@@ -91,6 +97,9 @@ This admin site is how you will add and remove datasets for the wms server.
 
 In order for the wmstest page to work you need to add your site (and port) url to the sites list and remove all others.
 
+###Caveats:
+
+Look at https://github.com/acrosby/sci-wms/issues?state=open for a list of known issues and problems.
 
 ##Description of Styles Parameter:
 
