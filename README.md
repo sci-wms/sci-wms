@@ -12,6 +12,8 @@ sci-wms
 
 ##Install
 
+Download the compressed project and unpack anywhere. This is where the installation will live.
+
 ####If you have the standard enthought python distribution (epd):
 
 Install the remaining dependencies:
