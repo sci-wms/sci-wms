@@ -12,7 +12,13 @@ from pywms.wms.models import Dataset
 import server_local_config
 import multiprocessing
 from collections import deque
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except: 
+    import Pickle as pickle
+    
+s = multiprocessing.Semaphore(2)
+
 
 def create_topology(datasetname, url):
     import server_local_config as config
@@ -115,7 +121,6 @@ def check_topology_age():
         for dataset in datasets:
             #print dataset
             name = dataset["name"]
-            s = multiprocessing.Semaphore(2)
             p = multiprocessing.Process(target=do, args=(name,dataset,s))
             p.daemon = True
             p.start()
