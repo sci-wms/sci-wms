@@ -7,6 +7,8 @@ sci-wms
 - > 2 CPU (> 4 CPU Best)
 - Python > Version 2.6
 
+####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids officially supported)
+
 ##Install
 
 ####If you have the standard enthought python distribution (epd):
