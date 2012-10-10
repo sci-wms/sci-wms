@@ -3,11 +3,12 @@ sci-wms
 
 ##System Requirements
 
+####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids officially supported)
+
 - >= 4GB RAM
 - > 2 CPU (> 4 CPU Best)
 - Python > Version 2.6
 
-####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids officially supported)
 
 ##Install
 
