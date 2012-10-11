@@ -1540,15 +1540,15 @@ def fvDo (request, dataset, logger):
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
                             #yi = numpy.arange(lat.min(), lat.max(), 1000)
                             #print "lon " + str(lonmax-lonmin), lonmax, lonmin
-                            if lonmax-lonmin < 3:
-                                num = 300
-                            elif lonmax-lonmin < 5:
-                                num = 500
-                            elif lonmax-lonmin < 9:
-                                num = 900
-                            else:
-                                num = 2500
-                            #num = int( (lonmax - lonmin) *  100 )
+                            #if lonmax-lonmin < 3:
+                            #    num = 300
+                            #elif lonmax-lonmin < 5:
+                            #    num = 500
+                            #elif lonmax-lonmin < 9:
+                            #    num = 900
+                            #else:
+                            #    num = 2500
+                            num = int( (lonmax - lonmin) *  320 )
                             xi = numpy.arange(m.xmin, m.xmax, num)
                             yi = numpy.arange(m.ymin, m.ymax, num)
 
