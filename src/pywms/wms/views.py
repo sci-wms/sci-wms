@@ -1193,7 +1193,7 @@ def fvDo (request, dataset, logger):
                                 #    lon[triangs].mean(),
                                 #    lat[triangs].mean()))
                                 #trid.set_mask(mask)
-                                m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2)
+                                m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))
                                 
                                 import shapely.geometry
                                 import matplotlib.patches as mpatches
@@ -1333,7 +1333,7 @@ def fvDo (request, dataset, logger):
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2)           
+                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))           
 
                         elif "filledcontours" in actions:
                             fig.set_figheight(height/80.0)
@@ -1366,7 +1366,7 @@ def fvDo (request, dataset, logger):
                                 
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
-                                m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0)
+                                m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))
                                 
                                 f = open(os.path.join(config.topologypath, dataset + '.domain'))
                                 domain = pickle.load(f)
@@ -1502,7 +1502,7 @@ def fvDo (request, dataset, logger):
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0)   
+                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))   
                                 
                             
                             
