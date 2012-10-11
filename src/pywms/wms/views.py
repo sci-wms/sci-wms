@@ -479,7 +479,7 @@ def getLegendGraphic(request, dataset, logger):
                                             clip=False,
                                             )
         cb = matplotlib.colorbar.ColorbarBase(ax,
-                                              cmap=colormap,
+                                              cmap=get_cmap(colormap),
                                               norm=CNorm,
                                               orientation='vertical',
                                               )
