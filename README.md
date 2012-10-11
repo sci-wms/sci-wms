@@ -100,9 +100,12 @@ The admin page can be found here:   http://server:port/admin
 
 This admin site is how you will add and remove datasets for the wms server.
 
+###http://server:port/wmstest
+
 In order for the wmstest page to work you need to add your site (and port) url to the sites list and remove all others. This is *important* because a request to the *wmstest* page will 
 initialize newly added datasets and update datasets that are specified as updateable in the system. If you have a lot of datasets in your server, it may take a while to initialize all of them.
-Ensure that there is a dataset_id.nc and dataset_id.domain file in the pywms folder for each of your datasets before allowing others to use your services.
+Ensure that there is a dataset_id.nc and dataset_id.domain file in the pywms folder for each of your datasets before allowing others to use your services. Initialization needs to only be done once
+per dataset, and subsequent updates (if required) are quick.
 
 ###Caveats:
 
