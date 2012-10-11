@@ -441,7 +441,7 @@ def getLegendGraphic(request, dataset, logger):
     topology_type = styles[5]
     plot_type = styles[0]
     #magnitudebool = styles[6]
-    colormap = styles[2]
+    colormap = styles[2].replace('-', '_')
     
     # direct the service to the dataset
     # make changes to server_local_config.py 
