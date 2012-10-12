@@ -1548,7 +1548,7 @@ def fvDo (request, dataset, logger):
                             #    num = 900
                             #else:
                             #    num = 2500
-                            num = int( (lonmax - lonmin) *  400 )
+                            num = int( (lonmax - lonmin) *  320 )
                             xi = numpy.arange(m.xmin, m.xmax, num)
                             yi = numpy.arange(m.ymin, m.ymax, num)
 
