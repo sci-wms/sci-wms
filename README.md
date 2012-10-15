@@ -111,6 +111,16 @@ per dataset, and subsequent updates (if required) are quick.
 
 Look at https://github.com/acrosby/sci-wms/issues?state=open for a list of known issues and problems.
 
+###Use:
+
+This wms server is based on a model that has a separate GetCapabilities endpoint and base wms end point
+for each dataset added to the server. The datasets are distinguisghed internally by unique dataset id's
+provided by the administrator. These id's are also used used in the base wms url as follows.
+
+    http://server:port/wms/dataset_id/?REQUEST=GetCapabilities
+    
+There is no server-wide GetCapabilities document, but we may work on getting one installed in the future.
+
 ##Description of Styles Parameter:
 
 STYLES=position1_position2_position3_position4_position5_position6_position7
