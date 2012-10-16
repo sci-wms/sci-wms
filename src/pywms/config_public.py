@@ -23,7 +23,7 @@ workers = multiprocessing.cpu_count() * 2
 worker_class = worker
 debug = False
 timeout = 3600
-max_requests = 2
+max_requests = 5
 backlog = 100
 
 

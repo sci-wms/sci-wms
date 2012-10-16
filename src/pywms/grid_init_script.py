@@ -5,7 +5,7 @@ Created on Sep 6, 2011
 '''
 from netCDF4 import Dataset as ncDataset
 from netCDF4 import num2date
-import sys, os, numpy
+import sys, os, numpy, logging, traceback
 from datetime import datetime
 import numpy as np
 from pywms.wms.models import Dataset
@@ -19,13 +19,20 @@ except:
     
 s = multiprocessing.Semaphore(2)
 
+output_path = 'sciwms_wms'
+# Set up Logger
+logger = multiprocessing.get_logger()
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('%s.log' % output_path)
+formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 def create_topology(datasetname, url):
     import server_local_config as config
     nc = ncDataset(url)
     nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
     nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
-    
     if nc.variables.has_key("nv"):
         nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
         nclocal.createDimension('node', nc.variables['lat'].shape[0])
@@ -102,7 +109,7 @@ def create_topology(datasetname, url):
     nclocal.close()
     nc.close()
     create_domain_polygon(nclocalpath)
-
+    
 def create_topology_from_config():
     """
     Initialize topology upon server start up for each of the datasets listed in server_local_config.datasetpath dictionary
@@ -114,21 +121,31 @@ def create_topology_from_config():
 
 
 def check_topology_age():
-    from datetime import datetime
-    if True:
-        datasets = Dataset.objects.values()
-        jobs = []
-        for dataset in datasets:
-            #print dataset
-            name = dataset["name"]
-            p = multiprocessing.Process(target=do, args=(name,dataset,s))
-            p.daemon = True
-            p.start()
-            jobs.append(p)
-            #do(name, dataset)
-    
+    try:
+        from datetime import datetime
+        if True:
+            print True
+            datasets = Dataset.objects.values()
+            jobs = []
+            for dataset in datasets:
+                print dataset
+                #print dataset
+                name = dataset["name"]
+                print name
+                p = multiprocessing.Process(target=do, args=(name,dataset,s))
+                print "multi"
+                p.daemon = True
+                p.start()
+                jobs.append(p)
+                #do(name, dataset)
+    except Exception as detail:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("Disabling Error: " +\
+                                 repr(traceback.format_exception(exc_type, exc_value,
+                                              exc_traceback)))
 def do(name, dataset, s):
     with s:
+        print "got semaphore"
         try:
             try:
                 #get_lock()
@@ -163,8 +180,11 @@ def do(name, dataset, s):
                 topo.close()
             except:
                 pass
-        except:
-            pass
+        except Exception as detail:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logger.error("Disabling Error: " +\
+                                 repr(traceback.format_exception(exc_type, exc_value,
+                                              exc_traceback)))
     
 def create_domain_polygon(filename):
     from shapely.geometry import Polygon
