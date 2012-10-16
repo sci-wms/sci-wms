@@ -19,11 +19,11 @@ except:
         worker = "sync"
     
 bind = "0.0.0.0:7000"
-workers = multiprocessing.cpu_count() * 4
+workers = multiprocessing.cpu_count() * 2
 worker_class = worker
 debug = False
 timeout = 3600
-max_requests = 16
+max_requests = 2
 backlog = 100
 
 
