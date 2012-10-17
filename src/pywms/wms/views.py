@@ -590,8 +590,9 @@ def getFeatureInfo(request, dataset, logger):
     
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
-    lon, lat = mi(lonmin+(lonmax-lonmin)*(X/width),
-                            latmin+(latmax-latmin)*(Y/height),
+    # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
+    lon, lat = mi(lonmin+((lonmax-lonmin)*(X/width)),
+                            latmax-((latmax-latmin)*(Y/height)),
                             inverse=True)
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
@@ -613,8 +614,9 @@ def getFeatureInfo(request, dataset, logger):
         lats = topology.variables['latc'][:]
         lons = topology.variables['lonc'][:]
     
-    lengths = map(haversine, numpy.ones(len(lons))*lat, \
-                          numpy.ones(len(lons))*lon, lats, lons)
+    lengths = map(haversine, 
+                  numpy.ones(len(lons))*lat,
+                  numpy.ones(len(lons))*lon, lats, lons)
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
