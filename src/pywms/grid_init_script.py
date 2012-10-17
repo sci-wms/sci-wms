@@ -124,16 +124,12 @@ def check_topology_age():
     try:
         from datetime import datetime
         if True:
-            print True
             datasets = Dataset.objects.values()
             jobs = []
             for dataset in datasets:
-                print dataset
                 #print dataset
                 name = dataset["name"]
-                print name
                 p = multiprocessing.Process(target=do, args=(name,dataset,s))
-                print "multi"
                 p.daemon = True
                 p.start()
                 jobs.append(p)
@@ -145,7 +141,6 @@ def check_topology_age():
                                               exc_traceback)))
 def do(name, dataset, s):
     with s:
-        print "got semaphore"
         try:
             try:
                 #get_lock()
