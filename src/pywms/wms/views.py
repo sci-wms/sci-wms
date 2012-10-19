@@ -403,6 +403,7 @@ def getCapabilities(request, dataset, logger):
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
         except:
             pass
+    nc.close()
     tree = ET.ElementTree(root)
     # Return the response
     response = HttpResponse(content_type="text/xml")
@@ -543,6 +544,7 @@ def getLegendGraphic(request, dataset, logger):
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)
+    nc.close()
     return response
         
         
@@ -759,6 +761,8 @@ def getFeatureInfo(request, dataset, logger):
         buffer.close()
         response.write(dat)
         topology.close()
+    datasetnc.close()
+    topology.close()
     return response
 
 def fvDo (request, dataset, logger):
@@ -1978,6 +1982,7 @@ def fvDo (request, dataset, logger):
             canvas.print_png(response)
             
     topology.close()
+    datasetnc.close()
     gc.collect()
     loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
