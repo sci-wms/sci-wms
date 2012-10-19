@@ -17,6 +17,7 @@ sci-wms
 - working getmap
 - working getlegendgraphic for non-autoscaling colormap styles
 - service based dataset initialization and updating in addition to admin
+- support for native Adcirc and FVCOM model output meshes
 
 ####Version 1.1:
 - Support for rectilinear and curvilinear grids
@@ -26,7 +27,7 @@ sci-wms
 - server-wide symbolization customization in admin
 
 ####Experimental Fork/Branch:
-- Leverage hardware/opengl rendering for high overhead styles (facts, arrows...)
+- Leverage hardware/opengl rendering for high overhead styles (facets, arrows...)
 
 ##Install
 
