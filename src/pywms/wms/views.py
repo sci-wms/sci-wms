@@ -28,7 +28,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-output_path = 'sciwms_wms'
+output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
 logger = multiprocessing.get_logger()
 logger.setLevel(logging.INFO)

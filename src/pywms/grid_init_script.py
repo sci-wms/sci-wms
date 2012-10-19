@@ -10,6 +10,7 @@ from datetime import datetime
 import numpy as np
 from pywms.wms.models import Dataset
 import server_local_config
+import server_local_config as config
 import multiprocessing
 from collections import deque
 try:
@@ -19,7 +20,7 @@ except:
     
 s = multiprocessing.Semaphore(2)
 
-output_path = 'sciwms_wms'
+output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
 logger = multiprocessing.get_logger()
 logger.setLevel(logging.INFO)
