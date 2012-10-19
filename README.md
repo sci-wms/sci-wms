@@ -9,6 +9,24 @@ sci-wms
 - > 2 CPU (> 4 CPU Best)
 - Python > Version 2.6
 
+##Roadmap
+
+####Version 1:
+- Bug free working implementation of the current dev code
+- working getcaps
+- working getmap
+- working getlegendgraphic for non-autoscaling colormap styles
+- service based dataset initialization and updating in addition to admin
+
+####Version 1.1:
+- Support for rectilinear and curvilinear grids
+- some wps functionality
+- projections other than web mercator
+- working getlegendgraphic response for the autoscaling colormap styles
+- server-wide symbolization customization in admin
+
+####Experimental Fork/Branch:
+- Leverage hardware/opengl rendering for high overhead styles (facts, arrows...)
 
 ##Install
 
