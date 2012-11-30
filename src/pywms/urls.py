@@ -12,15 +12,16 @@ urlpatterns = patterns('',
     url(r'^wmstest/openlayers/(?P<filepath>.*)', 'wms.views.openlayers'),
     url(r'^static/(?P<filepath>.*)', 'wms.views.static'),
     url(r'^crossdomain.xml', 'wms.views.crossdomain'),
+    url(r'^update', 'wms.views.update'),
     #url(r'^testdb', 'wms.views.testdb'),
     url(r'^index', 'wms.views.index'),
     url(r'^$', 'wms.views.index'),
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    
+
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     )
-    
+
 
 

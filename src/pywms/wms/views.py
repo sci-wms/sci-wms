@@ -36,11 +36,11 @@ handler = logging.FileHandler('%s.log' % output_path)
 formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-    
+
 def testdb(request):
     #print dir(Dataset.objects.get(name='necofs'))
     return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
-    
+
 def index(request):
     import django.shortcuts as dshorts
     context = { "datasets":Dataset.objects.values()}
@@ -59,7 +59,7 @@ def static (request, filepath):
     f.close()
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(text, content_type='text/css')
-    
+
 def wmstest (request):
     import multiprocessing
     #p = multiprocessing.Process(target=grid.check_topology_age)
@@ -77,6 +77,12 @@ def wmstest (request):
     #return dshorts.render_to_response(text, dict1)
     return HttpResponse(Template(text).render(dict1))
 
+def update (request):
+    logger.info("Adding new datasets and checking for updates on old ones...")
+    grid.check_topology_age()
+    logger.info("...Finished updating")
+    return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
+
 def documentation (request):
     #jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
@@ -86,7 +92,7 @@ def documentation (request):
     text = f.read()
     dict1 = { "textfile":text}
     return dshorts.render_to_response('docs.html', dict1)
-    
+
 def crossdomain (request):
     f = open(config.staticspath + "crossdomain.xml")
     test = f.read()
@@ -126,8 +132,8 @@ def wms (request, dataset):
 def getCapabilities(request, dataset, logger):
     """
     get capabilities document based on this getcaps:
-    
-    
+
+
     http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
 
     """
@@ -137,10 +143,10 @@ def getCapabilities(request, dataset, logger):
     href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset + "/?"
 
     # Plug into your generic implentation of sciwms template
-    # will have to pull these fields out of the database directly 
+    # will have to pull these fields out of the database directly
     # to ensure uptodate
     service = ET.SubElement(root, 'Service')
-    
+
     servermetadata = Server.objects.values()[0]
     ET.SubElement(service, "Name").text = "OGC:WMS"
     ET.SubElement(service, "Title").text = servermetadata["title"]
@@ -167,7 +173,7 @@ def getCapabilities(request, dataset, logger):
     ET.SubElement(contactaddress, "Country").text = servermetadata['contact_country_address']
     ET.SubElement(contactinformation, "ContactVoiceTelephone").text = servermetadata['contact_telephone']
     ET.SubElement(contactinformation, "ContactElectronicMailAddress").text = servermetadata['contact_email']
-    
+
     # Capability elements (hardcoded)
     capability = ET.SubElement(root, "Capability")
     request = ET.SubElement(capability, "Request")
@@ -223,11 +229,11 @@ def getCapabilities(request, dataset, logger):
     #Exception
     exception = ET.SubElement(capability, "Exception")
     ET.SubElement(exception, "Format").text = "text/html"
-   
+
     # Pull layer description directly from database
     onlineresource.attrib["href"] = href
     # Layers
-    layer = ET.SubElement(capability, "Layer") 
+    layer = ET.SubElement(capability, "Layer")
     ET.SubElement(layer, "Title").text =  Dataset.objects.get(name=dataset).title
     ET.SubElement(layer, "Abstract").text =  Dataset.objects.get(name=dataset).abstract
     ET.SubElement(layer, "SRS").text =  "EPSG:3857"
@@ -410,11 +416,11 @@ def getCapabilities(request, dataset, logger):
     response.write(r'<?xml version="1.0" encoding="utf-8"?>')
     tree.write(response)
     return response
-    
+
 def getLegendGraphic(request, dataset, logger):
     """
     Parse parameters from request that looks like this:
-    
+
     http://webserver.smast.umassd.edu:8000/wms/NecofsWave?
     ELEVATION=1
     &LAYERS=hs
@@ -443,16 +449,16 @@ def getLegendGraphic(request, dataset, logger):
     plot_type = styles[0]
     #magnitudebool = styles[6]
     colormap = styles[2].replace('-', '_')
-    
+
     # direct the service to the dataset
-    # make changes to server_local_config.py 
+    # make changes to server_local_config.py
     if config.localdataset:
         url = config.localpath[dataset]
     else:
         url = Dataset.objects.get(name=dataset).uri
     nc = netCDF4.Dataset(url)
-    
-    
+
+
     """
     Create figure and axes for small legend image
     """
@@ -461,7 +467,7 @@ def getLegendGraphic(request, dataset, logger):
     fig.set_alpha(0)
     fig.set_figwidth(1*1.3)
     fig.set_figheight(1.5*1.3)
-                            
+
     """
     Create the colorbar or legend and add to axis
     """
@@ -493,18 +499,18 @@ def getLegendGraphic(request, dataset, logger):
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
             CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=True)
             levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
-            
+
             x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
-            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0]) 
+            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0])
                 for pc in cs.collections]
 
             fig.legend(proxy, levs,
-                       #bbox_to_anchor = (0, 0, 1, 1), 
-                       #bbox_transform = fig.transFigure, 
+                       #bbox_to_anchor = (0, 0, 1, 1),
+                       #bbox_transform = fig.transFigure,
                        loc = 6,
-                       title = nc.variables[variables[0]].units, 
+                       title = nc.variables[variables[0]].units,
                        prop = {'size':8},
                        frameon = False,
                        )
@@ -516,13 +522,13 @@ def getLegendGraphic(request, dataset, logger):
             CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=False,)
             levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
             levs = numpy.hstack(([-99999], levs, [99999]))
-            
+
             x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
-            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0]) 
+            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0])
                 for pc in cs.collections]
- 
+
             levels = []
             for i, value in enumerate(levs):
                 #if i == 0:
@@ -533,21 +539,21 @@ def getLegendGraphic(request, dataset, logger):
                     levels.append(str(value) + "-" + str(levs[i+1]))
             logger.info( str((levels, levs)) )
             fig.legend(proxy, levels,
-                       #bbox_to_anchor = (0, 0, 1, 1), 
-                       #bbox_transform = fig.transFigure, 
+                       #bbox_to_anchor = (0, 0, 1, 1),
+                       #bbox_transform = fig.transFigure,
                        loc = 6,
-                       title = nc.variables[variables[0]].units, 
+                       title = nc.variables[variables[0]].units,
                        prop = {'size':6},
                        frameon = False,
                        )
-    
+
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)
     nc.close()
     return response
-        
-        
+
+
 def getFeatureInfo(request, dataset, logger):
     """
      /wms/GOM3/?ELEVATION=1&LAYERS=temp&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=facets_average_jet_0_32_node_False&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:3857&BBOX=-7949675.196111,5078194.822174,-7934884.63114,5088628.476533&X=387&Y=196&INFO_FORMAT=text/csv&WIDTH=774&HEIGHT=546&QUERY_LAYERS=salinity&TIME=2012-08-14T00:00:00/2012-08-16T00:00:00
@@ -569,7 +575,7 @@ def getFeatureInfo(request, dataset, logger):
     X = float(request.GET['X'])
     Y = float(request.GET['Y'])
     #print X, Y
-    #VERSION = 
+    #VERSION =
     box = request.GET["BBOX"]
     box = box.split(",")
     latmin = float(box[1])
@@ -582,14 +588,14 @@ def getFeatureInfo(request, dataset, logger):
     #print styles
     #LAYERS = request.GET['LAYERS']
     #FORMAT =  request.GET['FORMAT']
-    #TRANSPARENT = 
+    #TRANSPARENT =
     QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
     elevation = [int(request.GET['ELEVATION'])]
     #print elevation
-    
+
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
@@ -599,13 +605,13 @@ def getFeatureInfo(request, dataset, logger):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+    #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
     #            urcrnrlon=lonmax, urcrnrlat=latmax,
-    #            projection=projection,                             
+    #            projection=projection,
     #            resolution=None,
     #            lat_ts = 0.0,
     #            suppress_ticks=True)
-    
+
     topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
 
     if 'node' in styles:
@@ -615,14 +621,14 @@ def getFeatureInfo(request, dataset, logger):
     else:
         lats = topology.variables['latc'][:]
         lons = topology.variables['lonc'][:]
-    
-    lengths = map(haversine, 
+
+    lengths = map(haversine,
                   numpy.ones(len(lons))*lat,
                   numpy.ones(len(lons))*lon, lats, lons)
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     index = lengths.index(min)
-    
+
     if config.localdataset:
         time = [1]
         time_units = topology.variables['time'].units
@@ -653,7 +659,7 @@ def getFeatureInfo(request, dataset, logger):
                 time = [0]
             else:
                 time = [time1]
-    
+
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
         #nc = netCDF4.Dataset(url, 'r')
@@ -667,7 +673,7 @@ def getFeatureInfo(request, dataset, logger):
                 return nc.variables[var][t, ind]
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
-    
+
     if config.localdataset:
         url = config.localpath[dataset]
         time = range(1,30)
@@ -675,7 +681,7 @@ def getFeatureInfo(request, dataset, logger):
     else:
         url = Dataset.objects.get(name=dataset).uri
     datasetnc = netCDF4.Dataset(url)
-   
+
     varis = deque()
     varis.append(getvar(datasetnc, time, elevation, "time", index))
     for var in QUERY_LAYERS:
@@ -684,8 +690,8 @@ def getFeatureInfo(request, dataset, logger):
             units = datasetnc.variables[var].units
         except:
             units = ""
-    
-    
+
+
     varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
     X = numpy.transpose(X)
@@ -695,7 +701,7 @@ def getFeatureInfo(request, dataset, logger):
         time_zone_offset = ZERO
     else:
         time_zone_offset = None
-    """   
+    """
     #print request.GET["INFO_FORMAT"]
     if request.GET["INFO_FORMAT"].lower() == "image/png":
         import matplotlib.dates as mdates
@@ -741,7 +747,7 @@ def getFeatureInfo(request, dataset, logger):
         canvas.print_png(response)
     elif request.GET["INFO_FORMAT"].lower() == "application/json" or request.GET["INFO_FORMAT"].lower() == "application/jsonp":
         pass
-    else: 
+    else:
         import csv
         response = HttpResponse()
         buffer = StringIO()
@@ -756,7 +762,7 @@ def getFeatureInfo(request, dataset, logger):
             thisline = [thistime.strftime("%Y%m%dT%H%M%SZ")]
             for k in range(1, len(varis)):
                 thisline.append(varis[k][i])
-            c.writerow(thisline)         
+            c.writerow(thisline)
         dat = buffer.getvalue()
         buffer.close()
         response.write(dat)
@@ -775,8 +781,8 @@ def fvDo (request, dataset, logger):
     5) Do averaging
     With appropriate parameters for each (parameters my overlap).
     '''
-    
-    
+
+
     totaltimer = timeobj.time()
     loglist = []
     def haversine(lat1, lon1, lat2, lon2):
@@ -792,20 +798,20 @@ def fvDo (request, dataset, logger):
         c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
         length = 6371 * c
         return length
-    
+
     def reorderArray(values, numsrow, numscol):
         grid = [];
         for i in range(numsrow):
             grid.append(values[ (i * numscol):((i * numscol) + (numscol - 1)) ])
         return grid
-    
+
     # direct the service to the dataset
-    # make changes to server_local_config.py 
+    # make changes to server_local_config.py
     if config.localdataset:
         url = config.localpath[dataset]
     else:
         url = Dataset.objects.get(name=dataset).uri
-        
+
 
     width = float(request.GET["width"])
     height = float(request.GET["height"])
@@ -813,7 +819,7 @@ def fvDo (request, dataset, logger):
     latmin = float(request.GET["latmin"])
     lonmax = float(request.GET["lonmax"])
     lonmin = float(request.GET["lonmin"])
-    
+
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
@@ -829,25 +835,25 @@ def fvDo (request, dataset, logger):
     layer = numpy.asarray(layer)
     actions = request.GET["actions"]
     actions = set(actions.split(","))
-    
+
     colormap = request.GET["colormap"]#.lower()
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
         climits = ["None", "None"]
-    
+
     magnitude = request.GET["magnitude"]
-        
+
 
     topology_type = request.GET["topologytype"]
-        
+
     variables = request.GET["variables"].split(",")
     continuous = False
-    
+
     if "kml" in actions:
         pass
     else:
-        
+
         topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
         datasetnc = netCDF4.Dataset(url)
 
@@ -866,7 +872,7 @@ def fvDo (request, dataset, logger):
                 (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
             lat = lat[index]
             lon = lon[index]
-            
+
         else:
             pass
         loglist.append("index " + str(len(index)))
@@ -898,7 +904,7 @@ def fvDo (request, dataset, logger):
                 loglist.append("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
             else:
                 nv = None
-            
+
             datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
             #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
             times = topology.variables['time'][:]
@@ -924,7 +930,7 @@ def fvDo (request, dataset, logger):
                     time[1] = time[1]
                 time = range(time[0], time[1]+1)
             loglist.append('time index requested ' + str(time))
-            
+
             def getvar(nc, t, layer, var):
                 if len(nc.variables[var].shape) == 3:
                     return nc.variables[var][t, layer[0], :]
@@ -947,7 +953,7 @@ def fvDo (request, dataset, logger):
                 except:
                     pass
             elif len(var1.shape) > 1:
-                var1 = var1[:, index] 
+                var1 = var1[:, index]
                 try:
                     var2 = var2[:, index]
                 except:
@@ -987,7 +993,7 @@ def fvDo (request, dataset, logger):
                             except:
                                 pass
                 else: pass # will eventually add animations over time, instead of averages
-        
+
                 if "image" in actions:
                     from matplotlib.figure import Figure
                     fig = Figure(dpi=80, facecolor='none', edgecolor='none')
@@ -995,13 +1001,13 @@ def fvDo (request, dataset, logger):
                     #ax = fig.add_subplot(111)
                     projection = request.GET["projection"]
 
-                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
                             urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
                             resolution=None,
                             lat_ts = 0.0,
                             suppress_ticks=True)
-                            
+
                     m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
 
                     if "regrid" in actions:
@@ -1045,7 +1051,7 @@ def fvDo (request, dataset, logger):
                             fig.set_figwidth(height/80.0/m.aspect)
                             fig.set_figheight(height/80.0)
                             #fig.set_figwidth(width/80.0)
-                            
+
                             mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
 
                             mag = numpy.sqrt(mag)
@@ -1055,7 +1061,7 @@ def fvDo (request, dataset, logger):
                                 pass
                             else:
                                 lon, lat = lonn, latn
-                                
+
                             #print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
                             lon, lat = m(lon, lat)
 
@@ -1066,7 +1072,7 @@ def fvDo (request, dataset, logger):
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
-                                       
+
                             if magnitude == "True":
                                 arrowsize = None
                             elif magnitude == "False":
@@ -1075,11 +1081,11 @@ def fvDo (request, dataset, logger):
                                 arrowsize = None
                             else:
                                 arrowsize = float(magnitude)
-                                
-                            
+
+
                             if topology_type.lower() == 'node':
                                 n = numpy.unique(nv)
-                                m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n], 
+                                m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
                                     pivot='mid',
                                     units='xy', #xy
                                     cmap=colormap,
@@ -1089,7 +1095,7 @@ def fvDo (request, dataset, logger):
                                     scale_units='inches',
                                     )
                             else:
-                                m.quiver(lon, lat, var1, var2, mag, 
+                                m.quiver(lon, lat, var1, var2, mag,
                                     pivot='mid',
                                     units='xy', #xy
                                     cmap=colormap,
@@ -1104,7 +1110,7 @@ def fvDo (request, dataset, logger):
                             fig.set_figwidth(height/80.0/m.aspect)
                             fig.set_figheight(height/80.0)
                             #fig.set_figwidth(width/80.0)
-                            
+
                             mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
 
                             mag = numpy.sqrt(mag)
@@ -1116,7 +1122,7 @@ def fvDo (request, dataset, logger):
                                 lon, lat = lonn, latn
 
                             lon, lat = m(lon, lat)
-                             
+
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                                 full = 10.#.2
@@ -1154,13 +1160,13 @@ def fvDo (request, dataset, logger):
                                     linewidth=1.7,
                                     sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
                                     #antialiased=True,
-                                    )   
-                            
+                                    )
 
-                            
+
+
                         elif "contours" in actions:
                             fig.set_figheight(height/80.0)
-                            fig.set_figwidth(width/80.0)  
+                            fig.set_figwidth(width/80.0)
                             #lon, lat = m(lon, lat)
                             #lonn, latn = m(lonn, latn)
                             if len(variables) > 1:
@@ -1171,7 +1177,7 @@ def fvDo (request, dataset, logger):
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
-                            
+
                             #ax = fig.add_subplot(111)
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
@@ -1185,12 +1191,12 @@ def fvDo (request, dataset, logger):
                             #    cmap=colormap,
                             #    norm=CNorm,
                             #    )\
-                            
+
                             #m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
                             if topology_type.lower() == 'cell':
                                 #if continuous is True:
                                 #    lon[np.where(lon < lonmin)] = lon[np.where(lon < lonmin)] + 360
-                            
+
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
                                 #mask = []
@@ -1200,7 +1206,7 @@ def fvDo (request, dataset, logger):
                                 #    lat[triangs].mean()))
                                 #trid.set_mask(mask)
                                 m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))
-                                
+
                                 import shapely.geometry
                                 import matplotlib.patches as mpatches
                                 import matplotlib.path as mpath
@@ -1219,11 +1225,11 @@ def fvDo (request, dataset, logger):
                                                                              shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
                                 else:
                                     box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
-                                
+
                                 domain = domain.intersection(box)
-                                
+
                                 buf = StringIO()
-                            
+
                                 lonmax1, latmax1 = m(lonmax, latmax)
                                 lonmin1, latmin1 = m(lonmin, latmin)
                                 m.ax.set_xlim(lonmin1, lonmax1)
@@ -1231,7 +1237,7 @@ def fvDo (request, dataset, logger):
                                 m.ax.set_frame_on(False)
                                 m.ax.set_clip_on(False)
                                 m.ax.set_position([0,0,1,1])
-                    
+
                                 canvas = FigureCanvasAgg(fig)
                                 canvas.print_png(buf)#("temp.png")
                                 buf.seek(0)
@@ -1240,14 +1246,14 @@ def fvDo (request, dataset, logger):
                                 fig = Figure(dpi=80, facecolor='none', edgecolor='none')
                                 fig.set_alpha(0)
                                 fig.set_figheight(height/80.0)
-                                fig.set_figwidth(width/80.0) 
+                                fig.set_figwidth(width/80.0)
                                 ##
                                 ## fig.figimage(im, clip_path=p)
                                 ##  p.set_color('none')
-                                ## 
-                                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                ##
+                                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
                                         urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                        #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                        #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
                                         resolution=None,
                                         lat_ts = 0.0,
                                         suppress_ticks=True)
@@ -1261,7 +1267,7 @@ def fvDo (request, dataset, logger):
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                         else:
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                    
+
                                     x, y = m(x, y)
                                     x = numpy.hstack((numpy.asarray(x),x[0]))
                                     y = numpy.hstack((numpy.asarray(y),y[0]))
@@ -1284,14 +1290,14 @@ def fvDo (request, dataset, logger):
                                         allcodes = numpy.concatenate((allcodes, newcodes))
                                         x = numpy.concatenate((x, holex))
                                         y = numpy.concatenate((y, holey))
-                                         
+
                                     p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
                                     patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
                                     m.ax.add_patch(patch1)
                                     fig.figimage(im, clip_path=patch1)
                                     #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                     patch1.set_color('none')
-                                    
+
                                 elif domain.geom_type == "MultiPolygon":
                                     for i, part in enumerate(domain.geoms):
                                         #if i == 0:
@@ -1339,21 +1345,21 @@ def fvDo (request, dataset, logger):
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))           
+                                m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))
 
                         elif "filledcontours" in actions:
                             fig.set_figheight(height/80.0)
-                            fig.set_figwidth(width/80.0)  
-                            
+                            fig.set_figwidth(width/80.0)
+
                             if len(variables) > 1:
-                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2) 
+                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                                 mag = numpy.sqrt(mag)
                             else:
                                 if magnitude == "True":
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
-                            
+
                             #ax = fig.add_subplot(111)
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
@@ -1369,11 +1375,11 @@ def fvDo (request, dataset, logger):
                                 import shapely.geometry
                                 import matplotlib.patches as mpatches
                                 import matplotlib.path as mpath
-                                
+
                                 lon, lat = m(lon, lat)
                                 trid = Tri.Triangulation(lon, lat)
                                 m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))
-                                
+
                                 f = open(os.path.join(config.topologypath, dataset + '.domain'))
                                 domain = pickle.load(f)
                                 f.close()
@@ -1388,11 +1394,11 @@ def fvDo (request, dataset, logger):
                                                                              shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
                                 else:
                                     box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
-                                
+
                                 domain = domain.intersection(box)
-                                
+
                                 buf = StringIO()
-                            
+
                                 lonmax1, latmax1 = m(lonmax, latmax)
                                 lonmin1, latmin1 = m(lonmin, latmin)
                                 m.ax.set_xlim(lonmin1, lonmax1)
@@ -1400,7 +1406,7 @@ def fvDo (request, dataset, logger):
                                 m.ax.set_frame_on(False)
                                 m.ax.set_clip_on(False)
                                 m.ax.set_position([0,0,1,1])
-                    
+
                                 canvas = FigureCanvasAgg(fig)
                                 canvas.print_png(buf)#("temp.png")
                                 buf.seek(0)
@@ -1413,10 +1419,10 @@ def fvDo (request, dataset, logger):
                                 ##
                                 ## fig.figimage(im, clip_path=p)
                                 ##  p.set_color('none')
-                                ## 
-                                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                                ##
+                                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
                                         urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                        #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,                              
+                                        #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
                                         resolution=None,
                                         lat_ts = 0.0,
                                         suppress_ticks=True)
@@ -1430,7 +1436,7 @@ def fvDo (request, dataset, logger):
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                         else:
                                             x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                    
+
                                     x, y = m(x, y)
                                     x = numpy.hstack((numpy.asarray(x),x[0]))
                                     y = numpy.hstack((numpy.asarray(y),y[0]))
@@ -1453,14 +1459,14 @@ def fvDo (request, dataset, logger):
                                         allcodes = numpy.concatenate((allcodes, newcodes))
                                         x = numpy.concatenate((x, holex))
                                         y = numpy.concatenate((y, holey))
-                                         
+
                                     p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
                                     patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
                                     m.ax.add_patch(patch1)
                                     fig.figimage(im, clip_path=patch1)
                                     #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                     patch1.set_color('none')
-                                    
+
                                 elif domain.geom_type == "MultiPolygon":
                                     for i, part in enumerate(domain.geoms):
                                         #if i == 0:
@@ -1508,20 +1514,20 @@ def fvDo (request, dataset, logger):
                             else:
                                 lonn, latn = m(lonn, latn)
                                 tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))   
-                                
-                            
-                            
+                                m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))
+
+
+
                         elif "pcolor" in actions:
                             fig.set_figheight(height/80.0)
-                            fig.set_figwidth(width/80.0)  
+                            fig.set_figwidth(width/80.0)
                             if topology_type.lower() == "cell":
                                 lon, lat = m(lon, lat)
                                 lonn, latn = m(lonn, latn)
                             else:
                                 lon, lat = m(lonn, latn)
                                 lonn, latn = lon, lat
-                                
+
                             if len(variables) > 1:
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                                 mag = numpy.sqrt(mag)
@@ -1530,7 +1536,7 @@ def fvDo (request, dataset, logger):
                                     mag = numpy.abs(var1)
                                 else:
                                     mag = var1
-                            
+
                             #ax = fig.add_subplot(111)
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
@@ -1539,9 +1545,9 @@ def fvDo (request, dataset, logger):
                                                                     vmax=climits[1],
                                                                     clip=True,
                                                                    )
-                                                                   
+
                             #tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                           
+
                             #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
                             #xi = numpy.arange(lon.min(), lon.max(), 1000)
                             #yi = numpy.arange(lat.min(), lat.max(), 1000)
@@ -1575,7 +1581,7 @@ def fvDo (request, dataset, logger):
                             #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
                             #multi1 = MultiPolygon([[a, []], [b, []]])
                             loglist.append("time to before domain open " + str(timeobj.time() - totaltimer))
-                            
+
                             f = open(os.path.join(config.topologypath, dataset + '.domain'))
                             domain = pickle.load(f)
                             f.close()
@@ -1603,7 +1609,7 @@ def fvDo (request, dataset, logger):
                                         x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
                                     else:
                                         x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                
+
                                 x, y = m(x, y)
                                 x = numpy.hstack((numpy.asarray(x),x[0]))
                                 y = numpy.hstack((numpy.asarray(y),y[0]))
@@ -1626,13 +1632,13 @@ def fvDo (request, dataset, logger):
                                     allcodes = numpy.concatenate((allcodes, newcodes))
                                     x = numpy.concatenate((x, holex))
                                     y = numpy.concatenate((y, holey))
-                                     
+
                                 p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
                                 patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
                                 m.ax.add_patch(patch1)
                                 m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                 patch1.set_color('none')
-                                
+
                             elif domain.geom_type == "MultiPolygon":
                                 for i, part in enumerate(domain.geoms):
                                     #if i == 0:
@@ -1676,10 +1682,10 @@ def fvDo (request, dataset, logger):
                                     m.ax.add_patch(patch1)
                                     m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
                                     patch1.set_color('none')
-                        
+
                         elif "flow" in actions:
                             #fig.set_figheight(height/80.0)
-                            #fig.set_figwidth(width/80.0)  
+                            #fig.set_figwidth(width/80.0)
                             if topology_type.lower() == "cell":
                                 lon, lat = lon, lat
                                 lonn, latn = lonn, latn
@@ -1705,7 +1711,7 @@ def fvDo (request, dataset, logger):
                             domain = pickle.load(f)
                             f.close()
                             import shapely.geometry
-                            
+
                             if topology_type.lower() == "node":
                                 n = numpy.unique(nv)
                                 u = griddata(lon[n], lat[n], var1[n], xi, yi, interp='nn')
@@ -1716,16 +1722,16 @@ def fvDo (request, dataset, logger):
                             xi = xi.flatten()
                             yi = yi.flatten()
                             cont = domain.overlaps(shapely.geometry.MultiPoint(numpy.asarray((xi,yi)).T))
-                            
+
                             u.flatten()[cont==False] = 0
                             v.flatten()[cont==False] = 0
-                            
+
                             import seeded_flow
                             js = seeded_flow.js_container(xi,yi,u,v)
                             #html = seeded_flow.html5_canvas(js)
                             dataresponse = HttpResponse(content_type='application/json')
                             dataresponse.write(js)
-                            
+
                         elif "shape" in actions:
                             import shapefile
                             import zipfile
@@ -1735,7 +1741,7 @@ def fvDo (request, dataset, logger):
                             w.field('mag','F')
                             mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                             mag = numpy.sqrt(mag)
-                            
+
                             for i,v in enumerate(index):
                                 w.poly(parts=[[[lonn[nv[i, 0]], latn[nv[i, 0]]], \
                                                [lonn[nv[i, 1]], latn[nv[i, 1]]], \
@@ -1754,16 +1760,16 @@ def fvDo (request, dataset, logger):
                             z.writestr("fvcom.shx", shx.getvalue())
                             z.writestr("fvcom.dbf", dbf.getvalue())
                             z.close()
-                                
+
                         elif  "facets" in actions:
                             #projection = request.GET["projection"]
-                            #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin, 
+                            #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
                             #            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                            #            lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2, 
+                            #            lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
                             #            )
                             fig.set_figheight(height/80.0)
                             fig.set_figwidth(width/80.0)
-                            
+
                             #print "points ll", numpy.min(lonn), numpy.min(latn), "ur", numpy.max(lonn), numpy.max(latn)
                             lonn, latn = m(lonn, latn)
                             tri = Tri.Triangulation(lonn,latn,triangles=nv)
@@ -1774,7 +1780,7 @@ def fvDo (request, dataset, logger):
                                     mag = numpy.sqrt(var1**2)
                                 else:
                                     mag = var1
-                                    
+
                             if (climits[0] == "None") or (climits[1] == "None"):
                                 CNorm = matplotlib.colors.Normalize()
                             else:
@@ -1782,14 +1788,14 @@ def fvDo (request, dataset, logger):
                                                                 vmax=climits[1],
                                                                 clip=True,
                                                                 )
-                                                                    
+
                             if topology_type.lower() == 'cell':
                                 verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
                                                         tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
-                                
-                                
+
+
                                 collection = PolyCollection(verts,
-                                                            cmap=colormap, 
+                                                            cmap=colormap,
                                                             norm=CNorm,
                                                             )
                                 collection.set_array(mag)
@@ -1803,7 +1809,7 @@ def fvDo (request, dataset, logger):
                                                norm=CNorm,
                                                cmap=colormap,
                                                )
-                            
+
                     lonmax, latmax = m(lonmax, latmax)
                     lonmin, latmin = m(lonmin, latmin)
                     m.ax.set_xlim(lonmin, lonmax)
@@ -1813,11 +1819,11 @@ def fvDo (request, dataset, logger):
                     m.ax.set_position([0,0,1,1])
                     #Plot.yticks(visible=False)
                     #Plot.xticks(visible=False)
-                    
+
                     #Plot.axis('off')
 
                     #canvas = Plot.get_current_fig_manager().canvas
-                    
+
                     canvas = FigureCanvasAgg(fig)
                     response = HttpResponse(content_type='image/png')
                     #response = HttpResponse(content_type="image/svg+xml")
@@ -1826,8 +1832,8 @@ def fvDo (request, dataset, logger):
                     canvas.print_png(response)
                     #print "print png"
                     #fig.clf()
-                    #Plot.close()   
-                """     
+                    #Plot.close()
+                """
                 elif "data" in actions:
                     if "regrid" in actions:
                         #size = int(request.GET["size"])
@@ -1837,7 +1843,7 @@ def fvDo (request, dataset, logger):
                         hi = math.ceil(hi)
                         if "grid" in actions:
                             import pywms.wms.regrid as regrid
-                            
+
                             response = HttpResponse(content_type='text/plain')
                             response['Content-Disposition'] = 'attachment; filename=fvcom.grd'
                             mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
@@ -1845,7 +1851,7 @@ def fvDo (request, dataset, logger):
                             reglon = numpy.linspace(numpy.negative(lonmin), numpy.negative(lonmax), wid)
                             reglon = numpy.negative(reglon)
                             reglat = numpy.linspace(latmin, latmax, hi)
-                            
+
                             #buffer = StringIO()
                             response.write(('ncols ' + str(len(reglon)) + '\n'))
                             response.write(('nrows ' + str(len(reglat)) + '\n'))
@@ -1853,11 +1859,11 @@ def fvDo (request, dataset, logger):
                             response.write(("yllcenter " + str(latmin)) + '\n')
                             response.write(('cellsize ' + str(size) + '\n'))
                             response.write(('NODATA_value ' + '-9999\n'))
-                            
+
                             newvalues = regrid.regrid(mag, lonn, latn, nv, reglon, reglat, size)
 
                             #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
-                
+
                             #dat = buffer.getvalue()
                             #buffer.close()
                             for i,v in enumerate(newvalues):
@@ -1869,7 +1875,7 @@ def fvDo (request, dataset, logger):
                                     else:
                                         response.write('\n')
                                 else: response.write(" ")
-                                
+
                     else:
                         if "nc" in actions:
                             response = HttpResponse(content_type='application/netcdf')
@@ -1891,17 +1897,17 @@ def fvDo (request, dataset, logger):
                             uvar = rootgrp.createVariable('u', 's', ('cell',))
                             vvar = rootgrp.createVariable('v', 's', ('cell',))
                             magvar = rootgrp.createVariable('velocity', 's', ('cell',))
-                            
-                            
+
+
                             uvar[:] = u
                             vvar[:] = v
                             latvar[:] = numpy.asarray(lat)
                             lonvar[:] = numpy.asarray(lon)
-                            
+
                             mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
                             mag = numpy.sqrt(mag)
                             magvar[:] = mag
-                            
+
                             rootgrp.close()
                             dat = buffer.getvalue()
                             buffer.close()
@@ -1911,26 +1917,26 @@ def fvDo (request, dataset, logger):
                             response['Content-Disposition'] = 'filename=fvcom.txt'
                             X = numpy.asarray([lon,lat,u,v])
                             X = numpy.transpose(X)
-                      
+
                             buffer = StringIO()
-                
+
                             numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
-                
+
                             dat = buffer.getvalue()
                             buffer.close()
                             response.write(dat)
-                            
+
                         elif "mat" in actions:
                             response = HttpResponse(content_type='application/matlab-mat')
                             response['Content-Disposition'] = 'attachment; filename=fvcom.mat'
                             X = numpy.asarray([lon,lat,u,v])
                             X = numpy.transpose(X)
-                      
+
                             buffer = StringIO()
-                
+
                             scipy.io.savemat(buffer, { 'data' : X })
                             #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f')
-                
+
                             dat = buffer.getvalue()
                             buffer.close()
                             response.write(dat)
@@ -1943,7 +1949,7 @@ def fvDo (request, dataset, logger):
                             w.field('mag','F')
                             mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
                             mag = numpy.sqrt(mag)
-                            
+
                             #for i,j in enumerate(lon):
                             #    w.point(j, lat[i])
                             #    w.record(mag[i])
@@ -1965,7 +1971,7 @@ def fvDo (request, dataset, logger):
                             z.writestr("fvcom.shx", shx.getvalue())
                             z.writestr("fvcom.dbf", dbf.getvalue())
                             z.close()
-                """        
+                """
         else:
             from matplotlib.figure import Figure
             fig = Figure(dpi=5, facecolor='none', edgecolor='none')
@@ -1980,7 +1986,7 @@ def fvDo (request, dataset, logger):
             canvas = FigureCanvasAgg(fig)
             response = HttpResponse(content_type='image/png')
             canvas.print_png(response)
-            
+
     topology.close()
     datasetnc.close()
     gc.collect()
@@ -1990,5 +1996,5 @@ def fvDo (request, dataset, logger):
         return dataresponse
     else:
         return response
-    
-    
+
+
