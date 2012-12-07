@@ -37,6 +37,7 @@ def create_topology(datasetname, url):
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if nc.variables.has_key("nv"):
             logger.info("identified as fvcom")
+            grid = 'False'
             nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
             nclocal.createDimension('node', nc.variables['lat'].shape[0])
             nclocal.createDimension('time', nc.variables['time'].shape[0])
@@ -73,9 +74,12 @@ def create_topology(datasetname, url):
             nv[:,:] = nc.variables['nv'][:,:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
+            nclocal.grid = grid
+            logger.info("data written to file")
 
         elif nc.variables.has_key("element"):
             logger.info("identified as adcirc")
+            grid = 'False'
             nclocal.createDimension('node', nc.variables['x'].shape[0])
             nclocal.createDimension('cell', nc.variables['element'].shape[0])
             nclocal.createDimension('time', nc.variables['time'].shape[0])
@@ -107,12 +111,48 @@ def create_topology(datasetname, url):
             nv[:,:] = nc.variables['element'][:,:].T
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
+            nclocal.grid = grid
+            logger.info("data written to file")
+        else:
+            logger.info("identified as grid")
+            print str(nc.variables['lat'].ndim)
+            if nc.variables['lat'].ndim > 1:
+                igrid = nc.variables['lat'].shape[0]
+                jgrid = nc.variables['lat'].shape[1]
+                grid = 'cgrid'
+            else:
+                grid = 'rgrid'
+                igrid = nc.variables['lat'].shape[0]
+                jgrid = nc.variables['lon'].shape[0]
+            latchunk, lonchunk = (igrid,jgrid,), (igrid,jgrid,)
+
+            nclocal.createDimension('igrid', igrid)
+            nclocal.createDimension('jgrid', jgrid)
+            nclocal.createDimension('time', nc.variables['time'].shape[0])
+
+            lat = nclocal.createVariable('lat', 'f', ('igrid','jgrid',), chunksizes=latchunk, zlib=False, complevel=0)
+            lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
+            time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
+
+            lontemp = nc.variables['lon'][:]
+            lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
+
+            if grid == 'rgrid':
+                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables['y'][:])
+                grid = 'cgrid'
+            else:
+                lon[:] = lontemp
+                lat[:] = nc.variables['lat'][:]
+            time[:] = nc.variables['time'][:]
+            time.units = nc.variables['time'].units
+            nclocal.grid = grid
             logger.info("data written to file")
 
         nclocal.sync()
         nclocal.close()
         nc.close()
-        create_domain_polygon(nclocalpath)
+        if not grid:
+            create_domain_polygon(nclocalpath)
 
 
     except Exception as detail:
@@ -120,6 +160,7 @@ def create_topology(datasetname, url):
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
+        os.unlink(nclocalpath)
 
 def create_topology_from_config():
     """
