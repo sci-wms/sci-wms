@@ -78,7 +78,7 @@ with pip on the install command.
 
 You also need to ensure that you have basemap matplotlib toolkit installed:
 
-    $wget -O basemap-1.0.1.tar.gz http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.1/basemap-1.0.1.tar.gz/download
+    $wget -o basemap-1.0.1.tar.gz http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.1/basemap-1.0.1.tar.gz/download
     $pip install basemap-1.0.1.tar.gz
 
 ##Run
