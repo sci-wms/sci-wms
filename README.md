@@ -61,15 +61,17 @@ have pip installed you can use the following to install many (but not all) of th
 
     $pip install package
 
+<!---
 Or you can install the required packages (with the versions we develop
 the wms on) with the requirements file:
 
     $pip install -r requirements.txt
-    
+-->
+
 Similarly if you have setup_tools installed you can use:
 
     $easy_install package
-    
+
 If you are using virtualenv, just make sure you have the environment
 activated before you try to install the packages or point to the environment
 with pip on the install command.
@@ -92,7 +94,7 @@ You also need to ensure that you have basemap matplotlib toolkit installed:
     $cd project_folder/src/pywms
 
     $gunicorn_django -c config_public.py       # for local use config_local.py (configs use port 7000 by default)
-    
+
 or
 
     $cd project_folder
@@ -113,7 +115,7 @@ to handle the kinds of requests the server sees.
 The default username is "*sciwmsuser*" and its password is "*sciwmspassword*". So,
 the first thing you should do is login to the administration utility
 and change the password or remove the default user and create a new one
-for yourself. 
+for yourself.
 
 The admin page can be found here:   http://server:port/admin
 
@@ -121,7 +123,7 @@ This admin site is how you will add and remove datasets for the wms server.
 
 ###http://server:port/wmstest
 
-In order for the wmstest page to work you need to add your site (and port) url to the sites list and remove all others. This is *important* because a request to the *wmstest* page will 
+In order for the wmstest page to work you need to add your site (and port) url to the sites list and remove all others. This is *important* because a request to the *wmstest* page will
 initialize newly added datasets and update datasets that are specified as updateable in the system. If you have a lot of datasets in your server, it may take a while to initialize all of them.
 Ensure that there is a dataset_id.nc and dataset_id.domain file in the pywms folder for each of your datasets before allowing others to use your services. Initialization needs to only be done once
 per dataset, and subsequent updates (if required) are quick.
@@ -137,7 +139,7 @@ for each dataset added to the server. The datasets are distinguisghed internally
 provided by the administrator. These id's are also used used in the base wms url as follows.
 
     http://server:port/wms/dataset_id/?REQUEST=GetCapabilities
-    
+
 There is no server-wide GetCapabilities document, but we may work on getting one installed in the future.
 
 ##Description of Styles Parameter:
