@@ -55,6 +55,7 @@ You must have the following installed:
 - matplotlib basemap (versions 1.0.1)
 - netCDF4-python (netCDF4)
 - shapely
+- markdown
 
 sci-wms works with both pip and virtualenv quite happily. If you
 have pip installed you can use the following to install many (but not all) of the required modules:

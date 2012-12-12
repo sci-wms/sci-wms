@@ -1,4 +1,5 @@
 numpy
+markdown
 Django==1.4.0
 Shapely==1.2.14
 greenlet==0.3.1
