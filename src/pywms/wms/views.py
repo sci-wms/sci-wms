@@ -1046,7 +1046,16 @@ def fvDo (request, dataset, logger):
                                                             vmax=climits[1],
                                                             clip=True,
                                                             )
-                        cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig, aspect=m.aspect, height=height, width=width, norm=CNorm)
+                        cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
+                                    aspect=m.aspect,
+                                    height=height,
+                                    width=width,
+                                    norm=CNorm,
+                                    cmin = climits[0],
+                                    cmax = climits[1],
+                                    magnitude = magnitude,
+                                    cmap = colormap)
+
                     elif gridtype == 'False':
                         if "regrid" in actions:
                             """
