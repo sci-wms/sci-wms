@@ -52,21 +52,24 @@ def create_topology(datasetname, url):
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d
 
             lontemp = nc.variables['lon'][:]
+            lonctemp = nc.variables['lonc'][:]
+
             if np.max(lontemp) > 180:
                 #print "greaterthan"
-                lonctemp = nc.variables['lonc'][:]
                 lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
-                lonctemp[lonctemp > 180] = lonctemp[lonctemp > 180] -360
                 lon[:] = np.asarray(lontemp)
-                lonc[:] = np.asarray(lonctemp)
             #elif np.min(lontemp) < -180:
             #    print "lessthan"
             #    lon[:] = np.asarray(lontemp) + 360
             #    lonc[:] = np.asarray(nc.variables['lonc'][:] + 360)
             else:
-            #    print "nochange"
+                #print "nochange"
                 lon[:] = lontemp
-                lonc[:] = nc.variables['lonc'][:]
+            if np.max(lonctemp) > 180:
+                lonctemp[lonctemp > 180] = lonctemp[lonctemp > 180] - 360
+                lonc[:] = np.asarray(lonctemp)
+            else:
+                lonc[:] = lonctemp
 
             lat[:] = nc.variables['lat'][:]
             latc[:] = nc.variables['latc'][:]
@@ -151,7 +154,7 @@ def create_topology(datasetname, url):
         nclocal.sync()
         nclocal.close()
         nc.close()
-        if not grid:
+        if grid == 'False':
             create_domain_polygon(nclocalpath)
 
 
@@ -245,12 +248,14 @@ def create_domain_polygon(filename):
     lonn = nc.variables['lon'][:]
     lon = nc.variables['lonc'][:]
     lat = nc.variables['latc'][:]
+
     index_pos = numpy.asarray(numpy.where(
             (lat <= 90) & (lat >= -90) &
             (lon <= 180) & (lon > 0),)).squeeze()
     index_neg = numpy.asarray(numpy.where(
             (lat <= 90) & (lat >= -90) &
             (lon < 0) & (lon >= -180),)).squeeze()
+
     if len(index_pos) > 0:
         p = deque()
         p_add = p.append
@@ -294,6 +299,7 @@ def create_domain_polygon(filename):
     elif len(index_pos) > 0:
         domain = domain_pos
     else:
+        logger.info(nc.__str__())
         logger.error("Domain file creation - No data in topology file")
         raise ValueError("No data in file")
 

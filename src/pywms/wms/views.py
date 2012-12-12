@@ -873,7 +873,7 @@ def fvDo (request, dataset, logger):
 
             lat = topology.variables[toplatc][:]
 
-            if gridtype is not 'False':
+            if gridtype != 'False':
                 #if grid == 'rgrid':
                 #    index, lat, lon = rgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
                 if gridtype == 'cgrid':
@@ -885,12 +885,11 @@ def fvDo (request, dataset, logger):
                 lat = lat[index]
                 lon = lon[index]
 
-        else:
-            pass
-        if gridtype != 'False':
-            loglist.append('index %f, %f' % index.shape)
-        else:
-            loglist.append("index " + str(len(index)))
+            if gridtype == 'False':
+                loglist.append('index ' + str(index.shape))
+            else:
+                loglist.append("index " + str(len(index)))
+
         if len(index) > 0:
             if ("facets" in actions) or \
             ("regrid" in actions) or \
