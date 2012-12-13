@@ -182,7 +182,7 @@ def check_topology_age():
             datasets = Dataset.objects.values()
             jobs = []
             for dataset in datasets:
-                #print dataset
+                print dataset
                 name = dataset["name"]
                 p = multiprocessing.Process(target=do, args=(name,dataset,s))
                 p.daemon = True
@@ -204,18 +204,18 @@ def do(name, dataset, s):
                     os.path.join(
                     server_local_config.topologypath, name + ".nc"
                     )))
-                #print filemtime
+                print filemtime
                 difference = datetime.now() - filemtime
                 if dataset["keep_up_to_date"]:
                     if difference.seconds > .5*3600 or difference.days > 0:
-
+                        print "true"
                         nc = ncDataset(dataset["uri"])
                         topo = ncDataset(os.path.join(
                             server_local_config.topologypath, name + ".nc"))
 
                         time1 = nc.variables['time'][-1]
                         time2 = topo.variables['time'][-1]
-
+                        print time1, time2
                         nc.close()
                         topo.close()
                         if time1 != time2:
@@ -248,7 +248,7 @@ def create_domain_polygon(filename):
     lonn = nc.variables['lon'][:]
     lon = nc.variables['lonc'][:]
     lat = nc.variables['latc'][:]
-
+    print lat, lon, latn, lonn
     index_pos = numpy.asarray(numpy.where(
             (lat <= 90) & (lat >= -90) &
             (lon <= 180) & (lon > 0),)).squeeze()

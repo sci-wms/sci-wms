@@ -15,32 +15,41 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     index = np.asarray(np.where(
         (lat <= latmax+.18) & (lat >= latmin-.18) &
         (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
-    ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))+1))
-    jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))+1))
-    lat = lat[ind[0]:ind[-1], jnd[0]:jnd[-1]]
-    lon = lon[ind[0]:ind[-1], jnd[0]:jnd[-1]]
+    if index.shape[1] > 0:
+        ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))+1))
+        jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))+1))
+        lat = lat[ind[0]:ind[-1], jnd[0]:jnd[-1]]
+        lon = lon[ind[0]:ind[-1], jnd[0]:jnd[-1]]
+    else:
+        index = None
+        lat = np.asarray([[],[]])
+        lon = np.asarray([[],[]])
     return index, lat, lon
 
 def getvar(datasetnc, t, layer, variables, index):
-    #var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
-    ncvar1 = datasetnc.variables[variables[0]]
-    shp = ncvar1.shape
-    ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
-    jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))))
-    if len(shp) > 3: # Check if the variable has depth
-        var1 = ncvar1[t, layer[0], ind, jnd]
-    elif len(shp) == 3:
-        var1 = ncvar1[t, ind, jnd]
-        var1 = var1.squeeze()
-    if len(variables) > 1: # Check if request came with more than 1 var
-        ncvar2 = datasetnc.variables[variables[1]]
-        shp = ncvar2.shape
-        if len(shp) > 3: # Check if the variable has depth
-            var2 = ncvar2[t, layer[0], ind, jnd]
-        elif len(shp) == 3:
-            var2 = ncvar2[t, ind, jnd]
-    else:
+    if index is None:
+        var1 = None
         var2 = None
+    else:
+        #var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
+        ncvar1 = datasetnc.variables[variables[0]]
+        shp = ncvar1.shape
+        ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
+        jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))))
+        if len(shp) > 3: # Check if the variable has depth
+            var1 = ncvar1[t, layer[0], ind, jnd]
+        elif len(shp) == 3:
+            var1 = ncvar1[t, ind, jnd]
+            var1 = var1.squeeze()
+        if len(variables) > 1: # Check if request came with more than 1 var
+            ncvar2 = datasetnc.variables[variables[1]]
+            shp = ncvar2.shape
+            if len(shp) > 3: # Check if the variable has depth
+                var2 = ncvar2[t, layer[0], ind, jnd]
+            elif len(shp) == 3:
+                var2 = ncvar2[t, ind, jnd]
+        else:
+            var2 = None
     return var1, var2
 
 def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
@@ -52,35 +61,36 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
     cmin = kwargs.get('cmin', "None")
     cmax = kwargs.get('cmax', "None")
     magnitude = kwargs.get('magnitude', 2)
-    if var2 is not None:
-        mag = np.sqrt(var1**2 + var2**2)
-    else:
-        mag = var1
-    mag = mag.squeeze()
-    if "pcolor" in actions:
-        fig.set_figheight(height/80.0)
-        fig.set_figwidth(width/80.0)
-        pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
-    elif "filledcontours" in actions:
-        fig.set_figheight(height/80.0)
-        fig.set_figwidth(width/80.0)
-        fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap)
-    elif "contours" in actions:
-        fig.set_figheight(height/80.0)
-        fig.set_figwidth(width/80.0)
-        contour(lon, lat, mag, ax, norm, cmin, cmax, cmap)
-    #elif "facets" in actions:
-    #    fig.set_figheight(height/80.0)
-    #    fig.set_figwidth(width/80.0)
-    #    facet(lon, lat, mag, ax)
-    elif "vectors" in actions:
-        fig.set_figheight(height/80.0/aspect)
-        fig.set_figwidth(width/80.0)
-        vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
-    elif "barbs" in actions:
-        fig.set_figheight(height/80.0/aspect)
-        fig.set_figwidth(width/80.0)
-        barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude)
+    if var1 is not None:
+        if var2 is not None:
+            mag = np.sqrt(var1**2 + var2**2)
+        else:
+            mag = var1
+        mag = mag.squeeze()
+        if "pcolor" in actions:
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
+        elif "filledcontours" in actions:
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap)
+        elif "contours" in actions:
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            contour(lon, lat, mag, ax, norm, cmin, cmax, cmap)
+        #elif "facets" in actions:
+        #    fig.set_figheight(height/80.0)
+        #    fig.set_figwidth(width/80.0)
+        #    facet(lon, lat, mag, ax)
+        elif "vectors" in actions:
+            fig.set_figheight(height/80.0/aspect)
+            fig.set_figwidth(width/80.0)
+            vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
+        elif "barbs" in actions:
+            fig.set_figheight(height/80.0/aspect)
+            fig.set_figwidth(width/80.0)
+            barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude)
 
 def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
     mag = np.ma.array(mag, mask=np.isnan(mag))

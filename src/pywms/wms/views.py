@@ -884,13 +884,18 @@ def fvDo (request, dataset, logger):
                     (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
                 lat = lat[index]
                 lon = lon[index]
+                if not len(index) > 0:
+                    index = None
 
             if gridtype == 'False':
-                loglist.append('index ' + str(index.shape))
+                loglist.append('index ' + str(len(index)))
             else:
-                loglist.append("index " + str(len(index)))
+                try:
+                    loglist.append("index " + str(index.shape))
+                except:
+                    loglist.append("index " + str(index))
 
-        if len(index) > 0:
+        if index is not None:
             if ("facets" in actions) or \
             ("regrid" in actions) or \
             ("shape" in actions) or \
