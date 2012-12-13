@@ -766,12 +766,38 @@ def getFeatureInfo(request, dataset, logger):
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
-    elif request.GET["INFO_FORMAT"].lower() == "application/json" or request.GET["INFO_FORMAT"].lower() == "application/jsonp":
+    elif request.GET["INFO_FORMAT"].lower() == "application/json":
+        import json
         pass
+    elif request.GET["INFO_FORMAT"].lower() == "text/javascript":
+        """
+        http://docs.geoserver.org/latest/en/user/services/wms/reference.html#getfeatureinfo
+        """
+        import json
+        callback = "parseResposnse"
+        try:
+            callback = request.GET["CALLBACK"]
+        except:
+            pass
+        try:
+            callback = request.GET["callback"]
+        except:
+            pass
+        response = HttpResponse()
+        output_dict = {}
+        varis[0] = [t.strftime("%Y%m%dT%H%M%SZ") for t in varis[0]]
+        output_dict["time"] = {"units": "iso", "values": varis[0]}
+        for i, var in enumerate(QUERY_LAYERS):
+            varis[i+1] = list(varis[i+1])
+            for q, v in enumerate(varis[i+1]):
+                if numpy.isnan(v):
+                    varis[i+1][q] = float("nan")
+            output_dict[var] = {"units": datasetnc.variables[var].units, "values": varis[i+1]}
+        output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+        response.write(output_str)
     else:
         import csv
         response = HttpResponse()
-        buffer = StringIO()
         #buffer.write(lat.__str__() + " , " + lon.__str__())
         #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
         c = csv.writer(buffer)
@@ -788,7 +814,6 @@ def getFeatureInfo(request, dataset, logger):
         buffer.close()
         response.write(dat)
     datasetnc.close()
-    del gridtype
     topology.close()
     return response
 

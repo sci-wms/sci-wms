@@ -59,7 +59,6 @@ def getvar(datasetnc, t, layer, variables, index):
                 var2 = var2.squeeze()
         else:
             var2 = None
-        print var1, var2
     return var1, var2
 
 def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
