@@ -1,7 +1,7 @@
 sci-wms
 =========
 
-####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids officially supported)
+####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids and structured grids officially supported)
 
 ##System Requirements
 
