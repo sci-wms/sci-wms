@@ -84,6 +84,12 @@ def update (request):
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
+def add(request):
+    return HttpResponse()
+
+def remove(request):
+    return HttpResponse()
+
 def documentation (request):
     #jobsarray = grid.check_topology_age()
     import django.shortcuts as dshorts
@@ -130,7 +136,7 @@ def wms (request, dataset):
                                   exc_traceback)) + '\n' + str(request))
         return HttpResponse(status=500)
 
-def getCapabilities(request, dataset, logger):
+def getCapabilities(request, dataset, logger): # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
 
@@ -573,6 +579,8 @@ def getFeatureInfo(request, dataset, logger):
         length = 6371 * c
         return length
 
+    vhaversine = numpy.vectorize(haversine)
+
     X = float(request.GET['X'])
     Y = float(request.GET['Y'])
     #print X, Y
@@ -614,21 +622,28 @@ def getFeatureInfo(request, dataset, logger):
     #            suppress_ticks=True)
 
     topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
-
-    if 'node' in styles:
-        #nv = topology.variables['nv'][:,index].T-1
-        lats = topology.variables['lat'][:]
-        lons = topology.variables['lon'][:]
-    else:
-        lats = topology.variables['latc'][:]
-        lons = topology.variables['lonc'][:]
-
-    lengths = map(haversine,
+    gridtype = topology.grid
+    if gridtype == 'False':
+        if 'node' in styles:
+            lats = topology.variables['lat'][:]
+            lons = topology.variables['lon'][:]
+        else:
+            lats = topology.variables['latc'][:]
+            lons = topology.variables['lonc'][:]
+        lengths = map(haversine,
                   numpy.ones(len(lons))*lat,
                   numpy.ones(len(lons))*lon, lats, lons)
+    else:
+        lats = topology.variables['lat'][:]
+        lons = topology.variables['lon'][:]
+        lengths = vhaversine(lat, lon, lats, lons)
+
     min = numpy.asarray(lengths)
     min = numpy.min(min)
-    index = lengths.index(min)
+    if gridtype == 'False':
+        index = lengths.index(min)
+    else:
+        index = numpy.where(lengths==min)
 
     if config.localdataset:
         time = [1]
@@ -685,13 +700,18 @@ def getFeatureInfo(request, dataset, logger):
 
     varis = deque()
     varis.append(getvar(datasetnc, time, elevation, "time", index))
-    for var in QUERY_LAYERS:
-        varis.append(getvar(datasetnc, time, elevation, var, index))
-        try:
-            units = datasetnc.variables[var].units
-        except:
-            units = ""
-
+    if gridtype == 'False':
+        for var in QUERY_LAYERS:
+            varis.append(getvar(datasetnc, time, elevation, var, index))
+            try:
+                units = datasetnc.variables[var].units
+            except:
+                units = ""
+    else:
+        var1, var2 = cgrid.getvar(datasetnc, time, elevation, QUERY_LAYERS, index)
+        varis.append(var1)
+        if var2 is not None:
+            varis.append(var2)
 
     varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
@@ -767,8 +787,8 @@ def getFeatureInfo(request, dataset, logger):
         dat = buffer.getvalue()
         buffer.close()
         response.write(dat)
-        topology.close()
     datasetnc.close()
+    del gridtype
     topology.close()
     return response
 

@@ -34,12 +34,19 @@ def getvar(datasetnc, t, layer, variables, index):
         #var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
         ncvar1 = datasetnc.variables[variables[0]]
         shp = ncvar1.shape
-        ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
-        jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))))
+        if len(index[0]) == 1:
+            ind = index[0][0]
+        else:
+            ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
+        if len(index[1]) == 1:
+            jnd = index[1][0]
+        else:
+            jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))))
         if len(shp) > 3: # Check if the variable has depth
             var1 = ncvar1[t, layer[0], ind, jnd]
         elif len(shp) == 3:
             var1 = ncvar1[t, ind, jnd]
+        if len(var1) > 1:
             var1 = var1.squeeze()
         if len(variables) > 1: # Check if request came with more than 1 var
             ncvar2 = datasetnc.variables[variables[1]]
@@ -48,8 +55,11 @@ def getvar(datasetnc, t, layer, variables, index):
                 var2 = ncvar2[t, layer[0], ind, jnd]
             elif len(shp) == 3:
                 var2 = ncvar2[t, ind, jnd]
+            if len(var2) > 1:
+                var2 = var2.squeeze()
         else:
             var2 = None
+        print var1, var2
     return var1, var2
 
 def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
