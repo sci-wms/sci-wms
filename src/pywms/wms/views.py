@@ -214,10 +214,10 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
     ET.SubElement(gfi, "Format").text = "image/png"
     ET.SubElement(gfi, "Format").text = "text/csv"
     ET.SubElement(gfi, "Format").text = "text/javascript"
-    #ET.SubElement(getmap, "Format").text = "text/csv"
-    #ET.SubElement(getmap, "Format").text = "application/netcdf"
-    #ET.SubElement(getmap, "Format").text = "application/matlab-mat"
-    #ET.SubElement(getmap, "Format").text = "application/x-zip-esrishp"
+    #ET.SubElement(gfi, "Format").text = "text/csv"
+    #ET.SubElement(gfi, "Format").text = "application/netcdf"
+    #ET.SubElement(gfi, "Format").text = "application/matlab-mat"
+    #ET.SubElement(gfi, "Format").text = "application/x-zip-esrishp"
     gfi_dcptype = ET.SubElement(gfi, "DCPType")
     gfi_http = ET.SubElement(gfi_dcptype, "HTTP")
     gfi_get = ET.SubElement(gfi_http, "Get")
@@ -935,7 +935,10 @@ def fvDo (request, dataset, logger):
                     index = None
 
             if gridtype == 'False':
-                loglist.append('index ' + str(len(index)))
+                try:
+                    loglist.append("index " + len(index))
+                except:
+                    loglist.append("index " + str(index))
             else:
                 try:
                     loglist.append("index " + str(index.shape))
