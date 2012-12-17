@@ -212,7 +212,9 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
     # GetFeatureInfo
     gfi = ET.SubElement(request, "GetFeatureInfo")
     ET.SubElement(gfi, "Format").text = "image/png"
-    ET.SubElement(getmap, "Format").text = "text/csv"
+    ET.SubElement(gfi, "Format").text = "text/csv"
+    ET.SubElement(gfi, "Format").text = "text/javascript"
+    #ET.SubElement(getmap, "Format").text = "text/csv"
     #ET.SubElement(getmap, "Format").text = "application/netcdf"
     #ET.SubElement(getmap, "Format").text = "application/matlab-mat"
     #ET.SubElement(getmap, "Format").text = "application/x-zip-esrishp"
