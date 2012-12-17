@@ -75,6 +75,7 @@ def create_topology(datasetname, url):
             latc[:] = nc.variables['latc'][:]
 
             nv[:,:] = nc.variables['nv'][:,:]
+            #print np.max(np.max(nv)), np.max(np.max(nc.variables['nv'][:,:]))
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             nclocal.grid = grid
@@ -244,18 +245,19 @@ def create_domain_polygon(filename):
 
     nc = ncDataset(filename)
     nv = nc.variables['nv'][:, :].T-1
+    #print np.max(np.max(nv))
     latn = nc.variables['lat'][:]
     lonn = nc.variables['lon'][:]
     lon = nc.variables['lonc'][:]
     lat = nc.variables['latc'][:]
-    #print lat, lon, latn, lonn
+    #print lat, lon, latn, lonn, nv
     index_pos = numpy.asarray(numpy.where(
             (lat <= 90) & (lat >= -90) &
             (lon <= 180) & (lon > 0),)).squeeze()
     index_neg = numpy.asarray(numpy.where(
             (lat <= 90) & (lat >= -90) &
             (lon < 0) & (lon >= -180),)).squeeze()
-
+    #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
     if len(index_pos) > 0:
         p = deque()
         p_add = p.append
