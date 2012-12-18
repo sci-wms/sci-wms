@@ -150,6 +150,11 @@ def create_topology(datasetname, url):
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             nclocal.grid = grid
+            try:
+                nclocal.grid
+            except:
+                nclocal.__setattr__("grid", "cgrid")
+
             logger.info("data written to file")
 
         nclocal.sync()
