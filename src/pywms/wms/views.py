@@ -714,6 +714,10 @@ def getFeatureInfo(request, dataset, logger):
         varis.append(var1)
         if var2 is not None:
             varis.append(var2)
+        try:
+            units = datasetnc.variables[QUERY_LAYERS[0]].units
+        except:
+            units = ""
 
     varis[0] = netCDF4.num2date(varis[0], units=time_units)
     X = numpy.asarray([var for var in varis])
