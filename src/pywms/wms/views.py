@@ -770,7 +770,7 @@ def getFeatureInfo(request, dataset, logger):
         canvas.print_png(response)
     elif request.GET["INFO_FORMAT"].lower() == "application/json":
         import json
-        pass
+        response = HttpResponse("Response MIME Type application/json not supported at this time")
     elif request.GET["INFO_FORMAT"].lower() == "text/javascript":
         """
         http://docs.geoserver.org/latest/en/user/services/wms/reference.html#getfeatureinfo
@@ -794,11 +794,14 @@ def getFeatureInfo(request, dataset, logger):
             for q, v in enumerate(varis[i+1]):
                 if numpy.isnan(v):
                     varis[i+1][q] = float("nan")
+                else:
+                    varis[i+1][q] = float(varis[i+1][q])
             output_dict[var] = {"units": datasetnc.variables[var].units, "values": varis[i+1]}
         output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
         response.write(output_str)
-    else:
+    elif request.GET["INFO_FORMAT"].lower() == "text/csv":
         import csv
+        buffer = StringIO()
         response = HttpResponse()
         #buffer.write(lat.__str__() + " , " + lon.__str__())
         #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
@@ -815,6 +818,8 @@ def getFeatureInfo(request, dataset, logger):
         dat = buffer.getvalue()
         buffer.close()
         response.write(dat)
+    else:
+        response = HttpResponse("Response MIME Type %s not supported at this time" % request.GET["INFO_FORMAT"].lower())
     datasetnc.close()
     topology.close()
     return response
