@@ -107,12 +107,18 @@ def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
     ax.pcolormesh(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
 
 def fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap):
-    levs = np.arange(1, 12)*(cmax-cmin)/10
-    levs = np.hstack(([-99999], levs, [99999]))
+    if (climits[0] == "None") or (climits[1] == "None"):
+        levs = None
+    else:
+        levs = np.arange(1, 12)*(cmax-cmin)/10
+        levs = np.hstack(([-99999], levs, [99999]))
     ax.contourf(lon, lat, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=cmap)
 
 def contour(lon, lat, mag, ax, norm, cmin, cmax, cmap):
-    levs = np.arange(0, 12)*(cmax-cmin)/10
+    if (climits[0] == "None") or (climits[1] == "None"):
+        levs = None
+    else:
+        levs = np.arange(0, 12)*(cmax-cmin)/10
     ax.contour(lon, lat, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=cmap)
 
 #def lcontour(lon, lat, var1, var2, ax): pass
