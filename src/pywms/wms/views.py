@@ -791,7 +791,7 @@ def getFeatureInfo(request, dataset, logger):
             pass
         response = HttpResponse()
         output_dict = {}
-        varis[0] = [t.strftime("%Y%m%dT%H%M%SZ") for t in varis[0]]
+        varis[0] = [t.strftime("%Y%m%dT%H:%M:%SZ") for t in varis[0]]
         output_dict["time"] = {"units": "iso", "values": varis[0]}
         for i, var in enumerate(QUERY_LAYERS):
             varis[i+1] = list(varis[i+1])
@@ -815,7 +815,7 @@ def getFeatureInfo(request, dataset, logger):
             header.append(var + "[" + datasetnc.variables[var].units + "]")
         c.writerow(header)
         for i, thistime in enumerate(varis[0]):
-            thisline = [thistime.strftime("%Y%m%dT%H%M%SZ")]
+            thisline = [thistime.strftime("%Y%m%dT%H:%M:%SZ")]
             for k in range(1, len(varis)):
                 thisline.append(varis[k][i])
             c.writerow(thisline)
