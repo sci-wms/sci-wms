@@ -659,7 +659,7 @@ def getFeatureInfo(request, dataset, logger):
             time_units = topology.variables['time'].units
             datestart = netCDF4.date2num(datestart, units=time_units)
             dateend = netCDF4.date2num(dateend, units=time_units)
-            time1 = bisect.bisect_right(times, datestart) - 1
+            time1 = bisect.bisect_right(times, datestart)
             time2 = bisect.bisect_right(times, dateend) - 1
             if time1 == -1:
                 time1 = 0
@@ -672,7 +672,7 @@ def getFeatureInfo(request, dataset, logger):
             times = topology.variables['time'][:]
             time_units = topology.variables['time'].units
             datestart = netCDF4.date2num(datestart, units=time_units)
-            time1 = bisect.bisect_right(times, datestart) - 1
+            time1 = bisect.bisect_right(times, datestart)
             if time1 == -1:
                 time = [0]
             else:
