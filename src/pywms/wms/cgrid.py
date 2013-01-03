@@ -80,6 +80,10 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
             pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
+        if "facets" in actions:
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
         elif "filledcontours" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
