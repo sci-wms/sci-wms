@@ -30,7 +30,16 @@ class wms_handler(object):
             now = date.today().isoformat()
             time = now + "T00:00:00"#
         time = time.split("/")
-        if len(time) > 1: 
+        print time
+        for i in range(len(time)):
+            print time[i]
+            if len(time[i]) == 16:
+                time[i] = time[i] + ":00"
+            elif len(time[i]) == 13:
+                time[i] = time[i] + ":00:00"
+            elif len(time[i]) == 10:
+                time[i] = time[i] + "T00:00:00"
+        if len(time) > 1:
             timestart = time[0]
             timeend = time[1]
         else:
@@ -42,7 +51,7 @@ class wms_handler(object):
         latmax = box[3]
         lonmin = box[0]
         lonmax = box[2]
-        
+
         height = requestobj.GET["HEIGHT"]
         width = requestobj.GET["WIDTH"]
         styles = requestobj.GET["STYLES"].split(",")[0].split("_")
@@ -51,10 +60,10 @@ class wms_handler(object):
         topology_type = styles[5]
         magnitude_bool = styles[6]
         #reqtype = requestobj.GET["REQUEST"]
-        
+
         class action_request:
             pass
-            
+
         action_request.GET = {u'latmax':latmax, u'lonmax':lonmax,
                           u'projection':u'merc', u'layer':levels,
                           u'datestart':timestart, u'dateend':timeend,
@@ -70,10 +79,10 @@ class wms_handler(object):
                           }
         if float(lonmax)-float(lonmin) < .0001:
             action_request == None
-            
+
         return action_request
-                
-        
+
+
 
     def __init__(self, requestobj):
         '''

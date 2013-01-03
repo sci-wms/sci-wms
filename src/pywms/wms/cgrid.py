@@ -139,12 +139,13 @@ def vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
         arrowsize = float(magnitude)
     ax.quiver(lon, lat, var1.squeeze(), var2.squeeze(), mag.squeeze(),
                 pivot='mid',
-                units='xy', #xy
+                #units='uv', #xy
                 cmap=cmap,
                 norm=norm,
                 minlength=.5,
                 scale=arrowsize,
                 scale_units='inches',
+                angles='uv',
                 )
 
 def barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude):
@@ -173,5 +174,6 @@ def barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude):
             norm=norm,
             linewidth=1.7,
             sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
-            #antialiased=True,
+            #antialiased=True
+            #angles='uv',
             )
