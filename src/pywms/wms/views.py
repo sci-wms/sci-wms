@@ -337,7 +337,7 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            if variable == "u" or variable == "u-vel" or variable == "ua":
+            if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc":
                 style_code = "vectors_average_jet_None_None_" + location + "_False"
                 if variable == "u":
                     layername = "u,v"
@@ -345,6 +345,10 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                     layername = "u-vel,v-vel"
                 elif variable == "ua":
                     layername = "ua,va"
+                elif variable == "uc":
+                    layername = "uc,vc"
+                elif variable == "U":
+                    layername = "U,V"
                 try:
                     location = nc.variables[variable].location
                 except:
