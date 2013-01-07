@@ -608,8 +608,11 @@ def getFeatureInfo(request, dataset, logger):
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     TIME = request.GET['TIME']
-    elevation = [int(request.GET['ELEVATION'])]
+    try:
+        elevation = [int(request.GET['ELEVATION'])]
     #print elevation
+    except:
+        elevation = [0]
 
     from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
@@ -651,6 +654,9 @@ def getFeatureInfo(request, dataset, logger):
     else:
         index = numpy.where(lengths==min)
 
+    selected_latitude = lats[index]
+    selected_longitude = lons[index]
+
     if config.localdataset:
         time = [1]
         time_units = topology.variables['time'].units
@@ -668,7 +674,7 @@ def getFeatureInfo(request, dataset, logger):
             if time1 == -1:
                 time1 = 0
             if time2 == -1:
-                time2 = len(times)
+                time2 = len(times)-1
             time = range(time1, time2)
 
         else:
@@ -797,6 +803,8 @@ def getFeatureInfo(request, dataset, logger):
         output_dict = {}
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
         output_dict["time"] = {"units": "iso", "values": varis[0]}
+        output_dict["latitude"] = {"units":"degrees_north", "values":selected_latitude}
+        output_dict["longitude"] = {"units":"degrees_east", "values":selected_longitude}
         for i, var in enumerate(QUERY_LAYERS):
             varis[i+1] = list(varis[i+1])
             for q, v in enumerate(varis[i+1]):
@@ -815,11 +823,15 @@ def getFeatureInfo(request, dataset, logger):
         #numpy.savetxt(buffer, X, delimiter=",", fmt='%10.5f', newline="|")
         c = csv.writer(buffer)
         header = ["time"]
+        header.append("latitude[degrees_north]")
+        header.append("longitude[degrees_east]")
         for var in QUERY_LAYERS:
             header.append(var + "[" + datasetnc.variables[var].units + "]")
         c.writerow(header)
         for i, thistime in enumerate(varis[0]):
             thisline = [thistime.strftime("%Y-%m-%dT%H:%M:%SZ")]
+            thisline.append(selected_latitude)
+            thisline.append(selected_longitude)
             for k in range(1, len(varis)):
                 thisline.append(varis[k][i])
             c.writerow(thisline)
