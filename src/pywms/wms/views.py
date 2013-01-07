@@ -571,6 +571,9 @@ def getFeatureInfo(request, dataset, logger):
     """
      /wms/GOM3/?ELEVATION=1&LAYERS=temp&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=facets_average_jet_0_32_node_False&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:3857&BBOX=-7949675.196111,5078194.822174,-7934884.63114,5088628.476533&X=387&Y=196&INFO_FORMAT=text/csv&WIDTH=774&HEIGHT=546&QUERY_LAYERS=salinity&TIME=2012-08-14T00:00:00/2012-08-16T00:00:00
     """
+    from datetime import date
+    from mpl_toolkits.basemap import pyproj
+
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -607,14 +610,13 @@ def getFeatureInfo(request, dataset, logger):
     QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
     INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
-    TIME = request.GET['TIME']
+    #TIME = request.GET['TIME']
     try:
         elevation = [int(request.GET['ELEVATION'])]
     #print elevation
     except:
         elevation = [0]
 
-    from mpl_toolkits.basemap import pyproj
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
     lon, lat = mi(lonmin+((lonmax-lonmin)*(X/width)),
@@ -651,11 +653,12 @@ def getFeatureInfo(request, dataset, logger):
     min = numpy.min(min)
     if gridtype == 'False':
         index = lengths.index(min)
+        selected_latitude = lats[index]
+        selected_longitude = lons[index]
     else:
         index = numpy.where(lengths==min)
-
-    selected_latitude = lats[index]
-    selected_longitude = lons[index]
+        selected_latitude = lats[index][0]
+        selected_longitude = lons[index][0]
 
     if config.localdataset:
         time = [1]
@@ -663,23 +666,23 @@ def getFeatureInfo(request, dataset, logger):
     else:
         #TIMES = TIME.split("/")
         try:
-            TIME = requestobj.GET["TIME"]
+            TIME = request.GET["TIME"]
             if TIME == "":
                 now = date.today().isoformat()
                 TIME = now + "T00:00:00"#
         except:
             now = date.today().isoformat()
             TIME = now + "T00:00:00"#
+            print "here"
         TIMES = TIME.split("/")
-        #print time
-        for i in range(len(time)):
-            print time[i]
-            if len(time[i]) == 16:
-                time[i] = time[i] + ":00"
-            elif len(time[i]) == 13:
-                time[i] = time[i] + ":00:00"
-            elif len(time[i]) == 10:
-                time[i] = time[i] + "T00:00:00"
+        for i in range(len(TIMES)):
+            print TIMES[i]
+            if len(TIMES[i]) == 16:
+                TIMES[i] = TIMES[i] + ":00"
+            elif len(TIMES[i]) == 13:
+                TIMES[i] = TIMES[i] + ":00:00"
+            elif len(TIMES[i]) == 10:
+                TIMES[i] = TIMES[i] + "T00:00:00"
         if len(TIMES) > 1:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
             dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
@@ -689,12 +692,12 @@ def getFeatureInfo(request, dataset, logger):
             dateend = netCDF4.date2num(dateend, units=time_units)
             time1 = bisect.bisect_right(times, datestart)
             time2 = bisect.bisect_right(times, dateend) - 1
-            logger.info(str(time2))
+            print time2
             if time1 == -1:
                 time1 = 0
             if time2 == -1:
                 time2 = len(times)
-            logger.info(str(time2))
+            print time2
             time = range(time1, time2)
 
         else:

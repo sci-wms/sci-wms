@@ -32,7 +32,7 @@ class wms_handler(object):
         time = time.split("/")
         #print time
         for i in range(len(time)):
-            print time[i]
+            #print time[i]
             if len(time[i]) == 16:
                 time[i] = time[i] + ":00"
             elif len(time[i]) == 13:
