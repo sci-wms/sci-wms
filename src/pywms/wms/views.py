@@ -814,7 +814,7 @@ def getFeatureInfo(request, dataset, logger):
         http://docs.geoserver.org/latest/en/user/services/wms/reference.html#getfeatureinfo
         """
         import json
-        callback = "parseResposnse"
+        callback = "parseResponse"
         try:
             callback = request.GET["CALLBACK"]
         except:
