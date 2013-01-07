@@ -674,7 +674,8 @@ def getFeatureInfo(request, dataset, logger):
             if time1 == -1:
                 time1 = 0
             if time2 == -1:
-                time2 = len(times)-1
+                time2 = len(times)
+            logger.info(str(time2))
             time = range(time1, time2)
 
         else:
