@@ -700,7 +700,7 @@ def getFeatureInfo(request, dataset, logger):
             print time2
             time = range(time1, time2)
             if len(time) < 1:
-                time = [len(times)]
+                time = [len(times) - 1]
         else:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
             times = topology.variables['time'][:]
