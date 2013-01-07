@@ -661,7 +661,25 @@ def getFeatureInfo(request, dataset, logger):
         time = [1]
         time_units = topology.variables['time'].units
     else:
+        #TIMES = TIME.split("/")
+        try:
+            TIME = requestobj.GET["TIME"]
+            if TIME == "":
+                now = date.today().isoformat()
+                TIME = now + "T00:00:00"#
+        except:
+            now = date.today().isoformat()
+            TIME = now + "T00:00:00"#
         TIMES = TIME.split("/")
+        #print time
+        for i in range(len(time)):
+            print time[i]
+            if len(time[i]) == 16:
+                time[i] = time[i] + ":00"
+            elif len(time[i]) == 13:
+                time[i] = time[i] + ":00:00"
+            elif len(time[i]) == 10:
+                time[i] = time[i] + "T00:00:00"
         if len(TIMES) > 1:
             datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
             dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
@@ -671,6 +689,7 @@ def getFeatureInfo(request, dataset, logger):
             dateend = netCDF4.date2num(dateend, units=time_units)
             time1 = bisect.bisect_right(times, datestart)
             time2 = bisect.bisect_right(times, dateend) - 1
+            logger.info(str(time2))
             if time1 == -1:
                 time1 = 0
             if time2 == -1:
@@ -804,8 +823,8 @@ def getFeatureInfo(request, dataset, logger):
         output_dict = {}
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
         output_dict["time"] = {"units": "iso", "values": varis[0]}
-        output_dict["latitude"] = {"units":"degrees_north", "values":selected_latitude}
-        output_dict["longitude"] = {"units":"degrees_east", "values":selected_longitude}
+        output_dict["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
+        output_dict["longitude"] = {"units":"degrees_east", "values":float(selected_longitude)}
         for i, var in enumerate(QUERY_LAYERS):
             varis[i+1] = list(varis[i+1])
             for q, v in enumerate(varis[i+1]):
