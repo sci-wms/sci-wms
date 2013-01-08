@@ -4,10 +4,10 @@
 
 <head>
 <style type="text/css">
-    body {  
-    height: 100%; 
-    margin: 0; 
-    padding: 0;  
+    body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
     }
     p {
     background-color:#6495ed;
@@ -15,14 +15,14 @@
     margin-right:5px;
     margin-left:5px;
     }
-    h2 { 
+    h2 {
     padding: 10px;
     position: static;
     background-position: left top;
     width: 100%;
-    background-color: #002242; 
+    background-color: #002242;
     color: #b0c4de;
-    text-align: left;  
+    text-align: left;
     margin-top:0px;
     }
     li {
@@ -58,12 +58,12 @@
     <h2>Sci-wms: A Python WMS service for geospatial gridded data</h2>
     {% for dataset in datasets %}
         <p>
-        <he><b>{{dataset.name}}</b><he>
+        <he><a href="wms/{{dataset.name}}/?REQUEST=GetCapabilities"><b>{{dataset.name}}</b></a><he>
         <li>URI: <a href="{{dataset.uri}}.html">{{dataset.uri}}</a> </li>
         <li>Update?: {{dataset.keep_up_to_date}} </li>
         </p>
     {% endfor %}
-    
+
     <li class="foot">
     <a href="admin">To add or remove datasets, use the admin interface</a>
     </li>
@@ -74,7 +74,7 @@
     <li class="foot">
     <a href="doc">Documentation can be found here</a>
     </li>
-    
+
 
 </body>
 </html>
