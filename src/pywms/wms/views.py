@@ -253,7 +253,10 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
         try:
             location = nc.variables[variable].location
         except:
-            location = "node"
+            if topology.grid != 'False':
+                location = "grid"
+            else:
+                location = "node"
         if location == "face":
             location = "cell"
         try:
@@ -353,7 +356,10 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                 try:
                     location = nc.variables[variable].location
                 except:
-                    location = "node"
+                    if topology.grid != 'False':
+                        location = "grid"
+                    else:
+                        location = "node"
                 if location == "face":
                     location = "cell"
                 layer1 = ET.SubElement(layer, "Layer")
