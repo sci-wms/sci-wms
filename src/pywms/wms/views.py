@@ -337,8 +337,7 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc":
-                style_code = "vectors_average_jet_None_None_" + location + "_False"
+            if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc" or variable=="wind_u":
                 if variable == "u":
                     layername = "u,v"
                 elif variable == "u-vel":
@@ -349,6 +348,8 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                     layername = "uc,vc"
                 elif variable == "U":
                     layername = "U,V"
+                elif variable == "wind_u":
+                    layername = "wind_u,wind_v"
                 try:
                     location = nc.variables[variable].location
                 except:
@@ -408,14 +409,16 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                     ET.SubElement(layer1, "DepthLayers").text = "0"
                     elev_extent.text = "0"
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
-                style = ET.SubElement(layer1, "Style")
-                ET.SubElement(style, "Name").text = style_code
-                ET.SubElement(style, "Title").text = style_code
-                ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
-                legendurl = ET.SubElement(style, "LegendURL")
-                legendurl.attrib["width"] = "50"
-                legendurl.attrib["height"] = "80"
-                ET.SubElement(legendurl, "Format").text = "image/png"
+                for style in ["vectors", "barbs"]:
+                    style_code = style + "_average_jet_None_None_" + location + "_False"
+                    style = ET.SubElement(layer1, "Style")
+                    ET.SubElement(style, "Name").text = style_code
+                    ET.SubElement(style, "Title").text = style_code
+                    ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
+                    legendurl = ET.SubElement(style, "LegendURL")
+                    legendurl.attrib["width"] = "50"
+                    legendurl.attrib["height"] = "80"
+                    ET.SubElement(legendurl, "Format").text = "image/png"
                 #legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
