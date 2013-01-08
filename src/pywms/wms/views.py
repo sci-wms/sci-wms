@@ -337,7 +337,7 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc" or variable=="wind_u":
+            if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc" or variable=="air_u":
                 if variable == "u":
                     layername = "u,v"
                 elif variable == "u-vel":
@@ -348,8 +348,8 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
                     layername = "uc,vc"
                 elif variable == "U":
                     layername = "U,V"
-                elif variable == "wind_u":
-                    layername = "wind_u,wind_v"
+                elif variable == "air_u":
+                    layername = "air_u,air_v"
                 try:
                     location = nc.variables[variable].location
                 except:
