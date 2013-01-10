@@ -123,7 +123,8 @@ def create_topology(datasetname, url):
             latname, lonname = 'lat', 'lon'
             if 'lat' not in nc.variables:
                 for key in nc.variables.iterkeys():
-                    if nc.variables[key].__hasattr__('units'):
+                    try:
+                        nc.variables[key].__getattr__('units')
                         temp_units = nc.variables[key].units
                         if 'degree' in temp_units:
                             if 'east' in temp_units:
@@ -132,6 +133,8 @@ def create_topology(datasetname, url):
                                 latname = key
                             else:
                                 raise ValueError("No valid coordinates found in source netcdf file")
+                    except:
+                        pass
             if nc.variables[latname].ndim > 1:
                 igrid = nc.variables[latname].shape[0]
                 jgrid = nc.variables[latname].shape[1]

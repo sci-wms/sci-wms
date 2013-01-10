@@ -143,7 +143,8 @@ def vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
         arrowsize = None
     else:
         arrowsize = float(magnitude)
-    ax.quiver(lon, lat, var1.squeeze(), var2.squeeze(), mag.squeeze(),
+    stride = 1
+    ax.quiver(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], mag.squeeze()[::stride,::stride],
                 pivot='mid',
                 #units='uv', #xy
                 cmap=cmap,
