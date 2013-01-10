@@ -123,15 +123,23 @@ def create_topology(datasetname, url):
             latname, lonname = 'lat', 'lon'
             if 'lat' not in nc.variables:
                 for key in nc.variables.iterkeys():
-                    pass
-            if nc.variables['lat'].ndim > 1:
-                igrid = nc.variables['lat'].shape[0]
-                jgrid = nc.variables['lat'].shape[1]
+                    if nc.variables[key].__hasattr__('units'):
+                        temp_units = nc.variables[key].units
+                        if 'degree' in temp_units:
+                            if 'east' in temp_units:
+                                lonname = key
+                            elif 'north' in temp_units:
+                                latname = key
+                            else:
+                                raise ValueError("No valid coordinates found in source netcdf file")
+            if nc.variables[latname].ndim > 1:
+                igrid = nc.variables[latname].shape[0]
+                jgrid = nc.variables[latname].shape[1]
                 grid = 'cgrid'
             else:
                 grid = 'rgrid'
-                igrid = nc.variables['lat'].shape[0]
-                jgrid = nc.variables['lon'].shape[0]
+                igrid = nc.variables[latname].shape[0]
+                jgrid = nc.variables[lonname].shape[0]
             latchunk, lonchunk = (igrid,jgrid,), (igrid,jgrid,)
 
             nclocal.createDimension('igrid', igrid)
@@ -142,15 +150,15 @@ def create_topology(datasetname, url):
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
-            lontemp = nc.variables['lon'][:]
+            lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
             if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables['lat'][:])
+                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])
                 grid = 'cgrid'
             else:
                 lon[:] = lontemp
-                lat[:] = nc.variables['lat'][:]
+                lat[:] = nc.variables[latname][:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             nclocal.__setattr__("grid", "cgrid")
