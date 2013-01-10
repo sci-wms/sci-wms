@@ -120,6 +120,10 @@ def create_topology(datasetname, url):
         else:
             logger.info("identified as grid")
             #print str(nc.variables['lat'].ndim)
+            latname, lonname = 'lat', 'lon'
+            if 'lat' not in nc.variables:
+                for key in nc.variables.iterkeys():
+                    pass
             if nc.variables['lat'].ndim > 1:
                 igrid = nc.variables['lat'].shape[0]
                 jgrid = nc.variables['lat'].shape[1]
@@ -142,18 +146,14 @@ def create_topology(datasetname, url):
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
             if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables['y'][:])
+                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables['lat'][:])
                 grid = 'cgrid'
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables['lat'][:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
-            nclocal.grid = grid
-            try:
-                nclocal.grid
-            except:
-                nclocal.__setattr__("grid", "cgrid")
+            nclocal.__setattr__("grid", "cgrid")
 
             logger.info("data written to file")
 
