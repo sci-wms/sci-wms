@@ -1152,9 +1152,6 @@ def fvDo (request, dataset, logger):
 
                     m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
 
-                    #if gridtype == 'rgrid':
-                    #    lon, lat = m(lon, lat)
-                    #    rgrid.plot(lon, lat, var1, var2, actions, ax)
                     if gridtype == 'cgrid':
                         lon, lat = m(lon, lat)
                         if (climits[0] == "None") or (climits[1] == "None"):
@@ -1164,6 +1161,15 @@ def fvDo (request, dataset, logger):
                                                             vmax=climits[1],
                                                             clip=True,
                                                             )
+                        try:
+                            if 'direction' in datasetnc.variables[variables[1]].units:
+                                #assign new var1,var2 as u,v components
+                                var2 = 450 - var2
+                                var2[var2>360] = var2[var2>360] - 360
+                                var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
+                                var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
+                        except:
+                            pass
                         cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
                                     aspect=m.aspect,
                                     height=height,
@@ -1212,22 +1218,23 @@ def fvDo (request, dataset, logger):
                             """
                         else:
                             if "vectors" in actions:
-                                #fig.set_figheight(5)
                                 fig.set_figwidth(height/80.0/m.aspect)
                                 fig.set_figheight(height/80.0)
-                                #fig.set_figwidth(width/80.0)
-
+                                try:
+                                    if 'direction' in datasetnc.variables[variables[1]].units:
+                                        #assign new var1,var2 as u,v components
+                                        var2 = 450 - var2
+                                        var2[var2>360] = var2[var2>360] - 360
+                                        var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
+                                        var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
+                                except:
+                                    pass
                                 mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-
                                 mag = numpy.sqrt(mag)
-                                #ax = fig.add_subplot(111)
-                                #ax.quiver(lon, lat, u, v, mag, pivot='mid')
                                 if topology_type.lower() == 'cell':
                                     pass
                                 else:
                                     lon, lat = lonn, latn
-
-                                #print "points ll", numpy.min(lon), numpy.min(lat), "ur", numpy.max(lon), numpy.max(lat)
                                 lon, lat = m(lon, lat)
 
                                 if (climits[0] == "None") or (climits[1] == "None"):
