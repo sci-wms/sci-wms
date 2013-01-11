@@ -46,7 +46,7 @@ Install the remaining dependencies:
 
 ####If are not using the enthought python distribution:
 
-You must have the following installed:
+You must have the following python packages installed:
 
 - django
 - gunicorn
@@ -55,7 +55,7 @@ You must have the following installed:
 - numpy
 - matplotlib (1.1.0 preferred)
 - matplotlib basemap (versions 1.0.1)
-- netCDF4-python (netCDF4)
+- netCDF4 (Install from the netcdf4-python google code repository if using HDF a recent build of HDF5)
 - shapely
 - markdown
 
