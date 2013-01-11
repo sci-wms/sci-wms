@@ -3,6 +3,8 @@ sci-wms
 
 ####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids and structured grids officially supported)
 
+![Global HYCOM as filled contours](https://raw.github.com/acrosby/sci-wms/master/src/pywms/wms/static/example1.png)
+
 ##System Requirements
 
 - >= 4GB RAM
