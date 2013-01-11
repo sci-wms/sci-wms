@@ -1162,7 +1162,7 @@ def fvDo (request, dataset, logger):
                                                             clip=True,
                                                             )
                         try:
-                            if 'direction' in datasetnc.variables[variables[1]].units:
+                            if 'direction' in datasetnc.variables[variables[1]].standard_name:
                                 #assign new var1,var2 as u,v components
                                 var2 = 450 - var2
                                 var2[var2>360] = var2[var2>360] - 360
@@ -1221,7 +1221,7 @@ def fvDo (request, dataset, logger):
                                 fig.set_figwidth(height/80.0/m.aspect)
                                 fig.set_figheight(height/80.0)
                                 try:
-                                    if 'direction' in datasetnc.variables[variables[1]].units:
+                                    if 'direction' in datasetnc.variables[variables[1]].standard_name:
                                         #assign new var1,var2 as u,v components
                                         var2 = 450 - var2
                                         var2[var2>360] = var2[var2>360] - 360
