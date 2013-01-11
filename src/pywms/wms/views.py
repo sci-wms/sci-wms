@@ -755,10 +755,14 @@ def getFeatureInfo(request, dataset, logger):
             except:
                 units = ""
     else:
+        """
         var1, var2 = cgrid.getvar(datasetnc, time, elevation, QUERY_LAYERS, index)
         varis.append(var1)
         if var2 is not None:
             varis.append(var2)
+        """
+        for var in QUERY_LAYERS:
+            varis.append(cgrid.getvar(datasetnc, time, elevation, [var], index)[0])
         try:
             units = datasetnc.variables[QUERY_LAYERS[0]].units
         except:
