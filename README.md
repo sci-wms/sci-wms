@@ -7,8 +7,8 @@ sci-wms
 
 ##System Requirements
 
-- >= 4GB RAM
-- > 2 CPU (> 4 CPU Best)
+- >= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.
+- > 2 CPU (> 4 CPU Better) 
 - Python > Version 2.6
 
 ##Roadmap
@@ -119,6 +119,12 @@ The default username is "*sciwmsuser*" and its password is "*sciwmspassword*". S
 the first thing you should do is login to the administration utility
 and change the password or remove the default user and create a new one
 for yourself.
+
+*Caution*: Depending on the version of Django you have installed you may have a problem
+logging into the admin site, even with the correct password. An easy way solve this problem is to
+simply to run the following command to reset the sciwmsuser password from the command line.
+
+    $python manage.py changepassword sciwmsuser
 
 The admin page can be found here:   http://server:port/admin
 
