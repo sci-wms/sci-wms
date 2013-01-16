@@ -164,8 +164,8 @@ def create_topology(datasetname, url):
                 lat[:] = nc.variables[latname][:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
-            nclocal.__setattr__("grid", "cgrid")
-
+            while not 'grid' in nclocal.ncattrs():
+                nclocal.__setattr__('grid', 'cgrid')
             logger.info("data written to file")
 
         nclocal.sync()
