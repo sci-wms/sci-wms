@@ -93,6 +93,10 @@ def create_topology(datasetname, url):
             lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=(nc.variables['x'].shape[0],), zlib=False, complevel=0)
             latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(nc.variables['element'].shape[0],), zlib=False, complevel=0)
             lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(nc.variables['element'].shape[0],), zlib=False, complevel=0)
+            #if nc.variables['element'].shape[0] == 3:
+            #    nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape, zlib=False, complevel=0)
+            #    nv[:,:] = nc.variables['element'][:,:]
+            #else:
             nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape[::-1], zlib=False, complevel=0)
 
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
@@ -111,12 +115,12 @@ def create_topology(datasetname, url):
 
             lonc[:] = lontemp[tri.triangles].mean(axis=1)
             latc[:] = lattemp[tri.triangles].mean(axis=1)
-
             nv[:,:] = nc.variables['element'][:,:].T
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             nclocal.grid = grid
             logger.info("data written to file")
+
         else:
             logger.info("identified as grid")
             #print str(nc.variables['lat'].ndim)

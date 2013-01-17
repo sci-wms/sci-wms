@@ -965,7 +965,7 @@ def fvDo (request, dataset, logger):
         datasetnc = netCDF4.Dataset(url)
         gridtype = topology.grid
 
-        if gridtype is not 'False':
+        if gridtype != 'False':
             toplatc, toplonc = 'lat', 'lon'
             #toplatn, toplonn = 'lat', 'lon'
         else:
@@ -1076,7 +1076,6 @@ def fvDo (request, dataset, logger):
                     return nc.variables[var][:]
 
             t = time
-            index = numpy.asarray(index)
 
             if gridtype == 'False':
                 var1 = getvar(datasetnc , t, layer, variables[0])
@@ -1098,6 +1097,7 @@ def fvDo (request, dataset, logger):
             #if gridtype == 'rgrid':
             #    var1, var2 = rgrid.getvar(datasetnc, t, layer, variables, index)
             if gridtype == 'cgrid':
+                index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
 
             if latmin != latmax:
