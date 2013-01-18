@@ -29,7 +29,7 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-time_units = 'seconds since 1970-01-01'
+time_units = 'hours since 1970-01-01'
 
 def create_topology(datasetname, url):
     try:
@@ -51,7 +51,7 @@ def create_topology(datasetname, url):
             lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=nc.variables['latc'].shape, zlib=False, complevel=0)
             nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
 
-            time = nclocal.createVariable('time', 'u8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d
+            time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d
 
             lontemp = nc.variables['lon'][:]
             lonctemp = nc.variables['lonc'][:]
@@ -78,14 +78,10 @@ def create_topology(datasetname, url):
 
             # DECODE the FVCOM datetime string (Time) and save as a high precision datenum
             timestrs = nc.variables['Times'][:] #format: "2013-01-15T00:00:00.000000"
-            print timestrs
             dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
             #dates = [datetime.strptime(str(timestrs[tind,:]), "%Y-%m-%dT%H:%M:%S.%f") for tind in range(len(timestrs))]
-            print dates
             datenums = date2num(dates, units=time_units)# use netCDF4's date2num function
-            print datenums
             time[:] = datenums
-            print num2date(time[:], units=time_units)
             time.units = time_units
             nclocal.sync()
             nclocal.grid = grid

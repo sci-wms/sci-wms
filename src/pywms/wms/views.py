@@ -684,10 +684,10 @@ def getFeatureInfo(request, dataset, logger):
         except:
             now = date.today().isoformat()
             TIME = now + "T00:00:00"#
-            print "here"
+            #print "here"
         TIMES = TIME.split("/")
         for i in range(len(TIMES)):
-            print TIMES[i]
+##            print TIMES[i]
             if len(TIMES[i]) == 16:
                 TIMES[i] = TIMES[i] + ":00"
             elif len(TIMES[i]) == 13:
@@ -703,12 +703,12 @@ def getFeatureInfo(request, dataset, logger):
             dateend = netCDF4.date2num(dateend, units=time_units)
             time1 = bisect.bisect_right(times, datestart)
             time2 = bisect.bisect_right(times, dateend)
-            print time2
+##            print time2
             if time1 == -1:
                 time1 = 0
             if time2 == -1:
                 time2 = len(times)
-            print time2
+##            print time2
             time = range(time1, time2)
             if len(time) < 1:
                 time = [len(times) - 1]
@@ -746,7 +746,7 @@ def getFeatureInfo(request, dataset, logger):
     datasetnc = netCDF4.Dataset(url)
 
     varis = deque()
-    varis.append(getvar(datasetnc, time, elevation, "time", index))
+    varis.append(getvar(topology, time, elevation, "time", index))
     if gridtype == 'False':
         for var in QUERY_LAYERS:
             varis.append(getvar(datasetnc, time, elevation, var, index))
