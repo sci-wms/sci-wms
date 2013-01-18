@@ -4,7 +4,7 @@ Created on Sep 6, 2011
 @author: ACrosby
 '''
 from netCDF4 import Dataset as ncDataset
-from netCDF4 import num2date
+from netCDF4 import num2date, date2num
 import sys, os, numpy, logging, traceback
 from datetime import datetime
 import numpy as np
@@ -28,6 +28,8 @@ handler = logging.FileHandler('%s.log' % output_path)
 formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+time_units = 'seconds since 1970-01-01T00:00:00Z'
 
 def create_topology(datasetname, url):
     try:
@@ -55,7 +57,6 @@ def create_topology(datasetname, url):
             lonctemp = nc.variables['lonc'][:]
 
             if np.max(lontemp) > 180:
-                #print "greaterthan"
                 lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
                 lon[:] = np.asarray(lontemp)
             #elif np.min(lontemp) < -180:
@@ -63,7 +64,6 @@ def create_topology(datasetname, url):
             #    lon[:] = np.asarray(lontemp) + 360
             #    lonc[:] = np.asarray(nc.variables['lonc'][:] + 360)
             else:
-                #print "nochange"
                 lon[:] = lontemp
             if np.max(lonctemp) > 180:
                 lonctemp[lonctemp > 180] = lonctemp[lonctemp > 180] - 360
@@ -75,10 +75,17 @@ def create_topology(datasetname, url):
             latc[:] = nc.variables['latc'][:]
 
             nv[:,:] = nc.variables['nv'][:,:]
-            #print np.max(np.max(nv)), np.max(np.max(nc.variables['nv'][:,:]))
-            time[:] = nc.variables['time'][:]
-            time.units = nc.variables['time'].units
+
+            # DECODE the FVCOM datetime string (Time) and save as a high precision datenum
+            timestrs = nc.variables['Times'][:] #format: "2013-01-15T00:00:00.000000"
+            dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
+            #dates = [datetime.strptime(str(timestrs[tind,:]), "%Y-%m-%dT%H:%M:%S.%f") for tind in range(len(timestrs))]
+            datenums = date2num(dates, time_units)# use netCDF4's date2num function
+            time[:] = datenums
+            time.units = time_units
+            nclocal.sync()
             nclocal.grid = grid
+            nclocal.sync()
             logger.info("data written to file")
 
         elif nc.variables.has_key("element"):
@@ -118,7 +125,9 @@ def create_topology(datasetname, url):
             nv[:,:] = nc.variables['element'][:,:].T
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
+            nclocal.sync()
             nclocal.grid = grid
+            nclocal.sync()
             logger.info("data written to file")
 
         else:
@@ -170,6 +179,7 @@ def create_topology(datasetname, url):
             time.units = nc.variables['time'].units
             while not 'grid' in nclocal.ncattrs():
                 nclocal.__setattr__('grid', 'cgrid')
+                nclocal.sync()
             logger.info("data written to file")
 
         nclocal.sync()
