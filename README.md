@@ -13,7 +13,7 @@ sci-wms
 
 ##Install
 
-Download the compressed project and unpack anywhere. This is where the installation will live.
+[Download the compressed project and unpack anywhere.](http://acrosby.github.com/sci-wms) This is where the installation will live.
 
 ####If you have the standard enthought python distribution (epd):
 
