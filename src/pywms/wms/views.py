@@ -1135,10 +1135,11 @@ def fvDo (request, dataset, logger):
                                 except:
                                     pass
                     else: pass # will eventually add animations over time, instead of averages
-                print var1, var1.min(), var1.max()
-                var1[numpy.isnan(var1)] = 0
-                var2[numpy.isnan(var2)] = 0
-                print var1.min(), var1.max()
+                #print var1
+                #print var1.min(), var1.max(), type(var1)
+                #var1[numpy.isnan(var1)] = 0
+                #var2[numpy.isnan(var2)] = 0
+                #print var1.min(), var1.max(), type(var1)
                 if "image" in actions:
                     from matplotlib.figure import Figure
                     fig = Figure(dpi=80, facecolor='none', edgecolor='none')
