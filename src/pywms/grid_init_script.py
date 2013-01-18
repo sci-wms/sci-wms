@@ -186,7 +186,8 @@ def create_topology(datasetname, url):
         nclocal.close()
         nc.close()
         if grid == 'False':
-            create_domain_polygon(nclocalpath)
+            if not os.path.exists(nclocalpath[:-3] + '.domain'):
+                create_domain_polygon(nclocalpath)
 
 
     except Exception as detail:
