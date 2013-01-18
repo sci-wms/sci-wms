@@ -584,7 +584,7 @@ def getFeatureInfo(request, dataset, logger):
     """
     from datetime import date
     from mpl_toolkits.basemap import pyproj
-
+    totaltimer = timeobj.time()
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -652,18 +652,22 @@ def getFeatureInfo(request, dataset, logger):
         else:
             lats = topology.variables['latc'][:]
             lons = topology.variables['lonc'][:]
-        lengths = map(haversine,
-                  numpy.ones(len(lons))*lat,
-                  numpy.ones(len(lons))*lon, lats, lons)
+##        lengths = map(haversine,
+##                  numpy.ones(len(lons))*lat,
+##                  numpy.ones(len(lons))*lon, lats, lons)
+        print 'time before haversine ' + str(timeobj.time() - totaltimer)
+        lengths = vhaversine(lat, lon, lats, lons)
     else:
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
+        print 'time before haversine ' + str(timeobj.time() - totaltimer)
         lengths = vhaversine(lat, lon, lats, lons)
-
+    print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     if gridtype == 'False':
-        index = lengths.index(min)
+        index = list(lengths).index(min)
+##        index = numpy.where(lengths==min)[0] # this is a little faster but need to figure out the brackets stuff
         selected_latitude = lats[index]
         selected_longitude = lons[index]
     else:
