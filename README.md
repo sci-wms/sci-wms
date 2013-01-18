@@ -11,25 +11,58 @@ sci-wms
 - > 2 CPU (> 4 CPU Better) 
 - Python > Version 2.6
 
-##Roadmap
+##Install
 
-####Version 1:
-- Bug free working implementation of the current dev code
-- working getcaps
-- working getmap
-- working getlegendgraphic for non-autoscaling colormap styles
-- service based dataset initialization and updating in addition to admin
-- support for native Adcirc and FVCOM model output meshes
+Download the compressed project and unpack anywhere. This is where the installation will live.
 
-####Version 1.1:
-- Support for rectilinear and curvilinear grids
-- some wps functionality
-- projections other than web mercator
-- working getlegendgraphic response for the autoscaling colormap styles
-- server-wide symbolization customization in admin
+####If you have the standard enthought python distribution (epd):
 
-####Experimental Fork/Branch:
-- Leverage hardware/opengl rendering for high overhead styles (facets, arrows...)
+Install the remaining dependencies:
+
+    $easy_install gunicorn
+    $easy_install greenlet
+    $easy_install gevent              # or easy_install eventlet
+    $easy_install django
+
+####If are not using the enthought python distribution:
+
+You must have the following python packages installed:
+
+- django
+- gunicorn
+- greenlet
+- gevent or eventlet
+- numpy
+- matplotlib (1.1.0 preferred)
+- matplotlib basemap (versions 1.0.1)
+- netCDF4 (Install from the netcdf4-python google code repository if using HDF a recent build of HDF5)
+- shapely
+- markdown
+
+sci-wms works with both pip and virtualenv quite happily. If you
+have pip installed you can use the following to install many (but not all) of the required modules:
+
+    $pip install package
+
+<!---
+Or you can install the required packages (with the versions we develop
+the wms on) with the requirements file:
+
+    $pip install -r requirements.txt
+-->
+
+Similarly if you have setup_tools installed you can use:
+
+    $easy_install package
+
+If you are using virtualenv, just make sure you have the environment
+activated before you try to install the packages or point to the environment
+with pip on the install command.
+
+You also need to ensure that you have basemap matplotlib toolkit installed:
+
+    $wget -o basemap-1.0.1.tar.gz http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.1/basemap-1.0.1.tar.gz/download
+    $pip install basemap-1.0.1.tar.gz
 
 
 ###Caveats:
