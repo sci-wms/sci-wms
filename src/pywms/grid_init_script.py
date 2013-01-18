@@ -82,9 +82,10 @@ def create_topology(datasetname, url):
             dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
             #dates = [datetime.strptime(str(timestrs[tind,:]), "%Y-%m-%dT%H:%M:%S.%f") for tind in range(len(timestrs))]
             print dates
-            datenums = date2num(dates, time_units)# use netCDF4's date2num function
+            datenums = date2num(dates, units=time_units)# use netCDF4's date2num function
             print datenums
             time[:] = datenums
+            print num2date(time[:], units=time_units)
             time.units = time_units
             nclocal.sync()
             nclocal.grid = grid
