@@ -4,7 +4,7 @@ Created on Sep 1, 2011
 @author: ACrosby
 '''
 # Create your views here.
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from pywms.wms.models import Dataset, Server
 from django.contrib.sites.models import Site
 import matplotlib
@@ -91,14 +91,15 @@ def remove(request):
     return HttpResponse()
 
 def documentation (request):
-    #jobsarray = grid.check_topology_age()
-    import django.shortcuts as dshorts
-    import os
-    #import pywms.server_local_config as config
-    f = open(os.path.join(config.fullpath_to_wms, "README.md"))
-    text = f.read()
-    dict1 = { "textfile":text}
-    return dshorts.render_to_response('docs.html', dict1)
+##    #jobsarray = grid.check_topology_age()
+##    import django.shortcuts as dshorts
+##    import os
+##    #import pywms.server_local_config as config
+##    f = open(os.path.join(config.fullpath_to_wms, "README.md"))
+##    text = f.read()
+##    dict1 = { "textfile":text}
+##    return dshorts.render_to_response('docs.html', dict1)
+    return HttpResponseRedirect('http://acrosby.github.com/sci-wms')
 
 def crossdomain (request):
     f = open(config.staticspath + "crossdomain.xml")
