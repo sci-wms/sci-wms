@@ -132,7 +132,7 @@ def create_topology(datasetname, url):
 
         else:
             logger.info("identified as grid")
-            #print str(nc.variables['lat'].ndim)
+            print str(nc.variables['lat'].ndim)
             latname, lonname = 'lat', 'lon'
             if 'lat' not in nc.variables:
                 for key in nc.variables.iterkeys():

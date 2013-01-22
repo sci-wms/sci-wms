@@ -11,19 +11,21 @@ try:
     worker = "gevent"
 except:
     try:
-        import eventlet 
+        import eventlet
         worker = "eventlet"
     except:
         # Default to basic sync worker if other libs are
         # not installed
         worker = "sync"
-    
+
 bind = "0.0.0.0:7000"
-workers = multiprocessing.cpu_count() * 2
+workers = multiprocessing.cpu_count()
 worker_class = worker
 debug = False
-timeout = 3600
-max_requests = 5
+timeout = 120
+#raceful_timeout = 120
+max_requests = 2
+keep_alive = 5
 backlog = 100
 
 
