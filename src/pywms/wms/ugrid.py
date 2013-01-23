@@ -190,7 +190,6 @@ def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, 
     else:
         full = cmin
         flag = cmax
-
     if topology_type.lower() == 'cell':
         pass
     else:
