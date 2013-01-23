@@ -2,6 +2,8 @@
 Created on Sep 6, 2011
 
 @author: ACrosby
+
+!!!THIS IS NOT A SCRIPT ANYMORE!!!
 '''
 from netCDF4 import Dataset as ncDataset
 from netCDF4 import num2date, date2num
@@ -132,9 +134,9 @@ def create_topology(datasetname, url):
 
         else:
             logger.info("identified as grid")
-            print str(nc.variables['lat'].ndim)
+            #print str(nc.variables['lat'].ndim)
             latname, lonname = 'lat', 'lon'
-            if 'lat' not in nc.variables:
+            if latname not in nc.variables:
                 for key in nc.variables.iterkeys():
                     try:
                         nc.variables[key].__getattr__('units')
@@ -166,6 +168,10 @@ def create_topology(datasetname, url):
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
+            while not 'grid' in nclocal.ncattrs():
+                nclocal.__setattr__('grid', 'cgrid')
+                nclocal.sync()
+
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
@@ -177,9 +183,6 @@ def create_topology(datasetname, url):
                 lat[:] = nc.variables[latname][:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
-            while not 'grid' in nclocal.ncattrs():
-                nclocal.__setattr__('grid', 'cgrid')
-                nclocal.sync()
             logger.info("data written to file")
 
         nclocal.sync()

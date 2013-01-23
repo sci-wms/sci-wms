@@ -27,7 +27,7 @@ timeout = 120
 max_requests = 2
 keep_alive = 5
 backlog = 100
-
+log_file = 'sciwms_gunicorn.log'
 
 def on_starting(server):
     #print os.environ
