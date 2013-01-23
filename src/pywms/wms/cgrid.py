@@ -4,14 +4,6 @@ import numpy as np
 from matplotlib.pylab import get_cmap
 
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
-    """
-    for ugrid:
-    index = numpy.asarray(numpy.where(
-        (lat <= latmax+.18) & (lat >= latmin-.18) &
-        (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
-    lat = lat[index]
-    lon = lon[index]
-    """
     index = np.asarray(np.where(
         (lat <= latmax+.18) & (lat >= latmin-.18) &
         (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
@@ -27,11 +19,14 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     return index, lat, lon
 
 def getvar(datasetnc, t, layer, variables, index):
+    special_function = ""
     if index is None:
         var1 = None
         var2 = None
     else:
-        #var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
+        if "+" in variables[0]:
+            variables = variables[0].split("+")
+            special_function = "+"
         ncvar1 = datasetnc.variables[variables[0]]
         shp = ncvar1.shape
         if len(index[0]) == 1:
@@ -60,6 +55,9 @@ def getvar(datasetnc, t, layer, variables, index):
             if len(var2) > 1:
                 var2 = var2.squeeze()
         else:
+            var2 = None
+        if special_function == "+":
+            var1 = var1 + var2
             var2 = None
     return var1, var2
 
