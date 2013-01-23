@@ -16,7 +16,7 @@ import pywms.server_local_config as config
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import time as timeobj
 import pywms.grid_init_script as grid
-from pywms.wms import cgrid
+from pywms.wms import cgrid, ugrid
 import matplotlib.pyplot as plt
 from matplotlib.pylab import get_cmap
 import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
@@ -119,7 +119,7 @@ def wms (request, dataset):
             handler = wms.wms_handler(request)
             action_request = handler.make_action_request(request)
             if action_request is not None:
-                response = fvDo(action_request, dataset, logger)
+                response = getMap(action_request, dataset, logger)
             else:
                 response = HttpResponse()
         elif reqtype.lower() == 'getfeatureinfo':
@@ -888,47 +888,20 @@ def getFeatureInfo(request, dataset, logger):
     topology.close()
     return response
 
-def fvDo (request, dataset, logger):
+def getMap (request, dataset, logger):
     '''
-    Request a set of functionalities, any subset of the following:
-    1) WMS Style Image Request
-    2) WMS Style Image Request for Vectors
-    3) Regridding
-    4) Request t/lat/lon/z chunk
-    5) Do averaging
-    With appropriate parameters for each (parameters my overlap).
+    the meat and bones of getMap
     '''
+    from mpl_toolkits.basemap import pyproj
+    from matplotlib.figure import Figure
 
-
-    totaltimer = timeobj.time()
+    #totaltimer = timeobj.time()
     loglist = []
-    def haversine(lat1, lon1, lat2, lon2):
-        # Haversine formulation
-        # inputs in degrees
-        startX = math.radians(lon1)
-        startY = math.radians(lat1)
-        endX = math.radians(lon2)
-        endY = math.radians(lat2)
-        diffX = endX - startX
-        diffY = endY - startY
-        a = math.sin(diffY/2)**2 + math.cos(startY) * math.cos(endY) * math.sin(diffX/2)**2
-        c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
-        length = 6371 * c
-        return length
-
-    def reorderArray(values, numsrow, numscol):
-        grid = [];
-        for i in range(numsrow):
-            grid.append(values[ (i * numscol):((i * numscol) + (numscol - 1)) ])
-        return grid
 
     # direct the service to the dataset
-    # make changes to server_local_config.py
-    if config.localdataset:
-        url = config.localpath[dataset]
-    else:
-        url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).uri
 
+    # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])
     height = float(request.GET["height"])
     latmax = float(request.GET["latmax"])
@@ -936,12 +909,7 @@ def fvDo (request, dataset, logger):
     lonmax = float(request.GET["lonmax"])
     lonmin = float(request.GET["lonmin"])
 
-    from mpl_toolkits.basemap import pyproj
-    mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
-    lonmin, latmin = mi(lonmin, latmin, inverse=True)
-    lonmax, latmax = mi(lonmax, latmax, inverse=True)
-    #print "ll", lonmin, latmin, "ur", lonmax, latmax
-
+    # Get time extents, elevation index(layer), and styles(actions)
     datestart = request.GET["datestart"]
     dateend = request.GET["dateend"]
     layer = request.GET["layer"]
@@ -952,23 +920,32 @@ def fvDo (request, dataset, logger):
     actions = request.GET["actions"]
     actions = set(actions.split(","))
 
+    # Get the colormap requested, the color limits/scaling
     colormap = request.GET["colormap"]#.lower()
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
         climits = ["None", "None"]
 
+    # Get the absolute magnitude bool, the topological location of variable of
+    # interest, and the variables of interest (comma sep, no spaces, limit 2)
     magnitude = request.GET["magnitude"]
     topology_type = request.GET["topologytype"]
     variables = request.GET["variables"].split(",")
     continuous = False
 
-    if "kml" in actions:
+    # Get the box coordinates from webmercator to proper lat/lon for grid subsetting
+    mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
+    lonmin, latmin = mi(lonmin, latmin, inverse=True)
+    lonmax, latmax = mi(lonmax, latmax, inverse=True)
+
+    if "kml" in actions: # TODO: REMOVE THIS!
         pass
     else:
+        # Open topology cache file, and the actualy data endpoint
         topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
         datasetnc = netCDF4.Dataset(url)
-        gridtype = topology.grid
+        gridtype = topology.grid # Grid type found in topology file
 
         if gridtype != 'False':
             toplatc, toplonc = 'lat', 'lon'
@@ -977,7 +954,11 @@ def fvDo (request, dataset, logger):
             toplatc, toplonc = 'latc', 'lonc'
             #toplatn, toplonn = 'lat', 'lon'
 
+        # If the request is not a box, then do nothing.
         if latmax != latmin:
+            # Pull cell coords out of cache.
+            # Deal with the longitudes of a global file so that it adheres to
+            # the -180/180 convention.
             if lonmin > lonmax:
                 lonmax = lonmax + 360
                 continuous = True
@@ -986,24 +967,15 @@ def fvDo (request, dataset, logger):
                 lon[wher] = lon[wher] + 360
             else:
                 lon = topology.variables[toplonc][:]
-
             lat = topology.variables[toplatc][:]
 
             if gridtype != 'False':
-                #if grid == 'rgrid':
-                #    index, lat, lon = rgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
             else:
-                index = numpy.asarray(numpy.where(
-                    (lat <= latmax+.18) & (lat >= latmin-.18) &
-                    (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
-                lat = lat[index]
-                lon = lon[index]
-                if not len(index) > 0:
-                    index = None
+                index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
 
-            if gridtype == 'False':
+            if gridtype == 'False': # TODO: Get rid of thiss whole chunk!
                 try:
                     loglist.append("index " + len(index))
                 except:
@@ -1023,35 +995,29 @@ def fvDo (request, dataset, logger):
             ("filledcontours" in actions) or \
             ("pcolor" in actions) or \
             (topology_type.lower()=='node'):
-                if gridtype == 'False':
-                    from matplotlib.collections import PolyCollection
-                    import matplotlib.tri as Tri
-                    #nv = topology.variables['nv'][:,index].T-1
-                    nvtemp = topology.variables['nv'][:,:]#.T-1
-                    nv = nvtemp[:,index].T-1
-                    latn = topology.variables['lat'][:]
-                    lonn = topology.variables['lon'][:]
+                if gridtype == 'False': # If ugrid
+                    # If the nodes are important, get the node coords, and
+                    # topology array
+                    nv = ugrid.get_topologyarray(topology, index)
+                    latn, lonn = ugrid.get_nodes(topology)
                     if topology_type.lower() == "node":
                         index = range(len(latn))
+                    # Deal with global out of range datasets in the node longitudes
                     if continuous is True:
                         if lonmin < 0:
                             lonn[numpy.where(lonn > 0)] = lonn[numpy.where(lonn > 0)] - 360
                             lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                         else:
                             lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
-                    uu = numpy.unique(nv)
-                    loglist.append("range of unique indices " + str( (numpy.min(uu), numpy.max(uu)) ))
                 else:
-                    pass
+                    pass # If regular grid, do nothing
             else:
                 nv = None
+                lonn, latn = None, None
 
-            datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" )
-            #dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
             times = topology.variables['time'][:]
-            datestart = netCDF4.date2num(datestart,
-                units=topology.variables['time'].units)
-            #dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)
+            datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" ) # datestr --> datetime obj
+            datestart = netCDF4.date2num(datestart, units=topology.variables['time'].units) # datetime obj --> netcdf datenum
             time = bisect.bisect_right(times, datestart) - 1
             if config.localdataset:
                 time = [1]
@@ -1060,8 +1026,8 @@ def fvDo (request, dataset, logger):
             else:
                 time = [time]
             if dateend != datestart:
-                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )
-                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)
+                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" ) # datestr --> datetime obj
+                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units) # datetime obj --> netcdf datenum
                 time.append(bisect.bisect_right(times, dateend) - 1)
                 if config.localdataset:
                     time[1] = 1
@@ -1070,950 +1036,215 @@ def fvDo (request, dataset, logger):
                 else:
                     time[1] = time[1]
                 time = range(time[0], time[1]+1)
+            t = time # TODO: ugh this is bad
             loglist.append('time index requested ' + str(time))
 
-            def getvar(nc, t, layer, var):
-                if len(nc.variables[var].shape) == 3:
-                    return nc.variables[var][t, layer[0], :]
-                elif len(nc.variables[var].shape) == 2:
-                    return nc.variables[var][t, :]
-                elif len(nc.variables[var].shape) == 1:
-                    return nc.variables[var][:]
-
-            t = time
-
+            # Get the data and appropriate resulting shape from the data source
             if gridtype == 'False':
-                var1 = getvar(datasetnc , t, layer, variables[0])
-                if len(variables) > 1:
-                    var2 = getvar(datasetnc, t, layer, variables[1])
-                if len(var1.shape) > 2:
-                    var1 = var1[:, :, index]
-                    try:
-                        var2 = var2[:, :, index]
-                    except:
-                        pass
-                elif len(var1.shape) > 1:
-                    var1 = var1[:, index]
-                    try:
-                        var2 = var2[:, index]
-                    except:
-                        pass
-                else: pass # or 1 timestep geographic...?...
-            #if gridtype == 'rgrid':
-            #    var1, var2 = rgrid.getvar(datasetnc, t, layer, variables, index)
+                var1, var2 = ugrid.getvar(datasetnc, t, layer, variables, index)
             if gridtype == 'cgrid':
                 index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
 
-            if latmin != latmax:
-                if gridtype == 'False':
-                # This is averaging in time over all timesteps downloaded
-                    if not "animate" in actions:
-                        if "average" in actions:
-                            if len(var1.shape) > 2:
-                                var1 = var1.mean(axis=0)
-                                var1 = var1.mean(axis=0)
-                                try:
-                                    var2 = var2.mean(axis=0)
-                                    var2 = var2.mean(axis=0)
-                                except:
-                                    pass
-                            elif len(var1.shape) > 1:
-                                var1 = var1.mean(axis=0)
-                                try:
-                                    var2 = var2.mean(axis=0)
-                                except:
-                                    pass
-                        if "maximum" in actions:
-                            if len(var1.shape) > 2:
-                                var1 = numpy.abs(var1).max(axis=0)
-                                var1 = numpy.abs(var1).max(axis=0)
-                                try:
-                                    var2 = numpy.abs(var2).max(axis=0)
-                                    var2 = numpy.abs(var2).max(axis=0)
-                                except:
-                                    pass
-                            elif len(var1.shape) > 1:
-                                var1 = numpy.abs(var1).max(axis=0)
-                                try:
-                                    var2 = numpy.abs(var2).max(axis=0)
-                                except:
-                                    pass
-                    else: pass # will eventually add animations over time, instead of averages
-                #print var1
-                #print var1.min(), var1.max(), type(var1)
-                #var1[numpy.isnan(var1)] = 0
-                #var2[numpy.isnan(var2)] = 0
-                #print var1.min(), var1.max(), type(var1)
-                if "image" in actions:
-                    from matplotlib.figure import Figure
-                    fig = Figure(dpi=80, facecolor='none', edgecolor='none')
-                    fig.set_alpha(0)
-                    #ax = fig.add_subplot(111)
-                    projection = request.GET["projection"]
+            if latmin != latmax: # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
+                if gridtype == 'False': # TODO: Should take a look at this
+                    # This is averaging in time over all timesteps downloaded
+                    if "average" in actions:
+                        if len(var1.shape) > 2:
+                            var1 = var1.mean(axis=0)
+                            var1 = var1.mean(axis=0)
+                            try:
+                                var2 = var2.mean(axis=0)
+                                var2 = var2.mean(axis=0)
+                            except:
+                                pass
+                        elif len(var1.shape) > 1:
+                            var1 = var1.mean(axis=0)
+                            try:
+                                var2 = var2.mean(axis=0)
+                            except:
+                                pass
+                    # This finding max in time over all timesteps downloaded
+                    if "maximum" in actions:
+                        if len(var1.shape) > 2:
+                            var1 = numpy.abs(var1).max(axis=0)
+                            var1 = numpy.abs(var1).max(axis=0)
+                            try:
+                                var2 = numpy.abs(var2).max(axis=0)
+                                var2 = numpy.abs(var2).max(axis=0)
+                            except:
+                                pass
+                        elif len(var1.shape) > 1:
+                            var1 = numpy.abs(var1).max(axis=0)
+                            try:
+                                var2 = numpy.abs(var2).max(axis=0)
+                            except:
+                                pass
 
-                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
-                            resolution=None,
-                            lat_ts = 0.0,
-                            suppress_ticks=True)
+                # Setup the basemap/matplotlib figure
+                fig = Figure(dpi=80, facecolor='none', edgecolor='none')
+                fig.set_alpha(0)
+                projection = request.GET["projection"]
+                m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
+                        urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                        resolution=None,
+                        lat_ts = 0.0,
+                        suppress_ticks=True)
+                m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
 
-                    m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
+                try: # Fail gracefully if not standard_name, should do this a little better than a try
+                    if 'direction' in datasetnc.variables[variables[1]].standard_name:
+                        #assign new var1,var2 as u,v components
+                        var2 = 450 - var2
+                        var2[var2>360] = var2[var2>360] - 360
+                        var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
+                        var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
+                except:
+                    pass
+                if (climits[0] == "None") or (climits[1] == "None"):
+                    CNorm = matplotlib.colors.Normalize()
+                else:
+                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                    vmax=climits[1],
+                                                    clip=True,
+                                                    )
 
-                    if gridtype == 'cgrid':
-                        lon, lat = m(lon, lat)
-                        if (climits[0] == "None") or (climits[1] == "None"):
-                            CNorm = matplotlib.colors.Normalize()
-                        else:
-                            CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                            vmax=climits[1],
-                                                            clip=True,
-                                                            )
-                        try:
-                            if 'direction' in datasetnc.variables[variables[1]].standard_name:
-                                #assign new var1,var2 as u,v components
-                                var2 = 450 - var2
-                                var2[var2>360] = var2[var2>360] - 360
-                                var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
-                                var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
-                        except:
-                            pass
-                        cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
-                                    aspect=m.aspect,
-                                    height=height,
-                                    width=width,
-                                    norm=CNorm,
-                                    cmin = climits[0],
-                                    cmax = climits[1],
-                                    magnitude = magnitude,
-                                    cmap = colormap)
-
-                    elif gridtype == 'False':
-                        if "regrid" in actions:
-                            """
-                            import pywms.wms.regrid as regrid
-                            wid = numpy.max((width, height))
-                            size = (lonmax - lonmin) / wid
-                            hi = (latmax - latmin) / size
-                            hi = math.ceil(hi)
-                            reglon = numpy.linspace(numpy.negative(lonmin), numpy.negative(lonmax), wid)
-                            reglon = numpy.negative(reglon)
-                            reglat = numpy.linspace(latmin, latmax, hi)
-
-                            if "pcolor" in actions:
-                                mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
-                                mag = numpy.sqrt(mag)
-                                newvalues = regrid.regrid(mag, lonn, latn, nv, reglon, reglat, size)
-                                reglon, reglat = numpy.meshgrid(reglon, reglat)
-                                grid = reorderArray(newvalues, len(reglat[:,1]), len(reglon[1,:]))
-                                ax = fig.add_subplot(111)
-                                ax.pcolor(reglon, reglat, grid)
-                            if "contours" in actions:
-                                mag = numpy.power(u.__abs__(), 2)+numpy.power(v.__abs__(), 2)
-                                mag = numpy.sqrt(mag)
-                                newvalues = regrid.regrid(mag, lonn, latn, nv, reglon, reglat, size)
-                                reglon, reglat = numpy.meshgrid(reglon, reglat)
-                                grid = reorderArray(newvalues, len(reglat[:,1]), len(reglon[1,:]))
-                                ax = fig.add_subplot(111)
-                                ax.contourf(reglon, reglat, grid)
-                            if "vectors" in actions:
-                                newv = regrid.regrid(v, lonn, latn, nv, reglon, reglat, size)
-                                newu = regrid.regrid(u, lonn, latn, nv, reglon, reglat, size)
-                                mag = numpy.power(newu.__abs__(), 2)+numpy.power(newv.__abs__(), 2)
-                                mag = numpy.sqrt(mag)
-                                ax = fig.add_subplot(111)
-                                ax.quiver(reglon, reglat, newu, newv, mag, pivot='mid')
-                            """
-                        else:
-                            if "vectors" in actions:
-                                fig.set_figwidth(height/80.0/m.aspect)
-                                fig.set_figheight(height/80.0)
-                                try:
-                                    if 'direction' in datasetnc.variables[variables[1]].standard_name:
-                                        #assign new var1,var2 as u,v components
-                                        var2 = 450 - var2
-                                        var2[var2>360] = var2[var2>360] - 360
-                                        var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
-                                        var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
-                                except:
-                                    pass
-                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-                                mag = numpy.sqrt(mag)
-                                if topology_type.lower() == 'cell':
-                                    pass
-                                else:
-                                    lon, lat = lonn, latn
-                                lon, lat = m(lon, lat)
-
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                                    vmax=climits[1],
-                                                                    clip=True,
-                                                                    )
-
-                                if magnitude == "True":
-                                    arrowsize = None
-                                elif magnitude == "False":
-                                    arrowsize = 2.
-                                elif magnitude == "None":
-                                    arrowsize = None
-                                else:
-                                    arrowsize = float(magnitude)
-
-
-                                if topology_type.lower() == 'node':
-                                    n = numpy.unique(nv)
-                                    m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
-                                        pivot='mid',
-                                        units='xy', #xy
-                                        cmap=colormap,
+                # Plot to the projected figure axes!
+                if gridtype == 'cgrid':
+                    lon, lat = m(lon, lat)
+                    cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
+                                aspect=m.aspect,
+                                height=height,
+                                width=width,
+                                norm=CNorm,
+                                cmin = climits[0],
+                                cmax = climits[1],
+                                magnitude = magnitude,
+                                cmap = colormap)
+                elif gridtype == 'False':
+                    if "regrid" in actions:
+                        pass #TODO: Remove regrid option and indenting
+                    else:
+                        if ("vectors" in actions) or ("barbs" in actions) or ("facets" in actions):
+                            ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
+                                        aspect=m.aspect,
+                                        height=height,
+                                        width=width,
                                         norm=CNorm,
-                                        minlength=.5,
-                                        scale=arrowsize,
-                                        scale_units='inches',
+                                        cmin = climits[0],
+                                        cmax = climits[1],
+                                        magnitude = magnitude,
+                                        cmap = colormap,
+                                        topology_type = topology_type,
+                                        #config = config,
+                                        #lonmin = lonmin,
+                                        #latmin = latmin,
+                                        #lonmax = lonmax,
+                                        #latmax = latmax,
+                                        #dataset = dataset,
+                                        #continuous = continuous,
+                                        #projection = projection,
                                         )
-                                else:
-                                    m.quiver(lon, lat, var1, var2, mag,
-                                        pivot='mid',
-                                        units='xy', #xy
-                                        cmap=colormap,
-                                        norm=CNorm,
-                                        minlength=.5,
-                                        scale=arrowsize,
-                                        scale_units='inches',
-                                        )
-
-                            if "barbs" in actions:
-                                #fig.set_figheight(5)
-                                fig.set_figwidth(height/80.0/m.aspect)
-                                fig.set_figheight(height/80.0)
-                                #fig.set_figwidth(width/80.0)
-
-                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-
-                                mag = numpy.sqrt(mag)
-                                #ax = fig.add_subplot(111)
-                                #ax.quiver(lon, lat, u, v, mag, pivot='mid')
-                                if topology_type.lower() == 'cell':
-                                    pass
-                                else:
-                                    lon, lat = lonn, latn
-
-                                lon, lat = m(lon, lat)
-
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                    full = 10.#.2
-                                    flag = 50.#1.
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                                    vmax=climits[1],
-                                                                    clip=True,
-                                                                    )
-                                    full = climits[0]
-                                    flag = climits[1]
-                                if topology_type.lower() == 'node':
-                                    n = numpy.unique(nv)
-                                    m.ax.barbs(lon[n], lat[n], var1[n], var2[n], mag[n],
-                                        length=7.,
-                                        pivot='middle',
-                                        barb_increments=dict(half=full/2., full=full, flag=flag),
-                                        #units='xy',
-                                        cmap=colormap,
-                                        norm=CNorm,
-                                        #clim=climits,
-                                        linewidth=1.7,
-                                        sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
-                                        #antialiased=True,
-                                        )
-                                else:
-                                    m.ax.barbs(lon, lat, var1, var2, mag,
-                                        length=7.,
-                                        pivot='middle',
-                                        barb_increments=dict(half=full/2., full=full, flag=flag),
-                                        #units='xy',
-                                        cmap=colormap,
-                                        norm=CNorm,
-                                        #clim=climits,
-                                        linewidth=1.7,
-                                        sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
-                                        #antialiased=True,
-                                        )
-
-
-
-                            elif "contours" in actions:
-                                fig.set_figheight(height/80.0)
-                                fig.set_figwidth(width/80.0)
-                                #lon, lat = m(lon, lat)
-                                #lonn, latn = m(lonn, latn)
-                                if len(variables) > 1:
-                                    mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-                                    mag = numpy.sqrt(mag)
-                                else:
-                                    if magnitude == "True":
-                                        mag = numpy.abs(var1)
-                                    else:
-                                        mag = var1
-
-                                #ax = fig.add_subplot(111)
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                    levs = None
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=True,
-                                                                    )
-                                    levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
-                                #tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                                #ax.tricontourf(tri, mag,
-                                #    cmap=colormap,
-                                #    norm=CNorm,
-                                #    )\
-
-                                #m.contour(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, levels=levs)
-                                if topology_type.lower() == 'cell':
-                                    #if continuous is True:
-                                    #    lon[np.where(lon < lonmin)] = lon[np.where(lon < lonmin)] + 360
-
-                                    lon, lat = m(lon, lat)
-                                    trid = Tri.Triangulation(lon, lat)
-                                    #mask = []
-                                    #for triangs in trid.triangles:
-                                    #    mask.append(m.is_land(
-                                    #    lon[triangs].mean(),
-                                    #    lat[triangs].mean()))
-                                    #trid.set_mask(mask)
-                                    m.ax.tricontour(trid, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))
-
-                                    import shapely.geometry
-                                    import matplotlib.patches as mpatches
-                                    import matplotlib.path as mpath
-
-                                    f = open(os.path.join(config.topologypath, dataset + '.domain'))
-                                    domain = pickle.load(f)
-                                    f.close()
-                                    if continuous is True:
-                                        if lonmin < 0:
-                                            #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                            #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 0, latmax),
-                                                                                 shapely.geometry.box(0, latmin, lonmax, latmax)))
-                                        else:
-                                            box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
-                                                                                 shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
-                                    else:
-                                        box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
-
-                                    domain = domain.intersection(box)
-
-                                    buf = StringIO()
-
-                                    lonmax1, latmax1 = m(lonmax, latmax)
-                                    lonmin1, latmin1 = m(lonmin, latmin)
-                                    m.ax.set_xlim(lonmin1, lonmax1)
-                                    m.ax.set_ylim(latmin1, latmax1)
-                                    m.ax.set_frame_on(False)
-                                    m.ax.set_clip_on(False)
-                                    m.ax.set_position([0,0,1,1])
-
-                                    canvas = FigureCanvasAgg(fig)
-                                    canvas.print_png(buf)#("temp.png")
-                                    buf.seek(0)
-                                    im = matplotlib.image.imread(buf)#"temp.png")#[-1:0:-1,:,:]
-                                    buf.close()
-                                    fig = Figure(dpi=80, facecolor='none', edgecolor='none')
-                                    fig.set_alpha(0)
-                                    fig.set_figheight(height/80.0)
-                                    fig.set_figwidth(width/80.0)
-                                    ##
-                                    ## fig.figimage(im, clip_path=p)
-                                    ##  p.set_color('none')
-                                    ##
-                                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                                            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
-                                            resolution=None,
-                                            lat_ts = 0.0,
-                                            suppress_ticks=True)
-                                    m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-                                    if domain.geom_type == "Polygon":
-                                        x, y = domain.exterior.xy
-                                        x = numpy.asarray(x)
-                                        if continuous is True:
-                                            if lonmin < 0:
-                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            else:
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-
-                                        x, y = m(x, y)
-                                        x = numpy.hstack((numpy.asarray(x),x[0]))
-                                        y = numpy.hstack((numpy.asarray(y),y[0]))
-                                        allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                        allcodes[0] = mpath.Path.MOVETO
-                                        allcodes[-1] = mpath.Path.CLOSEPOLY
-                                        for hole in domain.interiors:
-                                            holex, holey = hole.xy
-                                            holex = numpy.asarray(holex)
-                                            if continuous is True:
-                                                if lonmin < 0:
-                                                    holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                else:
-                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                            holex, holey = m(holex, holey)
-                                            newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                            newcodes[0] = mpath.Path.MOVETO
-                                            newcodes[-1] = mpath.Path.CLOSEPOLY
-                                            allcodes = numpy.concatenate((allcodes, newcodes))
-                                            x = numpy.concatenate((x, holex))
-                                            y = numpy.concatenate((y, holey))
-
-                                        p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                        patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                        m.ax.add_patch(patch1)
-                                        fig.figimage(im, clip_path=patch1)
-                                        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                        patch1.set_color('none')
-
-                                    elif domain.geom_type == "MultiPolygon":
-                                        for i, part in enumerate(domain.geoms):
-                                            #if i == 0:
-                                            x, y = part.exterior.xy
-                                            x = numpy.asarray(x)
-                                            if continuous is True:
-                                                if lonmin < 0:
-                                                    x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                                else:
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            x, y = m(x, y)
-                                            x = numpy.hstack((numpy.asarray(x),x[0]))
-                                            y = numpy.hstack((numpy.asarray(y),y[0]))
-                                            allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                            allcodes[0] = mpath.Path.MOVETO
-                                            allcodes[-1] = mpath.Path.CLOSEPOLY
-                                            try:
-                                                for hole in part.interiors:
-                                                    holex, holey = hole.xy
-                                                    holex = numpy.asarray(holex)
-                                                    if continuous is True:
-                                                        if lonmin < 0:
-                                                            holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                        else:
-                                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                    holex, holey = m(holex, holey)
-                                                    newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                                    newcodes[0] = mpath.Path.MOVETO
-                                                    newcodes[-1] = mpath.Path.CLOSEPOLY
-                                                    allcodes = numpy.concatenate((allcodes, newcodes))
-                                                    x = numpy.concatenate((x, holex))
-                                                    y = numpy.concatenate((y, holey))
-                                            except:
-                                                logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
-                                                loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
-                                                #logger.warning('MultiPolygon only has :' + str(dir(part)))
-                                            p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                            patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                            m.ax.add_patch(patch1)
-                                            fig.figimage(im, clip_path=patch1)
-                                            #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                            patch1.set_color('none')
-                                else:
-                                    lonn, latn = m(lonn, latn)
-                                    tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                    m.ax.tricontour(tri, mag, norm=CNorm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(colormap))
-
-                            elif "filledcontours" in actions:
-                                fig.set_figheight(height/80.0)
-                                fig.set_figwidth(width/80.0)
-
-                                if len(variables) > 1:
-                                    mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-                                    mag = numpy.sqrt(mag)
-                                else:
-                                    if magnitude == "True":
-                                        mag = numpy.abs(var1)
-                                    else:
-                                        mag = var1
-
-                                #ax = fig.add_subplot(111)
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                    levs = None
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],                             vmax=climits[1],clip=False,
-                                                                        )
-                                    levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
-                                    levs = numpy.hstack(([-99999], levs, [99999]))
-
-                                if topology_type.lower() == 'cell':
-                                    #print dir(m)
-                                    import shapely.geometry
-                                    import matplotlib.patches as mpatches
-                                    import matplotlib.path as mpath
-
-                                    lon, lat = m(lon, lat)
-                                    trid = Tri.Triangulation(lon, lat)
-                                    m.ax.tricontourf(trid, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))
-
-                                    f = open(os.path.join(config.topologypath, dataset + '.domain'))
-                                    domain = pickle.load(f)
-                                    f.close()
-                                    if continuous is True:
-                                        if lonmin < 0:
-                                            #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                            #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 0, latmax),
-                                                                                 shapely.geometry.box(0, latmin, lonmax, latmax)))
-                                        else:
-                                            box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
-                                                                                 shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
-                                    else:
-                                        box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
-
-                                    domain = domain.intersection(box)
-
-                                    buf = StringIO()
-
-                                    lonmax1, latmax1 = m(lonmax, latmax)
-                                    lonmin1, latmin1 = m(lonmin, latmin)
-                                    m.ax.set_xlim(lonmin1, lonmax1)
-                                    m.ax.set_ylim(latmin1, latmax1)
-                                    m.ax.set_frame_on(False)
-                                    m.ax.set_clip_on(False)
-                                    m.ax.set_position([0,0,1,1])
-
-                                    canvas = FigureCanvasAgg(fig)
-                                    canvas.print_png(buf)#("temp.png")
-                                    buf.seek(0)
-                                    im = matplotlib.image.imread(buf)#("temp.png")#[-1:0:-1,:,:]
-                                    buf.close()
-                                    fig = Figure(dpi=80, facecolor='none', edgecolor='none')
-                                    fig.set_alpha(0)
-                                    fig.set_figheight(height/80.0)
-                                    fig.set_figwidth(width/80.0)
-                                    ##
-                                    ## fig.figimage(im, clip_path=p)
-                                    ##  p.set_color('none')
-                                    ##
-                                    m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                                            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                            #lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
-                                            resolution=None,
-                                            lat_ts = 0.0,
-                                            suppress_ticks=True)
-                                    m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-                                    if domain.geom_type == "Polygon":
-                                        x, y = domain.exterior.xy
-                                        x = numpy.asarray(x)
-                                        if continuous is True:
-                                            if lonmin < 0:
-                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            else:
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-
-                                        x, y = m(x, y)
-                                        x = numpy.hstack((numpy.asarray(x),x[0]))
-                                        y = numpy.hstack((numpy.asarray(y),y[0]))
-                                        allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                        allcodes[0] = mpath.Path.MOVETO
-                                        allcodes[-1] = mpath.Path.CLOSEPOLY
-                                        for hole in domain.interiors:
-                                            holex, holey = hole.xy
-                                            holex = numpy.asarray(holex)
-                                            if continuous is True:
-                                                if lonmin < 0:
-                                                    holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                else:
-                                                    holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                            holex, holey = m(holex, holey)
-                                            newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                            newcodes[0] = mpath.Path.MOVETO
-                                            newcodes[-1] = mpath.Path.CLOSEPOLY
-                                            allcodes = numpy.concatenate((allcodes, newcodes))
-                                            x = numpy.concatenate((x, holex))
-                                            y = numpy.concatenate((y, holey))
-
-                                        p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                        patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                        m.ax.add_patch(patch1)
-                                        fig.figimage(im, clip_path=patch1)
-                                        #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                        patch1.set_color('none')
-
-                                    elif domain.geom_type == "MultiPolygon":
-                                        for i, part in enumerate(domain.geoms):
-                                            #if i == 0:
-                                            x, y = part.exterior.xy
-                                            x = numpy.asarray(x)
-                                            if continuous is True:
-                                                if lonmin < 0:
-                                                    x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                                else:
-                                                    x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            x, y = m(x, y)
-                                            x = numpy.hstack((numpy.asarray(x),x[0]))
-                                            y = numpy.hstack((numpy.asarray(y),y[0]))
-                                            allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                            allcodes[0] = mpath.Path.MOVETO
-                                            allcodes[-1] = mpath.Path.CLOSEPOLY
-                                            try:
-                                                for hole in part.interiors:
-                                                    holex, holey = hole.xy
-                                                    holex = numpy.asarray(holex)
-                                                    if continuous is True:
-                                                        if lonmin < 0:
-                                                            holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                        else:
-                                                            holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                    holex, holey = m(holex, holey)
-                                                    newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                                    newcodes[0] = mpath.Path.MOVETO
-                                                    newcodes[-1] = mpath.Path.CLOSEPOLY
-                                                    allcodes = numpy.concatenate((allcodes, newcodes))
-                                                    x = numpy.concatenate((x, holex))
-                                                    y = numpy.concatenate((y, holey))
-                                            except:
-                                                logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
-                                                loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
-                                                #logger.warning('MultiPolygon only has :' + str(dir(part)))
-                                            p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                            patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                            m.ax.add_patch(patch1)
-                                            fig.figimage(im, clip_path=patch1)
-                                            #m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                            patch1.set_color('none')
-                                else:
-                                    lonn, latn = m(lonn, latn)
-                                    tri = Tri.Triangulation(lonn, latn, triangles=nv)
-                                    m.ax.tricontourf(tri, mag, norm=CNorm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(colormap))
-
-
-
-                            elif "pcolor" in actions:
-                                fig.set_figheight(height/80.0)
-                                fig.set_figwidth(width/80.0)
-                                if topology_type.lower() == "cell":
-                                    lon, lat = m(lon, lat)
-                                    lonn, latn = m(lonn, latn)
-                                else:
-                                    lon, lat = m(lonn, latn)
-                                    lonn, latn = lon, lat
-
-                                if len(variables) > 1:
-                                    mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-                                    mag = numpy.sqrt(mag)
-                                else:
-                                    if magnitude == "True":
-                                        mag = numpy.abs(var1)
-                                    else:
-                                        mag = var1
-
-                                #ax = fig.add_subplot(111)
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                                        vmax=climits[1],
-                                                                        clip=True,
-                                                                       )
-
-                                #tri = Tri.Triangulation(lonn,latn,triangles=nv)
-
-                                #m.pcolor(numpy.asarray(lon), numpy.asarray(lat), numpy.asarray(mag), tri=True, norm=CNorm, rasterized=True)
-                                #xi = numpy.arange(lon.min(), lon.max(), 1000)
-                                #yi = numpy.arange(lat.min(), lat.max(), 1000)
-                                #print "lon " + str(lonmax-lonmin), lonmax, lonmin
-                                #if lonmax-lonmin < 3:
-                                #    num = 300
-                                #elif lonmax-lonmin < 5:
-                                #    num = 500
-                                #elif lonmax-lonmin < 9:
-                                #    num = 900
-                                #else:
-                                #    num = 2500
-                                num = int( (lonmax - lonmin) *  320 )
-                                xi = numpy.arange(m.xmin, m.xmax, num)
-                                yi = numpy.arange(m.ymin, m.ymax, num)
-
-                                from matplotlib.mlab import griddata
-
-                                if topology_type.lower() == "node":
-                                    n = numpy.unique(nv)
-                                    #print "lon " , lon[n].min(), lon[n].max()
-                                    #print "xi", xi.min(), xi.max()
-                                    zi = griddata(lon[n], lat[n], mag[n], xi, yi, interp='nn')
-                                else:
-                                    zi = griddata(lon, lat, mag, xi, yi, interp='nn')
-
-                                import matplotlib.patches as mpatches
-                                import matplotlib.path as mpath
-
-                                #a = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
-                                #b = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
-                                #multi1 = MultiPolygon([[a, []], [b, []]])
-                                loglist.append("time to before domain open " + str(timeobj.time() - totaltimer))
-
-                                f = open(os.path.join(config.topologypath, dataset + '.domain'))
-                                domain = pickle.load(f)
-                                f.close()
-                                import shapely.geometry
-                                if continuous is True:
-                                    if lonmin < 0:
-                                        #x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                        #x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                        box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 0, latmax),
-                                                                             shapely.geometry.box(0, latmin, lonmax, latmax)))
-                                    else:
-                                        box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
-                                                                             shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
-                                else:
-                                    box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
-                                domain = domain.intersection(box)
-                                #print lonmin, latmin, lonmax, latmax
-                                loglist.append("time to after domain intersection " + str(timeobj.time() - totaltimer))
-                                if domain.geom_type == "Polygon":
-                                    x, y = domain.exterior.xy
-                                    x = numpy.asarray(x)
-                                    if continuous is True:
-                                        if lonmin < 0:
-                                            x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                        else:
-                                            x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-
-                                    x, y = m(x, y)
-                                    x = numpy.hstack((numpy.asarray(x),x[0]))
-                                    y = numpy.hstack((numpy.asarray(y),y[0]))
-                                    allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                    allcodes[0] = mpath.Path.MOVETO
-                                    allcodes[-1] = mpath.Path.CLOSEPOLY
-                                    for hole in domain.interiors:
-                                        holex, holey = hole.xy
-                                        holex = numpy.asarray(holex)
-                                        if continuous is True:
-                                            if lonmin < 0:
-                                                holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                            else:
-                                                holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                        holex, holey = m(holex, holey)
-                                        newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                        newcodes[0] = mpath.Path.MOVETO
-                                        newcodes[-1] = mpath.Path.CLOSEPOLY
-                                        allcodes = numpy.concatenate((allcodes, newcodes))
-                                        x = numpy.concatenate((x, holex))
-                                        y = numpy.concatenate((y, holey))
-
-                                    p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                    patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                    m.ax.add_patch(patch1)
-                                    m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                    patch1.set_color('none')
-
-                                elif domain.geom_type == "MultiPolygon":
-                                    for i, part in enumerate(domain.geoms):
-                                        #if i == 0:
-                                        x, y = part.exterior.xy
-                                        x = numpy.asarray(x)
-                                        if continuous is True:
-                                            if lonmin < 0:
-                                                x[numpy.where(x > 0)] = x[numpy.where(x > 0)] - 360
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                            else:
-                                                x[numpy.where(x < lonmax-359)] = x[numpy.where(x < lonmax-359)] + 360
-                                        x, y = m(x, y)
-                                        x = numpy.hstack((numpy.asarray(x),x[0]))
-                                        y = numpy.hstack((numpy.asarray(y),y[0]))
-                                        allcodes = numpy.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                        allcodes[0] = mpath.Path.MOVETO
-                                        allcodes[-1] = mpath.Path.CLOSEPOLY
-                                        try:
-                                            for hole in part.interiors:
-                                                holex, holey = hole.xy
-                                                holex = numpy.asarray(holex)
-                                                if continuous is True:
-                                                    if lonmin < 0:
-                                                        holex[numpy.where(holex > 0)] = holex[numpy.where(holex > 0)] - 360
-                                                        holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                    else:
-                                                        holex[numpy.where(holex < lonmax-359)] = holex[numpy.where(holex < lonmax-359)] + 360
-                                                holex, holey = m(holex, holey)
-                                                newcodes  = numpy.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
-                                                newcodes[0] = mpath.Path.MOVETO
-                                                newcodes[-1] = mpath.Path.CLOSEPOLY
-                                                allcodes = numpy.concatenate((allcodes, newcodes))
-                                                x = numpy.concatenate((x, holex))
-                                                y = numpy.concatenate((y, holey))
-                                        except:
-                                            logger.warning('failure to add hole in domain.interiors of a MultiPolygon')
-                                            loglist.append('failure to add hole in domain.interiors of a MultiPolygon')
-                                            #logger.warning('MultiPolygon only has :' + str(dir(part)))
-                                        p = mpath.Path(numpy.asarray((x,y)).T, codes = allcodes)
-                                        patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
-                                        m.ax.add_patch(patch1)
-                                        m.imshow(zi, norm=CNorm, cmap=colormap, clip_path=patch1, interpolation="nearest")
-                                        patch1.set_color('none')
-
-                            elif "flow" in actions:
-                                #fig.set_figheight(height/80.0)
-                                #fig.set_figwidth(width/80.0)
-                                if topology_type.lower() == "cell":
-                                    lon, lat = lon, lat
-                                    lonn, latn = lonn, latn
-                                else:
-                                    lon, lat = lonn, latn
-                                    lonn, latn = lon, lat
-
-                                if lonmax-lonmin < 3:
-                                    num = 300
-                                elif lonmax-lonmin < 5:
-                                    num = 500
-                                elif lonmax-lonmin < 9:
-                                    num = 900
-                                else:
-                                    num = 2500
-
-                                xi = numpy.arange(lonmin, lonmax, num)
-                                yi = numpy.arange(latmin, latmax, num)
-
-                                from matplotlib.mlab import griddata
-
-                                f = open(os.path.join(config.topologypath, dataset + '.domain'))
-                                domain = pickle.load(f)
-                                f.close()
-                                import shapely.geometry
-
-                                if topology_type.lower() == "node":
-                                    n = numpy.unique(nv)
-                                    u = griddata(lon[n], lat[n], var1[n], xi, yi, interp='nn')
-                                    v = griddata(lon[n], lat[n], var2[n], xi, yi, interp='nn')
-                                else:
-                                    u = griddata(lon, lat, var1, xi, yi, interp='nn')
-                                    v = griddata(lon, lat, var2, xi, yi, interp='nn')
-                                xi = xi.flatten()
-                                yi = yi.flatten()
-                                cont = domain.overlaps(shapely.geometry.MultiPoint(numpy.asarray((xi,yi)).T))
-
-                                u.flatten()[cont==False] = 0
-                                v.flatten()[cont==False] = 0
-
-                                import seeded_flow
-                                js = seeded_flow.js_container(xi,yi,u,v)
-                                #html = seeded_flow.html5_canvas(js)
-                                dataresponse = HttpResponse(content_type='application/json')
-                                dataresponse.write(js)
-
-                            elif "shape" in actions:
-                                import shapefile
-                                import zipfile
-                                dataresponse = HttpResponse(content_type='application/x-zip')
-                                dataresponse['Content-Disposition'] = 'attachment; filename=fvcom.zip'
-                                w = shapefile.Writer(shapefile.POLYGON)
-                                w.field('mag','F')
-                                mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
-                                mag = numpy.sqrt(mag)
-
-                                for i,v in enumerate(index):
-                                    w.poly(parts=[[[lonn[nv[i, 0]], latn[nv[i, 0]]], \
-                                                   [lonn[nv[i, 1]], latn[nv[i, 1]]], \
-                                                   [lonn[nv[i, 2]], latn[nv[i, 2]]]]])
-                                    w.record(mag[i])
-
-                                shp = StringIO()
-                                shx = StringIO()
-                                dbf = StringIO()
-                                w.saveShp(shp)
-                                w.saveShx(shx)
-                                w.saveDbf(dbf)
-                                z = zipfile.ZipFile(dataresponse, "w", zipfile.ZIP_STORED)
-                                #z = zipfile.ZipFile('/home/acrosby/alexsfvcomshape.zip', 'w', zipfile.ZIP_STORED)
-                                z.writestr("fvcom.shp", shp.getvalue())
-                                z.writestr("fvcom.shx", shx.getvalue())
-                                z.writestr("fvcom.dbf", dbf.getvalue())
-                                z.close()
-
-                            elif  "facets" in actions:
-                                #projection = request.GET["projection"]
-                                #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                                #            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                                #            lat_0 =(latmax + latmin) / 2, lon_0 =(lonmax + lonmin) / 2,
-                                #            )
-                                fig.set_figheight(height/80.0)
-                                fig.set_figwidth(width/80.0)
-
-                                #print "points ll", numpy.min(lonn), numpy.min(latn), "ur", numpy.max(lonn), numpy.max(latn)
-                                lonn, latn = m(lonn, latn)
-                                tri = Tri.Triangulation(lonn,latn,triangles=nv)
-                                if len(variables) > 1:
-                                    mag = numpy.sqrt(numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2))
-                                else:
-                                    if magnitude == "True":
-                                        mag = numpy.sqrt(var1**2)
-                                    else:
-                                        mag = var1
-
-                                if (climits[0] == "None") or (climits[1] == "None"):
-                                    CNorm = matplotlib.colors.Normalize()
-                                else:
-                                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                                    vmax=climits[1],
-                                                                    clip=True,
-                                                                    )
-
-                                if topology_type.lower() == 'cell':
-                                    verts = numpy.concatenate((tri.x[tri.triangles][...,numpy.newaxis],\
-                                                            tri.y[tri.triangles][...,numpy.newaxis]), axis=2)
-
-
-                                    collection = PolyCollection(verts,
-                                                                cmap=colormap,
-                                                                norm=CNorm,
-                                                                )
-                                    collection.set_array(mag)
-                                    collection.set_edgecolor('none')
-
-                                    m.ax.add_collection(collection)
-                                    #print "adding collection"
-                                else:
-                                    m.ax.tripcolor(tri, mag,
-                                                   shading="",
-                                                   norm=CNorm,
-                                                   cmap=colormap,
-                                                   )
-
-                    lonmax, latmax = m(lonmax, latmax)
-                    lonmin, latmin = m(lonmin, latmin)
-                    m.ax.set_xlim(lonmin, lonmax)
-                    m.ax.set_ylim(latmin, latmax)
-                    m.ax.set_frame_on(False)
-                    m.ax.set_clip_on(False)
-                    m.ax.set_position([0,0,1,1])
-                    #Plot.yticks(visible=False)
-                    #Plot.xticks(visible=False)
-
-                    #Plot.axis('off')
-
-                    #canvas = Plot.get_current_fig_manager().canvas
-
-                    canvas = FigureCanvasAgg(fig)
-                    response = HttpResponse(content_type='image/png')
-                    #response = HttpResponse(content_type="image/svg+xml")
-                    #fig.savefig(response, format='svg')
-                    #canvas.print_figure(response, dpi=80, facecolor=None, edgecolor=None)
-                    canvas.print_png(response)
-                    #print "print png"
-                    #fig.clf()
-                    #Plot.close()
+                        """
+                        elif "flow" in actions:
+                            #fig.set_figheight(height/80.0)
+                            #fig.set_figwidth(width/80.0)
+                            if topology_type.lower() == "cell":
+                                lon, lat = lon, lat
+                                lonn, latn = lonn, latn
+                            else:
+                                lon, lat = lonn, latn
+                                lonn, latn = lon, lat
+
+                            if lonmax-lonmin < 3:
+                                num = 300
+                            elif lonmax-lonmin < 5:
+                                num = 500
+                            elif lonmax-lonmin < 9:
+                                num = 900
+                            else:
+                                num = 2500
+
+                            xi = numpy.arange(lonmin, lonmax, num)
+                            yi = numpy.arange(latmin, latmax, num)
+
+                            from matplotlib.mlab import griddata
+
+                            f = open(os.path.join(config.topologypath, dataset + '.domain'))
+                            domain = pickle.load(f)
+                            f.close()
+                            import shapely.geometry
+
+                            if topology_type.lower() == "node":
+                                n = numpy.unique(nv)
+                                u = griddata(lon[n], lat[n], var1[n], xi, yi, interp='nn')
+                                v = griddata(lon[n], lat[n], var2[n], xi, yi, interp='nn')
+                            else:
+                                u = griddata(lon, lat, var1, xi, yi, interp='nn')
+                                v = griddata(lon, lat, var2, xi, yi, interp='nn')
+                            xi = xi.flatten()
+                            yi = yi.flatten()
+                            cont = domain.overlaps(shapely.geometry.MultiPoint(numpy.asarray((xi,yi)).T))
+
+                            u.flatten()[cont==False] = 0
+                            v.flatten()[cont==False] = 0
+
+                            import seeded_flow
+                            js = seeded_flow.js_container(xi,yi,u,v)
+                            #html = seeded_flow.html5_canvas(js)
+                            dataresponse = HttpResponse(content_type='application/json')
+                            dataresponse.write(js)
+
+                        elif "shape" in actions:
+                            import shapefile
+                            import zipfile
+                            dataresponse = HttpResponse(content_type='application/x-zip')
+                            dataresponse['Content-Disposition'] = 'attachment; filename=fvcom.zip'
+                            w = shapefile.Writer(shapefile.POLYGON)
+                            w.field('mag','F')
+                            mag = numpy.power(var1.__abs__(), 2)+numpy.power(var2.__abs__(), 2)
+                            mag = numpy.sqrt(mag)
+
+                            for i,v in enumerate(index):
+                                w.poly(parts=[[[lonn[nv[i, 0]], latn[nv[i, 0]]], \
+                                               [lonn[nv[i, 1]], latn[nv[i, 1]]], \
+                                               [lonn[nv[i, 2]], latn[nv[i, 2]]]]])
+                                w.record(mag[i])
+
+                            shp = StringIO()
+                            shx = StringIO()
+                            dbf = StringIO()
+                            w.saveShp(shp)
+                            w.saveShx(shx)
+                            w.saveDbf(dbf)
+                            z = zipfile.ZipFile(dataresponse, "w", zipfile.ZIP_STORED)
+                            #z = zipfile.ZipFile('/home/acrosby/alexsfvcomshape.zip', 'w', zipfile.ZIP_STORED)
+                            z.writestr("fvcom.shp", shp.getvalue())
+                            z.writestr("fvcom.shx", shx.getvalue())
+                            z.writestr("fvcom.dbf", dbf.getvalue())
+                            z.close()
+                        """
+
+                lonmax, latmax = m(lonmax, latmax)
+                lonmin, latmin = m(lonmin, latmin)
+                m.ax.set_xlim(lonmin, lonmax)
+                m.ax.set_ylim(latmin, latmax)
+                m.ax.set_frame_on(False)
+                m.ax.set_clip_on(False)
+                m.ax.set_position([0,0,1,1])
+                #Plot.yticks(visible=False)
+                #Plot.xticks(visible=False)
+                #Plot.axis('off')
+                #canvas = Plot.get_current_fig_manager().canvas
+                canvas = FigureCanvasAgg(fig)
+                response = HttpResponse(content_type='image/png')
+                #response = HttpResponse(content_type="image/svg+xml")
+                #fig.savefig(response, format='svg')
+                #canvas.print_figure(response, dpi=80, facecolor=None, edgecolor=None)
+                canvas.print_png(response)
+                #print "print png"
+                #fig.clf()
+                #Plot.close()
                 """
                 elif "data" in actions:
                     if "regrid" in actions:
@@ -2170,8 +1401,8 @@ def fvDo (request, dataset, logger):
 
     topology.close()
     datasetnc.close()
-    gc.collect()
-    loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
+    #gc.collect()
+    #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
     if "flow" in actions or "shape" in actions: # TODO: Remove and make the data repsponses wfs/wps's
         return dataresponse
