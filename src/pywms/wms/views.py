@@ -1145,7 +1145,6 @@ def getMap (request, dataset, logger):
                 m.ax.set_frame_on(False)
                 m.ax.set_clip_on(False)
                 m.ax.set_position([0,0,1,1])
-                fig.set_alpha(0)
                 canvas = FigureCanvasAgg(fig)
                 response = HttpResponse(content_type='image/png')
                 canvas.print_png(response)

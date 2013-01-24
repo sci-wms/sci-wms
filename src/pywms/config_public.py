@@ -19,7 +19,7 @@ except:
         worker = "sync"
 
 bind = "0.0.0.0:7000"
-workers = multiprocessing.cpu_count()
+workers = multiprocessing.cpu_count() * 2
 worker_class = worker
 debug = False
 timeout = 120
