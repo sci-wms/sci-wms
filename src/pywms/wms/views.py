@@ -70,7 +70,7 @@ def wmstest (request):
     #p = multiprocessing.Process(target=grid.check_topology_age)
     #p.daemon = True
     #p.start()
-    grid_cache.check_topology_age()
+    #grid_cache.check_topology_age()
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))

@@ -11,8 +11,7 @@ import sys, os, numpy, logging, traceback
 from datetime import datetime
 import numpy as np
 from pywms.wms.models import Dataset
-from pywms import build_tree
-import server_local_config
+#from pywms import build_tree
 import server_local_config as config
 import multiprocessing
 from collections import deque
@@ -36,13 +35,13 @@ time_units = 'hours since 1970-01-01'
 
 def create_topology(datasetname, url):
     try:
-        import server_local_config as config
         nc = ncDataset(url)
         nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if nc.variables.has_key("nv"):
             logger.info("identified as fvcom")
             grid = 'False'
+
             nclocal.createDimension('cell', nc.variables['latc'].shape[0])#90415)
             nclocal.createDimension('node', nc.variables['lat'].shape[0])
             nclocal.createDimension('time', nc.variables['time'].shape[0])
@@ -55,7 +54,7 @@ def create_topology(datasetname, url):
             nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['nv'].shape, zlib=False, complevel=0)
 
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0) #d
-
+            logger.info("done creating")
             lontemp = nc.variables['lon'][:]
             lonctemp = nc.variables['lonc'][:]
 
@@ -78,14 +77,17 @@ def create_topology(datasetname, url):
             latc[:] = nc.variables['latc'][:]
 
             nv[:,:] = nc.variables['nv'][:,:]
-
+            logger.info("done filling vars")
             # DECODE the FVCOM datetime string (Time) and save as a high precision datenum
             timestrs = nc.variables['Times'][:] #format: "2013-01-15T00:00:00.000000"
-            dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
-            #dates = [datetime.strptime(str(timestrs[tind,:]), "%Y-%m-%dT%H:%M:%S.%f") for tind in range(len(timestrs))]
-            datenums = date2num(dates, units=time_units)# use netCDF4's date2num function
-            time[:] = datenums
-            time.units = time_units
+            print timestrs
+            #dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
+            #datenums = date2num(dates, units=time_units)# use netCDF4's date2num function
+            #time[:] = datenums
+            time[:] = nc.variables['time'][:]
+            logger.info("done time conversion")
+            #time.units = time_units
+            time.units = nc.variables['time'].units
             nclocal.sync()
             nclocal.grid = grid
             nclocal.sync()
@@ -169,10 +171,6 @@ def create_topology(datasetname, url):
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
-            while not 'grid' in nclocal.ncattrs():
-                nclocal.__setattr__('grid', 'cgrid')
-                nclocal.sync()
-
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
@@ -185,15 +183,17 @@ def create_topology(datasetname, url):
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             logger.info("data written to file")
-
+            while not 'grid' in nclocal.ncattrs():
+                nclocal.__setattr__('grid', 'cgrid')
+                nclocal.sync()
         nclocal.sync()
         nclocal.close()
         nc.close()
         if grid == 'False':
             if not os.path.exists(nclocalpath[:-3] + '.domain'):
                 create_domain_polygon(nclocalpath)
-            if not (os.path.exists(nclocalpath[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3] + '_nodes.idx')):
-                build_tree.build_from_nc(nclocalpath)
+            #if not (os.path.exists(nclocalpath[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3] + '_nodes.idx')):
+            #    build_tree.build_from_nc(nclocalpath)
 
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -239,7 +239,7 @@ def do(name, dataset, s):
                 filemtime = datetime.fromtimestamp(
                     os.path.getmtime(
                     os.path.join(
-                    server_local_config.topologypath, name + ".nc"
+                    config.topologypath, name + ".nc"
                     )))
                 #print filemtime
                 difference = datetime.now() - filemtime
@@ -248,7 +248,7 @@ def do(name, dataset, s):
                         #print "true"
                         nc = ncDataset(dataset["uri"])
                         topo = ncDataset(os.path.join(
-                            server_local_config.topologypath, name + ".nc"))
+                            config.topologypath, name + ".nc"))
 
                         time1 = nc.variables['time'][-1]
                         time2 = topo.variables['time'][-1]

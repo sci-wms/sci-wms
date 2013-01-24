@@ -62,7 +62,7 @@ def getvar(datasetnc, t, layer, variables, index):
         else:
             var1, var2 = None, None
         if special_function == "+":
-            #var1[np.isnan(var2)] = np.nan # shouldnt be necessary in ugrid...
+            #var1[np.isnan(var2)] = np.nan # shouldnt be necessary in ...
             #var2[np.isnan(var1)] = np.nan
             var1 = var1 + var2
             var2 = None
@@ -140,7 +140,7 @@ def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topolo
         lon, lat = m(lon, lat)
         trid = Tri.Triangulation(lon, lat)
         m.ax.tricontour(trid, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(cmap))
-        fig = ugrid.cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
+        fig = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     else:
         lonn, latn = m(lonn, latn)
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
@@ -157,7 +157,7 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topol
         lon, lat = m(lon, lat)
         trid = Tri.Triangulation(lon, lat)
         m.ax.tricontourf(trid, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
-        fig = ugrid.cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
+        fig = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     else:
         lonn, latn = m(lonn, latn)
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
