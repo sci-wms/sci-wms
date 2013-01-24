@@ -11,7 +11,7 @@ import sys, os, numpy, logging, traceback
 from datetime import datetime
 import numpy as np
 from pywms.wms.models import Dataset
-#from pywms import build_tree
+from pywms import build_tree
 import server_local_config as config
 import multiprocessing
 from collections import deque
@@ -80,14 +80,12 @@ def create_topology(datasetname, url):
             logger.info("done filling vars")
             # DECODE the FVCOM datetime string (Time) and save as a high precision datenum
             timestrs = nc.variables['Times'][:] #format: "2013-01-15T00:00:00.000000"
-            print timestrs
-            #dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
-            #datenums = date2num(dates, units=time_units)# use netCDF4's date2num function
-            #time[:] = datenums
-            time[:] = nc.variables['time'][:]
+            dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
+            time[:] = date2num(dates, units=time_units)# use netCDF4's date2num function
+            #time[:] = nc.variables['time'][:]
             logger.info("done time conversion")
-            #time.units = time_units
-            time.units = nc.variables['time'].units
+            time.units = time_units
+            #time.units = nc.variables['time'].units
             nclocal.sync()
             nclocal.grid = grid
             nclocal.sync()
@@ -192,8 +190,8 @@ def create_topology(datasetname, url):
         if grid == 'False':
             if not os.path.exists(nclocalpath[:-3] + '.domain'):
                 create_domain_polygon(nclocalpath)
-            #if not (os.path.exists(nclocalpath[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3] + '_nodes.idx')):
-            #    build_tree.build_from_nc(nclocalpath)
+            if not (os.path.exists(nclocalpath[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3] + '_nodes.idx')):
+                build_tree.build_from_nc(nclocalpath)
 
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()

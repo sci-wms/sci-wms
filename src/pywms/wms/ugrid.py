@@ -69,6 +69,7 @@ def getvar(datasetnc, t, layer, variables, index):
     return var1, var2
 
 def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
+    patch1 = None
     aspect = kwargs.get('aspect', None)
     height = kwargs.get('height')
     width = kwargs.get('width')
@@ -104,12 +105,12 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
             continuous = kwargs.get("continuous")
             projection = kwargs.get("projection")
             if "pcolor" in actions:
-                fig = pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+                fig, m = pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
             elif "filledcontours" in actions:
-                fig = fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+                fig, m = fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
             elif "contours" in actions:
-                fig = contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
-    return fig
+                fig, m = contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+    return fig, m
 
 def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     from matplotlib.mlab import griddata
@@ -129,7 +130,7 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
         zi = griddata(lon, lat, mag, xi, yi, interp='nn')
     fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     m.imshow(zi, norm=norm, cmap=cmap, clip_path=patch1, interpolation="nearest")
-    return fig
+    return fig, m
 
 def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
@@ -140,12 +141,12 @@ def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topolo
         lon, lat = m(lon, lat)
         trid = Tri.Triangulation(lon, lat)
         m.ax.tricontour(trid, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(cmap))
-        fig = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
+        fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     else:
         lonn, latn = m(lonn, latn)
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
         m.ax.tricontour(tri, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(cmap))
-    return fig
+    return fig, m
 
 def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
@@ -157,12 +158,12 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topol
         lon, lat = m(lon, lat)
         trid = Tri.Triangulation(lon, lat)
         m.ax.tricontourf(trid, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
-        fig = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
+        fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     else:
         lonn, latn = m(lonn, latn)
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
         m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
-    return fig
+    return fig, m
 
 def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs):
     lonn, latn = m(lonn, latn)
@@ -313,7 +314,6 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
         box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
     # Find the intersection of the dataset domain and view extent
     domain = domain.intersection(box)
-
     # Create a path out of the polygon for clipping
     if domain.geom_type == "Polygon":
         x, y = domain.exterior.xy

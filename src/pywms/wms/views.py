@@ -9,6 +9,7 @@ import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, log
 import matplotlib
 matplotlib.use("Agg")
 from mpl_toolkits.basemap import Basemap
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
@@ -1119,24 +1120,24 @@ def getMap (request, dataset, logger):
                                 magnitude = magnitude,
                                 cmap = colormap)
                 elif gridtype == 'False':
-                    fig = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
-                                    aspect=m.aspect,
-                                    height=height,
-                                    width=width,
-                                    norm=CNorm,
-                                    cmin = climits[0],
-                                    cmax = climits[1],
-                                    magnitude = magnitude,
-                                    cmap = colormap,
-                                    topology_type = topology_type,
-                                    lonmin = lonmin,
-                                    latmin = latmin,
-                                    lonmax = lonmax,
-                                    latmax = latmax,
-                                    dataset = dataset,
-                                    continuous = continuous,
-                                    projection = projection,
-                                    )
+                    fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
+                                        aspect=m.aspect,
+                                        height=height,
+                                        width=width,
+                                        norm=CNorm,
+                                        cmin = climits[0],
+                                        cmax = climits[1],
+                                        magnitude = magnitude,
+                                        cmap = colormap,
+                                        topology_type = topology_type,
+                                        lonmin = lonmin,
+                                        latmin = latmin,
+                                        lonmax = lonmax,
+                                        latmax = latmax,
+                                        dataset = dataset,
+                                        continuous = continuous,
+                                        projection = projection,
+                                        )
                 lonmax, latmax = m(lonmax, latmax)
                 lonmin, latmin = m(lonmin, latmin)
                 m.ax.set_xlim(lonmin, lonmax)
@@ -1144,13 +1145,13 @@ def getMap (request, dataset, logger):
                 m.ax.set_frame_on(False)
                 m.ax.set_clip_on(False)
                 m.ax.set_position([0,0,1,1])
+                fig.set_alpha(0)
                 canvas = FigureCanvasAgg(fig)
                 response = HttpResponse(content_type='image/png')
                 canvas.print_png(response)
         else:
             fig = Figure(dpi=5, facecolor='none', edgecolor='none')
             fig.set_alpha(0)
-            projection = request.GET["projection"]
             ax = fig.add_axes([0, 0, 1, 1])
             fig.set_figheight(height/5.0)
             fig.set_figwidth(width/5.0)
