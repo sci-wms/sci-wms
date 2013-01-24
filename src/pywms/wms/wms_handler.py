@@ -87,7 +87,7 @@ class wms_handler(object):
         Constructor
         '''
         self.request = requestobj
-
+'''
 def getCapabilities(request, dataset, logger): # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
@@ -892,3 +892,4 @@ def getFeatureInfo(request, dataset, logger):
     datasetnc.close()
     topology.close()
     return response
+'''
