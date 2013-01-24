@@ -42,7 +42,9 @@ def getvar(datasetnc, t, layer, variables, index):
             var1 = ncvar1[t, layer[0], ind, jnd]
         elif len(shp) == 3:
             var1 = ncvar1[t, ind, jnd]
-        if len(var1) > 1:
+        elif len(shp) == 2:
+            var1 = ncvar1[ind, jnd]
+        if type(var1) == np.ndarray:
             var1 = var1.squeeze()
         if len(variables) > 1: # Check if request came with more than 1 var
             ncvar2 = datasetnc.variables[variables[1]]
@@ -52,7 +54,9 @@ def getvar(datasetnc, t, layer, variables, index):
                 var2 = ncvar2[t, layer[0], ind, jnd]
             elif len(shp) == 3:
                 var2 = ncvar2[t, ind, jnd]
-            if len(var2) > 1:
+            elif len(shp) == 2:
+                var2 = ncvar2[ind, jnd]
+            if type(var1) == np.ndarray:
                 var2 = var2.squeeze()
         else:
             var2 = None

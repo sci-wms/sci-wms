@@ -585,7 +585,7 @@ def getFeatureInfo(request, dataset, logger):
     """
     from datetime import date
     from mpl_toolkits.basemap import pyproj
-    totaltimer = timeobj.time()
+    #totaltimer = timeobj.time()
     def haversine(lat1, lon1, lat2, lon2):
         # Haversine formulation
         # inputs in degrees
@@ -637,13 +637,6 @@ def getFeatureInfo(request, dataset, logger):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    #m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-    #            urcrnrlon=lonmax, urcrnrlat=latmax,
-    #            projection=projection,
-    #            resolution=None,
-    #            lat_ts = 0.0,
-    #            suppress_ticks=True)
-
     topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
     gridtype = topology.grid
     if gridtype == 'False':
@@ -653,17 +646,14 @@ def getFeatureInfo(request, dataset, logger):
         else:
             lats = topology.variables['latc'][:]
             lons = topology.variables['lonc'][:]
-##        lengths = map(haversine,
-##                  numpy.ones(len(lons))*lat,
-##                  numpy.ones(len(lons))*lon, lats, lons)
-        print 'time before haversine ' + str(timeobj.time() - totaltimer)
+        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         lengths = vhaversine(lat, lon, lats, lons)
     else:
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
-        print 'time before haversine ' + str(timeobj.time() - totaltimer)
+        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         lengths = vhaversine(lat, lon, lats, lons)
-    print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
+    #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     min = numpy.asarray(lengths)
     min = numpy.min(min)
     if gridtype == 'False':
@@ -849,7 +839,7 @@ def getFeatureInfo(request, dataset, logger):
         output_dict["time"] = {"units": "iso", "values": varis[0]}
         output_dict["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
         output_dict["longitude"] = {"units":"degrees_east", "values":float(selected_longitude)}
-        for i, var in enumerate(QUERY_LAYERS):
+        for i, var in enumerate(QUERY_LAYERS): # TODO: use map to convert to floats
             varis[i+1] = list(varis[i+1])
             for q, v in enumerate(varis[i+1]):
                 if numpy.isnan(v):
@@ -877,7 +867,10 @@ def getFeatureInfo(request, dataset, logger):
             thisline.append(selected_latitude)
             thisline.append(selected_longitude)
             for k in range(1, len(varis)):
-                thisline.append(varis[k][i])
+                if type(varis[k]) == numpy.ndarray:
+                    thisline.append(varis[k][i])
+                else: # If the variable is not changing with type, like bathy
+                    thisline.append(varis[k])
             c.writerow(thisline)
         dat = buffer.getvalue()
         buffer.close()
@@ -893,7 +886,7 @@ def getMap (request, dataset, logger):
     the meat and bones of getMap
     '''
     from mpl_toolkits.basemap import pyproj
-    from matplotlib.figure import Figure
+
 
     #totaltimer = timeobj.time()
     loglist = []
