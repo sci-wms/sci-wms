@@ -61,6 +61,8 @@ def getvar(datasetnc, t, layer, variables, index):
         else:
             var2 = None
         if special_function == "+":
+            var1[np.isnan(var2)] = np.nan
+            var2[np.isnan(var1)] = np.nan
             var1 = var1 + var2
             var2 = None
     return var1, var2
