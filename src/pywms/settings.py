@@ -2,7 +2,7 @@
 import server_local_config
 import os, logging
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
