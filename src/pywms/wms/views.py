@@ -886,7 +886,7 @@ def getMap (request, dataset, logger):
     the meat and bones of getMap
     '''
     from mpl_toolkits.basemap import pyproj
-
+    from matplotlib.figure import Figure
 
     #totaltimer = timeobj.time()
     loglist = []
