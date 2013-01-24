@@ -3,23 +3,19 @@ Created on Sep 1, 2011
 
 @author: ACrosby
 '''
-# Create your views here.
-from django.http import HttpResponse, HttpResponseRedirect
-from pywms.wms.models import Dataset, Server
-from django.contrib.sites.models import Site
+import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
+
+# Import from matplotlib and set backend
 import matplotlib
 matplotlib.use("Agg")
 from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+
+# Other random "from" imports
 from collections import deque
 from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
-import pywms.server_local_config as config
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 import time as timeobj
-import pywms.grid_init_script as grid
-from pywms.wms import cgrid, ugrid
-import matplotlib.pyplot as plt
-from matplotlib.pylab import get_cmap
-import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
 try:
     import cPickle as pickle
 except ImportError:
@@ -28,6 +24,14 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
+# Import from sci-wms
+from pywms.wms.models import Dataset, Server
+from django.contrib.sites.models import Site
+import pywms.grid_init_script as grid_cache
+from pywms.wms import cgrid, ugrid
+from django.http import HttpResponse, HttpResponseRedirect
+import pywms.server_local_config as config
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
@@ -66,7 +70,7 @@ def wmstest (request):
     #p = multiprocessing.Process(target=grid.check_topology_age)
     #p.daemon = True
     #p.start()
-    grid.check_topology_age()
+    grid_cache.check_topology_age()
     import django.shortcuts as dshorts
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
@@ -80,7 +84,7 @@ def wmstest (request):
 
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
-    grid.check_topology_age()
+    grid_cache.check_topology_age()
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
@@ -91,7 +95,7 @@ def remove(request):
     return HttpResponse()
 
 def documentation (request):
-##    #jobsarray = grid.check_topology_age()
+##    #jobsarray = grid_cache.check_topology_age()
 ##    import django.shortcuts as dshorts
 ##    import os
 ##    #import pywms.server_local_config as config
@@ -483,11 +487,11 @@ def getLegendGraphic(request, dataset, logger):
         url = Dataset.objects.get(name=dataset).uri
     nc = netCDF4.Dataset(url)
 
-
     """
     Create figure and axes for small legend image
     """
     from matplotlib.figure import Figure
+    from matplotlib.pylab import get_cmap
     fig = Figure(dpi=100., facecolor='none', edgecolor='none')
     fig.set_alpha(0)
     fig.set_figwidth(1*1.3)
@@ -1102,7 +1106,6 @@ def getMap (request, dataset, logger):
                                                     vmax=climits[1],
                                                     clip=True,
                                                     )
-
                 # Plot to the projected figure axes!
                 if gridtype == 'cgrid':
                     lon, lat = m(lon, lat)
@@ -1116,10 +1119,7 @@ def getMap (request, dataset, logger):
                                 magnitude = magnitude,
                                 cmap = colormap)
                 elif gridtype == 'False':
-                    if "regrid" in actions:
-                        pass #TODO: Remove regrid option and indenting
-                    else:
-                        fig = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
+                    fig = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
                                     aspect=m.aspect,
                                     height=height,
                                     width=width,
@@ -1144,21 +1144,10 @@ def getMap (request, dataset, logger):
                 m.ax.set_frame_on(False)
                 m.ax.set_clip_on(False)
                 m.ax.set_position([0,0,1,1])
-                #Plot.yticks(visible=False)
-                #Plot.xticks(visible=False)
-                #Plot.axis('off')
-                #canvas = Plot.get_current_fig_manager().canvas
                 canvas = FigureCanvasAgg(fig)
                 response = HttpResponse(content_type='image/png')
-                #response = HttpResponse(content_type="image/svg+xml")
-                #fig.savefig(response, format='svg')
-                #canvas.print_figure(response, dpi=80, facecolor=None, edgecolor=None)
                 canvas.print_png(response)
-                #print "print png"
-                #fig.clf()
-                #Plot.close()
         else:
-            from matplotlib.figure import Figure
             fig = Figure(dpi=5, facecolor='none', edgecolor='none')
             fig.set_alpha(0)
             projection = request.GET["projection"]
@@ -1171,15 +1160,11 @@ def getMap (request, dataset, logger):
             canvas = FigureCanvasAgg(fig)
             response = HttpResponse(content_type='image/png')
             canvas.print_png(response)
-
     topology.close()
     datasetnc.close()
     #gc.collect()
     #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
-    if "flow" in actions or "shape" in actions: # TODO: Remove and make the data repsponses wfs/wps's
-        return dataresponse
-    else:
-        return response
+    return response
 
 
