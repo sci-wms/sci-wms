@@ -11,6 +11,7 @@ import sys, os, numpy, logging, traceback
 from datetime import datetime
 import numpy as np
 from pywms.wms.models import Dataset
+from pywms import build_tree
 import server_local_config
 import server_local_config as config
 import multiprocessing
@@ -191,7 +192,8 @@ def create_topology(datasetname, url):
         if grid == 'False':
             if not os.path.exists(nclocalpath[:-3] + '.domain'):
                 create_domain_polygon(nclocalpath)
-
+            if not (os.path.exists(nclocalpath[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3] + '_nodes.idx')):
+                build_tree.build_from_nc(nclocalpath)
 
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
