@@ -75,12 +75,15 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
     cmap = get_cmap(kwargs.get('cmap', 'jet'))
     cmin = kwargs.get('cmin', "None")
     cmax = kwargs.get('cmax', "None")
-    magnitude = kwargs.get('magnitude', 2)
+    magnitude = kwargs.get('magnitude', 'False')
     if var1 is not None:
         if var2 is not None:
             mag = np.sqrt(var1**2 + var2**2)
         else:
-            mag = var1
+            if magnitude == 'False':
+                mag = var1
+            else:
+                mag = np.abs(var1)
         mag = mag.squeeze()
         if "pcolor" in actions:
             fig.set_figheight(height/80.0)

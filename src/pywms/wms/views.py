@@ -67,12 +67,7 @@ def static (request, filepath):
     return HttpResponse(text, content_type='text/css')
 
 def wmstest (request):
-    import multiprocessing
-    #p = multiprocessing.Process(target=grid.check_topology_age)
-    #p.daemon = True
-    #p.start()
-    #grid_cache.check_topology_age()
-    import django.shortcuts as dshorts
+    grid_cache.check_topology_age()
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
     text = f.read()
@@ -80,7 +75,6 @@ def wmstest (request):
     sites = Site.objects.values()
     dict1 = Context({ 'localsite':sites[0]['domain'],
                       'datasets':Dataset.objects.values()})
-    #return dshorts.render_to_response(text, dict1)
     return HttpResponse(Template(text).render(dict1))
 
 def update (request):
@@ -140,7 +134,7 @@ def wms (request, dataset):
         logger.error("Status 500 Error: " +\
                      repr(traceback.format_exception(exc_type, exc_value,
                                   exc_traceback)) + '\n' + str(request))
-        return HttpResponse(status=500)
+        return HttpResponse("problem", status=500)
 
 def getCapabilities(request, dataset, logger): # TODO move get capabilities to template system like sciwps
     """
@@ -893,7 +887,7 @@ def getMap (request, dataset, logger):
     from mpl_toolkits.basemap import pyproj
     from matplotlib.figure import Figure
 
-    #totaltimer = timeobj.time()
+    totaltimer = timeobj.time()
     loglist = []
 
     # direct the service to the dataset
@@ -1162,8 +1156,8 @@ def getMap (request, dataset, logger):
             canvas.print_png(response)
     topology.close()
     datasetnc.close()
-    #gc.collect()
-    #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
+    gc.collect()
+    loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     logger.info(str(loglist))
     return response
 
