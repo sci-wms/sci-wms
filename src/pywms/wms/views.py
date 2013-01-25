@@ -136,7 +136,7 @@ def wms (request, dataset):
                                   exc_traceback)) + '\n' + str(request))
         return HttpResponse("problem", status=500)
 
-def getCapabilities(request, dataset, logger): # TODO move get capabilities to template system like sciwps
+def getCapabilities(req, dataset, logger): # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
 
@@ -435,10 +435,27 @@ def getCapabilities(request, dataset, logger): # TODO move get capabilities to t
             pass
     nc.close()
     tree = ET.ElementTree(root)
-    # Return the response
-    response = HttpResponse(content_type="text/xml")
-    response.write(r'<?xml version="1.0" encoding="utf-8"?>')
-    tree.write(response)
+    if req.GET["FORMAT"].lower() == "text/javascript":
+        import json
+        output_dict = {}
+        output_dict["capabilities"] = r'<?xml version="1.0" encoding="utf-8"?>' + ET.tostring(root)
+        callback = "parseResponse"
+        try:
+            callback = request.GET["CALLBACK"]
+        except:
+            pass
+        try:
+            callback = request.GET["callback"]
+        except:
+            pass
+        response = HttpResponse(content_type="text/javascript")
+        output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+        response.write(output_str)
+    else:
+        # Return the response
+        response = HttpResponse(content_type="text/xml")
+        response.write(r'<?xml version="1.0" encoding="utf-8"?>')
+        tree.write(response)
     return response
 
 def getLegendGraphic(request, dataset, logger):
@@ -619,7 +636,7 @@ def getFeatureInfo(request, dataset, logger):
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT =
     QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
-    INFO_FORMAT = "text/plain" # request.GET['INFO_FORMAT']
+    INFO_FORMAT = "text/csv" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     #TIME = request.GET['TIME']
     try:
@@ -836,7 +853,7 @@ def getFeatureInfo(request, dataset, logger):
         output_dict = {}
         output_dict2 = {}
         output_dict["type"] = "Feature"
-        output_dict["geometry"] = {"type":"Point", "coordinates":[selected_longitude,selected_latitude]]}
+        output_dict["geometry"] = {"type":"Point", "coordinates":[selected_longitude,selected_latitude]}
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
         output_dict2["time"] = {"units": "iso", "values": varis[0]}
         output_dict2["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
