@@ -7,6 +7,8 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     index = np.asarray(np.where(
         (lat <= latmax+.18) & (lat >= latmin-.18) &
         (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
+        #((lat <= latmax) == (lat >= latmin)) ==
+        #((lon <= lonmax) == (lon >= lonmin),))).squeeze()
     if index.shape[1] > 0:
         ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))+1))
         jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))+1))

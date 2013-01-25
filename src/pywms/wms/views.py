@@ -981,13 +981,12 @@ def getMap (request, dataset, logger):
             else:
                 lon = topology.variables[toplonc][:]
             lat = topology.variables[toplatc][:]
-
             if gridtype != 'False':
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-
+            print lon.min(), lon.max(), lon.shape
             if gridtype == 'False': # TODO: Get rid of thiss whole chunk!
                 try:
                     loglist.append("index " + len(index))
@@ -1024,13 +1023,7 @@ def getMap (request, dataset, logger):
                         else:
                             lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                 else:
-                    #pass # If regular grid, do nothing
-                    if continuous is True:
-                        if lonmin < 0:
-                            lon[numpy.where(lon > 0)] = lon[numpy.where(lon > 0)] - 360
-                            lon[numpy.where(lon < lonmax-359)] = lon[numpy.where(lon < lonmax-359)] + 360
-                        else:
-                            lon[numpy.where(lon < lonmax-359)] = lon[numpy.where(lon < lonmax-359)] + 360
+                    pass # If regular grid, do nothing
             else:
                 nv = None
                 lonn, latn = None, None
