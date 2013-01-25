@@ -834,10 +834,13 @@ def getFeatureInfo(request, dataset, logger):
             pass
         response = HttpResponse()
         output_dict = {}
+        output_dict2 = {}
+        output_dict["type"] = "Feature"
+        output_dict["geometry"] = {"type":"Point", "coordinates":[selected_longitude,selected_latitude]]}
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
-        output_dict["time"] = {"units": "iso", "values": varis[0]}
-        output_dict["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
-        output_dict["longitude"] = {"units":"degrees_east", "values":float(selected_longitude)}
+        output_dict2["time"] = {"units": "iso", "values": varis[0]}
+        output_dict2["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
+        output_dict2["longitude"] = {"units":"degrees_east", "values":float(selected_longitude)}
         for i, var in enumerate(QUERY_LAYERS): # TODO: use map to convert to floats
             varis[i+1] = list(varis[i+1])
             for q, v in enumerate(varis[i+1]):
@@ -845,7 +848,8 @@ def getFeatureInfo(request, dataset, logger):
                     varis[i+1][q] = float("nan")
                 else:
                     varis[i+1][q] = float(varis[i+1][q])
-            output_dict[var] = {"units": datasetnc.variables[var].units, "values": varis[i+1]}
+            output_dict2[var] = {"units": datasetnc.variables[var].units, "values": varis[i+1]}
+        output_dict["properties"] = output_dict2
         output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
         response.write(output_str)
     elif request.GET["INFO_FORMAT"].lower() == "text/csv":
