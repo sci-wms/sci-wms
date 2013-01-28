@@ -36,6 +36,13 @@ time_units = 'hours since 1970-01-01'
 def create_topology(datasetname, url):
     try:
         nc = ncDataset(url)
+        try:
+            os.unlink(nclocalpath)
+        except:
+            try:
+                os.unlink(nclocalpath)
+            except:
+                os.unlink(nclocalpath)
         nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if nc.variables.has_key("nv"):
@@ -254,9 +261,16 @@ def do(name, dataset, s):
                         nc.close()
                         topo.close()
                         if time1 != time2:
+                            check = True
                             logger.info("Updating: " + dataset["uri"])
                             create_topology(name, dataset["uri"])
-
+                            while check:
+                                try:
+                                    check_nc = ncDataset(nclocalpath)
+                                    check_nc.close()
+                                    check = False
+                                except: # TODO: Catch the specific file corrupt error im looking for here
+                                    create_topology(name, dataset["uri"])
             except:
                 logger.info("Initializing: " + dataset["uri"])
                 create_topology(name, dataset["uri"])

@@ -986,7 +986,6 @@ def getMap (request, dataset, logger):
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-            print lon.min(), lon.max(), lon.shape
             if gridtype == 'False': # TODO: Get rid of thiss whole chunk!
                 try:
                     loglist.append("index " + len(index))
