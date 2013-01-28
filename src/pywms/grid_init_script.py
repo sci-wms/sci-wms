@@ -36,14 +36,14 @@ time_units = 'hours since 1970-01-01'
 def create_topology(datasetname, url):
     try:
         nc = ncDataset(url)
+        nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
         try:
             os.unlink(nclocalpath)
         except:
             try:
                 os.unlink(nclocalpath)
             except:
-                os.unlink(nclocalpath)
-        nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
+                pass
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if nc.variables.has_key("nv"):
             logger.info("identified as fvcom")

@@ -120,6 +120,8 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
 
 def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
     mag = np.ma.array(mag, mask=np.isnan(mag))
+    if (cmin == "None") or (cmax == "None"):
+        cmin, cmax = mag.min(), mag.max()
     #ax.pcolorfast(lon, lat, mag[:-1, :-1], shading="", norm=norm, cmap='jet',)
     ax.pcolormesh(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
 
