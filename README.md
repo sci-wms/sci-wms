@@ -41,7 +41,7 @@ You must have the following python packages installed:
 - matplotlib basemap (versions 1.0.1)
 - netCDF4 (Install from the netcdf4-python google code repository if using HDF a recent build of HDF5)
 - shapely
-- markdown
+- rtree
 
 sci-wms works with both pip and virtualenv quite happily. If you
 have pip installed you can use the following to install many (but not all) of the required modules:
