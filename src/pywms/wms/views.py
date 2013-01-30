@@ -281,16 +281,16 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                 ET.SubElement(layer1, "Abstract").text = variable
             ET.SubElement(layer1, "SRS").text = "EPSG:4326"
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-            llbbox.attrib["minx"] = topology.variables["lon"][:].min()
-            llbbox.attrib["miny"] = topology.variables["lat"][:].min()
-            llbbox.attrib["maxx"] = topology.variables["lon"][:].max()
-            llbbox.attrib["maxy"] = topology.variables["lat"][:].max()
+            llbbox.attrib["minx"] = str(topology.variables["lon"][:].min())
+            llbbox.attrib["miny"] = str(topology.variables["lat"][:].min())
+            llbbox.attrib["maxx"] = str(topology.variables["lon"][:].max())
+            llbbox.attrib["maxy"] = str(topology.variables["lat"][:].max())
             llbbox = ET.SubElement(layer1, "BoundingBox")
             llbbox.attrib["SRS"] = "EPSG:4326"
-            llbbox.attrib["minx"] = topology.variables["lon"][:].min()
-            llbbox.attrib["miny"] = topology.variables["lat"][:].min()
-            llbbox.attrib["maxx"] = topology.variables["lon"][:].max()
-            llbbox.attrib["maxy"] = topology.variables["lat"][:].max()
+            llbbox.attrib["minx"] = str(topology.variables["lon"][:].min())
+            llbbox.attrib["miny"] = str(topology.variables["lat"][:].min())
+            llbbox.attrib["maxx"] = str(topology.variables["lon"][:].max())
+            llbbox.attrib["maxy"] = str(topology.variables["lat"][:].max())
             time_dimension = ET.SubElement(layer1, "Dimension")
             time_dimension.attrib["name"] = "time"
             time_dimension.attrib["units"] = "ISO8601"
@@ -372,16 +372,16 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                 ET.SubElement(layer1, "Abstract").text = "Magnitude of current velocity from u and v components"
                 ET.SubElement(layer1, "SRS").text = "EPSG:4326"
                 llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-                llbbox.attrib["minx"] = "-180"
-                llbbox.attrib["miny"] = "-90"
-                llbbox.attrib["maxx"] = "180"
-                llbbox.attrib["maxy"] = "90"
+                llbbox.attrib["minx"] = str(topology.variables["lon"][:].min())
+                llbbox.attrib["miny"] = str(topology.variables["lat"][:].min())
+                llbbox.attrib["maxx"] = str(topology.variables["lon"][:].max())
+                llbbox.attrib["maxy"] = str(topology.variables["lat"][:].max())
                 llbbox = ET.SubElement(layer1, "BoundingBox")
                 llbbox.attrib["SRS"] = "EPSG:4326"
-                llbbox.attrib["minx"] = "-180"
-                llbbox.attrib["miny"] = "-90"
-                llbbox.attrib["maxx"] = "180"
-                llbbox.attrib["maxy"] = "90"
+                llbbox.attrib["minx"] = str(topology.variables["lon"][:].min())
+                llbbox.attrib["miny"] = str(topology.variables["lat"][:].min())
+                llbbox.attrib["maxx"] = str(topology.variables["lon"][:].max())
+                llbbox.attrib["maxy"] = str(topology.variables["lat"][:].max())
                 time_dimension = ET.SubElement(layer1, "Dimension")
                 time_dimension.attrib["name"] = "time"
                 time_dimension.attrib["units"] = "ISO8601"
@@ -435,23 +435,29 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             pass
     nc.close()
     tree = ET.ElementTree(root)
-    if req.GET["FORMAT"].lower() == "text/javascript":
-        import json
-        output_dict = {}
-        output_dict["capabilities"] = r'<?xml version="1.0" encoding="utf-8"?>' + ET.tostring(root)
-        callback = "parseResponse"
-        try:
-            callback = request.GET["CALLBACK"]
-        except:
-            pass
-        try:
-            callback = request.GET["callback"]
-        except:
-            pass
-        response = HttpResponse(content_type="text/javascript")
-        output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
-        response.write(output_str)
-    else:
+    try:
+        if req.GET["FORMAT"].lower() == "text/javascript":
+            import json
+            output_dict = {}
+            output_dict["capabilities"] = r'<?xml version="1.0" encoding="utf-8"?>' + ET.tostring(root)
+            callback = "parseResponse"
+            try:
+                callback = request.GET["CALLBACK"]
+            except:
+                pass
+            try:
+                callback = request.GET["callback"]
+            except:
+                pass
+            response = HttpResponse(content_type="text/javascript")
+            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+            response.write(output_str)
+        else:
+            # Return the response
+            response = HttpResponse(content_type="text/xml")
+            response.write(r'<?xml version="1.0" encoding="utf-8"?>')
+            tree.write(response)
+    except:
         # Return the response
         response = HttpResponse(content_type="text/xml")
         response.write(r'<?xml version="1.0" encoding="utf-8"?>')
