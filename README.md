@@ -11,6 +11,10 @@ sci-wms
 - > 2 CPU (> 4 CPU Better) 
 - Python > Version 2.6
 
+##Community
+
+[We have started a Google Group for the sci-wms project located here.](https://groups.google.com/forum/?fromgroups#!forum/sci-wms)
+
 ##Install
 
 [Download the compressed project and unpack anywhere.](http://acrosby.github.com/sci-wms) This is where the installation will live.
