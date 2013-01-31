@@ -3,7 +3,7 @@ from netCDF4 import Dataset
 
 class Dataset(models.Model):
     uri             = models.CharField(max_length=1000)
-    name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('-','_','0123456789' are allowed).")
+    name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
     title           = models.CharField(max_length=200, help_text="Human Readable Title")
     abstract        = models.CharField(max_length=200, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField()
