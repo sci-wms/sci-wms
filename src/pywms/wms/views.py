@@ -307,25 +307,55 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                 time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
             except:
                 time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-            if nc.variables[variable].ndim > 2:
-                try:
-                    ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
-                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
-                except:
-                    ET.SubElement(layer1, "DepthLayers").text = ""
-                try:
-                    if nc.variables["siglay"].positive.lower() == "up":
-                        ET.SubElement(layer1, "DepthDirection").text = "Down"
-                    elif nc.variables["siglay"].positive.lower() == "down":
-                        ET.SubElement(layer1, "DepthDirection").text = "Up"
-                    else:
+            
+            ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
+            if topology.grid.lower() == 'false':
+                if nc.variables[variable].ndim > 2:
+                    try:
+                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
+                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
+                    except:
+                        ET.SubElement(layer1, "DepthLayers").text = ""
+                    try:
+                        if nc.variables["siglay"].positive.lower() == "up":
+                            ET.SubElement(layer1, "DepthDirection").text = "Down"
+                        elif nc.variables["siglay"].positive.lower() == "down":
+                            ET.SubElement(layer1, "DepthDirection").text = "Up"
+                        else:
+                            ET.SubElement(layer1, "DepthDirection").text = ""
+                    except:
                         ET.SubElement(layer1, "DepthDirection").text = ""
-                except:
-                    ET.SubElement(layer1, "DepthDirection").text = ""
+                else:
+                    ET.SubElement(layer1, "DepthLayers").text = "0"
+                    ET.SubElement(layer1, "DepthDirection").text = "Down"
+                    elev_extent.text = "0"
+            elif topology.grid.lower() =='cgrid':
+                if nc.variables[variable].ndim > 3:
+                    try:
+                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
+                        elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
+                    except:
+                        ET.SubElement(layer1, "DepthLayers").text = ""
+                    try:
+                        #if nc.variables["depth"].positive.lower() == "up":
+                        #    ET.SubElement(layer1, "DepthDirection").text = "Down"
+                        #elif nc.variables["depth"].positive.lower() == "down":
+                        #    ET.SubElement(layer1, "DepthDirection").text = "Up"
+                        #else:
+                        #    ET.SubElement(layer1, "DepthDirection").text = ""
+                        ET.SubElement(layer1, "DepthDirection").text = ""
+                    except:
+                        ET.SubElement(layer1, "DepthDirection").text = ""
+                else:
+                    ET.SubElement(layer1, "DepthLayers").text = "0"
+                    ET.SubElement(layer1, "DepthDirection").text = "Down"
+                    elev_extent.text = "0"
             else:
                 ET.SubElement(layer1, "DepthLayers").text = "0"
                 ET.SubElement(layer1, "DepthDirection").text = "Down"
                 elev_extent.text = "0"
+            ##
+            
             for style in ["filledcontours", "contours", "pcolor", "facets"]:
                 style_code = style + "_average_jet_None_None_" + location + "_False"
                 style = ET.SubElement(layer1, "Style")
