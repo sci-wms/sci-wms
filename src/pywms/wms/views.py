@@ -688,57 +688,54 @@ def getFeatureInfo(request, dataset, logger):
         selected_latitude = lats[index][0]
         selected_longitude = lons[index][0]
 
-    if config.localdataset:
-        time = [1]
-        time_units = topology.variables['time'].units
-    else:
-        #TIMES = TIME.split("/")
-        try:
-            TIME = request.GET["TIME"]
-            if TIME == "":
-                now = date.today().isoformat()
-                TIME = now + "T00:00:00"#
-        except:
+    #TIMES = TIME.split("/")
+    try:
+        TIME = request.GET["TIME"]
+        if TIME == "":
             now = date.today().isoformat()
             TIME = now + "T00:00:00"#
-            #print "here"
-        TIMES = TIME.split("/")
-        for i in range(len(TIMES)):
+    except:
+        now = date.today().isoformat()
+        TIME = now + "T00:00:00"#
+        #print "here"
+    TIMES = TIME.split("/")
+    print TIMES
+    for i in range(len(TIMES)):
 ##            print TIMES[i]
-            if len(TIMES[i]) == 16:
-                TIMES[i] = TIMES[i] + ":00"
-            elif len(TIMES[i]) == 13:
-                TIMES[i] = TIMES[i] + ":00:00"
-            elif len(TIMES[i]) == 10:
-                TIMES[i] = TIMES[i] + "T00:00:00"
-        if len(TIMES) > 1:
-            datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
-            dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
-            times = topology.variables['time'][:]
-            time_units = topology.variables['time'].units
-            datestart = netCDF4.date2num(datestart, units=time_units)
-            dateend = netCDF4.date2num(dateend, units=time_units)
-            time1 = bisect.bisect_right(times, datestart)
-            time2 = bisect.bisect_right(times, dateend)
+        if len(TIMES[i]) == 16:
+            TIMES[i] = TIMES[i] + ":00"
+        elif len(TIMES[i]) == 13:
+            TIMES[i] = TIMES[i] + ":00:00"
+        elif len(TIMES[i]) == 10:
+            TIMES[i] = TIMES[i] + "T00:00:00"
+    if len(TIMES) > 1:
+        datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
+        dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
+        times = topology.variables['time'][:]
+        time_units = topology.variables['time'].units
+        datestart = netCDF4.date2num(datestart, units=time_units)
+        dateend = netCDF4.date2num(dateend, units=time_units)
+        time1 = bisect.bisect_right(times, datestart)
+        time2 = bisect.bisect_right(times, dateend)
 ##            print time2
-            if time1 == -1:
-                time1 = 0
-            if time2 == -1:
-                time2 = len(times)
+        if time1 == -1:
+            time1 = 0
+        if time2 == -1:
+            time2 = len(times)
 ##            print time2
-            time = range(time1, time2)
-            if len(time) < 1:
-                time = [len(times) - 1]
+        time = range(time1, time2)
+        if len(time) < 1:
+            time = [len(times) - 1]
+    else:
+        datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
+        times = topology.variables['time'][:]
+        time_units = topology.variables['time'].units
+        datestart = netCDF4.date2num(datestart, units=time_units)
+        time1 = bisect.bisect_right(times, datestart)
+        if time1 == -1:
+            time = [0]
         else:
-            datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
-            times = topology.variables['time'][:]
-            time_units = topology.variables['time'].units
-            datestart = netCDF4.date2num(datestart, units=time_units)
-            time1 = bisect.bisect_right(times, datestart)
-            if time1 == -1:
-                time = [0]
-            else:
-                time = [time1]
+            time = [time1]
 
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
@@ -894,7 +891,10 @@ def getFeatureInfo(request, dataset, logger):
             thisline.append(selected_longitude)
             for k in range(1, len(varis)):
                 if type(varis[k]) == numpy.ndarray:
-                    thisline.append(varis[k][i])
+                    try:
+                        thisline.append(varis[k][i])
+                    except:
+                        thisline.append(varis[k])
                 else: # If the variable is not changing with type, like bathy
                     thisline.append(varis[k])
             c.writerow(thisline)
