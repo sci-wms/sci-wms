@@ -167,7 +167,7 @@ def create_topology(datasetname, url):
                 igrid = nc.variables[latname].shape[0]
                 jgrid = nc.variables[lonname].shape[0]
             latchunk, lonchunk = (igrid,jgrid,), (igrid,jgrid,)
-
+            logger.info("native grid style identified")
             nclocal.createDimension('igrid', igrid)
             nclocal.createDimension('jgrid', jgrid)
             nclocal.createDimension('time', nc.variables['time'].shape[0])
@@ -175,7 +175,7 @@ def create_topology(datasetname, url):
             lat = nclocal.createVariable('lat', 'f', ('igrid','jgrid',), chunksizes=latchunk, zlib=False, complevel=0)
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
-
+            logger.info("variables created in cache")
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
