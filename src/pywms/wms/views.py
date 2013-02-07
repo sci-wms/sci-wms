@@ -974,7 +974,8 @@ def getMap (request, dataset, logger):
     layer = request.GET["layer"]
     layer = layer.split(",")
     for i,l in enumerate(layer):
-        layer[i] = int(l)-1
+    #    layer[i] = int(l)-1
+        layer = int(l)
     layer = numpy.asarray(layer)
     actions = request.GET["actions"]
     actions = set(actions.split(","))

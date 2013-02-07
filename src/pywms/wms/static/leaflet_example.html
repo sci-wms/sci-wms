@@ -29,18 +29,18 @@
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery Â© <a href="http://cloudmade.com">CloudMade</a>'
 		}).addTo(map);
-                
-                var mich = L.tileLayer.wms("http://localhost:7000/wms/Mich3/", {
-                        layers: 'u%2Cv',
+                {% for dataset in datasets %}
+                var {{dataset.name}} = L.tileLayer.wms("http://{{localsite}}/wms/{{dataset.name}}/", {
+                        layers: '{{dataset.test_layer}}',
                         format: 'image/png',
                         transparent: 'true',
                         attribution: "Alexander Crosby is awesome",
-                        styles: "vectors_average_jet_0_.5_grid_.3"});
+                        styles: "{{dataset.test_style}}"});
                         
-                mich.setParams({
-                        TIME: '2013-01-21T12%3A00%3A00',
+                {{dataset.name}}.setParams({
+                        TIME: '{{dataset.test_date}}',
                         ELEVATION: '0'});
-                
+                {% endfor %}
 		function onLocationFound(e) {
 			var radius = e.accuracy / 2;
 
@@ -59,7 +59,11 @@
 
 		map.locate({setView: true, maxZoom: 16});
                 
-                var overlayMaps = {"Lake Michican Currents":mich};
+                var overlayMaps = {
+                    {% for dataset in datasets %}
+                    "{{dataset.name}}":{{dataset.name}},
+                    {% endfor %}
+                    };
                 
                 L.control.layers(overlayMaps).addTo(map);
 	</script>

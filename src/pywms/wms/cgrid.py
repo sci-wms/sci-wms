@@ -43,7 +43,7 @@ def getvar(datasetnc, t, layer, variables, index):
             jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))))
         if len(shp) > 3: # Check if the variable has depth
             #ncvar1.set_auto_maskandscale(False)
-            var1 = ncvar1[t, layer[0], ind, jnd]
+            var1 = ncvar1[t, [layer], ind, jnd]
         elif len(shp) == 3:
             var1 = ncvar1[t, ind, jnd]
         elif len(shp) == 2:
@@ -55,7 +55,7 @@ def getvar(datasetnc, t, layer, variables, index):
             shp = ncvar2.shape
             if len(shp) > 3: # Check if the variable has depth
                 #ncvar2.set_auto_maskandscale(False)
-                var2 = ncvar2[t, layer[0], ind, jnd]
+                var2 = ncvar2[t, [layer], ind, jnd]
             elif len(shp) == 3:
                 var2 = ncvar2[t, ind, jnd]
             elif len(shp) == 2:
