@@ -29,7 +29,7 @@ def get_topologyarray(topology, index):
 
 def varfromnc(nc, t, layer, var):
     if len(nc.variables[var].shape) == 3:
-        return nc.variables[var][t, layer, :]
+        return nc.variables[var][t, [layer], :]
     elif len(nc.variables[var].shape) == 2:
         return nc.variables[var][t, :]
     elif len(nc.variables[var].shape) == 1:
