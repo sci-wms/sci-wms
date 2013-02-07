@@ -10,7 +10,10 @@ class wms_handler(object):
     classdocs
     '''
     def make_action_request(self, requestobj):
-        layers = requestobj.GET["LAYERS"]
+        try:
+            layers = requestobj.GET["LAYERS"]
+        except:
+            layers = requestobj.GET["layers"]
         try:
             levels = requestobj.GET["ELEVATION"]
             if levels == "":
@@ -44,16 +47,25 @@ class wms_handler(object):
         else:
             timestart = time[0]
             timeend = time[0]
-        box = requestobj.GET["BBOX"]
+        try:
+            box = requestobj.GET["BBOX"]
+        except:
+            box = requestobj.GET["bbox"]
         box = box.split(",")
         latmin = box[1]
         latmax = box[3]
         lonmin = box[0]
         lonmax = box[2]
 
-        height = requestobj.GET["HEIGHT"]
-        width = requestobj.GET["WIDTH"]
-        styles = requestobj.GET["STYLES"].split(",")[0].split("_")
+        try:
+            height = requestobj.GET["HEIGHT"]
+            width = requestobj.GET["WIDTH"]
+            styles = requestobj.GET["STYLES"].split(",")[0].split("_")
+        except:
+            height = requestobj.GET["height"]
+            width = requestobj.GET["width"]
+            styles = requestobj.GET["styles"].split(",")[0].split("_")
+
         colormap = styles[2].replace("-", "_")
         climits = styles[3:5]
         topology_type = styles[5]

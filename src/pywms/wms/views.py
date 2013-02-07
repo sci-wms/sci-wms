@@ -76,6 +76,16 @@ def wmstest (request):
     dict1 = Context({ 'localsite':sites[0]['domain'],
                       'datasets':Dataset.objects.values()})
     return HttpResponse(Template(text).render(dict1))
+    
+def leaflet (request):
+    from django.template import Context, Template
+    f = open(os.path.join(config.staticspath, "leaflet_example.html"))
+    text = f.read()
+    f.close()
+    sites = Site.objects.values()
+    dict1 = Context({ 'localsite':sites[0]['domain'],
+                      'datasets':Dataset.objects.values()})
+    return HttpResponse(Template(text).render(dict1))
 
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
