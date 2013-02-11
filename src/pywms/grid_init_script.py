@@ -15,6 +15,7 @@ from pywms import build_tree
 import server_local_config as config
 import multiprocessing
 from collections import deque
+import shutil
 try:
     import cPickle as pickle
 except:
@@ -36,14 +37,7 @@ time_units = 'hours since 1970-01-01'
 def create_topology(datasetname, url):
     try:
         nc = ncDataset(url)
-        nclocalpath = os.path.join(config.topologypath, datasetname+".nc")
-        try:
-            os.unlink(nclocalpath)
-        except:
-            try:
-                os.unlink(nclocalpath)
-            except:
-                pass
+        nclocalpath = os.path.join(config.topologypath, datasetname+".nc.updating")
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if nc.variables.has_key("nv"):
             logger.info("identified as fvcom")
@@ -194,6 +188,7 @@ def create_topology(datasetname, url):
         nclocal.sync()
         nclocal.close()
         nc.close()
+        shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
         if grid == 'False':
             if not os.path.exists(nclocalpath[:-3] + '.domain'):
                 create_domain_polygon(nclocalpath)
@@ -264,13 +259,13 @@ def do(name, dataset, s):
                             check = True
                             logger.info("Updating: " + dataset["uri"])
                             create_topology(name, dataset["uri"])
-                            while check:
-                                try:
-                                    check_nc = ncDataset(nclocalpath)
-                                    check_nc.close()
-                                    check = False
-                                except: # TODO: Catch the specific file corrupt error im looking for here
-                                    create_topology(name, dataset["uri"])
+                            #while check:
+                            #    try:
+                            #        check_nc = ncDataset(nclocalpath)
+                            #        check_nc.close()
+                            #        check = False
+                            #    except: # TODO: Catch the specific file corrupt error im looking for here
+                            #        create_topology(name, dataset["uri"])
             except:
                 logger.info("Initializing: " + dataset["uri"])
                 create_topology(name, dataset["uri"])

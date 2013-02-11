@@ -9,7 +9,7 @@ sci-wms
 
 - >= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.
 - > 2 CPU (> 4 CPU Better) 
-- Python > Version 2.6
+- Version 3 > Python > Version 2.6
 
 ##Community
 

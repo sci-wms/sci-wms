@@ -19,14 +19,14 @@ except:
         worker = "sync"
 
 bind = "0.0.0.0:7000"
-workers = multiprocessing.cpu_count() * 2
+workers = multiprocessing.cpu_count() + 1
 worker_class = worker
 debug = False
 timeout = 120
 #raceful_timeout = 120
 max_requests = 5
 keep_alive = 5
-backlog = 100
+backlog = 10
 log_file = 'sciwms_gunicorn.log'
 
 def on_starting(server):
