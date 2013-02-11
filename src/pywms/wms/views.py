@@ -781,11 +781,12 @@ def getFeatureInfo(request, dataset, logger):
     def getvar(nc, t, layer, var, ind):
         #nc = netCDF4.Dataset(url, 'r')
         if var == "time":
+            #print var, t
             return nc.variables[var][t]
         else:
             # Expects 3d cell variables.
             if len(nc.variables[var].shape) == 3:
-                return nc.variables[var][t, [layer], ind]
+                return nc.variables[var][t, layer, ind]
             elif len(nc.variables[var].shape) == 2:
                 return nc.variables[var][t, ind]
             elif len(nc.variables[var].shape) == 1:
