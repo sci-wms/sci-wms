@@ -686,10 +686,10 @@ def getFeatureInfo(request, dataset, logger):
     projection = 'merc'#request.GET['SRS']
     #TIME = request.GET['TIME']
     try:
-        elevation = [int(request.GET['ELEVATION'])]
+        elevation = int(request.GET['ELEVATION'])
     #print elevation
     except:
-        elevation = [0]
+        elevation = 0
 
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
@@ -739,7 +739,7 @@ def getFeatureInfo(request, dataset, logger):
         TIME = now + "T00:00:00"#
         #print "here"
     TIMES = TIME.split("/")
-    print TIMES
+    #print TIMES
     for i in range(len(TIMES)):
 ##            print TIMES[i]
         if len(TIMES[i]) == 16:
@@ -785,18 +785,13 @@ def getFeatureInfo(request, dataset, logger):
         else:
             # Expects 3d cell variables.
             if len(nc.variables[var].shape) == 3:
-                return nc.variables[var][t, layer[0], ind]
+                return nc.variables[var][t, [layer], ind]
             elif len(nc.variables[var].shape) == 2:
                 return nc.variables[var][t, ind]
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
 
-    if config.localdataset:
-        url = config.localpath[dataset]
-        time = range(1,30)
-        elevation = [5]
-    else:
-        url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).uri
     datasetnc = netCDF4.Dataset(url)
 
     varis = deque()
