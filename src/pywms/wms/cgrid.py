@@ -113,6 +113,10 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
             vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
+        #elif "streamlines" in actions:
+        #    fig.set_figheight(height/80.0/aspect)
+        #    fig.set_figwidth(width/80.0)
+        #    streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
         elif "barbs" in actions:
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
@@ -166,6 +170,23 @@ def vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
                 scale=arrowsize,
                 scale_units='inches',
                 angles='uv',
+                )
+                
+def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
+    if magnitude == "True":
+        arrowsize = None
+    elif magnitude == "False":
+        arrowsize = 2.
+    elif magnitude == "None":
+        arrowsize = None
+    else:
+        arrowsize = float(magnitude)
+    stride = 1
+    ax.streamplot(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], color=mag.squeeze()[::stride,::stride],
+                density=6,
+                linewidth=5*mag.squeeze()[::stride,::stride]/mag.squeeze()[::stride,::stride].max(),
+                cmap=cmap,
+                norm=norm,
                 )
 
 def barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude):

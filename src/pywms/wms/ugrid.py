@@ -94,6 +94,8 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
             facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs)
         elif "vectors" in actions:
             vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
+        #elif "streamlines" in actions:
+        #    streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         elif "barbs" in actions:
             barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type)
         else:
@@ -219,6 +221,37 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude,
             minlength=.5,
             scale=arrowsize,
             scale_units='inches',
+            )
+           
+def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
+    if magnitude == "True":
+        arrowsize = None
+    elif magnitude == "False":
+        arrowsize = 2.
+    elif magnitude == "None":
+        arrowsize = None
+    else:
+        arrowsize = float(magnitude)
+    stride = 1
+    if topology_type.lower() == 'cell':
+        pass
+    else:
+        lon, lat = lonn, latn
+    lon, lat = m(lon, lat)
+    if topology_type.lower() == 'node':
+        n = np.unique(nv)
+        ax.streamplot(lon[n], lat[n], var1[n], var2[n], #color=mag[n],
+            density=6,
+            #linewidth=5*mag/mag.max(),
+            cmap=cmap,
+            norm=norm,
+            )
+    else:
+        ax.streamplot(lon, lat, var1, var2, #color=mag.T,
+            density=6,
+            #linewidth=5*mag/mag.max(),
+            cmap=cmap,
+            norm=norm,
             )
 
 def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type):
