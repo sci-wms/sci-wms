@@ -1101,10 +1101,6 @@ def getMap (request, dataset, logger):
                 index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
             
-            # Close remote dataset and local cache
-            topology.close()
-            datasetnc.close()
-            
             if latmin != latmax: # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
                 if gridtype == 'False': # TODO: Should take a look at this
                     # This is averaging in time over all timesteps downloaded
@@ -1150,7 +1146,6 @@ def getMap (request, dataset, logger):
                         lat_ts = 0.0,
                         suppress_ticks=True)
                 m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-
                 try: # Fail gracefully if not standard_name, should do this a little better than a try
                     if 'direction' in datasetnc.variables[variables[1]].standard_name:
                         #assign new var1,var2 as u,v components
@@ -1160,6 +1155,11 @@ def getMap (request, dataset, logger):
                         var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
                 except:
                     pass
+                
+                # Close remote dataset and local cache
+                topology.close()
+                datasetnc.close()
+            
                 if (climits[0] == "None") or (climits[1] == "None"):
                     CNorm = matplotlib.colors.Normalize()
                 else:
