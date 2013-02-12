@@ -113,6 +113,10 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
             vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
+        elif "unitvectors" in actions:
+            fig.set_figheight(height/80.0/aspect)
+            fig.set_figwidth(width/80.0)
+            unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
         #elif "streamlines" in actions:
         #    fig.set_figheight(height/80.0/aspect)
         #    fig.set_figwidth(width/80.0)
@@ -161,6 +165,30 @@ def vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
     else:
         arrowsize = float(magnitude)
     stride = 1
+    ax.quiver(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], mag.squeeze()[::stride,::stride],
+                pivot='mid',
+                #units='uv', #xy
+                cmap=cmap,
+                norm=norm,
+                minlength=.5,
+                scale=arrowsize,
+                scale_units='inches',
+                angles='uv',
+                )
+                
+def unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
+    if magnitude == "True":
+        arrowsize = None
+    elif magnitude == "False":
+        arrowsize = 2.
+    elif magnitude == "None":
+        arrowsize = None
+    else:
+        arrowsize = float(magnitude)
+    stride = 1
+    theta = np.degrees(np.arctan(var2/var1))
+    var1 = np.cos(np.radians(theta))# u
+    var2 = np.sin(np.radians(theta))# v
     ax.quiver(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], mag.squeeze()[::stride,::stride],
                 pivot='mid',
                 #units='uv', #xy

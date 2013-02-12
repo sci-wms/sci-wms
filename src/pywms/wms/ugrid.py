@@ -94,6 +94,8 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
             facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs)
         elif "vectors" in actions:
             vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
+        elif "unitvectors" in actions:
+            unit_vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         #elif "streamlines" in actions:
         #    streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         elif "barbs" in actions:
@@ -201,6 +203,45 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude,
     else:
         lon, lat = lonn, latn
     lon, lat = m(lon, lat)
+    if topology_type.lower() == 'node':
+        n = np.unique(nv)
+        m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
+            pivot='mid',
+            units='xy', #xy
+            cmap=cmap,
+            norm=norm,
+            minlength=.5,
+            scale=arrowsize,
+            scale_units='inches',
+            )
+    else:
+        m.quiver(lon, lat, var1, var2, mag,
+            pivot='mid',
+            units='xy', #xy
+            cmap=cmap,
+            norm=norm,
+            minlength=.5,
+            scale=arrowsize,
+            scale_units='inches',
+            )
+        
+def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
+    if magnitude == "True":
+        arrowsize = None
+    elif magnitude == "False":
+        arrowsize = 2.
+    elif magnitude == "None":
+        arrowsize = None
+    else:
+        arrowsize = float(magnitude)
+    if topology_type.lower() == 'cell':
+        pass
+    else:
+        lon, lat = lonn, latn
+    lon, lat = m(lon, lat)
+    theta = np.degrees(np.arctan(var2/var1))
+    var1 = np.cos(np.radians(theta))# u
+    var2 = np.sin(np.radians(theta))# v
     if topology_type.lower() == 'node':
         n = np.unique(nv)
         m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
