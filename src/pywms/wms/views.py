@@ -12,7 +12,7 @@ from mpl_toolkits.basemap import Basemap
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from rtree import rindex
+from rtree import index as rindex
 
 # Other random "from" imports
 from collections import deque
