@@ -393,7 +393,6 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
     domain = domain.intersection(box)
     # Create a path out of the polygon for clipping
     if domain.geom_type == "Polygon":
-        print "poly"
         x, y = domain.exterior.xy
         x = np.asarray(x)
         # Correct continous
@@ -413,7 +412,6 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
             y = np.concatenate((y, holey))
         p = mpath.Path(np.asarray((x,y)).T, codes = allcodes)
     elif domain.geom_type == "MultiPolygon":
-        print "multi"
         for i, part in enumerate(domain.geoms):
             x1, y1 = part.exterior.xy
             x1 = np.asarray(x1)
