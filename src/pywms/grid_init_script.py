@@ -189,11 +189,13 @@ def create_topology(datasetname, url):
         nclocal.close()
         nc.close()
         shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
+        if not (os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3].replace(".updating", "") + '_nodes.idx')):
+            build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
         if grid == 'False':
             if not os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '.domain'):
                 create_domain_polygon(nclocalpath.replace(".updating", ""))
-            if not (os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3].replace(".updating", "") + '_nodes.idx')):
-                build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
+            #if not (os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '_nodes.dat') and os.path.exists(nclocalpath[:-3].replace(".updating", "") + '_nodes.idx')):
+            #    build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
 
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()

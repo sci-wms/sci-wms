@@ -12,6 +12,7 @@ from mpl_toolkits.basemap import Basemap
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from rtree import rindex
 
 # Other random "from" imports
 from collections import deque
@@ -703,32 +704,40 @@ def getFeatureInfo(request, dataset, logger):
     gridtype = topology.grid
     if gridtype == 'False':
         if 'node' in styles:
+            tree = rindex.Index(dataset+'_nodes')
             lats = topology.variables['lat'][:]
             lons = topology.variables['lon'][:]
         else:
+            tree = rindex.Index(dataset+'_cells')
             lats = topology.variables['latc'][:]
             lons = topology.variables['lonc'][:]
         #print 'time before haversine ' + str(timeobj.time() - totaltimer)
-        lengths = vhaversine(lat, lon, lats, lons)
+        nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
+        selected_longitude, selected_latitude = tuple(nindex[0].bbox[:2])
+        index = nindex[0].id
+        tree.close()
     else:
+        """
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         lengths = vhaversine(lat, lon, lats, lons)
-    #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
-    min = numpy.asarray(lengths)
-    min = numpy.min(min)
-    if gridtype == 'False':
-        index = list(lengths).index(min)
-##        index = numpy.where(lengths==min)[0] # this is a little faster but need to figure out the brackets stuff
-        selected_latitude = lats[index]
-        selected_longitude = lons[index]
-    else:
+        # TODO: Replace this methodology with the rtree one
+        min = numpy.asarray(lengths)
+        min = numpy.min(min)
         index = numpy.where(lengths==min)
         selected_latitude = lats[index][0]
         selected_longitude = lons[index][0]
-
-    #TIMES = TIME.split("/")
+        """
+        tree = rindex.Index(dataset+'_nodes')
+        lats = topology.variables['lat'][:]
+        lons = topology.variables['lon'][:]
+        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
+        nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
+        selected_longitude, selected_latitude = lons[nindex[0][0],nindex[0][1]], lats[nindex[0][0],nindex[0][1]]
+        index = nindex[0]
+        tree.close()
+    #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
         TIME = request.GET["TIME"]
         if TIME == "":
