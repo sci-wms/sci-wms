@@ -2,6 +2,7 @@
 import os, sys
 import numpy as np
 from matplotlib.pylab import get_cmap
+from matplotlib.mlab import griddata
 
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     latbool = (lat <= latmax+.18) & (lat >= latmin-.18)
@@ -117,10 +118,15 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
             unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
-        #elif "streamlines" in actions:
-        #    fig.set_figheight(height/80.0/aspect)
-        #    fig.set_figwidth(width/80.0)
-        #    streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude)
+        elif "streamlines" in actions:
+            fig.set_figheight(height/80.0/aspect)
+            fig.set_figwidth(width/80.0)
+            m = kwargs.get('basemap')
+            lonmin = kwargs.get("lonmin")
+            latmin = kwargs.get("latmin")
+            lonmax = kwargs.get("lonmax")
+            latmax = kwargs.get("latmax")
+            streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin, latmin, lonmax, latmax)
         elif "barbs" in actions:
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
@@ -200,7 +206,7 @@ def unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
                 angles='uv',
                 )
                 
-def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
+def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin, latmin, lonmax, latmax):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
@@ -210,12 +216,32 @@ def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
     else:
         arrowsize = float(magnitude)
     stride = 1
-    ax.streamplot(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], color=mag.squeeze()[::stride,::stride],
-                density=6,
-                linewidth=5*mag.squeeze()[::stride,::stride]/mag.squeeze()[::stride,::stride].max(),
-                cmap=cmap,
-                norm=norm,
-                )
+    try:
+        ax.streamplot(lon[::stride,::stride], lat[::stride,::stride], 
+                      var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], 
+                      color=mag.squeeze()[::stride,::stride],
+                      density=6,
+                      linewidth=5*mag.squeeze()[::stride,::stride]/mag.squeeze()[::stride,::stride].max(),
+                      cmap=cmap,
+                      norm=norm,
+                      )
+    except:
+        num = int( (lonmax - lonmin) * 50000)#320 )
+        xi = np.arange(m.xmin, m.xmax, num)
+        yi = np.arange(m.ymin, m.ymax, num)
+        lat, lon, mag, var1, var2 = lat.astype(np.float64).flatten(), lon.astype(np.float64).flatten(), mag.astype(np.float64).flatten(), var1.astype(np.float64).flatten(), var2.astype(np.float64).flatten()
+        print lat.shape, mag.shape, var1.shape
+        mag = griddata(lon, lat, mag, xi, yi, interp='nn')
+        var1 = griddata(lon, lat, var1, xi, yi, interp='nn')
+        var2 = griddata(lon, lat, var2, xi, yi, interp='nn')
+        ax.streamplot(xi, yi, 
+                      var1, var2, 
+                      color=mag,
+                      density=6,
+                      linewidth=5*mag/mag.max(),
+                      cmap=cmap,
+                      norm=norm,
+                      )
 
 def barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude):
     if magnitude == "True":

@@ -134,6 +134,9 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
         zi = griddata(lon, lat, mag, xi, yi, interp='nn')
     fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     m.imshow(zi, norm=norm, cmap=cmap, clip_path=patch1, interpolation="nearest")
+    #from matplotlib.backends.backend_agg import FigureCanvasAgg
+    #canvas = FigureCanvasAgg(fig)
+    #canvas.print_png("testing_yay.png")
     return fig, m
 
 def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
@@ -390,6 +393,7 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
     domain = domain.intersection(box)
     # Create a path out of the polygon for clipping
     if domain.geom_type == "Polygon":
+        print "poly"
         x, y = domain.exterior.xy
         x = np.asarray(x)
         # Correct continous
@@ -409,15 +413,21 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
             y = np.concatenate((y, holey))
         p = mpath.Path(np.asarray((x,y)).T, codes = allcodes)
     elif domain.geom_type == "MultiPolygon":
+        print "multi"
         for i, part in enumerate(domain.geoms):
-            x, y = part.exterior.xy
-            x = np.asarray(x)
+            x1, y1 = part.exterior.xy
+            x1 = np.asarray(x1)
             # Correct continous
-            x = correct_continuous(x, continuous, lonmin, latmin, lonmax, latmax)
-            x, y = m(x, y)
-            x = np.hstack((np.asarray(x),x[0]))
-            y = np.hstack((np.asarray(y),y[0]))
-            allcodes = create_path_codes(x)
+            x1 = correct_continuous(x1, continuous, lonmin, latmin, lonmax, latmax)
+            x1, y1 = m(x1, y1)
+            if i != 0:
+                allcodes = add_path_codes(x1, allcodes)
+                x = np.concatenate((x, x1))
+                y = np.concatenate((y, y1))
+            else:
+                x = np.hstack((np.asarray(x1),x1[0]))
+                y = np.hstack((np.asarray(y1),y1[0]))
+                allcodes = create_path_codes(x)
             try:
                 for hole in part.interiors:
                     holex, holey = hole.xy

@@ -1178,7 +1178,13 @@ def getMap (request, dataset, logger):
                                 cmin = climits[0],
                                 cmax = climits[1],
                                 magnitude = magnitude,
-                                cmap = colormap)
+                                cmap = colormap,
+                                basemap = m,
+                                lonmin = lonmin,
+                                latmin = latmin,
+                                lonmax = lonmax,
+                                latmax = latmax,
+                                )
                 elif gridtype == 'False':
                     fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
                                         aspect=m.aspect,
