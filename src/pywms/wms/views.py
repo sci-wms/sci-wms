@@ -734,8 +734,8 @@ def getFeatureInfo(request, dataset, logger):
         lons = topology.variables['lon'][:]
         #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = lons[nindex[0][0],nindex[0][1]], lats[nindex[0][0],nindex[0][1]]
-        index = nindex[0]
+        selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]], lats[nindex[0].object[0],nindex[0].object[1]]
+        index = nindex[0].object
         tree.close()
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
