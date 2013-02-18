@@ -16,7 +16,7 @@ def build_from_nc(filename):
                 for col in range(lon.shape[1]):
                     coord = (lon[row,col], lat[row,col], lon[row,col], lat[row,col],)
                     c += 1
-                    yield(c, coord, (row, col))
+                    yield(c, coord, ((row,), (col,)))
 
         filename = filename[:-3]
         tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)

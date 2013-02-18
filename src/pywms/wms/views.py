@@ -723,11 +723,11 @@ def getFeatureInfo(request, dataset, logger):
         #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]], lats[nindex[0].object[0],nindex[0].object[1]]
-        index_temp = nindex[0].object
+        index = nindex[0].object
         tree.close()
-        index = []
-        for i, ind in enumerate(index_temp):
-            index.append((ind,))
+        #index = []
+        #for i, ind in enumerate(index_temp):
+        #    index.append((ind,))
         index = numpy.asarray(index)
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
