@@ -717,18 +717,6 @@ def getFeatureInfo(request, dataset, logger):
         index = nindex[0].id
         tree.close()
     else:
-        """
-        lats = topology.variables['lat'][:]
-        lons = topology.variables['lon'][:]
-        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
-        lengths = vhaversine(lat, lon, lats, lons)
-        # TODO: Replace this methodology with the rtree one
-        min = numpy.asarray(lengths)
-        min = numpy.min(min)
-        index = numpy.where(lengths==min)
-        selected_latitude = lats[index][0]
-        selected_longitude = lons[index][0]
-        """
         tree = rindex.Index(dataset+'_nodes')
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
@@ -737,6 +725,8 @@ def getFeatureInfo(request, dataset, logger):
         selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]], lats[nindex[0].object[0],nindex[0].object[1]]
         index = nindex[0].object
         tree.close()
+        for i, ind in enumerate(index):
+            index[i] = (ind,)
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
         TIME = request.GET["TIME"]
