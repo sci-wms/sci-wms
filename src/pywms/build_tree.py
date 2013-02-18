@@ -9,7 +9,7 @@ def build_from_nc(filename):
         lat = nc.variables['lat'][:]
         lon = nc.variables['lon'][:]
         nc.close()
-
+        print lon.shape
         def generator_nodes():
             c = -1
             for row in range(lon.shape[0]):
