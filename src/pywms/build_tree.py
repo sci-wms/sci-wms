@@ -12,8 +12,8 @@ def build_from_nc(filename):
 
         def generator_nodes():
             c = -1
-            for row in range(len(lon.shape[0])):
-                for col in range(len(lon.shape[1])):
+            for row in range(lon.shape[0]):
+                for col in range(lon.shape[1]):
                     coord = (lon[row,col], lat[row,col], lon[row,col], lat[row,col],)
                     c += 1
                     yield(c, coord, (row, col))
