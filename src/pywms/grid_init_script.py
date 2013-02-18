@@ -179,8 +179,14 @@ def create_topology(datasetname, url):
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables[latname][:]
-            time[:] = nc.variables['time'][:]
-            time.units = nc.variables['time'].units
+            if nc.variables['time'].ndim > 1:
+                _str_data = nc.variables['time'][:,:]
+                dates = [datetime.strptime(_str_data[i, :].tostring(), "%Y-%m-%dT%H:%M:%SZ") for i in range(len(_str_data[:,0]))]
+                time[:] = netCDF4.date2num(dates, time_units)
+                time.units = time_units
+            else:
+                time[:] = nc.variables['time'][:]
+                time.units = nc.variables['time'].units
             logger.info("data written to file")
             while not 'grid' in nclocal.ncattrs():
                 nclocal.__setattr__('grid', 'cgrid')
