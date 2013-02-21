@@ -5,6 +5,7 @@ Created on Sep 6, 2011
 
 !!!THIS IS NOT A SCRIPT ANYMORE!!!
 '''
+from dateutil.parser import parse
 from netCDF4 import Dataset as ncDataset
 from netCDF4 import num2date, date2num
 import sys, os, numpy, logging, traceback
@@ -168,7 +169,10 @@ def create_topology(datasetname, url):
 
             lat = nclocal.createVariable('lat', 'f', ('igrid','jgrid',), chunksizes=latchunk, zlib=False, complevel=0)
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
-            time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
+            if nc.variables['time'].ndim > 1:
+                time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=(nc.variables['time'].shape[0],), zlib=False, complevel=0)
+            else:
+                time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
             logger.info("variables created in cache")
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
@@ -181,8 +185,9 @@ def create_topology(datasetname, url):
                 lat[:] = nc.variables[latname][:]
             if nc.variables['time'].ndim > 1:
                 _str_data = nc.variables['time'][:,:]
-                dates = [datetime.strptime(_str_data[i, :].tostring(), "%Y-%m-%dT%H:%M:%SZ") for i in range(len(_str_data[:,0]))]
-                time[:] = netCDF4.date2num(dates, time_units)
+                #print _str_data.shape, type(_str_data), "''", str(_str_data[0,:].tostring().replace(" ","")), "''"
+                dates = [parse(_str_data[i, :].tostring()) for i in range(len(_str_data[:,0]))]
+                time[:] = date2num(dates, time_units)
                 time.units = time_units
             else:
                 time[:] = nc.variables['time'][:]
