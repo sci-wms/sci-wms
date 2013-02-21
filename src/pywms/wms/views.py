@@ -717,7 +717,7 @@ def getFeatureInfo(request, dataset, logger):
             nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
             test_point = Point(lon,lat)
             test = -1
-            for i in nindex:
+            for ii,i in enumerate(nindex):
                 lons = i.object[0]
                 lats = i.object[1]
                 test_cell = Polygon([(lons[0],lats[0]),
@@ -726,7 +726,7 @@ def getFeatureInfo(request, dataset, logger):
                                     (lons[0],lats[0]),
                                     ])
                 if test_cell.contains(test_point):
-                    test_index = i
+                    test_index = i.id
             if test == -1:
                 nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
