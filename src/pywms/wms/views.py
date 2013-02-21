@@ -718,8 +718,8 @@ def getFeatureInfo(request, dataset, logger):
             test_point = Point(lon,lat)
             test = -1
             for i in nindex:
-                lons = i.objects[0]
-                lats = i.objects[1]
+                lons = i.object[0]
+                lats = i.object[1]
                 test_cell = Polygon([(lons[0],lats[0]),
                                     (lons[1],lats[1]),
                                     (lons[2],lats[2]),
