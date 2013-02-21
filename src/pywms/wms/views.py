@@ -726,7 +726,7 @@ def getFeatureInfo(request, dataset, logger):
                                     (lons[0],lats[0]),
                                     ])
                 if test_cell.contains(test_point):
-                    test_index = i.id
+                    test_index = ii
                     test = i.id
                     print "found contains", test_index
             if test == -1:
