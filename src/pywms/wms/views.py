@@ -703,18 +703,34 @@ def getFeatureInfo(request, dataset, logger):
     topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
     gridtype = topology.grid
     if gridtype == 'False':
+        test_index = 0
         if 'node' in styles:
             tree = rindex.Index(dataset+'_nodes')
-            lats = topology.variables['lat'][:]
-            lons = topology.variables['lon'][:]
+            #lats = topology.variables['lat'][:]
+            #lons = topology.variables['lon'][:]
+            nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         else:
+            from shapely.geometry import Polygon, Point
             tree = rindex.Index(dataset+'_cells')
-            lats = topology.variables['latc'][:]
-            lons = topology.variables['lonc'][:]
-        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
-        nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = tuple(nindex[0].bbox[:2])
-        index = nindex[0].id
+            #lats = topology.variables['latc'][:]
+            #lons = topology.variables['lonc'][:]
+            nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
+            test_point = Point(lon,lat)
+            test = -1
+            for i in nindex:
+                lons = i.objects[0]
+                lats = i.objects[1]
+                test_cell = Polygon([(lons[0],lats[0]),
+                                    (lons[1],lats[1]),
+                                    (lons[2],lats[2]),
+                                    (lons[0],lats[0]),
+                                    ])
+                if test_cell.contains(test_point):
+                    test_index = i
+            if test == -1:
+                nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
+        selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
+        index = nindex[test_index].id
         tree.close()
     else:
         tree = rindex.Index(dataset+'_nodes')

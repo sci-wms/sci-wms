@@ -9,7 +9,7 @@ def build_from_nc(filename):
         lat = nc.variables['lat'][:]
         lon = nc.variables['lon'][:]
         nc.close()
-        print lon.shape
+        #print lon.shape
         def generator_nodes():
             c = -1
             for row in range(lon.shape[0]):
@@ -20,13 +20,15 @@ def build_from_nc(filename):
 
         filename = filename[:-3]
         tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        print (datetime.now()-timer).seconds # How long did it take to add the points
+        #print (datetime.now()-timer).seconds # How long did it take to add the points
         tree.close()
     else:
         lat = nc.variables['lat'][:]
         lon = nc.variables['lon'][:]
         latc = nc.variables['latc'][:]
         lonc = nc.variables['lonc'][:]
+        nv = nc.variables['nv'][:] # (3, long)
+        #print nv.shape, lonc.shape
         nc.close()
 
         def generator_nodes():
@@ -35,15 +37,15 @@ def build_from_nc(filename):
 
         def generator_cells():
             for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
-                yield(i, coord, None)
+                yield( i, coord, (lon[nv[:,i]-1], lat[nv[:,i]-1],) )
 
         filename = filename[:-3]
         tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        print (datetime.now()-timer).seconds # How long did it take to add the points
+        #print (datetime.now()-timer).seconds # How long did it take to add the points
         tree.close()
         tree = index.Index(filename+'_cells', generator_cells(), overwrite=True)
         tree.close()
-        print (datetime.now()-timer).seconds # How long did it take to add the points
+        #print (datetime.now()-timer).seconds # How long did it take to add the points
 
 if __name__ == "__main__":
     filename = sys.argv[1]
