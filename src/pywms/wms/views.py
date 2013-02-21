@@ -727,6 +727,7 @@ def getFeatureInfo(request, dataset, logger):
                                     ])
                 if test_cell.contains(test_point):
                     test_index = i.id
+                    test = i.id
             if test == -1:
                 nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
