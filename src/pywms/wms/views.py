@@ -527,7 +527,7 @@ def getLegendGraphic(request, dataset, logger):
         climits = (float(styles[3]), float(styles[4]))
     except:
         climits = (None, None)
-    datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
+    #datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
     #level = request.GET["ELEVATION"]
     #level = level.split(",")
     #for i,l in enumerate(level):
