@@ -728,9 +728,7 @@ def getFeatureInfo(request, dataset, logger):
                 if test_cell.contains(test_point):
                     test_index = ii
                     test = i.id
-                    print "found contains", test_index
             if test == -1:
-                print "didnt find", test_index
                 nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
         index = nindex[test_index].id
@@ -739,14 +737,10 @@ def getFeatureInfo(request, dataset, logger):
         tree = rindex.Index(dataset+'_nodes')
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
-        #print 'time before haversine ' + str(timeobj.time() - totaltimer)
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]], lats[nindex[0].object[0],nindex[0].object[1]]
         index = nindex[0].object
         tree.close()
-        #index = []
-        #for i, ind in enumerate(index_temp):
-        #    index.append((ind,))
         index = numpy.asarray(index)
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
@@ -762,6 +756,7 @@ def getFeatureInfo(request, dataset, logger):
     #print TIMES
     for i in range(len(TIMES)):
 ##            print TIMES[i]
+        TIMES[i] = TIMES[i].replace("Z","")
         if len(TIMES[i]) == 16:
             TIMES[i] = TIMES[i] + ":00"
         elif len(TIMES[i]) == 13:

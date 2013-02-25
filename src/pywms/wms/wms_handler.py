@@ -35,6 +35,7 @@ class wms_handler(object):
         #print time
         for i in range(len(time)):
             #print time[i]
+            time[i] = time[i].replace("Z", "")
             if len(time[i]) == 16:
                 time[i] = time[i] + ":00"
             elif len(time[i]) == 13:
