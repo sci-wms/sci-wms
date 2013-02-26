@@ -738,7 +738,7 @@ def getFeatureInfo(request, dataset, logger):
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]], lats[nindex[0].object[0],nindex[0].object[1]]
+        selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]][0], lats[nindex[0].object[0],nindex[0].object[1]][0]
         index = nindex[0].object
         tree.close()
         index = numpy.asarray(index)
@@ -907,7 +907,7 @@ def getFeatureInfo(request, dataset, logger):
         output_dict = {}
         output_dict2 = {}
         output_dict["type"] = "Feature"
-        output_dict["geometry"] = {"type":"Point", "coordinates":[selected_longitude,selected_latitude]}
+        output_dict["geometry"] = {"type":"Point", "coordinates":[float(selected_longitude),float(selected_latitude)]}
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
         output_dict2["time"] = {"units": "iso", "values": varis[0]}
         output_dict2["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
@@ -941,7 +941,7 @@ def getFeatureInfo(request, dataset, logger):
             thisline.append(selected_latitude)
             thisline.append(selected_longitude)
             for k in range(1, len(varis)):
-                if type(varis[k]) == numpy.ndarray:
+                if type(varis[k]) == numpy.ndarray or type(varis[k]) == numpy.ma.core.MaskedArray:
                     try:
                         thisline.append(varis[k][i])
                     except:
