@@ -22,7 +22,8 @@ try:
 except:
     import Pickle as pickle
 
-s = multiprocessing.Semaphore(1)
+s1 = multiprocessing.Semaphore(1)
+s2 = multiprocessing.Semaphore(2)
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
@@ -35,7 +36,7 @@ logger.addHandler(handler)
 
 time_units = 'hours since 1970-01-01'
 
-def create_topology(datasetname, url):
+def create_topology(datasetname, url, s1, s2):
     try:
         nc = ncDataset(url)
         nclocalpath = os.path.join(config.topologypath, datasetname+".nc.updating")
@@ -201,10 +202,12 @@ def create_topology(datasetname, url):
         nc.close()
         shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
         if not (os.path.exists(nclocalpath.replace(".updating", "").replace(".nc",'_nodes.dat')) and os.path.exists(nclocalpath.replace(".updating", "").replace(".nc","_nodes.idx"))):
-            build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
+            with s1:
+                build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
         if grid == 'False':
             if not os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '.domain'):
-                create_domain_polygon(nclocalpath.replace(".updating", ""))
+                with s2:
+                    create_domain_polygon(nclocalpath.replace(".updating", ""))
 
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -232,7 +235,7 @@ def check_topology_age():
             for dataset in datasets:
                 #print dataset
                 name = dataset["name"]
-                p = multiprocessing.Process(target=do, args=(name,dataset,s))
+                p = multiprocessing.Process(target=do, args=(name,dataset,s1,s2))
                 p.daemon = True
                 p.start()
                 jobs.append(p)
@@ -242,127 +245,127 @@ def check_topology_age():
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
-def do(name, dataset, s):
-    with s:
+def do(name, dataset, s1, s2):
+    #with s:
+    try:
         try:
-            try:
-                #get_lock()
-                filemtime = datetime.fromtimestamp(
-                    os.path.getmtime(
-                    os.path.join(
-                    config.topologypath, name + ".nc"
-                    )))
-                #print filemtime
-                difference = datetime.now() - filemtime
-                if dataset["keep_up_to_date"]:
-                    if difference.seconds > .5*3600 or difference.days > 0:
-                        #print "true"
-                        nc = ncDataset(dataset["uri"])
-                        topo = ncDataset(os.path.join(
-                            config.topologypath, name + ".nc"))
+            #get_lock()
+            filemtime = datetime.fromtimestamp(
+                os.path.getmtime(
+                os.path.join(
+                config.topologypath, name + ".nc"
+                )))
+            #print filemtime
+            difference = datetime.now() - filemtime
+            if dataset["keep_up_to_date"]:
+                if difference.seconds > .5*3600 or difference.days > 0:
+                    #print "true"
+                    nc = ncDataset(dataset["uri"])
+                    topo = ncDataset(os.path.join(
+                        config.topologypath, name + ".nc"))
 
-                        time1 = nc.variables['time'][-1]
-                        time2 = topo.variables['time'][-1]
-                        #print time1, time2
-                        nc.close()
-                        topo.close()
-                        if time1 != time2:
-                            check = True
-                            logger.info("Updating: " + dataset["uri"])
-                            create_topology(name, dataset["uri"])
-                            #while check:
-                            #    try:
-                            #        check_nc = ncDataset(nclocalpath)
-                            #        check_nc.close()
-                            #        check = False
-                            #    except: # TODO: Catch the specific file corrupt error im looking for here
-                            #        create_topology(name, dataset["uri"])
-            except:
-                logger.info("Initializing: " + dataset["uri"])
-                create_topology(name, dataset["uri"])
-            try:
-                nc.close()
-                topo.close()
-            except:
-                pass
-        except Exception as detail:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.error("Disabling Error: " +\
-                                 repr(traceback.format_exception(exc_type, exc_value,
-                                              exc_traceback)))
+                    time1 = nc.variables['time'][-1]
+                    time2 = topo.variables['time'][-1]
+                    #print time1, time2
+                    nc.close()
+                    topo.close()
+                    if time1 != time2:
+                        check = True
+                        logger.info("Updating: " + dataset["uri"])
+                        create_topology(name, dataset["uri"], s1, s2)
+                        #while check:
+                        #    try:
+                        #        check_nc = ncDataset(nclocalpath)
+                        #        check_nc.close()
+                        #        check = False
+                        #    except: # TODO: Catch the specific file corrupt error im looking for here
+                        #        create_topology(name, dataset["uri"])
+        except:
+            logger.info("Initializing: " + dataset["uri"])
+            create_topology(name, dataset["uri"], s1, s2)
+        try:
+            nc.close()
+            topo.close()
+        except:
+            pass
+    except Exception as detail:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("Disabling Error: " +\
+                             repr(traceback.format_exception(exc_type, exc_value,
+                                          exc_traceback)))
 
 def create_domain_polygon(filename):
     from shapely.geometry import Polygon
     from shapely.ops import cascaded_union
 
     #from shapely.prepared import prep
+    with s2:
+        nc = ncDataset(filename)
+        nv = nc.variables['nv'][:, :].T-1
+        #print np.max(np.max(nv))
+        latn = nc.variables['lat'][:]
+        lonn = nc.variables['lon'][:]
+        lon = nc.variables['lonc'][:]
+        lat = nc.variables['latc'][:]
+        #print lat, lon, latn, lonn, nv
+        index_pos = numpy.asarray(numpy.where(
+                (lat <= 90) & (lat >= -90) &
+                (lon <= 180) & (lon > 0),)).squeeze()
+        index_neg = numpy.asarray(numpy.where(
+                (lat <= 90) & (lat >= -90) &
+                (lon < 0) & (lon >= -180),)).squeeze()
+        #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
+        if len(index_pos) > 0:
+            p = deque()
+            p_add = p.append
+            for i in index_pos:
+                flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+                lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+                lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
+                if flon < -90:
+                    flon = flon + 360
+                if lon1 < -90:
+                    lon1 = lon1 + 360
+                if lon2 < -90:
+                    lon2 = lon2 + 360
+                p_add(Polygon(((flon, flat),
+                               (lon1, lat1),
+                               (lon2, lat2),
+                               (flon, flat),)))
+            domain_pos = cascaded_union(p)
+        if len(index_neg) > 0:
+            p = deque()
+            p_add = p.append
+            for i in index_neg:
+                flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+                lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+                lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
+                if flon > 90:
+                    flon = flon - 360
+                if lon1 > 90:
+                    lon1 = lon1 - 360
+                if lon2 > 90:
+                    lon2 = lon2 - 360
+                p_add(Polygon(((flon, flat),
+                               (lon1, lat1),
+                               (lon2, lat2),
+                               (flon, flat),)))
+            domain_neg = cascaded_union(p)
+        if len(index_neg) > 0 and len(index_pos) > 0:
+            domain = prep(cascaded_union((domain_neg, domain_pos,)))
+        elif len(index_neg) > 0:
+            domain = domain_neg
+        elif len(index_pos) > 0:
+            domain = domain_pos
+        else:
+            logger.info(nc.__str__())
+            logger.error("Domain file creation - No data in topology file")
+            raise ValueError("No data in file")
 
-    nc = ncDataset(filename)
-    nv = nc.variables['nv'][:, :].T-1
-    #print np.max(np.max(nv))
-    latn = nc.variables['lat'][:]
-    lonn = nc.variables['lon'][:]
-    lon = nc.variables['lonc'][:]
-    lat = nc.variables['latc'][:]
-    #print lat, lon, latn, lonn, nv
-    index_pos = numpy.asarray(numpy.where(
-            (lat <= 90) & (lat >= -90) &
-            (lon <= 180) & (lon > 0),)).squeeze()
-    index_neg = numpy.asarray(numpy.where(
-            (lat <= 90) & (lat >= -90) &
-            (lon < 0) & (lon >= -180),)).squeeze()
-    #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
-    if len(index_pos) > 0:
-        p = deque()
-        p_add = p.append
-        for i in index_pos:
-            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
-            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
-            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
-            if flon < -90:
-                flon = flon + 360
-            if lon1 < -90:
-                lon1 = lon1 + 360
-            if lon2 < -90:
-                lon2 = lon2 + 360
-            p_add(Polygon(((flon, flat),
-                           (lon1, lat1),
-                           (lon2, lat2),
-                           (flon, flat),)))
-        domain_pos = cascaded_union(p)
-    if len(index_neg) > 0:
-        p = deque()
-        p_add = p.append
-        for i in index_neg:
-            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
-            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
-            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
-            if flon > 90:
-                flon = flon - 360
-            if lon1 > 90:
-                lon1 = lon1 - 360
-            if lon2 > 90:
-                lon2 = lon2 - 360
-            p_add(Polygon(((flon, flat),
-                           (lon1, lat1),
-                           (lon2, lat2),
-                           (flon, flat),)))
-        domain_neg = cascaded_union(p)
-    if len(index_neg) > 0 and len(index_pos) > 0:
-        domain = prep(cascaded_union((domain_neg, domain_pos,)))
-    elif len(index_neg) > 0:
-        domain = domain_neg
-    elif len(index_pos) > 0:
-        domain = domain_pos
-    else:
-        logger.info(nc.__str__())
-        logger.error("Domain file creation - No data in topology file")
-        raise ValueError("No data in file")
-
-    f = open(filename[:-3] + '.domain', 'w')
-    pickle.dump(domain, f)
-    f.close()
-    nc.close()
+        f = open(filename[:-3] + '.domain', 'w')
+        pickle.dump(domain, f)
+        f.close()
+        nc.close()
 
 
 
