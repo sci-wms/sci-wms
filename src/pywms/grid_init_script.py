@@ -164,7 +164,7 @@ def create_topology(datasetname, url, s1, s2):
             import matplotlib.tri as Tri
             tri = Tri.Triangulation(lontemp,
                                     lattemp,
-                                    nc.variables['ele'][:,:]-1
+                                    nc.variables['ele'][:,:].T-1
                                     )
 
             lonc[:] = lontemp[tri.triangles].mean(axis=1)
