@@ -43,7 +43,7 @@ def build_from_nc(filename):
         tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
         #print (datetime.now()-timer).seconds # How long did it take to add the points
         tree.close()
-        tree = index.Index(filename+'_cells', generator_cells(), overwrite=True)
+        tree = index.Index(filename+'_cells', generator_cells(), overwrite=True, pagesize=200000)
         tree.close()
         #print (datetime.now()-timer).seconds # How long did it take to add the points
 
