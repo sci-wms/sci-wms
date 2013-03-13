@@ -22,7 +22,7 @@ try:
 except:
     import Pickle as pickle
 
-s = multiprocessing.Semaphore(2)
+s = multiprocessing.Semaphore(1)
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
