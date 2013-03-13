@@ -139,19 +139,19 @@ def create_topology(datasetname, url, s1, s2):
             logger.info("identified as selfe")
             grid = 'False'
             nclocal.createDimension('node', nc.variables['x'].shape[0])
-            nclocal.createDimension('cell', nc.variables['ele'].shape[0])
+            nclocal.createDimension('cell', nc.variables['ele'].shape[1])
             nclocal.createDimension('time', nc.variables['time'].shape[0])
-            nclocal.createDimension('corners', nc.variables['ele'].shape[1])
+            nclocal.createDimension('corners', nc.variables['ele'].shape[0])
 
             lat = nclocal.createVariable('lat', 'f', ('node',), chunksizes=(nc.variables['x'].shape[0],), zlib=False, complevel=0)
             lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=(nc.variables['x'].shape[0],), zlib=False, complevel=0)
-            latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[0],), zlib=False, complevel=0)
-            lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[0],), zlib=False, complevel=0)
+            latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[1],), zlib=False, complevel=0)
+            lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[1],), zlib=False, complevel=0)
             #if nc.variables['element'].shape[0] == 3:
             #    nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape, zlib=False, complevel=0)
             #    nv[:,:] = nc.variables['element'][:,:]
             #else:
-            nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['ele'].shape[::-1], zlib=False, complevel=0)
+            nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['ele'].shape, zlib=False, complevel=0)
 
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
@@ -169,7 +169,7 @@ def create_topology(datasetname, url, s1, s2):
 
             lonc[:] = lontemp[tri.triangles].mean(axis=1)
             latc[:] = lattemp[tri.triangles].mean(axis=1)
-            nv[:,:] = nc.variables['ele'][:,:].T
+            nv[:,:] = nc.variables['ele'][:,:]
             time[:] = nc.variables['time'][:]
             time.units = nc.variables['time'].units
             nclocal.sync()
