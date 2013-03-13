@@ -266,7 +266,7 @@ def create_topology_from_config():
         create_topology(dataset["name"], dataset["uri"])
 
 
-def check_topology_age():
+def check_topology_age(s1=s1, s2=s2):
     try:
         from datetime import datetime
         if True:
@@ -278,7 +278,7 @@ def check_topology_age():
                 p = multiprocessing.Process(target=do, args=(name,dataset,s1,s2))
                 p.daemon = True
                 p.start()
-                jobs.append(p)
+                #jobs.append(p)
                 #do(name, dataset)
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
