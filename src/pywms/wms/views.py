@@ -293,7 +293,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                     ET.SubElement(layer1, "Abstract").text = nc.variables[variable].long_name
             except:
                 ET.SubElement(layer1, "Abstract").text = variable
-            ET.SubElement(layer1, "SRS").text = "EPSG:4326"
+            ET.SubElement(layer1, "SRS").text = "EPSG:3857"
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
             llbbox.attrib["minx"] = str(topology.variables["lon"][:].min())
             llbbox.attrib["miny"] = str(topology.variables["lat"][:].min())
