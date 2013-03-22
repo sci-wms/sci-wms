@@ -93,9 +93,9 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
         if "facets" in actions:
             facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs)
         elif "vectors" in actions:
-            vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
+            vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
         elif "unitvectors" in actions:
-            unit_vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
+            unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
         #elif "streamlines" in actions:
         #    streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         elif "barbs" in actions:
@@ -192,7 +192,7 @@ def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology
                        cmap=cmap,
                        )
 
-def vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
+def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
@@ -228,7 +228,7 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude,
             scale_units='inches',
             )
         
-def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
+def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
