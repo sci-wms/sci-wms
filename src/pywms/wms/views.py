@@ -46,6 +46,7 @@ logger.addHandler(handler)
 
 s1 = multiprocessing.Semaphore(1)
 s2 = multiprocessing.Semaphore(2)
+s4 = multiprocessing.Semaphore(4)
 
 def testdb(request):
     #print dir(Dataset.objects.get(name='necofs'))
@@ -93,7 +94,7 @@ def leaflet (request):
 
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
-    grid_cache.check_topology_age(s1, s2)
+    grid_cache.check_topology_age(s1, s2, s4)
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 

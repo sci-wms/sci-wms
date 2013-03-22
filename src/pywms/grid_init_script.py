@@ -36,7 +36,7 @@ logger.addHandler(handler)
 
 time_units = 'hours since 1970-01-01'
 
-def create_topology(datasetname, url, s1, s2):
+def create_topology(datasetname, url, s1, s2, s4):
     try:
         nc = ncDataset(url)
         nclocalpath = os.path.join(config.topologypath, datasetname+".nc.updating")
@@ -266,7 +266,7 @@ def create_topology_from_config():
         create_topology(dataset["name"], dataset["uri"])
 
 
-def check_topology_age(s1=s1, s2=s2):
+def check_topology_age(s1=s1, s2=s2, s4=None):
     try:
         from datetime import datetime
         if True:
@@ -275,7 +275,7 @@ def check_topology_age(s1=s1, s2=s2):
             for dataset in datasets:
                 #print dataset
                 name = dataset["name"]
-                p = multiprocessing.Process(target=do, args=(name,dataset,s1,s2))
+                p = multiprocessing.Process(target=do, args=(name,dataset,s1,s2, s4))
                 p.daemon = True
                 p.start()
                 #jobs.append(p)
@@ -285,7 +285,7 @@ def check_topology_age(s1=s1, s2=s2):
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
-def do(name, dataset, s1, s2):
+def do(name, dataset, s1, s2, s4):
     #with s:
     try:
         try:
@@ -312,7 +312,7 @@ def do(name, dataset, s1, s2):
                     if time1 != time2:
                         check = True
                         logger.info("Updating: " + dataset["uri"])
-                        create_topology(name, dataset["uri"], s1, s2)
+                        create_topology(name, dataset["uri"], s1, s2, s4)
                         #while check:
                         #    try:
                         #        check_nc = ncDataset(nclocalpath)
