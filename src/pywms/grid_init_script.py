@@ -24,6 +24,7 @@ except:
 
 s1 = multiprocessing.Semaphore(1)
 s2 = multiprocessing.Semaphore(2)
+s4 = multiprocessing.Semaphore(4)
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
@@ -266,7 +267,7 @@ def create_topology_from_config():
         create_topology(dataset["name"], dataset["uri"])
 
 
-def check_topology_age(s1=s1, s2=s2, s4=None):
+def check_topology_age(s1=s1, s2=s2, s4=s4):
     try:
         from datetime import datetime
         if True:

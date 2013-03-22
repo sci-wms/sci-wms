@@ -46,7 +46,7 @@ logger.addHandler(handler)
 
 s1 = multiprocessing.Semaphore(1)
 s2 = multiprocessing.Semaphore(2)
-#s4 = multiprocessing.Semaphore(4)
+s4 = multiprocessing.Semaphore(4)
 
 def testdb(request):
     #print dir(Dataset.objects.get(name='necofs'))
