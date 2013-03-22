@@ -341,73 +341,72 @@ def create_domain_polygon(filename):
     from shapely.ops import cascaded_union
 
     #from shapely.prepared import prep
-    with s2:
-        nc = ncDataset(filename)
-        nv = nc.variables['nv'][:, :].T-1
-        #print np.max(np.max(nv))
-        latn = nc.variables['lat'][:]
-        lonn = nc.variables['lon'][:]
-        lon = nc.variables['lonc'][:]
-        lat = nc.variables['latc'][:]
-        #print lat, lon, latn, lonn, nv
-        index_pos = numpy.asarray(numpy.where(
-                (lat <= 90) & (lat >= -90) &
-                (lon <= 180) & (lon > 0),)).squeeze()
-        index_neg = numpy.asarray(numpy.where(
-                (lat <= 90) & (lat >= -90) &
-                (lon < 0) & (lon >= -180),)).squeeze()
-        #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
-        if len(index_pos) > 0:
-            p = deque()
-            p_add = p.append
-            for i in index_pos:
-                flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
-                lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
-                lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
-                if flon < -90:
-                    flon = flon + 360
-                if lon1 < -90:
-                    lon1 = lon1 + 360
-                if lon2 < -90:
-                    lon2 = lon2 + 360
-                p_add(Polygon(((flon, flat),
-                               (lon1, lat1),
-                               (lon2, lat2),
-                               (flon, flat),)))
-            domain_pos = cascaded_union(p)
-        if len(index_neg) > 0:
-            p = deque()
-            p_add = p.append
-            for i in index_neg:
-                flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
-                lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
-                lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
-                if flon > 90:
-                    flon = flon - 360
-                if lon1 > 90:
-                    lon1 = lon1 - 360
-                if lon2 > 90:
-                    lon2 = lon2 - 360
-                p_add(Polygon(((flon, flat),
-                               (lon1, lat1),
-                               (lon2, lat2),
-                               (flon, flat),)))
-            domain_neg = cascaded_union(p)
-        if len(index_neg) > 0 and len(index_pos) > 0:
-            domain = prep(cascaded_union((domain_neg, domain_pos,)))
-        elif len(index_neg) > 0:
-            domain = domain_neg
-        elif len(index_pos) > 0:
-            domain = domain_pos
-        else:
-            logger.info(nc.__str__())
-            logger.error("Domain file creation - No data in topology file")
-            raise ValueError("No data in file")
+    nc = ncDataset(filename)
+    nv = nc.variables['nv'][:, :].T-1
+    #print np.max(np.max(nv))
+    latn = nc.variables['lat'][:]
+    lonn = nc.variables['lon'][:]
+    lon = nc.variables['lonc'][:]
+    lat = nc.variables['latc'][:]
+    #print lat, lon, latn, lonn, nv
+    index_pos = numpy.asarray(numpy.where(
+            (lat <= 90) & (lat >= -90) &
+            (lon <= 180) & (lon > 0),)).squeeze()
+    index_neg = numpy.asarray(numpy.where(
+            (lat <= 90) & (lat >= -90) &
+            (lon < 0) & (lon >= -180),)).squeeze()
+    #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
+    if len(index_pos) > 0:
+        p = deque()
+        p_add = p.append
+        for i in index_pos:
+            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
+            if flon < -90:
+                flon = flon + 360
+            if lon1 < -90:
+                lon1 = lon1 + 360
+            if lon2 < -90:
+                lon2 = lon2 + 360
+            p_add(Polygon(((flon, flat),
+                           (lon1, lat1),
+                           (lon2, lat2),
+                           (flon, flat),)))
+        domain_pos = cascaded_union(p)
+    if len(index_neg) > 0:
+        p = deque()
+        p_add = p.append
+        for i in index_neg:
+            flon, flat = lonn[nv[i,0]], latn[nv[i,0]]
+            lon1, lat1 = lonn[nv[i,1]], latn[nv[i,1]]
+            lon2, lat2 = lonn[nv[i,2]], latn[nv[i,2]]
+            if flon > 90:
+                flon = flon - 360
+            if lon1 > 90:
+                lon1 = lon1 - 360
+            if lon2 > 90:
+                lon2 = lon2 - 360
+            p_add(Polygon(((flon, flat),
+                           (lon1, lat1),
+                           (lon2, lat2),
+                           (flon, flat),)))
+        domain_neg = cascaded_union(p)
+    if len(index_neg) > 0 and len(index_pos) > 0:
+        domain = prep(cascaded_union((domain_neg, domain_pos,)))
+    elif len(index_neg) > 0:
+        domain = domain_neg
+    elif len(index_pos) > 0:
+        domain = domain_pos
+    else:
+        logger.info(nc.__str__())
+        logger.error("Domain file creation - No data in topology file")
+        raise ValueError("No data in file")
 
-        f = open(filename[:-3] + '.domain', 'w')
-        pickle.dump(domain, f)
-        f.close()
-        nc.close()
+    f = open(filename[:-3] + '.domain', 'w')
+    pickle.dump(domain, f)
+    f.close()
+    nc.close()
 
 
 
