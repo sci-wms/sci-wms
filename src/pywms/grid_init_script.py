@@ -324,7 +324,7 @@ def do(name, dataset, s1, s2, s4):
                         #        create_topology(name, dataset["uri"])
         except:
             logger.info("Initializing: " + dataset["uri"])
-            create_topology(name, dataset["uri"], s1, s2)
+            create_topology(name, dataset["uri"], s1, s2, s4)
         try:
             nc.close()
             topo.close()
