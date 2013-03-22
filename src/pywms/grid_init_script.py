@@ -38,8 +38,8 @@ logger.addHandler(handler)
 time_units = 'hours since 1970-01-01'
 
 def create_topology(datasetname, url, s1, s2, s4):
-    with s4:
-        try:
+    try:
+        with s4:
             nc = ncDataset(url)
             nclocalpath = os.path.join(config.topologypath, datasetname+".nc.updating")
             nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
