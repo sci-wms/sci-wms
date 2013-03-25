@@ -138,7 +138,7 @@ def create_topology(datasetname, url, s1, s2, s4):
                 nclocal.sync()
                 logger.info("data written to file")
             elif nc.variables.has_key("ele"):
-                for varname in nc.variables.iterkeys:
+                for varname in nc.variables.iterkeys()):
                     if "mesh" in varname:
                         meshcoords = nc.variables[varname].node_coordinates.strip(" ").split(",")
                         lonname, latname = meshcoords[0], meshcoords[1]
