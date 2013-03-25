@@ -140,7 +140,7 @@ def create_topology(datasetname, url, s1, s2, s4):
             elif nc.variables.has_key("ele"):
                 for varname in nc.variables.iterkeys():
                     if "mesh" in varname:
-                        meshcoords = nc.variables[varname].node_coordinates.strip(" ").split(",")
+                        meshcoords = nc.variables[varname].node_coordinates.split(" ")
                         lonname, latname = meshcoords[0], meshcoords[1]
                 logger.info("identified as selfe")
                 grid = 'False'
