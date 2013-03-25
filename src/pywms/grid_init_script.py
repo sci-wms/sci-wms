@@ -400,7 +400,7 @@ def create_domain_polygon(filename):
         domain = domain_pos
     else:
         logger.info(nc.__str__())
-        logger.error("Domain file creation - No data in topology file %u %u" % index_pos, index_neg)
+        logger.error("Domain file creation - No data in topology file Length of positive:%u Length of negative:%u" % len(index_pos), len(index_neg))
         raise ValueError("No data in file")
 
     f = open(filename[:-3] + '.domain', 'w')
