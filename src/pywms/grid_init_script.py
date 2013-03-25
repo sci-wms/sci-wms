@@ -138,6 +138,10 @@ def create_topology(datasetname, url, s1, s2, s4):
                 nclocal.sync()
                 logger.info("data written to file")
             elif nc.variables.has_key("ele"):
+                for varname in nc.variables.iterkeys:
+                    if "mesh" in varname:
+                        meshcoords = nc.variables[varname].node_coordinates.strip(" ").split(",")
+                        lonname, latname = meshcoords[0], meshcoords[1]
                 logger.info("identified as selfe")
                 grid = 'False'
                 nclocal.createDimension('node', nc.variables['x'].shape[0])
@@ -157,8 +161,8 @@ def create_topology(datasetname, url, s1, s2, s4):
 
                 time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
-                lattemp = nc.variables['y'][:]
-                lontemp = nc.variables['x'][:]
+                lattemp = nc.variables[latname][:]
+                lontemp = nc.variables[lonname][:]
                 lat[:] = lattemp
                 lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
@@ -402,9 +406,6 @@ def create_domain_polygon(filename):
         logger.info(nc.__str__())
         logger.info(lat)
         logger.info(lon)
-        logger.info(nv)
-        logger.info(lonn)
-        logger.info(latn)
         logger.error("Domain file creation - No data in topology file Length of positive:%u Length of negative:%u" % (len(index_pos), len(index_neg)))
         raise ValueError("No data in file")
 
