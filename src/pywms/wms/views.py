@@ -28,7 +28,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 # Import from sci-wms
-from pywms.wms.models import Dataset, Server
+from pywms.wms.models import Dataset, Server, Group
 from django.contrib.sites.models import Site
 import pywms.grid_init_script as grid_cache
 from pywms.wms import cgrid, ugrid
@@ -48,11 +48,44 @@ s1 = multiprocessing.Semaphore(1)
 s2 = multiprocessing.Semaphore(2)
 s4 = multiprocessing.Semaphore(4)
 
-def testdb(request):
+def grouptest (request, group):
+    from django.template import Context, Template
+    f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
+    text = f.read()
+    f.close()
+    sites = Site.objects.values()
+    #print group
+    group = Group.objects.get(name=group)
+    dict1 = Context({ 'localsite':sites[0]['domain'],
+                      'datasets':list(Dataset.objects.filter(group=group))})
+    return HttpResponse(Template(text).render(dict1))
+    
+def groups (request, group):
+    import django.shortcuts as dshorts
+    reqtype = None
+    r = ''
+    try:
+        reqtype = request.GET['REQUEST']
+    except:
+        try:
+            reqtype = request.GET['request']
+        except:
+            #print group
+            group = Group.objects.get(name=group)
+            context = { "datasets":list(Dataset.objects.filter(group=group))}
+            return dshorts.render_to_response('index.html', context)
+    if reqtype != None: # Do GetCapabilities
+        for dataset in Dataset.objects.filter(group=group):
+            caps = getCapabilities(request, dataset.name, logger)
+            r = r + append( caps.content )
+        return HttpResponse(r, content_type=caps.content_type)
+            
+
+def testdb (request):
     #print dir(Dataset.objects.get(name='necofs'))
     return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
 
-def index(request):
+def index (request):
     import django.shortcuts as dshorts
     context = { "datasets":Dataset.objects.values()}
     return dshorts.render_to_response('index.html', context)
@@ -98,10 +131,10 @@ def update (request):
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
-def add(request):
+def add (request):
     return HttpResponse()
 
-def remove(request):
+def remove (request):
     return HttpResponse()
 
 def documentation (request):

@@ -9,7 +9,9 @@ urlpatterns = patterns('',
     url(r'^doc', 'wms.views.documentation'),
     url(r'^wms/(?P<dataset>.*)/', 'wms.views.wms'),
     url(r'^wmstest/$', 'wms.views.wmstest'),
+    url(r'^wmstest$', 'wms.views.wmstest'),
     url(r'^leaflet/$', 'wms.views.leaflet'),
+    url(r'^leaflet$', 'wms.views.wmstest'),
 
     url(r'^wmstest/openlayers/(?P<filepath>.*)', 'wms.views.openlayers'),
     url(r'^static/(?P<filepath>.*)', 'wms.views.static'),
@@ -27,6 +29,11 @@ urlpatterns = patterns('',
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    
+    url(r'^(?P<group>.*)/wmstest/$', 'wms.views.grouptest'),
+    url(r'^(?P<group>.*)/', 'wms.views.groups'),
+    url(r'^(?P<group>.*)', 'wms.views.groups'),
+    
     )
 
 

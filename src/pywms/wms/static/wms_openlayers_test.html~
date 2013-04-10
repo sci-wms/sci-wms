@@ -1,10 +1,9 @@
-<!DOCTYPE HTML>
 <html lang="en-US">
 <head>
 	<meta charset="UTF-8">
 	<title>SCI-WMS Service Test</title>
-	<script src="openlayers/OpenLayers.js" type="text/javascript"></script>
-	<link rel="stylesheet" href="openlayers/theme/default/style.css" />
+	<script src="/wmstest/openlayers/OpenLayers.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="/wmstest/openlayers/theme/default/style.css" />
 	<style type="text/css">
 		html, body, #map {
 			margin: 0;
@@ -48,12 +47,12 @@
 				                                    layers:"{{dataset.test_layer}}",
 				                                    transparent: true,
 				                                    styles: "{{dataset.test_style}}",
-				                                    time: "{{dataset.test_date}}",
-				                                    elevation: "1"
+				                                    time: "",
+				                                    elevation: "0"
 				                                },
 				                                
 				                                {
-				                                    singleTile: false
+				                                    singleTile: true
 				                                    , 
 				                                    ratio: 1,
 				                                    isBaseLayer: false,
