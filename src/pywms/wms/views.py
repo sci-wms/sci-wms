@@ -136,7 +136,7 @@ def leaflet (request):
 
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
-    grid_cache.check_topology_age(s1, s2, s4)
+    grid_cache.check_topology_age()
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 

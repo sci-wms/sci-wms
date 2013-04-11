@@ -22,7 +22,7 @@ try:
 except:
     import Pickle as pickle
 
-#s1 = multiprocessing.Semaphore(1)
+s1 = multiprocessing.Semaphore(1)
 #s2 = multiprocessing.Semaphore(2)
 #s4 = multiprocessing.Semaphore(4)
 
@@ -37,7 +37,7 @@ logger.addHandler(handler)
 
 time_units = 'hours since 1970-01-01'
 
-def create_topology(datasetname, url, s1, s2, s4):
+def create_topology(datasetname, url, s1):
     try:
         with s1:
             nc = ncDataset(url)
@@ -272,7 +272,7 @@ def create_topology_from_config():
         create_topology(dataset["name"], dataset["uri"])
 
 
-def check_topology_age(s1, s2, s4):
+def check_topology_age():
     try:
         from datetime import datetime
         if True:
@@ -281,7 +281,7 @@ def check_topology_age(s1, s2, s4):
             for dataset in datasets:
                 #print dataset
                 name = dataset["name"]
-                p = multiprocessing.Process(target=do, args=(name,dataset,s1,s2, s4))
+                p = multiprocessing.Process(target=do, args=(name,dataset,s1))
                 p.daemon = True
                 p.start()
                 #jobs.append(p)
@@ -291,7 +291,7 @@ def check_topology_age(s1, s2, s4):
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
-def do(name, dataset, s1, s2, s4):
+def do(name, dataset, s1):
     #with s:
     try:
         try:
@@ -318,7 +318,7 @@ def do(name, dataset, s1, s2, s4):
                     if time1 != time2:
                         check = True
                         logger.info("Updating: " + dataset["uri"])
-                        create_topology(name, dataset["uri"], s1, s2, s4)
+                        create_topology(name, dataset["uri"], s1)
                         #while check:
                         #    try:
                         #        check_nc = ncDataset(nclocalpath)
@@ -328,7 +328,7 @@ def do(name, dataset, s1, s2, s4):
                         #        create_topology(name, dataset["uri"])
         except:
             logger.info("Initializing: " + dataset["uri"])
-            create_topology(name, dataset["uri"], s1, s2, s4)
+            create_topology(name, dataset["uri"], s1)
         try:
             nc.close()
             topo.close()
