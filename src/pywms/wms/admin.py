@@ -17,6 +17,7 @@ class ServerAdmin(admin.ModelAdmin):
     list_display = ('title', 'keywords', 'contact_person', 'contact_email')
     
 class GroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'abstract')
     #list_display = ('datasets',)
     pass
 

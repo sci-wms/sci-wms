@@ -34,6 +34,7 @@ import pywms.grid_init_script as grid_cache
 from pywms.wms import cgrid, ugrid
 from django.http import HttpResponse, HttpResponseRedirect
 import pywms.server_local_config as config
+import pywms.wms.wms_requests as wms_reqs
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
@@ -63,7 +64,7 @@ def grouptest (request, group):
 def groups (request, group):
     import django.shortcuts as dshorts
     reqtype = None
-    r = ''
+    
     try:
         reqtype = request.GET['REQUEST']
     except:
@@ -74,12 +75,20 @@ def groups (request, group):
             group = Group.objects.get(name=group)
             context = { "datasets":list(Dataset.objects.filter(group=group))}
             return dshorts.render_to_response('index.html', context)
-    if reqtype != None: # Do GetCapabilities
-        for dataset in Dataset.objects.filter(group=group):
-            caps = getCapabilities(request, dataset.name, logger)
-            r = r + append( caps.content )
-        return HttpResponse(r, content_type=caps.content_type)
-            
+    if reqtype.lower() == "getcapabilities": # Do GetCapabilities
+        group = Group.objects.get(name=group)
+        caps = wms_reqs.groupGetCapabilities(request, group, logger)
+        return caps
+    elif reqtype != None:
+        try:
+            layers = request.GET["LAYERS"]
+        except:
+            layers = request.GET["layers"]
+        dataset = layers.split("/")[0]
+        request.GET = request.GET.copy()
+        request.GET["LAYERS"] = layers.replace(dataset+"/", "")
+        request.GET["layers"] = layers.replace(dataset+"/", "")
+        return wms(request, dataset)
 
 def testdb (request):
     #print dir(Dataset.objects.get(name='necofs'))

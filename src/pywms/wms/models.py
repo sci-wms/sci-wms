@@ -5,7 +5,7 @@ class Dataset(models.Model):
     uri             = models.CharField(max_length=1000)
     name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
     title           = models.CharField(max_length=200, help_text="Human Readable Title")
-    abstract        = models.CharField(max_length=200, help_text="Short Description of Dataset")
+    abstract        = models.CharField(max_length=2000, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField()
     #test_date       = models.CharField(max_length=200, help_text="Optional (YYYY-MM-DDTHH:mm:ss)", blank=True)
     test_layer      = models.CharField(max_length=200, help_text="Optional", blank=True)
@@ -16,6 +16,7 @@ class Dataset(models.Model):
     
 class Group(models.Model):
     name = models.CharField(max_length=200)
+    abstract = models.CharField(max_length=2000, blank=True, help_text="Short Description of the Group")
     datasets = models.ManyToManyField(Dataset, blank=True, help_text="Choose the datasets to add to this group, or create a dataset to add to this group")
     def __unicode__(self):
         return self.name
