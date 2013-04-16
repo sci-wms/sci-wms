@@ -58,7 +58,7 @@
     <h2>Sci-wms: A Python WMS service for geospatial gridded data</h2>
     {% for dataset in datasets %}
         <p>
-        <he><a href="wms/{{dataset.name}}/?REQUEST=GetCapabilities"><b>{{dataset.name}}</b></a><he>
+        <he><a href="/wms/{{dataset.name}}/?REQUEST=GetCapabilities"><b>{{dataset.name}}</b></a><he>
         <li>URI: <a href="{{dataset.uri}}.html">{{dataset.uri}}</a> </li>
         <li>Update?: {{dataset.keep_up_to_date}} </li>
         </p>
@@ -68,7 +68,7 @@
     <a href="admin">To add or remove datasets, use the admin interface</a>
     </li>
     <li class="foot">
-    <a href="wmstest">Test the services with the test page</a>
+    <a href="wmstest/">Test the services with the test page</a>
     </li>
     </li>
     <li class="foot">
