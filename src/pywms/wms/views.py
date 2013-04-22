@@ -46,8 +46,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 s1 = multiprocessing.Semaphore(1)
-s2 = multiprocessing.Semaphore(2)
-s4 = multiprocessing.Semaphore(4)
+#s2 = multiprocessing.Semaphore(2)
+#s4 = multiprocessing.Semaphore(4)
 
 def grouptest (request, group):
     from django.template import Context, Template
@@ -595,7 +595,7 @@ def getLegendGraphic(request, dataset, logger):
     """
     Create figure and axes for small legend image
     """
-    from matplotlib.figure import Figure
+    #from matplotlib.figure import Figure
     from matplotlib.pylab import get_cmap
     fig = Figure(dpi=100., facecolor='none', edgecolor='none')
     fig.set_alpha(0)
@@ -632,8 +632,8 @@ def getLegendGraphic(request, dataset, logger):
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
             CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=True)
-            levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
-
+            #levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
+            levs = numpy.linspace(climits[0], climits[1], 11)
             x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
@@ -654,7 +654,8 @@ def getLegendGraphic(request, dataset, logger):
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
             CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=False,)
-            levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
+            #levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
+            levs = numpy.linspace(climits[0], climits[1], 10)
             levs = numpy.hstack(([-99999], levs, [99999]))
 
             x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
@@ -667,10 +668,14 @@ def getLegendGraphic(request, dataset, logger):
             for i, value in enumerate(levs):
                 #if i == 0:
                 #    levels[i] = "<" + str(value)
-                if i == len(levs)-1:
-                    levels.append(">" + str(value))
+                if i == len(levs)-2 or i == len(levs)-1:
+                    levels.append("> " + str(value))
+                elif i == 0:
+                    levels.append("< " + str(levs[i+1]))
                 else:
-                    levels.append(str(value) + "-" + str(levs[i+1]))
+                    #levels.append(str(value) + "-" + str(levs[i+1]))
+                    text = '%.2f-%.2f' % (value, levs[i+1])
+                    levels.append(text)
             logger.info( str((levels, levs)) )
             fig.legend(proxy, levels,
                        #bbox_to_anchor = (0, 0, 1, 1),
