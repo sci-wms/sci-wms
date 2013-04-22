@@ -340,8 +340,8 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
             templon = topology.variables["lon"][:]
             templat = topology.variables["lat"][:]
-            templon = templon[!numpy.isnan(templon)]
-            templat = templat[!numpy.isnan(templat)]
+            templon = templon[not numpy.isnan(templon)]
+            templat = templat[not numpy.isnan(templat)]
             llbbox.attrib["minx"] = str(templon.min())
             llbbox.attrib["miny"] = str(templat.min())
             llbbox.attrib["maxx"] = str(templon.max())
