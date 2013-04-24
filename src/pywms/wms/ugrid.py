@@ -186,6 +186,7 @@ def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology
     lonn, latn = m(lonn, latn)
     tri = Tri.Triangulation(lonn,latn,triangles=nv)
     if topology_type.lower() == 'cell':
+        ## Uncomment this code if using matplotlib < 1.2.x
         #verts = np.concatenate((tri.x[tri.triangles][...,np.newaxis],\
         #                        tri.y[tri.triangles][...,np.newaxis]), axis=2)
         #collection = PolyCollection(verts,

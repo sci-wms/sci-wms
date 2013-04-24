@@ -37,8 +37,8 @@ You must have the following python packages installed:
 - greenlet
 - gevent or eventlet
 - numpy
-- matplotlib (1.1.0 preferred)
-- matplotlib basemap (versions 1.0.1)
+- matplotlib (>= 1.2.0 preferred)
+- matplotlib basemap (>= 1.0.6)
 - netCDF4 (Install from the netcdf4-python google code repository if using HDF a recent build of HDF5)
 - shapely
 - rtree
@@ -65,8 +65,8 @@ with pip on the install command.
 
 You also need to ensure that you have basemap matplotlib toolkit installed:
 
-    $wget -o basemap-1.0.1.tar.gz http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.1/basemap-1.0.1.tar.gz/download
-    $pip install basemap-1.0.1.tar.gz
+    $wget -o basemap-1.0.6.tar.gz http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.6/basemap-1.0.6.tar.gz/download
+    $pip install basemap-1.0.6.tar.gz
 
 
 ###Caveats:
