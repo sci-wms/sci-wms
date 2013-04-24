@@ -32,14 +32,14 @@ Install the remaining dependencies:
 
 You must have the following python packages installed:
 
-- django
+- django (>= 1.4 preferred)
 - gunicorn
 - greenlet
 - gevent or eventlet
 - numpy
 - matplotlib (>= 1.2.0)
 - matplotlib basemap (>= 1.0.6)
-- netCDF4 (Install from the netcdf4-python google code repository if using HDF a recent build of HDF5)
+- netCDF4 (Install from the netcdf4-python google code repository if using a recent build of HDF5)
 - shapely
 - rtree
 
