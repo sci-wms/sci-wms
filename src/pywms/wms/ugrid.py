@@ -186,15 +186,20 @@ def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology
     lonn, latn = m(lonn, latn)
     tri = Tri.Triangulation(lonn,latn,triangles=nv)
     if topology_type.lower() == 'cell':
-        verts = np.concatenate((tri.x[tri.triangles][...,np.newaxis],\
-                                tri.y[tri.triangles][...,np.newaxis]), axis=2)
-        collection = PolyCollection(verts,
-                                    cmap=cmap,
-                                    norm=norm,
-                                    )
-        collection.set_array(mag)
-        collection.set_edgecolor('none')
-        m.ax.add_collection(collection)
+        #verts = np.concatenate((tri.x[tri.triangles][...,np.newaxis],\
+        #                        tri.y[tri.triangles][...,np.newaxis]), axis=2)
+        #collection = PolyCollection(verts,
+        #                            cmap=cmap,
+        #                            norm=norm,
+        #                            )
+        #collection.set_array(mag)
+        #collection.set_edgecolor('none')
+        #m.ax.add_collection(collection)
+        m.ax.tripcolor(tri, facecolors=mag,
+                       shading="",
+                       norm=norm,
+                       cmap=cmap,
+                       )
     else:
         m.ax.tripcolor(tri, mag,
                        shading="",
