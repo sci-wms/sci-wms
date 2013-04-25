@@ -1,5 +1,6 @@
 sci-wms
 =========
+COPYRIGHT 2010 Alexander Crosby
 
 ####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids and structured grids officially supported)
 
@@ -10,6 +11,8 @@ sci-wms
 - >= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.
 - > 2 CPU (> 4 CPU Better) 
 - Version 3 > Python > Version 2.6
+- LibGeos (http://download.osgeo.org/geos/)
+- LibSpatialIndex (http://libspatialindex.github.com)
 
 ##Community
 
