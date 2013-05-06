@@ -202,7 +202,7 @@ def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonma
     mag[:,:,0:3] = mag[:,:,0:3] / 255.
     lonmax, latmax = m(lonmax, latmax)
     lonmin, latmin = m(lonmin, latmin)
-    print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
+    #print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
     ex = np.asarray([((lon.min()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx, ((lon.max()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx,((lat.min()-latmin+1)/(latmax-latmin))*m.urcrnry,((lat.max()-latmin+1)/(latmax-latmin))*m.urcrnry])
     m.ax.imshow(mag, origin='lower',
                 extent=ex)
