@@ -501,7 +501,7 @@ def create_projected_fig(lonmin, latmin, lonmax, latmax, projection, height, wid
     return fig, m
 
 def figure2array(fig):
-    from StringIO import StringIO
+    from StringIO import StringIO as StringIO
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.image import imread as mread
     buf = StringIO()

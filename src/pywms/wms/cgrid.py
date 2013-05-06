@@ -47,10 +47,14 @@ def getvar(datasetnc, t, layer, variables, index):
     if index is None:
         var1 = None
         var2 = None
+        var3 = None
     else:
         if "+" in variables[0]:
             variables = variables[0].split("+")
             special_function = "+"
+        if "*" in variables[0]:
+            variables = variables[0].split("*")
+            special_function = "*"
         ncvar1 = datasetnc.variables[variables[0]]
         shp = ncvar1.shape
         if len(index[0]) == 1:
@@ -70,6 +74,7 @@ def getvar(datasetnc, t, layer, variables, index):
             var1 = ncvar1[ind, jnd]
         if type(var1) == np.ndarray:
             var1 = var1.squeeze()
+        
         if len(variables) > 1: # Check if request came with more than 1 var
             ncvar2 = datasetnc.variables[variables[1]]
             shp = ncvar2.shape
@@ -84,11 +89,34 @@ def getvar(datasetnc, t, layer, variables, index):
                 var2 = var2.squeeze()
         else:
             var2 = None
+        
+        if len(variables) > 2: # Check if request came with more than 1 var
+            ncvar3 = datasetnc.variables[variables[2]]
+            shp = ncvar3.shape
+            if len(shp) > 3: # Check if the variable has depth
+                #ncvar2.set_auto_maskandscale(False)
+                var3 = ncvar3[t, [layer], ind, jnd]
+            elif len(shp) == 3:
+                var3 = ncvar3[t, ind, jnd]
+            elif len(shp) == 2:
+                var3 = ncvar3[ind, jnd]
+            if type(var1) == np.ndarray:
+                var3 = var3.squeeze()
+        else:
+            var3 = None
+        
         if special_function == "+":
             #var1[np.isnan(var2)] = np.nan # not causing it and probably slowing things down
             #var2[np.isnan(var1)] = np.nan
             var1 = var1 + var2
             var2 = None
+        if special_function == "*":
+            var1 = var1.squeeze()
+            alpha = np.ones_like(var1)
+            alpha[var1.mask] = 0
+            var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
+            var2 = None
+            var3 = None
         if var1 != None:
             if "additional_fill_values" in ncvar1.ncattrs():
                 for fillval in map(float, ncvar1.additional_fill_values.split(",")):
@@ -117,11 +145,21 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             else:
                 mag = np.abs(var1)
         mag = mag.squeeze()
-        if "pcolor" in actions:
+        if "composite" in actions or mag.shape[0] == 3:
+            m = kwargs.get('basemap')
+            lonmin = kwargs.get("lonmin")
+            latmin = kwargs.get("latmin")
+            lonmax = kwargs.get("lonmax")
+            latmax = kwargs.get("latmax")
+            projection = kwargs.get("projection")
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonmax, latmax, projection, height, width)
+        elif "pcolor" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
             pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
-        if "facets" in actions:
+        elif "facets" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
             pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
@@ -159,6 +197,16 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figwidth(width/80.0)
             barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude)
 
+def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonmax, latmax, projection, height, width):
+    mag = np.transpose(mag, axes=(1,2,0))
+    mag[:,:,0:3] = mag[:,:,0:3] / 255.
+    lonmax, latmax = m(lonmax, latmax)
+    lonmin, latmin = m(lonmin, latmin)
+    print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
+    ex = np.asarray([((lon.min()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx, ((lon.max()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx,((lat.min()-latmin+1)/(latmax-latmin))*m.urcrnry,((lat.max()-latmin+1)/(latmax-latmin))*m.urcrnry])
+    m.ax.imshow(mag, origin='lower',
+                extent=ex)
+    
 def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
     mag = np.ma.array(mag, mask=np.isnan(mag))
     if (cmin == "None") or (cmax == "None"):

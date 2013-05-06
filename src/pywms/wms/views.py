@@ -359,16 +359,16 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             templat = topology.variables["lat"][:]
             templon = templon[not numpy.isnan(templon)]
             templat = templat[not numpy.isnan(templat)]
-            llbbox.attrib["minx"] = str(templon.min())
-            llbbox.attrib["miny"] = str(templat.min())
-            llbbox.attrib["maxx"] = str(templon.max())
-            llbbox.attrib["maxy"] = str(templat.max())
+            llbbox.attrib["minx"] = str(templon.nanmin())
+            llbbox.attrib["miny"] = str(templat.nanmin())
+            llbbox.attrib["maxx"] = str(templon.nanmax())
+            llbbox.attrib["maxy"] = str(templat.nanmax())
             llbbox = ET.SubElement(layer1, "BoundingBox")
             llbbox.attrib["SRS"] = "EPSG:4326"
-            llbbox.attrib["minx"] = str(templon.min())
-            llbbox.attrib["miny"] = str(templat.min())
-            llbbox.attrib["maxx"] = str(templon.max())
-            llbbox.attrib["maxy"] = str(templat.max())
+            llbbox.attrib["minx"] = str(templon.nanmin())
+            llbbox.attrib["miny"] = str(templat.nanmin())
+            llbbox.attrib["maxx"] = str(templon.nanmax())
+            llbbox.attrib["maxy"] = str(templat.nanmax())
             time_dimension = ET.SubElement(layer1, "Dimension")
             time_dimension.attrib["name"] = "time"
             time_dimension.attrib["units"] = "ISO8601"
@@ -1191,7 +1191,9 @@ def getMap (request, dataset, logger):
             if latmin != latmax: # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
                 if gridtype == 'False': # TODO: Should take a look at this
                     # This is averaging in time over all timesteps downloaded
-                    if "average" in actions:
+                    if "composite" in actions:
+                        pass
+                    elif "average" in actions:
                         if len(var1.shape) > 2:
                             var1 = var1.mean(axis=0)
                             var1 = var1.mean(axis=0)
@@ -1207,7 +1209,7 @@ def getMap (request, dataset, logger):
                             except:
                                 pass
                     # This finding max in time over all timesteps downloaded
-                    if "maximum" in actions:
+                    elif "maximum" in actions:
                         if len(var1.shape) > 2:
                             var1 = numpy.abs(var1).max(axis=0)
                             var1 = numpy.abs(var1).max(axis=0)
@@ -1258,10 +1260,10 @@ def getMap (request, dataset, logger):
                 if gridtype == 'cgrid':
                     lon, lat = m(lon, lat)
                     cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
-                                aspect=m.aspect,
-                                height=height,
-                                width=width,
-                                norm=CNorm,
+                                aspect = m.aspect,
+                                height = height,
+                                width = width,
+                                norm = CNorm,
                                 cmin = climits[0],
                                 cmax = climits[1],
                                 magnitude = magnitude,
@@ -1271,13 +1273,13 @@ def getMap (request, dataset, logger):
                                 latmin = latmin,
                                 lonmax = lonmax,
                                 latmax = latmax,
-                                )
+                                projection = projection)
                 elif gridtype == 'False':
                     fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
-                                        aspect=m.aspect,
-                                        height=height,
-                                        width=width,
-                                        norm=CNorm,
+                                        aspect = m.aspect,
+                                        height = height,
+                                        width = width,
+                                        norm = CNorm,
                                         cmin = climits[0],
                                         cmax = climits[1],
                                         magnitude = magnitude,
