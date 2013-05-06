@@ -114,6 +114,7 @@ def getvar(datasetnc, t, layer, variables, index):
             var1 = var1.squeeze()
             alpha = np.ones_like(var1)
             alpha[var1.mask] = 0
+            alpha[(var1==0)&(var2.squeeze()==0)&(var3.squeeze()==0)] = 0
             var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
             var2 = None
             var3 = None
