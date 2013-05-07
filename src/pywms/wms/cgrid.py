@@ -29,8 +29,9 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     index = np.asarray(np.where(latbool & lonbool)).squeeze()
         #((lat <= latmax) == (lat >= latmin)) ==
         #((lon <= lonmax) == (lon >= lonmin),))).squeeze()
-    #lon[lon > lonmax+.18] = np.nan # would prefer to be subsetting the smallest area possible isntead of just hacking the rendering...
-    #lon[lon < lonmin-.18] = np.nan
+    if (lonmax > 0) & (lonmin < 0):
+        lon[lon > lonmax] = np.nan # would prefer to be subsetting the smallest area possible isntead of just hacking the rendering...
+        lon[lon < lonmin] = np.nan
     if index.shape[1] > 0:
         ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))+1))
         jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))+1))
