@@ -13,6 +13,8 @@ COPYRIGHT 2010 Alexander Crosby
 - Version 3 > Python > Version 2.6
 - LibGeos (http://download.osgeo.org/geos/)
 - LibSpatialIndex (http://libspatialindex.github.com)
+- netCDF4 C library (with opendap enabled, if opendap/remote functionality is desired)
+- libhdf5 C library (dependency of netCDF4)
 
 ##Community
 
