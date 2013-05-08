@@ -2,7 +2,7 @@ sci-wms
 =========
 COPYRIGHT 2010 Alexander Crosby
 
-####A Python WMS service for geospatial gridded data (Only unstructured FVCOM and ADCIRC grids and structured grids officially supported)
+####A Python WMS service for geospatial gridded data
 
 ![Global HYCOM as filled contours](https://raw.github.com/acrosby/sci-wms/master/src/pywms/wms/static/example1.png)
 
