@@ -62,7 +62,7 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-s1 = multiprocessing.Semaphore(1)
+#s1 = multiprocessing.Semaphore(1)
 #s2 = multiprocessing.Semaphore(2)
 #s4 = multiprocessing.Semaphore(4)
 
@@ -158,11 +158,44 @@ def update (request):
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
 def add (request):
-    return HttpResponse()
+    dataset_endpoint = request.GET.get("uri", None)
+    dataset_id = request.GET.get("id", None)
+    dataset_title = request.GET.get("title", None)
+    dataset_abstract = request.GET.get("name", None)
+    dataset_update = request.GET.get("update", False)
+    memberof_groups = request.GET.get("groups", [])
+    if dataset_id == None:
+        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+    elif dataset_endpoint == None:
+        return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
+    elif dataset_name == None:
+        return HttpResponse("Exception: Please include 'name' parameter in POST request.", status=500)
+    elif dataset_update == None:
+        return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
+    else:
+        dataset = Dataset.objects.create(name = dataset_id, 
+                                         title = dataset_title, 
+                                         abstract = dataset_abstract,
+                                         uri = dataset_endpoint,
+                                         keep_up_to_date = dataset_update,
+                                         )
+        dataset.save()
+        for groupname in memberof_groups:
+            if len(Group.objects.filter(name = groupname)) > 0:
+                group = Group.objects.get(name = groupname)
+                dataset.groups.add(group)
+        return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
+    
 
 def remove (request):
-    return HttpResponse()
-
+    dataset_id = request.GET.get("id", None)
+    if dataset_id == None:
+        return HttpResponse("Exception: Please include 'id' parameter in GET request.")
+    else:
+        dataset = Dataset.objects.get(name=dataset_id)
+        dataset.delete()
+        return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
+    
 def documentation (request):
 ##    #jobsarray = grid_cache.check_topology_age()
 ##    import django.shortcuts as dshorts

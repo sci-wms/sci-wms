@@ -175,7 +175,6 @@ def create_topology(datasetname, url, s1):
                 #    nv[:,:] = nc.variables['element'][:,:]
                 #else:
                 nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['ele'].shape, zlib=False, complevel=0)
-
                 time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
                 lattemp = nc.variables[latname][:]
