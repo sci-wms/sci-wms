@@ -90,7 +90,11 @@ def groups (request, group):
         except:
             #print group
             group = Group.objects.get(name=group)
-            context = { "datasets":list(Dataset.objects.filter(group=group))}
+            datasets = list(Dataset.objects.filter(group=group))
+            for dataset in datasets:
+                if dataset.uri[0:5] != "http":
+                    dataset.uri = "..." + os.path.basename(dataset.uri)
+            context = { "datasets":datasets}
             return dshorts.render_to_response('index.html', context)
     if reqtype.lower() == "getcapabilities": # Do GetCapabilities
         group = Group.objects.get(name=group)
@@ -113,7 +117,11 @@ def testdb (request):
 
 def index (request):
     import django.shortcuts as dshorts
-    context = { "datasets":Dataset.objects.values()}
+    datasets = Dataset.objects.values()
+    for dataset in datasets:
+        if dataset.uri[0:5] != "http":
+            dataset.uri = "..." + os.path.basename(dataset.uri)
+    context = { "datasets":datasets}
     return dshorts.render_to_response('index.html', context)
 
 def openlayers (request, filepath):
@@ -158,12 +166,12 @@ def update (request):
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
 def add (request):
-    dataset_endpoint = request.GET.get("uri", None)
-    dataset_id = request.GET.get("id", None)
-    dataset_title = request.GET.get("title", None)
-    dataset_abstract = request.GET.get("name", None)
-    dataset_update = request.GET.get("update", False)
-    memberof_groups = request.GET.get("groups", [])
+    dataset_endpoint = request.POST.get("uri", None)
+    dataset_id = request.POST.get("id", None)
+    dataset_title = request.POST.get("title", None)
+    dataset_abstract = request.POST.get("name", None)
+    dataset_update = request.POST.get("update", False)
+    memberof_groups = request.POST.get("groups", [])
     if dataset_id == None:
         return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
     elif dataset_endpoint == None:
@@ -181,7 +189,7 @@ def add (request):
                                          )
         dataset.save()
         for groupname in memberof_groups:
-            if len(Group.objects.filter(name = groupname)) > 0:
+            if len(list(Group.objects.filter(name = groupname))) > 0:
                 group = Group.objects.get(name = groupname)
                 dataset.groups.add(group)
         return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
