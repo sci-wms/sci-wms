@@ -92,7 +92,7 @@ def groups (request, group):
             group = Group.objects.get(name=group)
             datasets = list(Dataset.objects.filter(group=group))
             for dataset in datasets:
-                if dataset.uri[0:5] != "http":
+                if dataset.uri[0:4] != "http":
                     dataset.uri = "..." + os.path.basename(dataset.uri)
             context = { "datasets":datasets}
             return dshorts.render_to_response('index.html', context)
@@ -119,8 +119,8 @@ def index (request):
     import django.shortcuts as dshorts
     datasets = Dataset.objects.values()
     for dataset in datasets:
-        if dataset.uri[0:5] != "http":
-            dataset.uri = "..." + os.path.basename(dataset.uri)
+        if dataset["uri"][0:4] != "http":
+            dataset["uri"] = "..." + os.path.basename(dataset["uri"])
     context = { "datasets":datasets}
     return dshorts.render_to_response('index.html', context)
 
