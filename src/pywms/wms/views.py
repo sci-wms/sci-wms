@@ -62,10 +62,6 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-#s1 = multiprocessing.Semaphore(1)
-#s2 = multiprocessing.Semaphore(2)
-#s4 = multiprocessing.Semaphore(4)
-
 def grouptest (request, group):
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
@@ -81,7 +77,6 @@ def grouptest (request, group):
 def groups (request, group):
     import django.shortcuts as dshorts
     reqtype = None
-    
     try:
         reqtype = request.GET['REQUEST']
     except:
