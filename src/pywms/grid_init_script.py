@@ -39,9 +39,11 @@ try:
 except:
     import Pickle as pickle
 
-s1 = multiprocessing.Semaphore(1)
+#s1 = multiprocessing.Semaphore(1)
 #s2 = multiprocessing.Semaphore(2)
 #s4 = multiprocessing.Semaphore(4)
+mp_mgr = multiprocessing.Manager()
+s1 = mp_mgr.semaphore(1)
 
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
@@ -54,7 +56,7 @@ logger.addHandler(handler)
 
 time_units = 'hours since 1970-01-01'
 
-def create_topology(datasetname, url, s1):
+def create_topology(datasetname, url):
     try:
         with s1:
             nc = ncDataset(url)
@@ -297,7 +299,7 @@ def check_topology_age():
             for dataset in datasets:
                 #print dataset
                 name = dataset["name"]
-                p = multiprocessing.Process(target=do, args=(name,dataset,s1))
+                p = multiprocessing.Process(target=do, args=(name, dataset))
                 p.daemon = True
                 p.start()
                 #jobs.append(p)
@@ -307,7 +309,7 @@ def check_topology_age():
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
-def do(name, dataset, s1):
+def do(name, dataset):
     #with s:
     try:
         try:
@@ -334,7 +336,7 @@ def do(name, dataset, s1):
                     if time1 != time2:
                         check = True
                         logger.info("Updating: " + dataset["uri"])
-                        create_topology(name, dataset["uri"], s1)
+                        create_topology(name, dataset["uri"])
                         #while check:
                         #    try:
                         #        check_nc = ncDataset(nclocalpath)
@@ -344,7 +346,7 @@ def do(name, dataset, s1):
                         #        create_topology(name, dataset["uri"])
         except:
             logger.info("Initializing: " + dataset["uri"])
-            create_topology(name, dataset["uri"], s1)
+            create_topology(name, dataset["uri"])
         try:
             nc.close()
             topo.close()

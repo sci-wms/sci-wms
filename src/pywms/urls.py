@@ -55,7 +55,6 @@ urlpatterns = patterns('',
     url(r'^(?P<group>.*)/wmstest', 'wms.views.grouptest'),
     url(r'^(?P<group>.*)/', 'wms.views.groups'),
     url(r'^(?P<group>.*)', 'wms.views.groups'),
-    
     )
 
 
