@@ -166,7 +166,11 @@ def add (request):
     dataset_title = request.POST.get("title", None)
     dataset_abstract = request.POST.get("name", None)
     dataset_update = request.POST.get("update", False)
-    memberof_groups = request.POST.get("groups", [])
+    memberof_groups = request.POST.get("groups", None)
+    if memberof_groups == None:
+        memberof_groups = []
+    else:
+        memberof_groups = memberof_groups.split(",")
     if dataset_id == None:
         return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
     elif dataset_endpoint == None:
