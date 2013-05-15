@@ -66,6 +66,16 @@ If your NetCDF4 and HDF5 libraries are in non-typical locations, you will need t
 ```bash
 NETCDF4_DIR=path HDF5_DIR=path pip install paegan
 ```
+
+If there is problem with gevent or greenlet, or if you would like gunicorn 
+to use an alternative worker, you can install the `eventlet` worker. With some configuration 
+of the sci-wms gunicorn configuration files,  you can also use `tornado` workers.
+
+```bash
+pip install eventlet
+pip install tornado
+```
+
 ##Start the services
 You can start the services on port 7000 from the command line by using the following commands. [Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/)
 ```bash
