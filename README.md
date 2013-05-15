@@ -76,6 +76,13 @@ pip install eventlet
 pip install tornado
 ```
 
+##Test
+To make sure that dependencies have been installed correctly, and that sci-wms is fully functional. 
+Run the following command to run the tests.
+```bash
+cd sci-wms/src/pywms && python manage.py test
+```
+
 ##Start the services
 You can start the services on port 7000 from the command line by using the following commands. [Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/)
 ```bash
