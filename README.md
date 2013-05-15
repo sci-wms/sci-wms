@@ -1,5 +1,5 @@
-sci-wms
-=========
+#sci-wms
+
 COPYRIGHT 2010 Alexander Crosby
 
 ####A Python WMS service for geospatial gridded data
@@ -10,71 +10,70 @@ COPYRIGHT 2010 Alexander Crosby
 
 - >= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.
 - > 2 CPU (> 4 CPU Better) 
-- Version 3 > Python > Version 2.6
+- Python 2.7.x with sqlite
 - LibGeos (http://download.osgeo.org/geos/)
 - LibSpatialIndex (http://libspatialindex.github.com)
 - netCDF4 C library (with opendap enabled, if opendap/remote functionality is desired)
 - libhdf5 C library (dependency of netCDF4)
+- libcurl (required for opendap)
+
+Your system may have already installed the following dependencies, but 
+they are required by some of the module dependencies installed in the next section.
+
+- libpng
+- libfreetype
+- libjpeg
+- libevent
 
 ##Community
 
 [We have started a Google Group for the sci-wms project located here.](https://groups.google.com/forum/?fromgroups#!forum/sci-wms)
 
-##Install
+##Installation
 
 [Download the compressed project and unpack anywhere.](http://acrosby.github.com/sci-wms) This is where the installation will live.
 
-####If you have the standard enthought python distribution (epd):
-
-Install the remaining dependencies:
-
-    $easy_install gunicorn
-    $easy_install greenlet
-    $easy_install gevent              # or easy_install eventlet
-    $easy_install django
-
-####If are not using the enthought python distribution:
-
-You must have the following python packages installed:
-
-- django (>= 1.4 preferred)
-- gunicorn
-- greenlet
-- gevent or eventlet
-- numpy
-- matplotlib (>= 1.2.0)
-- matplotlib basemap (>= 1.0.6)
-- netCDF4 (Install from the netcdf4-python google code repository if using a recent build of HDF5)
-- shapely
-- rtree
-
-sci-wms works with both pip and virtualenv quite happily. If you
-have pip installed you can use the following to install many (but not all) of the required modules:
-
-    $pip install package
-
-<!---
-Or you can install the required packages (with the versions we develop
-the wms on) with the requirements file:
-
-    $pip install -r requirements.txt
--->
-
-Similarly if you have setup_tools installed you can use:
-
-    $easy_install package
-
-If you are using virtualenv, just make sure you have the environment
+Install the following Python dependencies using `pip`, `easy_install`, or equivalent. 
+If you are using [virtualenv](http://www.virtualenv.org/en/latest/), just make 
+sure you have the environment
 activated before you try to install the packages or point to the environment
 with pip on the install command.
+```bash
+pip install numpy
+pip install django>=1.4
+pip install gunicorn
+pip install gevent
+pip install matplotlib>=1.2.0
+pip install netCDF4
+pip install shapely
+pip install rtree
+```
 
-You also need to ensure that you have basemap matplotlib toolkit installed:
+You also need to ensure that you have basemap matplotlib toolkit installed, 
+which isn't available from pypi.
+```bash
+wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.6/basemap-1.0.6.tar.gz
+pip install basemap-1.0.6.tar.gz
+```
 
-    $wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.6/basemap-1.0.6.tar.gz
-    $pip install basemap-1.0.6.tar.gz
+If your version of the HDF5 C libraries is >=1.8.10, you may have to install 
+the netCDF4 Python module from the source repository in order for it to work properly. 
+This requires an SVN client to be installed on your system. (Please let us know if 
+you have problems importing netCDF4 in Python after running this command.)
+```bash
+pip install -e svn+http://netcdf4-python.googlecode.com/svn/trunk#egg=netCDF4
+```
 
+If your NetCDF4 and HDF5 libraries are in non-typical locations, you will need to pass the locations to the `pip` command:
+```bash
+NETCDF4_DIR=path HDF5_DIR=path pip install paegan
+```
+##Start the services
+You can start the services on port 7000 from the command line by using the following commands. [Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/)
+```bash
+cd sci-wms/src/pywms && gunicorn_django -c config_public.py
+```
 
-###Caveats:
+##Caveats:
 
-Look at https://github.com/acrosby/sci-wms/issues?state=open for a list of known issues and problems.
-
+Look at [https://github.com/acrosby/sci-wms/issues?state=open](https://github.com/acrosby/sci-wms/issues?state=open) for a list of known issues and problems.
