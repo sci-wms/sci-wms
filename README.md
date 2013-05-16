@@ -64,7 +64,7 @@ pip install -e svn+http://netcdf4-python.googlecode.com/svn/trunk#egg=netCDF4
 
 If your NetCDF4 and HDF5 libraries are in non-typical locations, you will need to pass the locations to the `pip` command:
 ```bash
-NETCDF4_DIR=path HDF5_DIR=path pip install paegan
+NETCDF4_DIR=path HDF5_DIR=path pip install netCDF4
 ```
 
 If there is problem with gevent or greenlet, or if you would like gunicorn 
