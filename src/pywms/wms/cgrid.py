@@ -22,6 +22,7 @@ import os, sys
 import numpy as np
 from matplotlib.pylab import get_cmap
 from matplotlib.mlab import griddata
+import ugrid
 
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     latbool = (lat <= latmax+.18) & (lat >= latmin-.18)
@@ -29,9 +30,9 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     index = np.asarray(np.where(latbool & lonbool)).squeeze()
         #((lat <= latmax) == (lat >= latmin)) ==
         #((lon <= lonmax) == (lon >= lonmin),))).squeeze()
-    if (lonmax > 0) & (lonmin < 0):
-        lon[lon > lonmax] = np.nan # would prefer to be subsetting the smallest area possible isntead of just hacking the rendering...
-        lon[lon < lonmin] = np.nan
+    #if (lonmax > 0) & (lonmin < 0):
+    #    lon[lon > lonmax+30] = np.nan # would prefer to be subsetting the smallest area possible isntead of just hacking the rendering...
+    #    lon[lon < lonmin-30] = np.nan
     if index.shape[1] > 0:
         ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))+1))
         jnd = np.asarray(range(np.min(np.min(index[1])),np.max(np.max(index[1]))+1))
@@ -224,6 +225,7 @@ def fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap):
     else:
         levs = np.arange(1, 12)*(cmax-cmin)/10
         levs = np.hstack(([-99999], levs, [99999]))
+    shp = lon.shape
     ax.contourf(lon, lat, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=cmap)
 
 def contour(lon, lat, mag, ax, norm, cmin, cmax, cmap):

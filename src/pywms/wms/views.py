@@ -1288,14 +1288,23 @@ def getMap (request, dataset, logger):
                 # Close remote dataset and local cache
                 topology.close()
                 datasetnc.close()
-            
+                
                 if (climits[0] == "None") or (climits[1] == "None"):
-                    CNorm = matplotlib.colors.Normalize()
+                    if magnitude.lower() == "log":
+                        CNorm = matplotlib.colors.LogNorm()
+                    else:
+                        CNorm = matplotlib.colors.Normalize()
                 else:
-                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                    vmax=climits[1],
-                                                    clip=True,
-                                                    )
+                    if magnitude.lower() == "log":
+                        CNorm = matplotlib.colors.LogNorm(vmin=climits[0],
+                                                        vmax=climits[1],
+                                                        clip=True,
+                                                        )                        
+                    else:
+                        CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                        vmax=climits[1],
+                                                        clip=True,
+                                                        )
                 # Plot to the projected figure axes!
                 if gridtype == 'cgrid':
                     lon, lat = m(lon, lat)
