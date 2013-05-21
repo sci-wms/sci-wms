@@ -43,10 +43,10 @@ worker_class = worker
 debug = False
 timeout = 120
 #raceful_timeout = 120
-max_requests = 5
+max_requests = 20
 keep_alive = 5
 backlog = 10
-log_file = 'sciwms_gunicorn.log'
+access_logfile = 'sciwms_gunicorn.log'
 
 def on_starting(server):
     #print os.environ

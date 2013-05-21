@@ -266,7 +266,7 @@ def create_topology(datasetname, url):
             nc.close()
         
         shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
-        if not (os.path.exists(nclocalpath.replace(".updating", "").replace(".nc",'_nodes.dat')) and os.path.exists(nclocalpath.replace(".updating", "").replace(".nc","_nodes.idx"))):
+        if not ((os.path.exists(nclocalpath.replace(".updating", "").replace(".nc",'_nodes.dat')) and os.path.exists(nclocalpath.replace(".updating", "").replace(".nc","_nodes.idx")))):
             #with s1:
             build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
         if grid == 'False':
