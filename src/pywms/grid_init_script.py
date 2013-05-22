@@ -279,7 +279,16 @@ def create_topology(datasetname, url):
         logger.error("Disabling Error: " +\
                                  repr(traceback.format_exception(exc_type, exc_value,
                                               exc_traceback)))
-        os.unlink(nclocalpath)
+        try:
+            nclocal.close()
+        except:
+            pass
+        try:
+            nc.close()
+        except:
+            pass 
+        if os.path.exists(nclocalpath):
+            os.unlink(nclocalpath)
 
 def create_topology_from_config():
     """
