@@ -230,14 +230,18 @@ def create_topology(datasetname, url):
             logger.info("native grid style identified")
             nclocal.createDimension('igrid', igrid)
             nclocal.createDimension('jgrid', jgrid)
-            nclocal.createDimension('time', nc.variables['time'].shape[0])
+            if nc.variables.has_key("time"):
+                nclocal.createDimension('time', nc.variables['time'].shape[0])
+                if nc.variables['time'].ndim > 1:
+                    time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=(nc.variables['time'].shape[0],), zlib=False, complevel=0)
+                else:
+                    time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
+            else:
+                nclocal.createDimension('time', 1)
+                time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=(1,), zlib=False, complevel=0)
 
             lat = nclocal.createVariable('lat', 'f', ('igrid','jgrid',), chunksizes=latchunk, zlib=False, complevel=0)
             lon = nclocal.createVariable('lon', 'f', ('igrid','jgrid',), chunksizes=lonchunk, zlib=False, complevel=0)
-            if nc.variables['time'].ndim > 1:
-                time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=(nc.variables['time'].shape[0],), zlib=False, complevel=0)
-            else:
-                time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
             logger.info("variables created in cache")
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
@@ -248,15 +252,19 @@ def create_topology(datasetname, url):
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables[latname][:]
-            if nc.variables['time'].ndim > 1:
-                _str_data = nc.variables['time'][:,:]
-                #print _str_data.shape, type(_str_data), "''", str(_str_data[0,:].tostring().replace(" ","")), "''"
-                dates = [parse(_str_data[i, :].tostring()) for i in range(len(_str_data[:,0]))]
-                time[:] = date2num(dates, time_units)
-                time.units = time_units
+            if nc.variables.has_key("time"):
+                if nc.variables['time'].ndim > 1:
+                    _str_data = nc.variables['time'][:,:]
+                    #print _str_data.shape, type(_str_data), "''", str(_str_data[0,:].tostring().replace(" ","")), "''"
+                    dates = [parse(_str_data[i, :].tostring()) for i in range(len(_str_data[:,0]))]
+                    time[:] = date2num(dates, time_units)
+                    time.units = time_units
+                else:
+                    time[:] = nc.variables['time'][:]
+                    time.units = nc.variables['time'].units
             else:
-                time[:] = nc.variables['time'][:]
-                time.units = nc.variables['time'].units
+                time[:] = np.ones(1)
+                time.units = time_units
             logger.info("data written to file")
             while not 'grid' in nclocal.ncattrs():
                 nclocal.__setattr__('grid', 'cgrid')
