@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand, CommandError
-from pywms.wms.models import Dataset
 import pywms.grid_init_script as grid_cache
 
 class Command(BaseCommand):

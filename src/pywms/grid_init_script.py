@@ -325,7 +325,13 @@ def check_topology_age():
 def do(datasets):
     #with s:
     for dataset in datasets:
-        name = dataset["name"]
+        if type(Dataset) != Dataset:
+            dataset = Dataset.objects.filter(name=dataset)[0]
+            name = dataset.name
+            uri = dataset.uri
+        else:
+            name = dataset["name"]
+            uri = dataset["uri"]
         try:
             try:
                 #get_lock()
@@ -339,7 +345,7 @@ def do(datasets):
                 if dataset["keep_up_to_date"]:
                     if difference.seconds > .5*3600 or difference.days > 0:
                         #print "true"
-                        nc = ncDataset(dataset["uri"])
+                        nc = ncDataset(uri)
                         topo = ncDataset(os.path.join(
                             config.topologypath, name + ".nc"))
 
@@ -350,8 +356,8 @@ def do(datasets):
                         topo.close()
                         if time1 != time2:
                             check = True
-                            logger.info("Updating: " + dataset["uri"])
-                            create_topology(name, dataset["uri"])
+                            logger.info("Updating: " + uri)
+                            create_topology(name, uri)
                             #while check:
                             #    try:
                             #        check_nc = ncDataset(nclocalpath)
@@ -360,8 +366,8 @@ def do(datasets):
                             #    except: # TODO: Catch the specific file corrupt error im looking for here
                             #        create_topology(name, dataset["uri"])
             except:
-                logger.info("Initializing: " + dataset["uri"])
-                create_topology(name, dataset["uri"])
+                logger.info("Initializing: " + uri)
+                create_topology(name, uri)
             try:
                 nc.close()
                 topo.close()
