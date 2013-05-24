@@ -56,7 +56,7 @@ import pywms.wms.wms_requests as wms_reqs
 output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
 # Set up Logger
 logger = multiprocessing.get_logger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 handler = logging.FileHandler('%s.log' % output_path)
 formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
 handler.setFormatter(formatter)
