@@ -25,16 +25,24 @@ worker = "sync"
 try:
     import tornado
     worker = "tornado"
+except:
+    pass
 try:
     import eventlet
     worker = "eventlet"
+except:
+    pass
 try:
     import greenlet
     worker = "greenlet"
+except:
+    pass
 try:
     import gevent
     worker = "gevent"
-
+except:
+    pass
+    
 bind = "0.0.0.0:7000"
 workers = multiprocessing.cpu_count() + 1
 worker_class = worker
@@ -42,9 +50,9 @@ debug = False
 timeout = 120
 #raceful_timeout = 120
 max_requests = 20
-keep_alive = 5
+keepalive = 5
 backlog = 10
-access_logfile = 'sciwms_gunicorn.log'
+accesslog = 'sciwms_gunicorn.log'
 
 def on_starting(server):
     print '\n    ##################################################\n' +\
