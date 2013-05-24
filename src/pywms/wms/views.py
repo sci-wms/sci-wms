@@ -666,6 +666,10 @@ def getLegendGraphic(request, dataset, logger):
     """
     Create the colorbar or legend and add to axis
     """
+    try:
+        units = nc.variables[variables[0]].units
+    except:
+        units = ''
     if climits[0] is None or climits[1] is None: # TODO: NOT SUPPORTED RESPONSE
             #going to have to get the data here to figure out bounds
             #need elevation, bbox, time, magnitudebool
@@ -685,7 +689,7 @@ def getLegendGraphic(request, dataset, logger):
                                               norm=CNorm,
                                               orientation='vertical',
                                               )
-        cb.set_label(nc.variables[variables[0]].units)
+        cb.set_label(units)
     else:#plot type somekind of contour
         if plot_type == "contours":
             #this should perhaps be a legend...
@@ -705,7 +709,7 @@ def getLegendGraphic(request, dataset, logger):
                        #bbox_to_anchor = (0, 0, 1, 1),
                        #bbox_transform = fig.transFigure,
                        loc = 6,
-                       title = nc.variables[variables[0]].units,
+                       title = units,
                        prop = {'size':8},
                        frameon = False,
                        )
@@ -742,7 +746,7 @@ def getLegendGraphic(request, dataset, logger):
                        #bbox_to_anchor = (0, 0, 1, 1),
                        #bbox_transform = fig.transFigure,
                        loc = 6,
-                       title = nc.variables[variables[0]].units,
+                       title = units,
                        prop = {'size':6},
                        frameon = False,
                        )
