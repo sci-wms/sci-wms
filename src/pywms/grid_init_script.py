@@ -313,10 +313,10 @@ def check_topology_age():
         from datetime import datetime
         if True:
             datasets = Dataset.objects.values()
-            p = multiprocessing.Process(target=do, args=(list(datasets),))
-            p.daemon = True
-            p.start()
-            #do(datasets)
+            #p = multiprocessing.Process(target=do, args=(list(datasets),))
+            #p.daemon = True
+            #p.start()
+            do(list(datasets))
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logger.error("Disabling Error: " +\
