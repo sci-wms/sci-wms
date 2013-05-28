@@ -209,13 +209,14 @@ def create_topology(datasetname, url):
                     try:
                         nc.variables[key].__getattr__('units')
                         temp_units = nc.variables[key].units
-                        if 'degree' in temp_units:
-                            if 'east' in temp_units:
-                                lonname = key
-                            elif 'north' in temp_units:
-                                latname = key
-                            else:
-                                raise ValueError("No valid coordinates found in source netcdf file")
+                        if (not '_u' in key) and (not '_v' in key) and (not '_psi' in key): 
+                            if 'degree' in temp_units:
+                                if 'east' in temp_units:
+                                    lonname = key
+                                elif 'north' in temp_units:
+                                    latname = key
+                                else:
+                                    raise ValueError("No valid coordinates found in source netcdf file")
                     except:
                         pass
             if nc.variables[latname].ndim > 1:
