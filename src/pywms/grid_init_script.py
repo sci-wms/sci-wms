@@ -326,7 +326,7 @@ def check_topology_age():
 def do(datasets):
     #with s:
     for dataset in datasets:
-        if type(Dataset) != Dataset:
+        if type(dataset) != dict:
             dataset = Dataset.objects.filter(name=dataset)[0]
             name = dataset.name
             uri = dataset.uri
