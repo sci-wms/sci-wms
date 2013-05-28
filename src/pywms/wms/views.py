@@ -164,8 +164,8 @@ def add (request):
     dataset_endpoint = request.POST.get("uri", None)
     dataset_id = request.POST.get("id", None)
     dataset_title = request.POST.get("title", None)
-    dataset_abstract = request.POST.get("name", None)
-    dataset_update = request.POST.get("update", False)
+    dataset_abstract = request.POST.get("abstract", None)
+    dataset_update = bool(request.POST.get("update", False))
     memberof_groups = request.POST.get("groups", None)
     if memberof_groups == None:
         memberof_groups = []
@@ -175,8 +175,8 @@ def add (request):
         return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
     elif dataset_endpoint == None:
         return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
-    elif dataset_name == None:
-        return HttpResponse("Exception: Please include 'name' parameter in POST request.", status=500)
+    elif dataset_abstract == None:
+        return HttpResponse("Exception: Please include 'abstract' parameter in POST request.", status=500)
     elif dataset_update == None:
         return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
     else:

@@ -37,8 +37,8 @@ urlpatterns = patterns('',
     url(r'^crossdomain.xml', 'wms.views.crossdomain'),
 
     url(r'^update', 'wms.views.update'),
-    url(r'add_dataset', 'wms.views.add'),
-    url(r'remove_dataset', 'wms.views.remove'),
+    url(r'^add_dataset', 'wms.views.add'),
+    url(r'^remove_dataset', 'wms.views.remove'),
     #url(r'^testdb', 'wms.views.testdb'),
 
     url(r'^index', 'wms.views.index'),

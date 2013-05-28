@@ -1,10 +1,10 @@
 numpy
-Django==1.4.0
-Shapely==1.2.14
-greenlet==0.3.1
-gevent==0.13.6
-gunicorn==0.13.4
+Django>=1.4.0
+Shapely
+greenlet>=0.3.1
+gevent>=0.13.6
+gunicorn>=0.13.4
 matplotlib>=1.2.0
-netCDF4==0.9.8
+netCDF4>=1.0.2
 rtree
 

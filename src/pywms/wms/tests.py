@@ -64,6 +64,11 @@ def add_group():
     g = Group.objects.create(name = 'MyTestGroup',)
     g.save()
     
+def post_add(self, filename):
+    params = {"uri":filename, "id":"test", "title":"test", "abstract":"my test dataset", "update":"True", "groups":""}
+    response = self.client.post("/add_dataset", params)
+    self.assertEqual(response.status_code, 200)
+    
 def add_dataset(filename):
     add_group()
     d = Dataset.objects.create(uri             = os.path.join(resource_path, filename),
@@ -95,6 +100,9 @@ class TestUgrid(TestCase):
     def test_add_group(self):
         add_group()
     
+    def test_post_add(self):
+        post_add(self, "201220109.nc")
+        
     def test_add_dataset(self):
         add_dataset("201220109.nc")
     
@@ -170,6 +178,9 @@ class TestCgrid(TestCase):
     
     def test_add_dataset(self):
         add_dataset("nasa_scb20111015.nc")
+        
+    def test_post_add(self):
+        post_add(self, "nasa_scb20111015.nc")
     
     def test_web_remove(self):
         add_server()
@@ -219,3 +230,7 @@ class TestCgrid(TestCase):
         wait_on_cache(self)
         response = self.client.get('/wms/test/?REQUEST=GetCapabilities')
         self.assertEqual(response.status_code, 200)
+
+class TestDap(TestCase):
+    def test_post_add(self):
+        post_add(self, "http://tds.glos.us:8080/thredds/dodsC/glos/glcfs/michigan/fcfmrc-2d/Lake_Michigan_-_2D_best.ncd")
