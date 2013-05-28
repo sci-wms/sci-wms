@@ -28,6 +28,7 @@ from pywms.wms.models import Dataset, Group, Server
 from django.contrib.sites.models import Site
 import pywms.server_local_config as config
 from time import sleep
+import pywms.grid_init_script as grid_cache
 
 resource_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'wms', 'resources')
 cache_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms')
@@ -47,7 +48,8 @@ def remove_cache():
         pass 
     
 def wait_on_cache(self):
-    self.client.get('/update')
+    #self.client.get('/update')
+    grid_cache.check_topology_age()
     c = 0
     while (not os.path.exists(os.path.join(cache_path, "test.nc"))) and (c < 5):
         sleep(3)
