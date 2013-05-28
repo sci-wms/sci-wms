@@ -160,7 +160,6 @@ def update (request):
     # possibly use import os; os.__file__ for better compatibility?
     manager_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms')
     cmd = 'cd '+manager_path+' && '+sys.executable+' manage.py updatecache'
-    print cmd
     p = subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
