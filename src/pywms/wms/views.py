@@ -157,10 +157,11 @@ def leaflet (request):
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
     #grid_cache.check_topology_age()
+    # possibly use import os; os.__file__ for better compatibility?
     manager_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms')
     cmd = 'cd '+manager_path+' && '+sys.executable+' manage.py updatecache'
     print cmd
-    p = subprocess.call(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
+    p = subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
     logger.info("...Finished updating")
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
