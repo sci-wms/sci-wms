@@ -401,18 +401,26 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
             templon = topology.variables["lon"][:]
             templat = topology.variables["lat"][:]
-            templon = templon[not numpy.isnan(templon)]
-            templat = templat[not numpy.isnan(templat)]
-            llbbox.attrib["minx"] = str(templon.nanmin())
-            llbbox.attrib["miny"] = str(templat.nanmin())
-            llbbox.attrib["maxx"] = str(templon.nanmax())
-            llbbox.attrib["maxy"] = str(templat.nanmax())
+            #templon = templon[not numpy.isnan(templon)]
+            #templat = templat[not numpy.isnan(templat)]
+            #llbbox.attrib["minx"] = str(templon.nanmin())
+            #llbbox.attrib["miny"] = str(templat.nanmin())
+            #llbbox.attrib["maxx"] = str(templon.nanmax())
+            #llbbox.attrib["maxy"] = str(templat.nanmax())
+            llbbox.attrib["minx"] = str(templon.min())
+            llbbox.attrib["miny"] = str(templat.min())
+            llbbox.attrib["maxx"] = str(templon.max())
+            llbbox.attrib["maxy"] = str(templat.max())
             llbbox = ET.SubElement(layer1, "BoundingBox")
             llbbox.attrib["SRS"] = "EPSG:4326"
-            llbbox.attrib["minx"] = str(templon.nanmin())
-            llbbox.attrib["miny"] = str(templat.nanmin())
-            llbbox.attrib["maxx"] = str(templon.nanmax())
-            llbbox.attrib["maxy"] = str(templat.nanmax())
+            llbbox.attrib["minx"] = str(templon.min())
+            llbbox.attrib["miny"] = str(templat.min())
+            llbbox.attrib["maxx"] = str(templon.max())
+            llbbox.attrib["maxy"] = str(templat.max())
+            #llbbox.attrib["minx"] = str(templon.nanmin())
+            #llbbox.attrib["miny"] = str(templat.nanmin())
+            #llbbox.attrib["maxx"] = str(templon.nanmax())
+            #llbbox.attrib["maxy"] = str(templat.nanmax())
             time_dimension = ET.SubElement(layer1, "Dimension")
             time_dimension.attrib["name"] = "time"
             time_dimension.attrib["units"] = "ISO8601"
@@ -425,11 +433,22 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             elev_extent.attrib["name"] = "elevation"
             elev_extent.attrib["default"] = "0"
             try:
-                units = topology.variables["time"].units
-                time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                try:
+                    units = topology.variables["time"].units
+                #print units
+                #print topology.variables["time"][0], len(topology.variables["time"])
+                #print topology.variables["time"][-1]
+                    if len(topology.variables["time"]) == 1:
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z"
+                    else:
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                except:
+                    if len(topology.variables["time"]) == 1:
+                        time_extent.text = str(topology.variables["time"][0])
+                    else:
+                        time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
             except:
-                time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-            
+                pass
             ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
             if topology.grid.lower() == 'false':
                 if nc.variables[variable].ndim > 2:
