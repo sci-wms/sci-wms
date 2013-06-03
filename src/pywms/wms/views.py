@@ -184,20 +184,44 @@ def add (request):
     elif dataset_update == None:
         return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
     else:
-        dataset = Dataset.objects.create(name = dataset_id, 
-                                         title = dataset_title, 
-                                         abstract = dataset_abstract,
-                                         uri = dataset_endpoint,
-                                         keep_up_to_date = dataset_update,
-                                         )
-        dataset.save()
+        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+            dataset = Dataset.objects.get(name = dataset_id)
+        else:
+            dataset = Dataset.objects.create(name = dataset_id, 
+                                             title = dataset_title, 
+                                             abstract = dataset_abstract,
+                                             uri = dataset_endpoint,
+                                             keep_up_to_date = dataset_update,
+                                             )
+            dataset.save()
         for groupname in memberof_groups:
             if len(list(Group.objects.filter(name = groupname))) > 0:
                 group = Group.objects.get(name = groupname)
                 dataset.groups.add(group)
+                dataset.save()
         return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
     
-
+def add_to_group (request):
+    dataset_id = request.GET.get("id", None)
+    memberof_groups = request.GET.get("groups", None)
+    if memberof_groups == None:
+        memberof_groups = []
+    else:
+        memberof_groups = memberof_groups.split(",")
+    if dataset_id == None:
+        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+    else:
+        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+            dataset = Dataset.objects.get(name = dataset_id)
+        else:
+            return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
+        for groupname in memberof_groups:
+            if len(list(Group.objects.filter(name = groupname))) > 0:
+                group = Group.objects.get(name = groupname)
+                dataset.groups.add(group)
+                dataset.save()
+        return HttpResponse("Success: Dataset %s added to %s groups." % (dataset_id, memberof_groups.__str__()))
+    
 def remove (request):
     dataset_id = request.GET.get("id", None)
     if dataset_id == None:
@@ -206,6 +230,27 @@ def remove (request):
         dataset = Dataset.objects.get(name=dataset_id)
         dataset.delete()
         return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
+        
+def remove_from_group (request):
+    dataset_id = request.GET.get("id", None)
+    memberof_groups = request.GET.get("groups", None)
+    if memberof_groups == None:
+        memberof_groups = []
+    else:
+        memberof_groups = memberof_groups.split(",")
+    if dataset_id == None:
+        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+    else:
+        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+            dataset = Dataset.objects.get(name = dataset_id)
+        else:
+            return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
+        for groupname in memberof_groups:
+            if len(list(Group.objects.filter(name = groupname))) > 0:
+                group = Group.objects.get(name = groupname)
+                dataset.groups.remove(group)
+                dataset.save()
+    return HttpResponse()
     
 def documentation (request):
 ##    #jobsarray = grid_cache.check_topology_age()

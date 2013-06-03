@@ -38,7 +38,9 @@ urlpatterns = patterns('',
 
     url(r'^update', 'wms.views.update'),
     url(r'^add_dataset', 'wms.views.add'),
+    url(r'^add_to_group', 'wms.views.add_to_group'),
     url(r'^remove_dataset', 'wms.views.remove'),
+    url(r'^remove_from_group', 'wms.views.remove_from_group'),
     #url(r'^testdb', 'wms.views.testdb'),
 
     url(r'^index', 'wms.views.index'),
