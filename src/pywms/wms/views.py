@@ -261,7 +261,7 @@ def documentation (request):
 ##    text = f.read()
 ##    dict1 = { "textfile":text}
 ##    return dshorts.render_to_response('docs.html', dict1)
-    return HttpResponseRedirect('http://acrosby.github.com/sci-wms')
+    return HttpResponseRedirect('http://acrosby.github.io/sci-wms')
 
 def crossdomain (request):
     f = open(config.staticspath + "crossdomain.xml")

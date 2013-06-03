@@ -37,7 +37,7 @@ urlpatterns = patterns('',
     url(r'^crossdomain.xml', 'wms.views.crossdomain'),
 
     url(r'^update', 'wms.views.update'),
-    url(r'^add_dataset', 'wms.views.add'),
+    url(r'^add_dataset', 'wms.views.add'), # This is a POST based view
     url(r'^add_to_group', 'wms.views.add_to_group'),
     url(r'^remove_dataset', 'wms.views.remove'),
     url(r'^remove_from_group', 'wms.views.remove_from_group'),
