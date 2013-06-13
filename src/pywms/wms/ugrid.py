@@ -56,6 +56,7 @@ def varfromnc(nc, t, layer, var):
 
 def getvar(datasetnc, t, layer, variables, index):
     special_function = ""
+    #print index
     if index is None:
         var1 = None
         var2 = None
@@ -76,6 +77,12 @@ def getvar(datasetnc, t, layer, variables, index):
             var1 = var1[:, index]
             try:
                 var2 = var2[:, index]
+            except:
+                var2 = None
+        elif len(var1.shape) == 1:
+            var1 = var1[index]
+            try:
+                var2 = var2[index]
             except:
                 var2 = None
         else:
