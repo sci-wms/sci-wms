@@ -115,8 +115,11 @@ def getvar(datasetnc, t, layer, variables, index):
         if special_function == "*":
             var1 = var1.squeeze()
             alpha = np.ones_like(var1)
-            alpha[var1.mask] = 0
-            alpha[(var1==0)&(var2.squeeze()==0)&(var3.squeeze()==0)] = 0
+            try:
+                alpha[var1.mask] = 0
+                alpha[(var1==0)&(var2.squeeze()==0)&(var3.squeeze()==0)] = 0
+            except:
+                pass
             var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
             var2 = None
             var3 = None
@@ -203,8 +206,11 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude)
 
 def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonmax, latmax, projection, height, width):
-    mag = np.transpose(mag, axes=(1,2,0))
+    mag = np.transpose(mag, axes=(1,2,0)).astype(float)
+    print mag.dtype
     mag[:,:,0:3] = mag[:,:,0:3] / 255.
+    print mag.dtype
+    print np.histogram(mag)
     lonmax, latmax = m(lonmax, latmax)
     lonmin, latmin = m(lonmin, latmin)
     #print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
