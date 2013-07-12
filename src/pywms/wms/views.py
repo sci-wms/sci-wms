@@ -422,7 +422,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                 location = "node"
         if location == "face":
             location = "cell"
-        try:
+        if True:#try:
             #nc.variables[variable].location
             layer1 = ET.SubElement(layer, "Layer")
             layer1.attrib["queryable"] = "1"
@@ -446,26 +446,26 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
             templon = topology.variables["lon"][:]
             templat = topology.variables["lat"][:]
-            templon = templon[not numpy.isnan(templon)]
-            templat = templat[not numpy.isnan(templat)]
-            #llbbox.attrib["minx"] = str(templon.nanmin())
-            #llbbox.attrib["miny"] = str(templat.nanmin())
-            #llbbox.attrib["maxx"] = str(templon.nanmax())
-            #llbbox.attrib["maxy"] = str(templat.nanmax())
-            llbbox.attrib["minx"] = str(templon.min())
-            llbbox.attrib["miny"] = str(templat.min())
-            llbbox.attrib["maxx"] = str(templon.max())
-            llbbox.attrib["maxy"] = str(templat.max())
+            #templon = templon[not numpy.isnan(templon)]
+            #templat = templat[not numpy.isnan(templat)]
+            llbbox.attrib["minx"] = str(numpy.nanmin(templon))
+            llbbox.attrib["miny"] = str(numpy.nanmin(templat))
+            llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
+            llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
+            #llbbox.attrib["minx"] = str(templon.min())
+            #llbbox.attrib["miny"] = str(templat.min())
+            #llbbox.attrib["maxx"] = str(templon.max())
+            #llbbox.attrib["maxy"] = str(templat.max())
             llbbox = ET.SubElement(layer1, "BoundingBox")
             llbbox.attrib["SRS"] = "EPSG:4326"
-            llbbox.attrib["minx"] = str(templon.min())
-            llbbox.attrib["miny"] = str(templat.min())
-            llbbox.attrib["maxx"] = str(templon.max())
-            llbbox.attrib["maxy"] = str(templat.max())
-            #llbbox.attrib["minx"] = str(templon.nanmin())
-            #llbbox.attrib["miny"] = str(templat.nanmin())
-            #llbbox.attrib["maxx"] = str(templon.nanmax())
-            #llbbox.attrib["maxy"] = str(templat.nanmax())
+            #llbbox.attrib["minx"] = str(templon.min())
+            #llbbox.attrib["miny"] = str(templat.min())
+            #llbbox.attrib["maxx"] = str(templon.max())
+            #llbbox.attrib["maxy"] = str(templat.max())
+            llbbox.attrib["minx"] = str(numpy.nanmin(templon))
+            llbbox.attrib["miny"] = str(numpy.nanmin(templat))
+            llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
+            llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
             time_dimension = ET.SubElement(layer1, "Dimension")
             time_dimension.attrib["name"] = "time"
             time_dimension.attrib["units"] = "ISO8601"
@@ -647,7 +647,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-        except:
+        if True:#except:
             pass
     nc.close()
     tree = ET.ElementTree(root)
