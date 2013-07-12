@@ -207,10 +207,7 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
 
 def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonmax, latmax, projection, height, width):
     mag = np.transpose(mag, axes=(1,2,0)).astype(float)
-    print mag.dtype
     mag[:,:,0:3] = mag[:,:,0:3] / 255.
-    print mag.dtype
-    print np.histogram(mag)
     lonmax, latmax = m(lonmax, latmax)
     lonmin, latmin = m(lonmin, latmin)
     #print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
