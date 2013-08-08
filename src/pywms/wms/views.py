@@ -352,6 +352,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
     root = ET.Element('WMT_MS_Capabilities')
     root.attrib["version"] = "1.1.1"#request.GET["version"]
     href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset + "/?"
+    virtual_layers = VirtualLayer.objects.filter(datasets__name=dataset)
 
     # Plug into your generic implentation of sciwms template
     # will have to pull these fields out of the database directly

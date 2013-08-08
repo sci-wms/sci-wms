@@ -76,7 +76,7 @@ def getvar(datasetnc, t, layer, variables, index):
             var1 = ncvar1[ind, jnd]
         if type(var1) == np.ndarray:
             var1 = var1.squeeze()
-        
+
         if len(variables) > 1: # Check if request came with more than 1 var
             ncvar2 = datasetnc.variables[variables[1]]
             shp = ncvar2.shape
@@ -114,15 +114,18 @@ def getvar(datasetnc, t, layer, variables, index):
             var2 = None
         if special_function == "*":
             var1 = var1.squeeze()
-            alpha = np.ones_like(var1)
-            try:
-                alpha[var1.mask] = 0
-                alpha[(var1==0)&(var2.squeeze()==0)&(var3.squeeze()==0)] = 0
-            except:
-                pass
-            var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
-            var2 = None
-            var3 = None
+            if len(var1.shape) > 1:
+                alpha = np.ones_like(var1)
+                try:
+                    alpha[var1.mask] = 0
+                    alpha[(var1==0)&(var2.squeeze()==0)&(var3.squeeze()==0)] = 0
+                except:
+                    pass
+                var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
+                var2 = None
+                var3 = None
+            else:
+                var1 = var2 = var3 = None
         if var1 != None:
             if "additional_fill_values" in ncvar1.ncattrs():
                 for fillval in map(float, ncvar1.additional_fill_values.split(",")):
