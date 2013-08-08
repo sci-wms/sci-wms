@@ -530,9 +530,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                     else:
                         if list_timesteps:
                             temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
-                            print temptime
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
-                            print time_extent.text
                         else:
                             time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
                 except:
