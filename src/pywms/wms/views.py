@@ -453,6 +453,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
     ET.SubElement(layer, "SRS").text =  "MERCATOR"
     nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).uri)
     topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
+    list_timesteps = Dataset.objects.get(name=dataset).display_all_timesteps
     for variable in nc.variables.keys():
         try:
             location = nc.variables[variable].location
@@ -527,12 +528,18 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
                     if len(topology.variables["time"]) == 1:
                         time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z"
                     else:
-                        time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                        if list_timesteps:
+                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
+                            print temptime
+                            time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
+                            print time_extent.text
+                        else:
+                            time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
                 except:
                     if len(topology.variables["time"]) == 1:
                         time_extent.text = str(topology.variables["time"][0])
                     else:
-                        time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
+                        time_extent.text = "Error: Units undefined, cannot query in time"
             except:
                 pass
             ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
