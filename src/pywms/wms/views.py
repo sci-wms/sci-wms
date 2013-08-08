@@ -155,7 +155,7 @@ def leaflet (request):
                       'datasets':Dataset.objects.values()})
     return HttpResponse(Template(text).render(dict1))
 
-def authenticate_view(request, uname, passw): 
+def authenticate_view(request): 
     if request.method == 'POST':
         uname = request.POST['username']
         passw = request.POST['password']

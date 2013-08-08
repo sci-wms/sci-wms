@@ -24,11 +24,13 @@ Replace this with more appropriate tests for your application.
 
 import os, sys
 from django.test import TestCase
-from pywms.wms.models import Dataset, Group, Server 
+from pywms.wms.models import Dataset, Group, Server
 from django.contrib.sites.models import Site
+from django.contrib.auth.models import User
 import pywms.server_local_config as config
 from time import sleep
 import pywms.grid_init_script as grid_cache
+import django.contrib.auth.hashers as hashpass
 
 resource_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'wms', 'resources')
 cache_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms')
@@ -83,7 +85,18 @@ def add_dataset(filename):
                                abstract        = "Test data set for sci-wms tests.",
                                keep_up_to_date = False,)
     d.save()
-        
+
+def add_user():
+    u = User(username="testuser",
+             first_name="test",
+             last_name="user",
+             email="test@yser.comn",
+             password=hashpass.make_password("test"),
+             is_active=True,
+             is_superuser=True,
+            )
+    u.save()
+
 class SimpleTest(TestCase):
     def test_basic_addition(self):
         """
@@ -113,10 +126,14 @@ class TestUgrid(TestCase):
         add_dataset("201220109.nc")
     
     def test_web_remove(self):
+        import base64
+        #auth_headers = { 'HTTP_AUTHORIZATION':
+        #                 'Basic ' + base64.b64encode('testuser:test')}
         add_server()
         add_group()
         add_dataset("201220109.nc")
-        response = self.client.get('/remove_dataset/?id=test')
+        add_user()
+        response = self.client.get('/remove_dataset/?id=test&username=testuser&password=test')
         self.assertEqual(response.status_code, 200)
     
     def test_facets(self):
@@ -189,10 +206,14 @@ class TestCgrid(TestCase):
     #    post_add(self, "nasa_scb20111015.nc")
     
     def test_web_remove(self):
+        #import base64
+        #auth_headers = { 'HTTP_AUTHORIZATION':
+        #                 'Basic ' + base64.b64encode('testuser:test')}
         add_server()
         add_group()
+        add_user()
         add_dataset("nasa_scb20111015.nc")
-        response = self.client.get('/remove_dataset/?id=test')
+        response = self.client.get('/remove_dataset/?id=test&username=testuser&password=test')
         self.assertEqual(response.status_code, 200)
         
     def test_pcolor(self):
