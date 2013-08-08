@@ -122,8 +122,7 @@ def getvar(datasetnc, t, layer, variables, index):
                 except:
                     pass
                 var1 = np.asarray((var1, var2.squeeze(), var3.squeeze(), alpha))
-                var2 = None
-                var3 = None
+                var2 = var3 = None
             else:
                 var1 = var2 = var3 = None
         if var1 != None:
