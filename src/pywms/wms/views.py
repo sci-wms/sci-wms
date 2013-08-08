@@ -20,7 +20,7 @@ Created on Sep 1, 2011
 
 @author: ACrosby
 '''
-import sys, os, gc, bisect, math, datetime, numpy, netCDF4, subprocess, multiprocessing, logging, traceback
+import sys, os, gc, bisect, math, datetime, numpy, netCDF4, subprocess, multiprocessing, logging, traceback, copy
 
 # Import from matplotlib and set backend
 import matplotlib
@@ -29,9 +29,9 @@ from mpl_toolkits.basemap import Basemap
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from rtree import index as rindex
 
 # Other random "from" imports
+from rtree import index as rindex
 from collections import deque
 from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
 import time as timeobj
@@ -45,8 +45,9 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 # Import from sci-wms
-from pywms.wms.models import Dataset, Server, Group
+from pywms.wms.models import Dataset, Server, Group, VirtualLayer
 from django.contrib.sites.models import Site
+from django.contrib.auth import authenticate, login
 import pywms.grid_init_script as grid_cache
 from pywms.wms import cgrid, ugrid
 from django.http import HttpResponse, HttpResponseRedirect
@@ -154,6 +155,26 @@ def leaflet (request):
                       'datasets':Dataset.objects.values()})
     return HttpResponse(Template(text).render(dict1))
 
+def authenticate_view(request, uname, passw): 
+    if request.method == 'POST':
+        uname = request.POST['username']
+        passw = request.POST['password']
+    elif request.method == 'GET':
+        uname = request.GET['username']
+        passw = request.GET['password']
+    user = authenticate(username=uname, password=passw)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def logout_view(request):
+    logout(request)
+
 def update (request):
     logger.info("Adding new datasets and checking for updates on old ones...")
     #grid_cache.check_topology_age()
@@ -165,92 +186,100 @@ def update (request):
     return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
 
 def add (request):
-    dataset_endpoint = request.POST.get("uri", None)
-    dataset_id = request.POST.get("id", None)
-    dataset_title = request.POST.get("title", None)
-    dataset_abstract = request.POST.get("abstract", None)
-    dataset_update = bool(request.POST.get("update", False))
-    memberof_groups = request.POST.get("groups", None)
-    if memberof_groups == None:
-        memberof_groups = []
-    else:
-        memberof_groups = memberof_groups.split(",")
-    if dataset_id == None:
-        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
-    elif dataset_endpoint == None:
-        return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
-    elif dataset_abstract == None:
-        return HttpResponse("Exception: Please include 'abstract' parameter in POST request.", status=500)
-    elif dataset_update == None:
-        return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
-    else:
-        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
-            dataset = Dataset.objects.get(name = dataset_id)
+    if authenticate_view(request):
+        dataset_endpoint = request.POST.get("uri", None)
+        dataset_id = request.POST.get("id", None)
+        dataset_title = request.POST.get("title", None)
+        dataset_abstract = request.POST.get("abstract", None)
+        dataset_update = bool(request.POST.get("update", False))
+        memberof_groups = request.POST.get("groups", None)
+        if memberof_groups == None:
+            memberof_groups = []
         else:
-            dataset = Dataset.objects.create(name = dataset_id, 
+            memberof_groups = memberof_groups.split(",")
+        if dataset_id == None:
+            return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+        elif dataset_endpoint == None:
+            return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
+        elif dataset_abstract == None:
+            return HttpResponse("Exception: Please include 'abstract' parameter in POST request.", status=500)
+        elif dataset_update == None:
+            return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
+        else:
+            if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+                dataset = Dataset.objects.get(name = dataset_id)
+            else:
+                dataset = Dataset.objects.create(name = dataset_id, 
                                              title = dataset_title, 
                                              abstract = dataset_abstract,
                                              uri = dataset_endpoint,
                                              keep_up_to_date = dataset_update,
                                              )
-            dataset.save()
-        for groupname in memberof_groups:
-            if len(list(Group.objects.filter(name = groupname))) > 0:
-                group = Group.objects.get(name = groupname)
-                dataset.groups.add(group)
                 dataset.save()
-        return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
-    
+            for groupname in memberof_groups:
+                if len(list(Group.objects.filter(name = groupname))) > 0:
+                    group = Group.objects.get(name = groupname)
+                    dataset.groups.add(group)
+                    dataset.save()
+                return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
+    logout_view(request)
+
 def add_to_group (request):
-    dataset_id = request.GET.get("id", None)
-    memberof_groups = request.GET.get("groups", None)
-    if memberof_groups == None:
-        memberof_groups = []
-    else:
-        memberof_groups = memberof_groups.split(",")
-    if dataset_id == None:
-        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
-    else:
-        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
-            dataset = Dataset.objects.get(name = dataset_id)
+    if authenticate_view(request):
+        dataset_id = request.GET.get("id", None)
+        memberof_groups = request.GET.get("groups", None)
+        if memberof_groups == None:
+            memberof_groups = []
         else:
-            return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
-        for groupname in memberof_groups:
-            if len(list(Group.objects.filter(name = groupname))) > 0:
-                group = Group.objects.get(name = groupname)
-                dataset.groups.add(group)
-                dataset.save()
-        return HttpResponse("Success: Dataset %s added to %s groups." % (dataset_id, memberof_groups.__str__()))
-    
+            memberof_groups = memberof_groups.split(",")
+        if dataset_id == None:
+            return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+        else:
+            if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+                dataset = Dataset.objects.get(name = dataset_id)
+            else:
+                return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
+            for groupname in memberof_groups:
+                if len(list(Group.objects.filter(name = groupname))) > 0:
+                    group = Group.objects.get(name = groupname)
+                    dataset.groups.add(group)
+                    dataset.save()
+                return HttpResponse("Success: Dataset %s added to %s groups." % (dataset_id, memberof_groups.__str__()))
+    logout_view(request)
+
 def remove (request):
-    dataset_id = request.GET.get("id", None)
-    if dataset_id == None:
-        return HttpResponse("Exception: Please include 'id' parameter in GET request.")
-    else:
-        dataset = Dataset.objects.get(name=dataset_id)
-        dataset.delete()
-        return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
+    if authenticate_view(request):
+        dataset_id = request.GET.get("id", None)
+        if dataset_id == None:
+            return HttpResponse("Exception: Please include 'id' parameter in GET request.")
+        else:
+            dataset = Dataset.objects.get(name=dataset_id)
+            dataset.delete()
+            return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
+    logout_view(request)
         
 def remove_from_group (request):
-    dataset_id = request.GET.get("id", None)
-    memberof_groups = request.GET.get("groups", None)
-    if memberof_groups == None:
-        memberof_groups = []
-    else:
-        memberof_groups = memberof_groups.split(",")
-    if dataset_id == None:
-        return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
-    else:
-        if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
-            dataset = Dataset.objects.get(name = dataset_id)
+    if authenticate_view(request):
+        dataset_id = request.GET.get("id", None)
+        memberof_groups = request.GET.get("groups", None)
+        if memberof_groups == None:
+            memberof_groups = []
         else:
-            return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
-        for groupname in memberof_groups:
-            if len(list(Group.objects.filter(name = groupname))) > 0:
-                group = Group.objects.get(name = groupname)
-                dataset.groups.remove(group)
-                dataset.save()
-    return HttpResponse()
+            memberof_groups = memberof_groups.split(",")
+            if dataset_id == None:
+                return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
+            else:
+                if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
+                    dataset = Dataset.objects.get(name = dataset_id)
+                else:
+                    return HttpResponse("Exception: Dataset matching that ID (%s) does not exist." % (dataset_id,), status=500)
+            for groupname in memberof_groups:
+                if len(list(Group.objects.filter(name = groupname))) > 0:
+                    group = Group.objects.get(name = groupname)
+                    dataset.groups.remove(group)
+                    dataset.save()
+            return HttpResponse()
+    logout_view(request)
     
 def documentation (request):
 ##    #jobsarray = grid_cache.check_topology_age()
@@ -270,13 +299,25 @@ def crossdomain (request):
     response.write(test)
     return response
 
+def lower_request (request):
+    gettemp = request.GET.copy()
+    for key in request.GET.iterkeys():
+        gettemp[key.lower()] = request.GET[key]
+    request._set_get(gettemp)
+    return request
+
+def database_request_interaction (request, dataset):
+    if VirtualLayer.objects.filter(datasets__name = dataset):
+        vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer = request.GET['layers'])
+        request.GET['layers'] = vlayer[0].layer_expression
+    return request
+            
 def wms (request, dataset):
     try:
-        try:
-            reqtype = request.GET['REQUEST']
-        except:
-            reqtype = request.GET['request']
+        request = lower_request(request)
+        reqtype = request.GET['request']
         if reqtype.lower() == 'getmap':
+            request = database_request_interaction(request, dataset)
             import pywms.wms.wms_handler as wms
             handler = wms.wms_handler(request)
             action_request = handler.make_action_request(request)
@@ -697,20 +738,14 @@ def getLegendGraphic(request, dataset, logger):
     &SRS=EPSG%3A3857
     &LAYER=hs
     """
-    styles = request.GET["STYLES"].split("_")
+    styles = request.GET["styles"].splot("_")
     try:
         climits = (float(styles[3]), float(styles[4]))
     except:
         climits = (None, None)
-    #datestart = datetime.datetime.strptime(request.GET["TIME"], "%Y-%m-%dT%H:%M:%S" )
-    #level = request.GET["ELEVATION"]
-    #level = level.split(",")
-    #for i,l in enumerate(level):
-    #    level[i] = int(l)-1
-    variables = request.GET["LAYER"].split(",")
+    variables = request.GET["layer"].split(",")
     topology_type = styles[5]
     plot_type = styles[0]
-    #magnitudebool = styles[6]
     colormap = styles[2].replace('-', '_')
 
     # direct the service to the dataset
@@ -832,46 +867,27 @@ def getFeatureInfo(request, dataset, logger):
     """
     from datetime import date
     from mpl_toolkits.basemap import pyproj
-    #totaltimer = timeobj.time()
-    def haversine(lat1, lon1, lat2, lon2):
-        # Haversine formulation
-        # inputs in degrees
-        startX = math.radians(lon1)
-        startY = math.radians(lat1)
-        endX = math.radians(lon2)
-        endY = math.radians(lat2)
-        diffX = endX - startX
-        diffY = endY - startY
-        a = math.sin(diffY/2)**2 + math.cos(startY) * math.cos(endY) * math.sin(diffX/2)**2
-        c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
-        length = 6371 * c
-        return length
-
-    vhaversine = numpy.vectorize(haversine)
-
-    X = float(request.GET['X'])
-    Y = float(request.GET['Y'])
-    #print X, Y
-    #VERSION =
-    box = request.GET["BBOX"]
+    X = float(request.GET['x'])
+    Y = float(request.GET['y'])
+    box = request.GET["bbox"]
     box = box.split(",")
     latmin = float(box[1])
     latmax = float(box[3])
     lonmin = float(box[0])
     lonmax = float(box[2])
-    height = float(request.GET["HEIGHT"])
-    width = float(request.GET["WIDTH"])
-    styles = request.GET["STYLES"].split(",")[0].split("_")
+    height = float(request.GET["height"])
+    width = float(request.GET["width"])
+    styles = request.GET["styles"].split(",")[0].split("_")
     #print styles
     #LAYERS = request.GET['LAYERS']
     #FORMAT =  request.GET['FORMAT']
     #TRANSPARENT =
-    QUERY_LAYERS = request.GET['QUERY_LAYERS'].split(",")
+    QUERY_LAYERS = request.GET['query_layers'].split(",")
     INFO_FORMAT = "text/csv" # request.GET['INFO_FORMAT']
     projection = 'merc'#request.GET['SRS']
     #TIME = request.GET['TIME']
     try:
-        elevation = int(request.GET['ELEVATION'])
+        elevation = int(request.GET['elevation'])
     #print elevation
     except:
         elevation = 0
@@ -928,7 +944,7 @@ def getFeatureInfo(request, dataset, logger):
         index = numpy.asarray(index)
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
-        TIME = request.GET["TIME"]
+        TIME = request.GET["time"]
         if TIME == "":
             now = date.today().isoformat()
             TIME = now + "T00:00:00"#
@@ -1070,23 +1086,15 @@ def getFeatureInfo(request, dataset, logger):
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
-    elif request.GET["INFO_FORMAT"].lower() == "application/json":
+    elif request.GET["info_format"].lower() == "application/json":
         import json
         response = HttpResponse("Response MIME Type application/json not supported at this time")
-    elif request.GET["INFO_FORMAT"].lower() == "text/javascript":
+    elif request.GET["info_format"].lower() == "text/javascript":
         """
         http://docs.geoserver.org/latest/en/user/services/wms/reference.html#getfeatureinfo
         """
         import json
-        callback = "parseResponse"
-        try:
-            callback = request.GET["CALLBACK"]
-        except:
-            pass
-        try:
-            callback = request.GET["callback"]
-        except:
-            pass
+        callback = request.GET.get("info_format", "parseResponse")
         response = HttpResponse()
         output_dict = {}
         output_dict2 = {}
@@ -1107,7 +1115,7 @@ def getFeatureInfo(request, dataset, logger):
         output_dict["properties"] = output_dict2
         output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
         response.write(output_str)
-    elif request.GET["INFO_FORMAT"].lower() == "text/csv":
+    elif request.GET["info_format"].lower() == "text/csv":
         import csv
         buffer = StringIO()
         response = HttpResponse()
@@ -1137,7 +1145,7 @@ def getFeatureInfo(request, dataset, logger):
         buffer.close()
         response.write(dat)
     else:
-        response = HttpResponse("Response MIME Type %s not supported at this time" % request.GET["INFO_FORMAT"].lower())
+        response = HttpResponse("Response MIME Type %s not supported at this time" % request.GET["info_format"].lower())
     datasetnc.close()
     topology.close()
     return response

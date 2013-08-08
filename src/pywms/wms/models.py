@@ -25,13 +25,20 @@ class Dataset(models.Model):
     name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
     title           = models.CharField(max_length=200, help_text="Human Readable Title")
     abstract        = models.CharField(max_length=2000, help_text="Short Description of Dataset")
-    keep_up_to_date = models.BooleanField()
+    keep_up_to_date = models.BooleanField(help_text="Check this box to keep the dataset up-to-date if changes are made to it on disk or remote server.")
     #test_date       = models.CharField(max_length=200, help_text="Optional (YYYY-MM-DDTHH:mm:ss)", blank=True)
     test_layer      = models.CharField(max_length=200, help_text="Optional", blank=True)
     test_style      = models.CharField(max_length=200, help_text="Optional", blank=True)
-    #groups = models.ManyToManyField(Group)
+    display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)")
     def __unicode__(self):
         return self.name
+
+class VirtualLayer(models.Model):
+    layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
+    layer_expression = models.CharField(max_length=200, help_text="Like u,v or Band1*Band2*Band3")
+    datasets = models.ManyToManyField(Dataset, help_text="Choose the datasets that this virtual layer applies to")
+    def __unicode__(self):
+        return self.layer
     
 class Group(models.Model):
     name = models.CharField(max_length=200)
