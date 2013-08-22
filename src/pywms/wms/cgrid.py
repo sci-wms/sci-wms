@@ -128,7 +128,7 @@ def getvar(datasetnc, t, layer, variables, index):
         if var1 != None:
             if "additional_fill_values" in ncvar1.ncattrs():
                 for fillval in map(float, ncvar1.additional_fill_values.split(",")):
-                    temp = var1==fillval
+                    #temp = var1==fillval
                     #var1.mask[var1==fillval] = True
                     var1[var1==fillval] = np.nan
         if var2 != None:
