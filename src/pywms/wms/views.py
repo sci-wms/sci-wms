@@ -1294,6 +1294,11 @@ def getMap (request, dataset):
                             lon[lon>0] = lon[lon>0] - 360
                         elif lonmin>0 and lonmax>0:
                             lon[lon<0] = lon[lon<0] + 360
+                        else:# elif lonmin<0 and lonmax>0:
+                            if numpy.abs(lonmax+.18-180) < 50:
+                                lon[lon<0] = lon[lon<0] + 360
+                            elif numpy.abs(lonmin-.18+180) < 50:
+                                lon[lon>0] = lon[lon>0] - 360
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
 
@@ -1312,7 +1317,7 @@ def getMap (request, dataset):
                     import matplotlib.tri as Tri
                     nv = ugrid.get_topologyarray(topology, index)
                     latn, lonn = ugrid.get_nodes(topology)
-                    if topology_type.lower() == "node":
+                    if topology1_type.lower() == "node":
                         index = range(len(latn))
                     # Deal with global out of range datasets in the node longitudes
                     if continuous is True:
