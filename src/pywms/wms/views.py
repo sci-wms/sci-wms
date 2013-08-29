@@ -322,15 +322,15 @@ def wms (request, dataset):
             handler = wms.wms_handler(request)
             action_request = handler.make_action_request(request)
             if action_request is not None:
-                response = getMap(action_request, dataset, logger)
+                response = getMap(action_request, dataset)
             else:
                 response = HttpResponse()
         elif reqtype.lower() == 'getfeatureinfo':
-            response =  getFeatureInfo(request, dataset, logger)
+            response =  getFeatureInfo(request, dataset)
         elif reqtype.lower() == 'getlegendgraphic':
-            response =  getLegendGraphic(request, dataset, logger)
+            response =  getLegendGraphic(request, dataset)
         elif reqtype.lower() == 'getcapabilities':
-            response = getCapabilities(request, dataset, logger)
+            response = getCapabilities(request, dataset)
         logger.info(str(request.GET))
         return response
     except Exception as detail:
@@ -340,7 +340,7 @@ def wms (request, dataset):
                                   exc_traceback)) + '\n' + str(request))
         return HttpResponse("problem", status=500)
 
-def getCapabilities(req, dataset, logger): # TODO move get capabilities to template system like sciwps
+def getCapabilities(req, dataset): # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
 
@@ -764,7 +764,7 @@ def getCapabilities(req, dataset, logger): # TODO move get capabilities to templ
         tree.write(response)
     return response
 
-def getLegendGraphic(request, dataset, logger):
+def getLegendGraphic(request, dataset):
     """
     Parse parameters from request that looks like this:
 
@@ -781,7 +781,7 @@ def getLegendGraphic(request, dataset, logger):
     &SRS=EPSG%3A3857
     &LAYER=hs
     """
-    styles = request.GET["styles"].splot("_")
+    styles = request.GET["styles"].split("_")
     try:
         climits = (float(styles[3]), float(styles[4]))
     except:
@@ -1193,15 +1193,24 @@ def getFeatureInfo(request, dataset, logger):
     topology.close()
     return response
 
-def getMap (request, dataset, logger):
+def getMap (request, dataset):
     '''
     the meat and bones of getMap
     '''
     from mpl_toolkits.basemap import pyproj
     from matplotlib.figure import Figure
 
-    totaltimer = timeobj.time()
-    loglist = []
+    #output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
+    # Set up Logger
+    #logger = multiprocessing.get_logger()
+    #logger.setLevel(logging.ERROR)
+    #handler = logging.FileHandler('%s.log' % output_path)
+    #formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
+    #handler.setFormatter(formatter)
+    #logger.addHandler(handler)
+    
+    #totaltimer = timeobj.time()
+    #loglist = []
 
     # direct the service to the dataset
     url = Dataset.objects.get(name=dataset).uri
@@ -1269,26 +1278,24 @@ def getMap (request, dataset, logger):
                 lonmax = lonmax + 360
                 continuous = True
                 lon = topology.variables[toplonc][:]
-                wher = numpy.where(lon<lonmin)
-                lon[wher] = lon[wher] + 360
+                #wher = numpy.where(lon<lonmin)
+                if gridtype != 'False':
+                    lon[lon<0] = lon[lon<0] + 360
+                else:
+                    lon[lon<lonmin] = lon[lon<lonmin] + 360
             else:
                 lon = topology.variables[toplonc][:]
             lat = topology.variables[toplatc][:]
             if gridtype != 'False':
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
+                    if not continuous:
+                        if lonmin<0 and lonmax<0:
+                            lon[lon>0] = lon[lon>0] - 360
+                        elif lonmin>0 and lonmax>0:
+                            lon[lon<0] = lon[lon<0] + 360
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-            if gridtype == 'False': # TODO: Get rid of thiss whole chunk!
-                try:
-                    loglist.append("index " + len(index))
-                except:
-                    loglist.append("index " + str(index))
-            else:
-                try:
-                    loglist.append("index " + str(index.shape))
-                except:
-                    loglist.append("index " + str(index))
 
         if index is not None:
             if ("facets" in actions) or \
@@ -1342,7 +1349,7 @@ def getMap (request, dataset, logger):
                     time[1] = time[1]
                 time = range(time[0], time[1]+1)
             t = time # TODO: ugh this is bad
-            loglist.append('time index requested ' + str(time))
+            #loglist.append('time index requested ' + str(time))
 
             # Get the data and appropriate resulting shape from the data source
             if gridtype == 'False':
@@ -1481,7 +1488,7 @@ def getMap (request, dataset, logger):
             ax = fig.add_axes([0, 0, 1, 1])
             fig.set_figheight(height/5.0)
             fig.set_figwidth(width/5.0)
-            ax.set_frame_on(False)
+            ax.set_frame_on(False) 
             ax.set_clip_on(False)
             ax.set_position([0,0,1,1])
             canvas = FigureCanvasAgg(fig)
@@ -1489,8 +1496,8 @@ def getMap (request, dataset, logger):
             canvas.print_png(response)
     
     gc.collect()
-    loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
-    logger.info(str(loglist))
+    #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
+    #logger.info(str(loglist))
     return response
 
 

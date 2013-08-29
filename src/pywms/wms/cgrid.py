@@ -18,15 +18,17 @@ This file is part of SCI-WMS.
 '''
 
 #cgrid
-import os, sys
+#import os, sys
 import numpy as np
 from matplotlib.pylab import get_cmap
 from matplotlib.mlab import griddata
 import ugrid
+import time as timeobj
 
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
-    latbool = (lat <= latmax+.18) & (lat >= latmin-.18)
-    lonbool = (lon <= lonmax+.18) & (lon >= lonmin-.18)
+    #t1 = timeobj.time()
+    latbool = (lat <= latmax-.18) & (lat >= latmin+.18)
+    lonbool = (lon <= lonmax-.18) & (lon >= lonmin+.18)
     index = np.asarray(np.where(latbool & lonbool)).squeeze()
         #((lat <= latmax) == (lat >= latmin)) ==
         #((lon <= lonmax) == (lon >= lonmin),))).squeeze()
@@ -42,9 +44,11 @@ def subset(latmin, lonmin, latmax, lonmax, lat, lon):
         index = None
         lat = np.asarray([[],[]])
         lon = np.asarray([[],[]])
+    #print str(timeobj.time()-t1) + " subset coords"
     return index, lat, lon
 
 def getvar(datasetnc, t, layer, variables, index):
+    #t1 = timeobj.time()
     special_function = ""
     if index is None:
         var1 = None
@@ -61,7 +65,7 @@ def getvar(datasetnc, t, layer, variables, index):
         shp = ncvar1.shape
         if len(index[0]) == 1:
             ind = index[0][0]
-        else:
+        else: 
             ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
         if len(index[1]) == 1:
             jnd = index[1][0]
@@ -135,9 +139,11 @@ def getvar(datasetnc, t, layer, variables, index):
             if "additional_fill_values" in ncvar2.ncattrs():
                 for fillval in map(float, ncvar2.additional_fill_values.split(",")):
                     var2[var2==fillval] = np.nan
+    #print str(timeobj.time()-t1) + " dap"
     return var1, var2
 
 def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
+    #t1 = timeobj.time()
     aspect = kwargs.get('aspect', None)
     height = kwargs.get('height')
     width = kwargs.get('width')
@@ -169,6 +175,10 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
             pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
+        elif "pcolorraw" in actions:
+            fig.set_figheight(height/80.0)
+            fig.set_figwidth(width/80.0)
+            pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap)
         elif "facets" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
@@ -206,6 +216,7 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
             fig.set_figheight(height/80.0/aspect)
             fig.set_figwidth(width/80.0)
             barbs(lon, lat, var1, var2, mag, ax, norm, cmin, cmax, cmap, magnitude)
+    #print str(timeobj.time()-t1) + " plot"
 
 def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonmax, latmax, projection, height, width):
     mag = np.transpose(mag, axes=(1,2,0)).astype(float)
@@ -221,8 +232,27 @@ def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
     mag = np.ma.array(mag, mask=np.isnan(mag))
     if (cmin == "None") or (cmax == "None"):
         cmin, cmax = mag.min(), mag.max()
+    lon = np.ma.asarray(lon)
+    lat = np.ma.asarray(lat)
+    isn = np.ma.getmaskarray(lon) + np.ma.getmaskarray(lat)
+    if (isn > 0).any():
+        mask = mag.mask
+        xymask = (isn[0:-1, 0:-1] + isn[1:, 1:] +
+                  isn[0:-1, 1:] + isn[1:, 0:-1])
+        mask[0:-1, 0:-1] = mask[0:-1, 0:-1] + xymask
+        mask[1:, 1:] = mask[1:, 1:] + xymask
+        mask[0:-1, 1:] = mask[0:-1, 1:] + xymask
+        mask[1:, 0:-1] = mask[1:, 0:-1] + xymask
+        mag = np.ma.array(mag, mask=mask)
     #ax.pcolorfast(lon, lat, mag[:-1, :-1], shading="", norm=norm, cmap='jet',)
     ax.pcolormesh(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
+
+def pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap):
+    mag = np.ma.array(mag, mask=np.isnan(mag))
+    if (cmin == "None") or (cmax == "None"):
+        cmin, cmax = mag.min(), mag.max()
+    #ax.pcolorfast(lon, lat, mag[:-1, :-1], shading="", norm=norm, cmap='jet',)
+    ax.pcolor(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
 
 def fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap):
     if (cmin == "None") or (cmax == "None"):
