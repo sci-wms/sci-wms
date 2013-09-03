@@ -1289,6 +1289,7 @@ def getMap (request, dataset):
             if gridtype != 'False':
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
+                    '''
                     if not continuous:
                         if lonmin<0 and lonmax<0:
                             lon[lon>0] = lon[lon>0] - 360
@@ -1299,6 +1300,7 @@ def getMap (request, dataset):
                                 lon[lon<0] = lon[lon<0] + 360
                             elif numpy.abs(lonmin-.18+180) < 50:
                                 lon[lon>0] = lon[lon>0] - 360
+                    '''
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
 

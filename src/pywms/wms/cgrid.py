@@ -27,8 +27,8 @@ import time as timeobj
 
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     #t1 = timeobj.time()
-    latbool = (lat <= latmax-.18) & (lat >= latmin+.18)
-    lonbool = (lon <= lonmax-.18) & (lon >= lonmin+.18)
+    latbool = (lat <= latmax+.18) & (lat >= latmin-.18)
+    lonbool = (lon <= lonmax+.18) & (lon >= lonmin-.18)
     index = np.asarray(np.where(latbool & lonbool)).squeeze()
         #((lat <= latmax) == (lat >= latmin)) ==
         #((lon <= lonmax) == (lon >= lonmin),))).squeeze()
