@@ -1319,7 +1319,7 @@ def getMap (request, dataset):
                     import matplotlib.tri as Tri
                     nv = ugrid.get_topologyarray(topology, index)
                     latn, lonn = ugrid.get_nodes(topology)
-                    if topology1_type.lower() == "node":
+                    if topology_type.lower() == "node":
                         index = range(len(latn))
                     # Deal with global out of range datasets in the node longitudes
                     if continuous is True:
