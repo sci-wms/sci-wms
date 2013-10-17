@@ -49,7 +49,7 @@ from pywms.wms.models import Dataset, Server, Group, VirtualLayer
 from django.contrib.sites.models import Site
 from django.contrib.auth import authenticate, login
 import pywms.grid_init_script as grid_cache
-from pywms.wms import cgrid, ugrid, swath
+from pywms.wms import cgrid, ugrid
 from django.http import HttpResponse, HttpResponseRedirect
 import pywms.server_local_config as config
 import pywms.wms.wms_requests as wms_reqs
