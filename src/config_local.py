@@ -32,27 +32,26 @@ except:
         worker = "sync"
 
 bind = "127.0.0.1:7000"
-workers = 12#multiprocessing.cpu_count()
+workers = multiprocessing.cpu_count()
 worker_class = worker
 debug = True
 timeout = 1000
 max_requests = 1
 backlog = 5
-django_settings = "settings_local.py"
+django_settings = "pywms.settings"
 log_file = 'sciwms_gunicorn.log'
 os.environ['DJANGO_SETTINGS_MODULE'] = "pywms.settings"
 
 def on_starting(server):
-    print os.environ
-    print os.getcwd()
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
-    from pywms import server_local_config
-    from pywms.grid_init_script import check_topology_age
+
+    print "Initializing datasets topologies..."
+    from pywms.grid_init_script import init_dataset_topology
+    init_dataset_topology('oceancolor')
+
     print '\n    ##################################################\n' +\
           '    #                                                #\n' +\
           '    #  Starting sci-wms...                           #\n' +\
           '    #  A wms server for unstructured scientific data #\n' +\
           '    #                                                #\n' +\
           '    ##################################################\n'
-    p = multiprocessing.Process(target=check_topology_age)
-    p.start()
