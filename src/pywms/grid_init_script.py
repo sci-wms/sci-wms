@@ -56,14 +56,22 @@ logger.addHandler(handler)
 
 time_units = 'hours since 1970-01-01'
 
+def init_all_datasets():
+    datasets = Dataset.objects.all()
+    for dataset in datasets:
+        name = dataset.name
+        uri = dataset.uri
+        logger.info("Initializing: " + uri)
+        create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
+
 def init_dataset_topology(dataset_name):
     dataset = Dataset.objects.get(name=dataset_name)
     name = dataset.name
     uri = dataset.uri
     logger.info("Initializing: " + uri)
-    create_topology(name, uri)
+    create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
 
-def create_topology(dataset_name, url):
+def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
     try:
         #with s1:
         nclocalpath = os.path.join(config.topologypath, dataset_name+".nc.updating")
@@ -209,10 +217,7 @@ def create_topology(dataset_name, url):
             logger.info("data written to file")
         else:
             logger.info("identified as grid")
-            #for v in nc.variables:
-            #    print v
-            #latname, lonname = 'lat', 'lon'
-            latname, lonname = 'Navigation%20Data.latitude', 'Navigation%20Data.longitude'
+            latname, lonname = lat_var, lon_var
             if latname not in nc.variables:
                 for key in nc.variables.iterkeys():
                     try:

@@ -46,8 +46,8 @@ def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
 
     print "Initializing datasets topologies..."
-    from pywms.grid_init_script import init_dataset_topology
-    init_dataset_topology('oceancolor')
+    from pywms.grid_init_script import init_all_datasets
+    init_all_datasets()
 
     print '\n    ##################################################\n' +\
           '    #                                                #\n' +\
