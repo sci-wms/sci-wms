@@ -38,7 +38,7 @@ activated before you try to install the packages or point to the environment
 with pip on the install command.
 ```bash
 pip install numpy
-pip install django>=1.4
+pip install django==1.4
 pip install gunicorn
 pip install gevent
 pip install matplotlib>=1.2.0
