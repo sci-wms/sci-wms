@@ -1033,7 +1033,7 @@ def getFeatureInfo(request, dataset):
         if time1 == -1:
             time = [0]
         else:
-            time = [time1]
+            time = [time1-1]
 
     pvar = deque()
     def getvar(nc, t, layer, var, ind):
