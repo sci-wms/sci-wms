@@ -119,7 +119,7 @@ def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
             logger.info("done filling vars")
             # DECODE the FVCOM datetime string (Time) and save as a high precision datenum
             timestrs = nc.variables['Times'][:] #format: "2013-01-15T00:00:00.000000"
-            dates = [datetime.strptime(timestrs[i, :].tostring(), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
+            dates = [datetime.strptime(timestrs[i, :].tostring().replace('\0', ""), "%Y-%m-%dT%H:%M:%S.%f") for i in range(len(timestrs[:,0]))]
             time[:] = date2num(dates, units=time_units)# use netCDF4's date2num function
             #time[:] = nc.variables['time'][:]
             logger.info("done time conversion")

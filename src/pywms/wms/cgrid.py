@@ -174,15 +174,15 @@ def plot(lon, lat, var1, var2, actions, ax, fig, **kwargs):
         elif "pcolor" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
-            pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
+            pcolor(lon, lat, mag, ax, cmin, cmax, cmap, norm)
         elif "pcolorraw" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
-            pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap)
+            pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap, norm)
         elif "facets" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
-            pcolor(lon, lat, mag, ax, cmin, cmax, cmap)
+            pcolor(lon, lat, mag, ax, cmin, cmax, cmap, norm)
         elif "filledcontours" in actions:
             fig.set_figheight(height/80.0)
             fig.set_figwidth(width/80.0)
@@ -228,7 +228,7 @@ def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonma
     m.ax.imshow(mag, origin='lower',
                 extent=ex)
     
-def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
+def pcolor(lon, lat, mag, ax, cmin, cmax, cmap, norm):
     mag = np.ma.array(mag, mask=np.isnan(mag))
     if (cmin == "None") or (cmax == "None"):
         cmin, cmax = mag.min(), mag.max()
@@ -245,14 +245,14 @@ def pcolor(lon, lat, mag, ax, cmin, cmax, cmap):
         mask[1:, 0:-1] = mask[1:, 0:-1] + xymask
         mag = np.ma.array(mag, mask=mask)
     #ax.pcolorfast(lon, lat, mag[:-1, :-1], shading="", norm=norm, cmap='jet',)
-    ax.pcolormesh(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
+    ax.pcolormesh(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap, norm=norm)
 
-def pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap):
+def pcolorraw(lon, lat, mag, ax, cmin, cmax, cmap, norm):
     mag = np.ma.array(mag, mask=np.isnan(mag))
     if (cmin == "None") or (cmax == "None"):
         cmin, cmax = mag.min(), mag.max()
     #ax.pcolorfast(lon, lat, mag[:-1, :-1], shading="", norm=norm, cmap='jet',)
-    ax.pcolor(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap)
+    ax.pcolor(lon, lat, mag, vmin=cmin, vmax=cmax, cmap=cmap, norm=norm)
 
 def fcontour(lon, lat, mag, ax, norm, cmin, cmax, cmap):
     if (cmin == "None") or (cmax == "None"):
