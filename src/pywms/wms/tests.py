@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2010 Alexander Crosby
+COPYRIGHT 2010 RPS ASA
 
 This file is part of SCI-WMS.
 
