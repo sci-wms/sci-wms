@@ -104,4 +104,4 @@ cd sci-wms/src/pywms && gunicorn_django -c config_public.py
 
 ##Caveats:
 
-Look at [https://github.com/acrosby/sci-wms/issues?state=open](https://github.com/acrosby/sci-wms/issues?state=open) for a list of known issues and problems.
+Look at [https://github.com/asascience-open/sci-wms/issues?state=open](https://github.com/asascience-open/sci-wms/issues?state=open) for a list of known issues and problems.
