@@ -18,11 +18,13 @@ This file is part of SCI-WMS.
 '''
 
 # Django settings for fvcom_compute project.
-import server_local_config
+import pywms.server_local_config as config
 import os
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+WSGI_APPLICATION = "pywms.wsgi.application"
+
+DEBUG          = True
+TEMPLATE_DEBUG = True
 
 ADMINS = (
     #('Your Name', 'youremail@domain.com'),
@@ -40,10 +42,6 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': os.path.join(os.path.dirname(__file__), "../", 'wms.db'),  # Or path to database file if using sqlite3.
-        'USER': '',      # Not used with sqlite3.
-        'PASSWORD': '',  # Not used with sqlite3.
-        'HOST': '',      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -69,6 +67,9 @@ USE_I18N = True
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
 USE_L10N = True
+
+# If you set this to False, Django will not use timezone-aware datetimes.
+USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -130,7 +131,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'pywms.urls'
 
 TEMPLATE_DIRS = (
-    server_local_config.staticspath,
+    config.staticspath,
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -146,8 +147,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.markup',
-    'wms',
-    'south',
+    'pywms.wms',
+    'south'
 )
 
 # A sample logging configuration. The only tangible logging

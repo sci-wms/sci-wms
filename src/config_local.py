@@ -22,12 +22,12 @@ import sys
 import multiprocessing
 
 try:
-    import eventlet
-    worker = "eventlet"
+    import tornado
+    worker = "tornado"
 except:
     try:
-        import greenlet
-        worker = "greenlet"
+        import eventlet
+        worker = "eventlet"
     except:
         try:
             import gevent
@@ -42,11 +42,15 @@ workers = multiprocessing.cpu_count()
 worker_class = worker
 debug = True
 timeout = 1000
-max_requests = 2
+#graceful_timeout = 120
+max_requests = 5
+#keepalive = 5
 backlog = 5
-django_settings = "pywms.settings"
-log_file = 'sciwms_gunicorn.log'
-os.environ['DJANGO_SETTINGS_MODULE'] = "pywms.settings"
+access_log_file = os.path.join('logs', 'sciwms_gunicorn_access.log')
+error_log_file = os.path.join('logs', 'sciwms_gunicorn_access.log')
+loglevel = "info"
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pywms.local_settings")
 
 
 def on_starting(server):

@@ -30,16 +30,12 @@ except:
         worker = "eventlet"
     except:
         try:
-            import greenlet
-            worker = "greenlet"
+            import gevent
+            worker = "gevent_wsgi"
         except:
-            try:
-                import gevent
-                worker = "gevent_wsgi"
-            except:
-                # Default to basic sync worker if other libs are
-                # not installed
-                worker = "sync"
+            # Default to basic sync worker if other libs are
+            # not installed
+            worker = "sync"
 
 bind = "0.0.0.0:7000"
 workers = multiprocessing.cpu_count() + 1
@@ -49,10 +45,12 @@ timeout = 120
 #graceful_timeout = 120
 max_requests = 20
 keepalive = 5
-backlog = 10
-django_settings = "pywms.settings"
-log_file = 'sciwms_gunicorn.log'
-os.environ['DJANGO_SETTINGS_MODULE'] = "pywms.settings"
+backlog = 20
+access_log_file = os.path.join('logs', 'sciwms_gunicorn_access.log')
+error_log_file = os.path.join('logs', 'sciwms_gunicorn_access.log')
+loglevel = "warning"
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pywms.public_settings")
 
 
 def on_starting(server):
