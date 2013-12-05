@@ -36,6 +36,7 @@ urlpatterns = patterns('',
     url(r'^static/(?P<filepath>.*)', 'wms.views.static'),
     url(r'^crossdomain.xml', 'wms.views.crossdomain'),
 
+    url(r'^datasets', 'wms.views.datasets'),
     url(r'^update', 'wms.views.update'),
     url(r'^add_dataset', 'wms.views.add'), # This is a POST based view
     url(r'^add_to_group', 'wms.views.add_to_group'),

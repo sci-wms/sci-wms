@@ -28,7 +28,7 @@ fullpath_to_wms = os.path.abspath(os.path.join(os.path.dirname(__file__),"../.."
 
 # local path to database (doesn't include file name)
 topologypath = os.path.join(fullpath_to_wms,
-    "src/pywms/")
+    "topology")
 
 # local path to statics (doesn't include file name)
 staticspath = os.path.join(fullpath_to_wms,

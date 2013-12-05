@@ -63,6 +63,12 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+def datasets (request):
+    from django.core import serializers
+    datasets = Dataset.objects.all()
+    data = serializers.serialize('json', datasets)
+    return HttpResponse(data, mimetype='application/json')
+
 def grouptest (request, group):
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "wms_openlayers_test.html"))
@@ -335,10 +341,10 @@ def wms (request, dataset):
         return response
     except Exception as detail:
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        logger.error("Status 500 Error: " +\
-                     repr(traceback.format_exception(exc_type, exc_value,
-                                  exc_traceback)) + '\n' + str(request))
-        return HttpResponse("problem", status=500)
+        str_exc_descr = repr(traceback.format_exception(exc_type, exc_value,
+                                  exc_traceback)) + '\n' + str(request)
+        logger.error("Status 500 Error: " + str_exc_descr)
+        return HttpResponse("<pre>Error: " + str_exc_descr + "</pre>", status=500)
 
 def getCapabilities(req, dataset): # TODO move get capabilities to template system like sciwps
     """
@@ -1261,7 +1267,7 @@ def getMap (request, dataset):
         topology = netCDF4.Dataset(os.path.join(config.topologypath, dataset + '.nc'))
         datasetnc = netCDF4.Dataset(url)
         gridtype = topology.grid # Grid type found in topology file
-
+        logger.info("gridtype: " + gridtype)
         if gridtype != 'False':
             toplatc, toplonc = 'lat', 'lon'
             #toplatn, toplonn = 'lat', 'lon'
@@ -1289,18 +1295,6 @@ def getMap (request, dataset):
             if gridtype != 'False':
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-                    '''
-                    if not continuous:
-                        if lonmin<0 and lonmax<0:
-                            lon[lon>0] = lon[lon>0] - 360
-                        elif lonmin>0 and lonmax>0:
-                            lon[lon<0] = lon[lon<0] + 360
-                        else:# elif lonmin<0 and lonmax>0:
-                            if numpy.abs(lonmax+.18-180) < 50:
-                                lon[lon<0] = lon[lon<0] + 360
-                            elif numpy.abs(lonmin-.18+180) < 50:
-                                lon[lon>0] = lon[lon>0] - 360
-                    '''
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
 

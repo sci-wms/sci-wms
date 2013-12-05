@@ -26,10 +26,12 @@ class Dataset(models.Model):
     title           = models.CharField(max_length=200, help_text="Human Readable Title")
     abstract        = models.CharField(max_length=2000, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField(help_text="Check this box to keep the dataset up-to-date if changes are made to it on disk or remote server.")
-    #test_date       = models.CharField(max_length=200, help_text="Optional (YYYY-MM-DDTHH:mm:ss)", blank=True)
     test_layer      = models.CharField(max_length=200, help_text="Optional", blank=True)
     test_style      = models.CharField(max_length=200, help_text="Optional", blank=True)
-    display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)")
+    display_all_timesteps   = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)")
+    latitude_variable       = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
+    longitude_variable      = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
+
     def __unicode__(self):
         return self.name
 

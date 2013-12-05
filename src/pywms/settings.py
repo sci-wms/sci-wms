@@ -143,14 +143,11 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
      'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
      'django.contrib.admindocs',
      'django.contrib.markup',
-     #'gunicorn',
      'wms',
-     #'wps',
+     'south',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -163,33 +160,33 @@ LOGGING_CONFIG = None
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    #'handlers': {
-    #    'mail_admins': {
-    #        'level': 'ERROR',
-    #        'class': 'django.utils.log.AdminEmailHandler'
-    #    },
-        #'console':{
-        #    'level': 'INFO',
-        #    'class': 'logging.StreamHandler',
-        #    #'formatter': 'simple'
-        #},
-        #'wmsfile':{
-        #    'level': 'INFO',
-        #    'class': 'log.multi_process_logging.MultiProcessingLogHandler',
-        #    'name': 'sciwms_wms.log',
-        #},
-    #},
-    #'loggers': {
-    #    'django.request': {
-    #        'handlers': ['mail_admins'],
-    #        'level': 'ERROR',
-    #        'propagate': True,
-    #    },
-        #'sciwms': {
-        #    'handlers': ['mail_admins', 'console', 'wmsfile'],
-        #    'level': 'INFO',
-        #    'propagate': True,
-        #},
-    #}
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console':{
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'wmsfile':{
+            'level': 'INFO',
+            'class': 'log.multi_process_logging.MultiProcessingLogHandler',
+            'name': 'sciwms_wms.log',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'sciwms': {
+            'handlers': ['mail_admins', 'console', 'wmsfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    }
 }
 
