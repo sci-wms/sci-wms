@@ -58,4 +58,5 @@ urlpatterns = patterns('',
     url(r'^(?P<group>.*)/wmstest', 'wms.views.grouptest'),
     url(r'^(?P<group>.*)/', 'wms.views.groups'),
     url(r'^(?P<group>.*)', 'wms.views.groups'),
+    url(r'^favicon\.ico$', 'django.views.generic.simple.redirect_to', {'url': '/static/favicon.ico'}),
     )
