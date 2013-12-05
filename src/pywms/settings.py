@@ -19,7 +19,7 @@ This file is part of SCI-WMS.
 
 # Django settings for fvcom_compute project.
 import server_local_config
-import os, logging
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -38,12 +38,12 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(os.path.dirname(__file__),"../",'wms.db'),                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': os.path.join(os.path.dirname(__file__), "../", 'wms.db'),  # Or path to database file if using sqlite3.
+        'USER': '',      # Not used with sqlite3.
+        'PASSWORD': '',  # Not used with sqlite3.
+        'HOST': '',      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -54,7 +54,7 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/New_York'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -106,7 +106,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -116,7 +116,7 @@ SECRET_KEY = 'zicip#n3_j%h&6tkb_p#9p571--=0g)2!-8xpq%dw*)_7uo=dw'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -143,11 +143,11 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'django.contrib.admin',
-     'django.contrib.admindocs',
-     'django.contrib.markup',
-     'wms',
-     'south',
+    'django.contrib.admin',
+    'django.contrib.admindocs',
+    'django.contrib.markup',
+    'wms',
+    'south',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -165,12 +165,12 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
         },
-        'console':{
+        'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'wmsfile':{
+        'wmsfile': {
             'level': 'INFO',
             'class': 'log.multi_process_logging.MultiProcessingLogHandler',
             'name': 'sciwms_wms.log',
@@ -189,4 +189,3 @@ LOGGING = {
         },
     }
 }
-

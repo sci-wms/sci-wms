@@ -17,30 +17,37 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+import os
+import sys
 import multiprocessing
-import os, sys
+
 try:
-    import gevent
-    worker = "gevent"
+    import eventlet
+    worker = "eventlet"
 except:
     try:
-        import eventlet
-        worker = "eventlet"
+        import greenlet
+        worker = "greenlet"
     except:
-        # Default to basic sync worker if other libs are
-        # not installed
-        worker = "sync"
+        try:
+            import gevent
+            worker = "gevent_wsgi"
+        except:
+            # Default to basic sync worker if other libs are
+            # not installed
+            worker = "sync"
 
 bind = "127.0.0.1:7000"
 workers = multiprocessing.cpu_count()
 worker_class = worker
 debug = True
 timeout = 1000
-max_requests = 1
+max_requests = 2
 backlog = 5
 django_settings = "pywms.settings"
 log_file = 'sciwms_gunicorn.log'
 os.environ['DJANGO_SETTINGS_MODULE'] = "pywms.settings"
+
 
 def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))

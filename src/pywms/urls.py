@@ -38,7 +38,7 @@ urlpatterns = patterns('',
 
     url(r'^datasets', 'wms.views.datasets'),
     url(r'^update', 'wms.views.update'),
-    url(r'^add_dataset', 'wms.views.add'), # This is a POST based view
+    url(r'^add_dataset', 'wms.views.add'),  # This is a POST based view
     url(r'^add_to_group', 'wms.views.add_to_group'),
     url(r'^remove_dataset', 'wms.views.remove'),
     url(r'^remove_from_group', 'wms.views.remove_from_group'),
@@ -53,12 +53,9 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin', include(admin.site.urls)),
-    
+
     url(r'^(?P<group>.*)/wmstest/$', 'wms.views.grouptest'),
     url(r'^(?P<group>.*)/wmstest', 'wms.views.grouptest'),
     url(r'^(?P<group>.*)/', 'wms.views.groups'),
     url(r'^(?P<group>.*)', 'wms.views.groups'),
     )
-
-
-

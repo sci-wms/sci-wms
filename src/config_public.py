@@ -17,44 +17,51 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import multiprocessing, sys, os
+import os
+import sys
+import multiprocessing
 
-# Default to basic sync worker if other libs are
-# not installed
-worker = "sync"
 try:
     import tornado
     worker = "tornado"
 except:
-    pass
-try:
-    import eventlet
-    worker = "eventlet"
-except:
-    pass
-try:
-    import greenlet
-    worker = "greenlet"
-except:
-    pass
-try:
-    import gevent
-    worker = "gevent"
-except:
-    pass
-    
+    try:
+        import eventlet
+        worker = "eventlet"
+    except:
+        try:
+            import greenlet
+            worker = "greenlet"
+        except:
+            try:
+                import gevent
+                worker = "gevent_wsgi"
+            except:
+                # Default to basic sync worker if other libs are
+                # not installed
+                worker = "sync"
+
 bind = "0.0.0.0:7000"
 workers = multiprocessing.cpu_count() + 1
 worker_class = worker
 debug = False
 timeout = 120
-#raceful_timeout = 120
+#graceful_timeout = 120
 max_requests = 20
 keepalive = 5
 backlog = 10
-accesslog = 'sciwms_gunicorn.log'
+django_settings = "pywms.settings"
+log_file = 'sciwms_gunicorn.log'
+os.environ['DJANGO_SETTINGS_MODULE'] = "pywms.settings"
+
 
 def on_starting(server):
+    sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
+
+    print "Initializing datasets topologies..."
+    from pywms.grid_init_script import init_all_datasets
+    init_all_datasets()
+
     print '\n    ##################################################\n' +\
           '    #                                                #\n' +\
           '    #  Starting sci-wms...                           #\n' +\
