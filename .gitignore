@@ -12,7 +12,10 @@
 bin/
 gen/
 *.pyc
-src/pywms/sciwms_wms.log
+*.log
 
 # Local configuration file (sdk path, etc)
 local.properties
+
+# Topology files
+topology/
