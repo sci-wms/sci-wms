@@ -25,38 +25,37 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     #url(r'^do/', 'wms.views.fvDo'),
-    url(r'^doc', 'wms.views.documentation'),
-    url(r'^wms/(?P<dataset>.*)/', 'wms.views.wms'),
 
-    url(r'^wmstest/openlayers/(?P<filepath>.*)', 'wms.views.openlayers'),
-    url(r'^wmstest/', 'wms.views.wmstest'),
-    url(r'^wmstest', 'wms.views.wmstest'),
-    url(r'^leaflet/', 'wms.views.leaflet'),
-    url(r'^leaflet', 'wms.views.wmstest'),
-    url(r'^static/(?P<filepath>.*)', 'wms.views.static'),
-    url(r'^crossdomain.xml', 'wms.views.crossdomain'),
-
-    url(r'^datasets', 'wms.views.datasets'),
-    url(r'^update', 'wms.views.update'),
-    url(r'^add_dataset', 'wms.views.add'),  # This is a POST based view
-    url(r'^add_to_group', 'wms.views.add_to_group'),
-    url(r'^remove_dataset', 'wms.views.remove'),
-    url(r'^remove_from_group', 'wms.views.remove_from_group'),
-    #url(r'^testdb', 'wms.views.testdb'),
-
-    url(r'^index', 'wms.views.index'),
-    url(r'^$', 'wms.views.index'),
-
-    # Uncomment the admin/doc line below to enable admin documentation:
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/doc', include('django.contrib.admindocs.urls')),
-    # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin', include(admin.site.urls)),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^admin/doc', include('django.contrib.admindocs.urls')),
 
-    url(r'^(?P<group>.*)/wmstest/$', 'wms.views.grouptest'),
-    url(r'^(?P<group>.*)/wmstest', 'wms.views.grouptest'),
-    url(r'^(?P<group>.*)/', 'wms.views.groups'),
-    url(r'^(?P<group>.*)', 'wms.views.groups'),
+    url(r'^doc', 'pywms.wms.views.documentation'),
+    url(r'^wms/(?P<dataset>.*)/', 'pywms.wms.views.wms'),
+
+    url(r'^wmstest/openlayers/(?P<filepath>.*)', 'pywms.wms.views.openlayers'),
+    url(r'^wmstest/', 'pywms.wms.views.wmstest'),
+    url(r'^wmstest', 'pywms.wms.views.wmstest'),
+    url(r'^leaflet/', 'pywms.wms.views.leaflet'),
+    url(r'^leaflet', 'pywms.wms.views.wmstest'),
+    url(r'^static/(?P<filepath>.*)', 'pywms.wms.views.static'),
     url(r'^favicon\.ico$', 'django.views.generic.simple.redirect_to', {'url': '/static/favicon.ico'}),
+    url(r'^crossdomain.xml', 'pywms.wms.views.crossdomain'),
+
+    url(r'^datasets', 'pywms.wms.views.datasets'),
+    url(r'^update', 'pywms.wms.views.update'),
+    url(r'^add_dataset', 'pywms.wms.views.add'),  # This is a POST based view
+    url(r'^add_to_group', 'pywms.wms.views.add_to_group'),
+    url(r'^remove_dataset', 'pywms.wms.views.remove'),
+    url(r'^remove_from_group', 'pywms.wms.views.remove_from_group'),
+    #url(r'^testdb', 'pywms.wms.views.testdb'),
+
+    url(r'^index', 'pywms.wms.views.index'),
+    url(r'^$', 'pywms.wms.views.index'),
+
+    url(r'^(?P<group>.*)/wmstest/$', 'pywms.wms.views.grouptest'),
+    url(r'^(?P<group>.*)/wmstest', 'pywms.wms.views.grouptest'),
+    url(r'^(?P<group>.*)/', 'pywms.wms.views.groups'),
+    url(r'^(?P<group>.*)', 'pywms.wms.views.groups'),
     )
