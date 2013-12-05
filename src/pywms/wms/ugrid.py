@@ -269,7 +269,7 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnit
             scale=arrowsize,
             scale_units='inches',
             )
-        
+
 def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
@@ -308,7 +308,7 @@ def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, m
             scale=arrowsize,
             scale_units='inches',
             )
-           
+
 def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None

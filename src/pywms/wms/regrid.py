@@ -15,7 +15,7 @@ This file is part of SCI-WMS.
 
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Created on Sep 23, 2011
 
 @author: ACrosby
@@ -30,7 +30,7 @@ def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
     reglon, reglat = numpy.meshgrid(reglon, reglat)
     reglon = numpy.reshape(reglon, numpy.prod(numpy.shape(reglon)))
     reglat = numpy.reshape(reglat, numpy.prod(numpy.shape(reglat)))
-    
+
     def newvalues(lon, lat, size, tri, trivals):
         new = createNewCell(lon, lat, size)
         matches = searchForIntersect(tri, new)
@@ -43,7 +43,7 @@ def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
             newvalue = getNewCellValue(new, matched, 5, sareas)
         else: newvalue = -9999
         return newvalue
-    
+
     tri = createPolygonList(trilon, trilat, topology)
     #parallel = pprocess.Map(limit=2)
     #pnewvalues = parallel.manage(pprocess.MakeParallel(newvalues))
@@ -54,26 +54,26 @@ def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
                                       (createNewCell, searchForIntersect, createIntersections,
                                        findDistancesList, getCentroid, findVolumesList,
                                        getNewCellValue, haversine), ("shapely.geometry as geometry", "numpy",)))
-    
+
     ##parallel = [newvalues(reglon[i], reglat[i], size, tri, trivals) for i in range(len(reglon))]
     parallel = [i() for i in parallel]
-    return parallel                               
-    
+    return parallel
+
 def createNewCell(lon, lat, size):
     newcell = geometry.Polygon(((lon+(size/2), lat+(size/2)),
                       (lon+(size/2), lat-(size/2)),
                       (lon-(size/2), lat-(size/2)),
-                      (lon-(size/2), lat+(size/2)))) 
+                      (lon-(size/2), lat+(size/2))))
     return newcell
-   
+
 
 def createPolygonList(lon, lat, topology):
     '''
     Create a list of polygons from input unstructured topology array
     '''
     #def seq(a, lon, lat):
-    #    return numpy.asarray((lon[a[0]], lat[a[0]]), 
-    #            (lon[a[1]], lat[a[1]]), 
+    #    return numpy.asarray((lon[a[0]], lat[a[0]]),
+    #            (lon[a[1]], lat[a[1]]),
     #            (lon[a[2]], lat[a[2]]))
     #ringsequence = numpy.apply_along_axis(seq, 0, topology, lon, lat)
     polygons = []
@@ -82,7 +82,7 @@ def createPolygonList(lon, lat, topology):
                                    (lon[topology[i,1]],lat[topology[i,1]]),
                                    (lon[topology[i,2]],lat[topology[i,2]])))
         polygons.append(polygon)
-        
+
     #polygons = map(geometry.Polygon, ringsequence)
     return polygons
 
@@ -121,8 +121,8 @@ def findDistancesList(original_centroids, supergrid_centroids):
     to determine distance.
     '''
     dists = map(haversine, [o.y for o in original_centroids],
-                [o.x for o in original_centroids], 
-                [s.y for s in supergrid_centroids], 
+                [o.x for o in original_centroids],
+                [s.y for s in supergrid_centroids],
                 [s.x for s in supergrid_centroids])
     return dists
 

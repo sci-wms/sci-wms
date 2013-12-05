@@ -889,7 +889,7 @@ class Editor(Writer):
 # Begin Testing
 #def test():
 #    import doctest
-#   
+#
 #    doctest.NORMALIZE_WHITESPACE = 1
 #    doctest.testmod(usage, verbose=1)
 #

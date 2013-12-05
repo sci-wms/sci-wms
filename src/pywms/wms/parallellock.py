@@ -26,6 +26,6 @@ def get_lock(name="lock.lock"):
         f = open(name, 'w')
         f.write(" ")
         f.close()
-    
+
 def release_lock(name="lock.lock"):
     os.remove(name)

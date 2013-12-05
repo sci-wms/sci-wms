@@ -36,10 +36,10 @@ def groupGetCapabilities(req, group, logger): # TODO move get capabilities to te
     http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
 
     """
-    
+
     datasets = list(Dataset.objects.filter(group=group))
-    
-    
+
+
     # Create the object to be encoded to xml later
     root = ET.Element('WMT_MS_Capabilities')
     root.attrib["version"] = "1.1.1"#request.GET["version"]
@@ -207,7 +207,7 @@ def groupGetCapabilities(req, group, logger): # TODO move get capabilities to te
                     time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
                 except:
                     time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-                
+
                 ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
                 if topology.grid.lower() == 'false':
                     if nc.variables[variable].ndim > 2:
@@ -255,7 +255,7 @@ def groupGetCapabilities(req, group, logger): # TODO move get capabilities to te
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
                     elev_extent.text = "0"
                 ##
-                
+
                 for style in ["filledcontours", "contours", "pcolor", "facets"]:
                     style_code = style + "_average_jet_None_None_" + location + "_False"
                     style = ET.SubElement(layer1, "Style")

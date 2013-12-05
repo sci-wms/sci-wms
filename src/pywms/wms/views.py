@@ -15,7 +15,7 @@ This file is part of SCI-WMS.
 
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Created on Sep 1, 2011
 
 @author: ACrosby
@@ -80,7 +80,7 @@ def grouptest (request, group):
     dict1 = Context({ 'localsite':sites[0]['domain'],
                       'datasets':list(Dataset.objects.filter(group=group))})
     return HttpResponse(Template(text).render(dict1))
-    
+
 def groups (request, group):
     import django.shortcuts as dshorts
     reqtype = None
@@ -90,7 +90,6 @@ def groups (request, group):
         try:
             reqtype = request.GET['request']
         except:
-            #print group
             group = Group.objects.get(name=group)
             datasets = list(Dataset.objects.filter(group=group))
             for dataset in datasets:
@@ -150,7 +149,7 @@ def wmstest (request):
     dict1 = Context({ 'localsite':sites[0]['domain'],
                       'datasets':Dataset.objects.values()})
     return HttpResponse(Template(text).render(dict1))
-    
+
 def leaflet (request):
     from django.template import Context, Template
     f = open(os.path.join(config.staticspath, "leaflet_example.html"))
@@ -161,7 +160,7 @@ def leaflet (request):
                       'datasets':Dataset.objects.values()})
     return HttpResponse(Template(text).render(dict1))
 
-def authenticate_view(request): 
+def authenticate_view(request):
     if request.method == 'POST':
         uname = request.POST['username']
         passw = request.POST['password']
@@ -215,8 +214,8 @@ def add (request):
             if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
                 dataset = Dataset.objects.get(name = dataset_id)
             else:
-                dataset = Dataset.objects.create(name = dataset_id, 
-                                             title = dataset_title, 
+                dataset = Dataset.objects.create(name = dataset_id,
+                                             title = dataset_title,
                                              abstract = dataset_abstract,
                                              uri = dataset_endpoint,
                                              keep_up_to_date = dataset_update,
@@ -263,7 +262,7 @@ def remove (request):
             dataset.delete()
             return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
     logout_view(request)
-        
+
 def remove_from_group (request):
     if authenticate_view(request):
         dataset_id = request.GET.get("id", None)
@@ -286,7 +285,7 @@ def remove_from_group (request):
                     dataset.save()
             return HttpResponse()
     logout_view(request)
-    
+
 def documentation (request):
 ##    #jobsarray = grid_cache.check_topology_age()
 ##    import django.shortcuts as dshorts
@@ -317,7 +316,7 @@ def database_request_interaction (request, dataset):
         vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer = request.GET['layers'])
         request.GET['layers'] = vlayer[0].layer_expression
     return request
-            
+
 def wms (request, dataset):
     try:
         request = lower_request(request)
@@ -359,23 +358,23 @@ def getCapabilities(req, dataset): # TODO move get capabilities to template syst
     root.attrib["version"] = "1.1.1"#request.GET["version"]
     href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset + "/?"
     virtual_layers = VirtualLayer.objects.filter(datasets__name=dataset)
-    expected_configurations = {"u":("u,v",","), 
+    expected_configurations = {"u":("u,v",","),
                                "u-vel":("u-vel,v-vel",","),
-                               "ua":("ua,va",","), 
-                               "U":("U,V",","), 
-                               "uc":("uc,vc",","), 
+                               "ua":("ua,va",","),
+                               "U":("U,V",","),
+                               "uc":("uc,vc",","),
                                "air_u":("air_u,air_v",","),
                                "water_u":("water_u,water_v",",")
                               }
     virtual_configurations = {}
     for layer in list(virtual_layers):
         if "*" in layer.layer_expression:
-            virtual_configurations[layer.layer_expression.split("*")[0]] = (layer.layer, "*") 
+            virtual_configurations[layer.layer_expression.split("*")[0]] = (layer.layer, "*")
         elif "+" in layer.layer_expression:
             virtual_configurations[layer.layer_expression.split("+")[0]] = (layer.layer, "+")
         elif "," in layer.layer_expression:
             virtual_configurations[layer.layer_expression.split(",")[0]] = (layer.layer, ",")
-    
+
     # Plug into your generic implentation of sciwms template
     # will have to pull these fields out of the database directly
     # to ensure uptodate
@@ -610,7 +609,7 @@ def getCapabilities(req, dataset): # TODO move get capabilities to template syst
                 ET.SubElement(layer1, "DepthDirection").text = "Down"
                 elev_extent.text = "0"
             ##
-            
+
             for style in ["filledcontours", "contours", "pcolor", "facets"]:
                 style_code = style + "_average_jet_None_None_" + location + "_False"
                 style = ET.SubElement(layer1, "Style")
@@ -625,9 +624,9 @@ def getCapabilities(req, dataset): # TODO move get capabilities to template syst
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            for configurations in [expected_configurations, virtual_configurations]: 
+            for configurations in [expected_configurations, virtual_configurations]:
                 if variable in configurations:
-                    layername, layertype = configurations[variable] 
+                    layername, layertype = configurations[variable]
                     try:
                         location = nc.variables[variable].location
                     except:
@@ -1214,7 +1213,7 @@ def getMap (request, dataset):
     #formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
     #handler.setFormatter(formatter)
     #logger.addHandler(handler)
-    
+
     #totaltimer = timeobj.time()
     #loglist = []
 
@@ -1358,7 +1357,7 @@ def getMap (request, dataset):
             if gridtype == 'cgrid':
                 index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
-            
+
             if latmin != latmax: # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
                 if gridtype == 'False': # TODO: Should take a look at this
                     # This is averaging in time over all timesteps downloaded
@@ -1415,11 +1414,11 @@ def getMap (request, dataset):
                         var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
                 except:
                     pass
-                
+
                 # Close remote dataset and local cache
                 topology.close()
                 datasetnc.close()
-                
+
                 if (climits[0] == "None") or (climits[1] == "None"):
                     if magnitude.lower() == "log":
                         CNorm = matplotlib.colors.LogNorm()
@@ -1430,7 +1429,7 @@ def getMap (request, dataset):
                         CNorm = matplotlib.colors.LogNorm(vmin=climits[0],
                                                         vmax=climits[1],
                                                         clip=True,
-                                                        )                        
+                                                        )
                     else:
                         CNorm = matplotlib.colors.Normalize(vmin=climits[0],
                                                         vmax=climits[1],
@@ -1489,13 +1488,13 @@ def getMap (request, dataset):
             ax = fig.add_axes([0, 0, 1, 1])
             fig.set_figheight(height/5.0)
             fig.set_figwidth(width/5.0)
-            ax.set_frame_on(False) 
+            ax.set_frame_on(False)
             ax.set_clip_on(False)
             ax.set_position([0,0,1,1])
             canvas = FigureCanvasAgg(fig)
             response = HttpResponse(content_type='image/png')
             canvas.print_png(response)
-    
+
     gc.collect()
     #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     #logger.info(str(loglist))

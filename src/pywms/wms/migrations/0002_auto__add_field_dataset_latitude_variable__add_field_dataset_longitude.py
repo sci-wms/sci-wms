@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -18,14 +17,12 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default='', max_length=200, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'Dataset.latitude_variable'
         db.delete_column('wms_dataset', 'latitude_variable')
 
         # Deleting field 'Dataset.longitude_variable'
         db.delete_column('wms_dataset', 'longitude_variable')
-
 
     models = {
         'wms.dataset': {

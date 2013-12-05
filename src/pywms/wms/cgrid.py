@@ -65,7 +65,7 @@ def getvar(datasetnc, t, layer, variables, index):
         shp = ncvar1.shape
         if len(index[0]) == 1:
             ind = index[0][0]
-        else: 
+        else:
             ind = np.asarray(range(np.min(np.min(index[0])),np.max(np.max(index[0]))))
         if len(index[1]) == 1:
             jnd = index[1][0]
@@ -95,7 +95,7 @@ def getvar(datasetnc, t, layer, variables, index):
                 var2 = var2.squeeze()
         else:
             var2 = None
-        
+
         if len(variables) > 2: # Check if request came with more than 1 var
             ncvar3 = datasetnc.variables[variables[2]]
             shp = ncvar3.shape
@@ -110,7 +110,7 @@ def getvar(datasetnc, t, layer, variables, index):
                 var3 = var3.squeeze()
         else:
             var3 = None
-        
+
         if special_function == "+":
             #var1[np.isnan(var2)] = np.nan # not causing it and probably slowing things down
             #var2[np.isnan(var1)] = np.nan
@@ -223,11 +223,11 @@ def composite(lon, lat, mag, ax, cmin, cmax, cmap, m, fig, lonmin, latmin, lonma
     mag[:,:,0:3] = mag[:,:,0:3] / 255.
     lonmax, latmax = m(lonmax, latmax)
     lonmin, latmin = m(lonmin, latmin)
-    #print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min() 
+    #print m.llcrnry, m.llcrnrx, m.urcrnry, m.urcrnrx, mag[:,:,1].max().max(), mag[:,:,1].min().min()
     ex = np.asarray([((lon.min()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx, ((lon.max()-lonmin+1)/(lonmax-lonmin))*m.urcrnrx,((lat.min()-latmin+1)/(latmax-latmin))*m.urcrnry,((lat.max()-latmin+1)/(latmax-latmin))*m.urcrnry])
     m.ax.imshow(mag, origin='lower',
                 extent=ex)
-    
+
 def pcolor(lon, lat, mag, ax, cmin, cmax, cmap, norm):
     mag = np.ma.array(mag, mask=np.isnan(mag))
     if (cmin == "None") or (cmax == "None"):
@@ -297,7 +297,7 @@ def vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
                 scale_units='inches',
                 angles='uv',
                 )
-                
+
 def unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
     if magnitude == "True":
         arrowsize = None
@@ -321,7 +321,7 @@ def unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
                 scale_units='inches',
                 angles='uv',
                 )
-                
+
 def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin, latmin, lonmax, latmax):
     if magnitude == "True":
         arrowsize = None
@@ -333,8 +333,8 @@ def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin,
         arrowsize = float(magnitude)
     stride = 1
     try:
-        ax.streamplot(lon[::stride,::stride], lat[::stride,::stride], 
-                      var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], 
+        ax.streamplot(lon[::stride,::stride], lat[::stride,::stride],
+                      var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride],
                       color=mag.squeeze()[::stride,::stride],
                       density=6,
                       linewidth=5*mag.squeeze()[::stride,::stride]/mag.squeeze()[::stride,::stride].max(),
@@ -350,8 +350,8 @@ def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin,
         mag = griddata(lon, lat, mag, xi, yi, interp='nn')
         var1 = griddata(lon, lat, var1, xi, yi, interp='nn')
         var2 = griddata(lon, lat, var2, xi, yi, interp='nn')
-        ax.streamplot(xi, yi, 
-                      var1, var2, 
+        ax.streamplot(xi, yi,
+                      var1, var2,
                       color=mag,
                       density=6,
                       linewidth=5*mag/mag.max(),

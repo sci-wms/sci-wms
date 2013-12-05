@@ -15,7 +15,7 @@ This file is part of SCI-WMS.
 
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Created on Sep 6, 2011
 
 @author: ACrosby
@@ -26,20 +26,24 @@ from django.contrib import admin
 #from django.db import models
 from pywms.wms.models import Dataset, Server, Group, VirtualLayer
 
+
 class DatasetAdmin(admin.ModelAdmin):
     list_display = ('name', 'title', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
-    
+
+
 class ServerAdmin(admin.ModelAdmin):
     list_display = ('title', 'keywords', 'contact_person', 'contact_email')
-    
+
+
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'abstract')
     #list_display = ('datasets',)
 
+
 class VirtualLayerAdmin(admin.ModelAdmin):
     list_display = ('layer', 'layer_expression')
-    
+
 admin.site.register(Dataset, DatasetAdmin)
 admin.site.register(Server, ServerAdmin)
 admin.site.register(Group, GroupAdmin)

@@ -41,22 +41,22 @@ response = '''<!DOCTYPE html>
         function init(){
             var options = {numZoomLevels: 100,
                            };
-                           
+
             map = new OpenLayers.Map('map', {
-                    
-                    
+
+
                 });
 
-            
+
 
             layer = new OpenLayers.Layer.WMS( "OpenLayers WMS",
                     "http://vmap0.tiles.osgeo.org/wms/vmap0", {layers: 'basic'} );
-            
-            
-    
+
+
+
             var jpl_wms = new OpenLayers.Layer.WMS(
                 "Alex's FVCOM Facets",
-                "http://''' + config.localhostip + '''/wms/", 
+                "http://''' + config.localhostip + '''/wms/",
                 {LAYERS: "facets,average",
                     HEIGHT: "500",
                     WIDTH: "1000",
@@ -67,10 +67,10 @@ response = '''<!DOCTYPE html>
                 {isBaseLayer: false,
                 singleTile: true}
                 );
-                
+
             var vec_wms = new OpenLayers.Layer.WMS(
                 "Alex's FVCOM Vectors",
-                "http://''' + config.localhostip + '''/wms/", 
+                "http://''' + config.localhostip + '''/wms/",
                 {LAYERS: "vectors,maximum",
                     HEIGHT: "500",
                     WIDTH: "1000",
@@ -81,7 +81,7 @@ response = '''<!DOCTYPE html>
                 {isBaseLayer: false,
                 singleTile: true}
                 );
- 
+
             map.addLayers([layer, jpl_wms, vec_wms]);
             map.addControl(new OpenLayers.Control.LayerSwitcher());
             map.setCenter(new OpenLayers.LonLat(-70, 42), 5);
