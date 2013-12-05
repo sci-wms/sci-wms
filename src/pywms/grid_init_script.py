@@ -45,11 +45,11 @@ except:
 #mp_mgr = multiprocessing.Manager()
 #s1 = mp_mgr.Semaphore(1)
 
-output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
+output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'logs', 'sciwms_wms.log')
 # Set up Logger
 logger = multiprocessing.get_logger()
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler('%s.log' % output_path)
+handler = logging.FileHandler(output_path)
 formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
