@@ -51,13 +51,15 @@ activated before you try to install the packages or point to the environment
 with pip on the install command.
 ```bash
 pip install numpy
-pip install django==1.4
-pip install gunicorn
-pip install gevent
+pip install Django==1.4.0
+pip install Shapely
+pip install greenlet>=0.3.1
+pip install gevent>=0.13.6
+pip install gunicorn>=0.13.4
 pip install matplotlib>=1.2.0
-pip install netCDF4
-pip install shapely
+pip install netCDF4>=1.0.2
 pip install rtree
+pip install south
 ```
 
 You also need to ensure that you have basemap matplotlib toolkit installed, 
