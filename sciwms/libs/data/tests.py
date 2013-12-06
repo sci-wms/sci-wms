@@ -22,18 +22,23 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-import os, sys
+import os
+import sys
 from django.test import TestCase
-from pywms.wms.models import Dataset, Group, Server
+from sciwms.apps.wms.models import Dataset, Group, Server
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
-import pywms.server_local_config as config
 from time import sleep
-import pywms.grid_init_script as grid_cache
-import django.contrib.auth.hashers as hashpass
+import sciwms.libs.data.grid_init_script as grid_cache
 
-resource_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'wms', 'resources')
-cache_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms')
+import django.contrib.auth.hashers as hashpass
+from django.conf import settings
+
+resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
+cache_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', "testcache")
+if not os.path.exists(cache_path):
+    os.makedirs(cache_path)
+
 
 def remove_cache():
     try:
@@ -48,6 +53,7 @@ def remove_cache():
         os.unlink(os.path.join(cache_path, "test.domain"))
     except:
         pass
+
 
 def wait_on_cache(self):
     #self.client.get('/update')
