@@ -30,7 +30,7 @@
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery Â© <a href="http://cloudmade.com">CloudMade</a>'
 		}).addTo(map);
                 {% for dataset in datasets %}
-                var {{dataset.name}} = L.tileLayer.wms("{% url sciwms.apps.wms.views.wms dataset=dataset.name %}", {
+                var {{dataset.name}} = L.tileLayer.wms("{% url 'dataset' dataset=dataset.name %}", {
                         layers: '{{dataset.test_layer}}',
                         format: 'image/png',
                         transparent: 'true',

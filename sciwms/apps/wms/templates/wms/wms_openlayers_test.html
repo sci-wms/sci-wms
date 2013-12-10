@@ -43,7 +43,7 @@
                 {% for dataset in datasets %}
 
                 {{dataset.name}} = new OpenLayers.Layer.WMS("{{dataset.name}}",
-                                                "{% url sciwms.apps.wms.views.wms dataset=dataset.name %}",
+                                                "{% url 'dataset' dataset=dataset.name %}",
                                                 {
                                                     layers:"{{dataset.test_layer}}",
                                                     transparent: true,

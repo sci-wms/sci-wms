@@ -18,7 +18,7 @@ This file is part of SCI-WMS.
 '''
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 from django.conf import settings
 
 # Uncomment the next two lines to enable the admin:
@@ -31,10 +31,10 @@ urlpatterns = patterns( '',
                         url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
                         url(r'^admin/doc', include('django.contrib.admindocs.urls')),
 
-                        url(r'^index', 'sciwms.apps.wms.views.index'),
-                        url(r'^$', 'sciwms.apps.wms.views.index'),
+                        url(r'^index', 'sciwms.apps.wms.views.index', name="index"),
+                        url(r'^$', 'sciwms.apps.wms.views.index', name="index"),
 
-                        url(r'^wms$', 'django.views.generic.simple.redirect_to', {'url': '/wms/'}),
+                        url(r'^wms$', 'django.shortcuts.redirect', {'/wms/'}),
                         url(r'^wms/', include('sciwms.apps.wms.urls')),
 
                     )

@@ -17,7 +17,7 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.conf import settings
 
 urlpatterns = patterns( '',
@@ -25,17 +25,17 @@ urlpatterns = patterns( '',
                         url(r'^index', 'sciwms.apps.wms.views.index'),
                         url(r'^$', 'sciwms.apps.wms.views.index'),
 
-                        url(r'^documentation/', 'sciwms.apps.wms.views.documentation'),
+                        url(r'^documentation/', 'sciwms.apps.wms.views.documentation', name='documentation'),
 
                         # Datasets
                         url(r'^datasets$',  'sciwms.apps.wms.views.datasets'),
                         url(r'^datasets/$', 'sciwms.apps.wms.views.datasets'),
-                        url(r'^datasets/(?P<dataset>.*)/', 'sciwms.apps.wms.views.wms'),
+                        url(r'^datasets/(?P<dataset>.*)/', 'sciwms.apps.wms.views.wms', name="dataset"),
 
                         # Clients
                         url(r'^openlayers/(?P<filepath>.*)', 'sciwms.apps.wms.views.openlayers'),
-                        url(r'^simple', 'sciwms.apps.wms.views.simpleclient'),
-                        url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient'),
+                        url(r'^simple', 'sciwms.apps.wms.views.simpleclient', name='simpleclient'),
+                        url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient', name='leafletclient'),
 
                         url(r'^crossdomain.xml', 'sciwms.apps.wms.views.crossdomain'),
 
