@@ -37,21 +37,20 @@ except:
             # not installed
             worker = "sync"
 
-bind = "0.0.0.0:7000"
-workers = multiprocessing.cpu_count() + 1
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.dev")
+
+bind = "127.0.0.1:7000"
+workers = multiprocessing.cpu_count()
 worker_class = worker
-debug = False
-timeout = 120
+debug = True
+timeout = 1000
 #graceful_timeout = 120
-max_requests = 20
-keepalive = 5
-backlog = 20
-access_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sci-wms", "logs", "sciwms_gunicorn_access.log"))
-error_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sci-wms", "logs", "sciwms_gunicorn_error.log"))
-loglevel = "warning"
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.prod")
-
+max_requests = 1
+#keepalive = 5
+backlog = 5
+access_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwms", "logs", "sciwms_gunicorn_access.log"))
+error_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwms", "logs", "sciwms_gunicorn_error.log"))
+loglevel = "info"
 
 def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))

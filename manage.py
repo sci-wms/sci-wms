@@ -18,16 +18,12 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from django.core.management import execute_manager
-import imp
-try:
-    imp.find_module('sciwms/settings/dev')  # Assumed to be in the same directory.
-except ImportError:
-    import sys
-    sys.stderr.write("Error: Can't find the file 'dev.py' in the directory containing %r. It appears you've customized things.\nYou'll have to run django-admin.py, passing it your settings module.\n" % __file__)
-    sys.exit(1)
-
-import sciwms.settings.dev
+import os
+import sys
 
 if __name__ == "__main__":
-    execute_manager(sciwms.settings.dev)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.dev")
+
+    from django.core.management import execute_from_command_line
+
+    execute_from_command_line(sys.argv)

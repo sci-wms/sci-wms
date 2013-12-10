@@ -31,27 +31,26 @@ except:
     except:
         try:
             import gevent
-            worker = "gevent"
+            worker = "gevent_wsgi"
         except:
             # Default to basic sync worker if other libs are
             # not installed
             worker = "sync"
 
-bind = "127.0.0.1:7000"
-workers = multiprocessing.cpu_count()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.prod")
+
+bind = "0.0.0.0:7000"
+workers = multiprocessing.cpu_count() + 1
 worker_class = worker
-debug = True
-timeout = 1000
+debug = False
+timeout = 120
 #graceful_timeout = 120
-max_requests = 1
-#keepalive = 5
-backlog = 5
+max_requests = 20
+keepalive = 5
+backlog = 20
 access_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwms", "logs", "sciwms_gunicorn_access.log"))
 error_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwms", "logs", "sciwms_gunicorn_error.log"))
-loglevel = "info"
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.dev")
-
+loglevel = "warning"
 
 def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
