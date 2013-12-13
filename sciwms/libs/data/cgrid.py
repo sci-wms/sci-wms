@@ -346,7 +346,7 @@ def streamlines(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude, m, lonmin,
         xi = np.arange(m.xmin, m.xmax, num)
         yi = np.arange(m.ymin, m.ymax, num)
         lat, lon, mag, var1, var2 = lat.astype(np.float64).flatten(), lon.astype(np.float64).flatten(), mag.astype(np.float64).flatten(), var1.astype(np.float64).flatten(), var2.astype(np.float64).flatten()
-        print lat.shape, mag.shape, var1.shape
+        #print lat.shape, mag.shape, var1.shape
         mag = griddata(lon, lat, mag, xi, yi, interp='nn')
         var1 = griddata(lon, lat, var1, xi, yi, interp='nn')
         var2 = griddata(lon, lat, var2, xi, yi, interp='nn')
