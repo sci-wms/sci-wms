@@ -52,16 +52,8 @@ access_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwm
 error_log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "sciwms", "logs", "sciwms_gunicorn_error.log"))
 loglevel = "warning"
 
+
 def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
-
-    print "Initializing datasets topologies..."
-    from sciwms.libs.data.grid_init_script import init_all_datasets
-    init_all_datasets()
-
-    print '\n    ##################################################\n' +\
-          '    #                                                #\n' +\
-          '    #  Starting sci-wms...                           #\n' +\
-          '    #  A wms server for unstructured scientific data #\n' +\
-          '    #                                                #\n' +\
-          '    ##################################################\n'
+    import sciwms.apps.wms.startup as startup
+    startup.run()
