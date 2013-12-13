@@ -20,6 +20,8 @@ Created on Sep 1, 2011
 
 @author: ACrosby
 '''
+
+import json
 import sys, os, gc, bisect, math, datetime, numpy, netCDF4, subprocess, multiprocessing, logging, traceback, copy
 
 # Import from matplotlib and set backend
@@ -47,7 +49,7 @@ except ImportError:
 # Import from sci-wms
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 from django.contrib.sites.models import Site
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 import sciwms.libs.data.grid_init_script as grid_cache
 from sciwms.libs.data import cgrid, ugrid
 from django.http import HttpResponse, HttpResponseRedirect
@@ -249,6 +251,8 @@ def remove (request):
             dataset = Dataset.objects.get(name=dataset_id)
             dataset.delete()
             return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
+    else:
+        return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
     logout_view(request)
 
 def remove_from_group (request):
@@ -293,7 +297,7 @@ def lower_request (request):
 
 def database_request_interaction (request, dataset):
     if VirtualLayer.objects.filter(datasets__name = dataset):
-        vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer = request.GET['layers'])
+        vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer_expression = request.GET['layers'])
         request.GET['layers'] = vlayer[0].layer_expression
     return request
 

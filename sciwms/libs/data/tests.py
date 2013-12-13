@@ -23,16 +23,15 @@ Replace this with more appropriate tests for your application.
 """
 
 import os
-import sys
-from django.test import TestCase
-from sciwms.apps.wms.models import Dataset, Group, Server
-from django.contrib.sites.models import Site
-from django.contrib.auth.models import User
 from time import sleep
-import sciwms.libs.data.grid_init_script as grid_cache
 
-import django.contrib.auth.hashers as hashpass
+from django.test import TestCase
 from django.conf import settings
+from django.contrib.auth.models import User
+import django.contrib.auth.hashers as hashpass
+
+from sciwms.apps.wms.models import Dataset, Group, Server
+import sciwms.libs.data.grid_init_script as grid_cache
 
 resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
 cache_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', "testcache")
@@ -55,42 +54,58 @@ def remove_cache():
         pass
 
 
-def wait_on_cache(self):
+def wait_on_cache():
     #self.client.get('/update')
     grid_cache.check_topology_age()
     c = 0
-    while (not os.path.exists(os.path.join(cache_path, "test.nc"))) and (c < 5):
+    while (not os.path.exists(os.path.join(cache_path, "test.nc"))) and (c < 10):
         sleep(3)
-        print "not nc"
-        c = c + 1
+        print "Waiting on NC file..."
+        c += 1
         pass
 
+
 def wait_on_domain():
-    while (not os.path.exists(os.path.join(cache_path, "test.domain"))):
-        print "not domain"
+    c = 0
+    while (not os.path.exists(os.path.join(cache_path, "test.domain"))) and (c < 10):
+        sleep(3)
+        print "Waiting on Domain file..."
+        c += 1
         pass
+
 
 def add_server():
     s = Server.objects.create()
     s.save()
 
+
 def add_group():
     g = Group.objects.create(name = 'MyTestGroup',)
     g.save()
 
+
 def post_add(self, filename):
-    params = {"uri":filename, "id":"test", "title":"test", "abstract":"my test dataset", "update":"True", "groups":""}
+    params = {  "uri"       : filename,
+                "id"        : "test",
+                "title"     : "test",
+                "abstract"  : "my test dataset",
+                "update"    : "True",
+                "groups"    : ""
+             }
     response = self.client.post("/add_dataset", params)
     self.assertEqual(response.status_code, 200)
 
+
 def add_dataset(filename):
     add_group()
-    d = Dataset.objects.create(uri             = os.path.join(resource_path, filename),
-                               name            = "test",
-                               title           = "Test dataset",
-                               abstract        = "Test data set for sci-wms tests.",
-                               keep_up_to_date = False,)
+    d = Dataset.objects.create(uri                   = os.path.join(resource_path, filename),
+                               name                  = "test",
+                               title                 = "Test dataset",
+                               abstract              = "Test data set for sci-wms tests.",
+                               display_all_timesteps = False,
+                               keep_up_to_date       = False,)
     d.save()
+
 
 def add_user():
     u = User(username="testuser",
@@ -103,6 +118,7 @@ def add_user():
             )
     u.save()
 
+
 class SimpleTest(TestCase):
     def test_basic_addition(self):
         """
@@ -114,6 +130,7 @@ class SimpleTest(TestCase):
         add_server()
         response = self.client.get('/index.html')
         self.assertEqual(response.status_code, 200)
+
 
 class TestUgrid(TestCase):
     """
@@ -132,56 +149,55 @@ class TestUgrid(TestCase):
         add_dataset("201220109.nc")
 
     def test_web_remove(self):
-        import base64
         #auth_headers = { 'HTTP_AUTHORIZATION':
         #                 'Basic ' + base64.b64encode('testuser:test')}
         add_server()
         add_group()
         add_dataset("201220109.nc")
         add_user()
-        response = self.client.get('/remove_dataset/?id=test&username=testuser&password=test')
+        response = self.client.get('/wms/remove_dataset/?id=test&username=testuser&password=test')
         self.assertEqual(response.status_code, 200)
 
     def test_facets(self):
         remove_cache()
         add_dataset("201220109.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_pcolor(self):
         remove_cache()
         add_dataset("201220109.nc")
-        wait_on_cache(self)
+        wait_on_cache()
         wait_on_domain()
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_contours(self):
         remove_cache()
         add_dataset("201220109.nc")
-        wait_on_cache(self)
+        wait_on_cache()
         wait_on_domain()
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_filledcontours(self):
         remove_cache()
         add_dataset("201220109.nc")
-        wait_on_cache(self)
+        wait_on_cache()
         wait_on_domain()
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_vectors(self):
         remove_cache()
         add_dataset("201220109.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
@@ -191,14 +207,13 @@ class TestUgrid(TestCase):
     def test_getCaps(self):
         add_dataset("201220109.nc")
         add_server()
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?REQUEST=GetCapabilities')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?REQUEST=GetCapabilities')
         self.assertEqual(response.status_code, 200)
 
+
 class TestCgrid(TestCase):
-    """
-    http://wms.glos.us:8080/wms/SLRFVM_Latest_Forecast/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-13557605.130243,3869302.3423325,-12989525.136107,4068650.1120725&WIDTH=929&HEIGHT=326
-    """
+
     def test_add_server(self):
         add_server()
 
@@ -219,38 +234,38 @@ class TestCgrid(TestCase):
         add_group()
         add_user()
         add_dataset("nasa_scb20111015.nc")
-        response = self.client.get('/remove_dataset/?id=test&username=testuser&password=test')
+        response = self.client.get('/wms/remove_dataset/?id=test&username=testuser&password=test')
         self.assertEqual(response.status_code, 200)
 
     def test_pcolor(self):
         remove_cache()
         add_dataset("nasa_scb20111015.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_contours(self):
         remove_cache()
         add_dataset("nasa_scb20111015.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_filledcontours(self):
         remove_cache()
         add_dataset("nasa_scb20111015.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
     def test_vectors(self):
         remove_cache()
         add_dataset("nasa_scb20111015.nc")
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
         remove_cache()
 
@@ -260,8 +275,8 @@ class TestCgrid(TestCase):
     def test_getCaps(self):
         add_dataset("nasa_scb20111015.nc")
         add_server()
-        wait_on_cache(self)
-        response = self.client.get('/wms/test/?REQUEST=GetCapabilities')
+        wait_on_cache()
+        response = self.client.get('/wms/datasets/test/?REQUEST=GetCapabilities')
         self.assertEqual(response.status_code, 200)
 
 #class TestDap(TestCase):
