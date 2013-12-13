@@ -1,3 +1,2 @@
 #!/bin/bash
-cd src
-gunicorn -c config_local.py sciwms.wsgi:application &
+gunicorn -c gunicorn_config_prod.py sciwms.wsgi:application

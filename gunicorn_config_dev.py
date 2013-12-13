@@ -39,7 +39,7 @@ except:
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.dev")
 
-bind = "127.0.0.1:7000"
+bind = "127.0.0.1:8000"
 workers = multiprocessing.cpu_count()
 worker_class = worker
 debug = True
