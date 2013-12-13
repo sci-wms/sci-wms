@@ -1,4 +1,5 @@
 #sci-wms
+####A Python WMS service for geospatial gridded data
 
 COPYRIGHT 2010 RPS ASA
 
@@ -14,8 +15,6 @@ COPYRIGHT 2010 RPS ASA
 
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
-
-####A Python WMS service for geospatial gridded data
 
 ##System Requirements
 
