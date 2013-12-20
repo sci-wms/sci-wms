@@ -60,9 +60,13 @@
     <h2>Sci-wms: A Python WMS service for geospatial gridded data</h2>
     {% for dataset in datasets %}
         <p>
-        <he><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities"><b>{{dataset.name}}</b></a><he>
-        <li>URI: <a href="{{dataset.uri}}.html">{{dataset.uri}}</a> </li>
-        <li>Update?: {{dataset.keep_up_to_date}} </li>
+        <he><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities"><b>{{ dataset.name }}</b></a><he>
+        {% if dataset.online %}
+            <li>URI: <a href="{{ dataset.uri }}.html">{{ dataset.uri }}</a> </li>
+        {% else %}
+            <li>URI: {{ dataset.uri }}</li>
+        {% endif %}
+        <li>Update?: {{ dataset.keep_up_to_date }}</li>
         </p>
     {% endfor %}
 

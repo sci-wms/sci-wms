@@ -130,8 +130,9 @@ def index(request):
     import django.shortcuts as dshorts
     datasets = Dataset.objects.values()
     for dataset in datasets:
-        if dataset["uri"][0:4] != "http":
-            dataset["uri"] = "..." + os.path.basename(dataset["uri"])
+        if dataset["uri"][0:4] == "http":
+            # Used in template to linkify to URI
+            dataset["online"] = True
     context = { "datasets" : datasets }
     return dshorts.render_to_response('wms/index.html', context)
 
