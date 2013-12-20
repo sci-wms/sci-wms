@@ -67,7 +67,15 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def datasets (request):
+
+def crossdomain(request):
+    with open(os.path.join(settings.COMMON_STATIC_FILES, "common", "crossdomain.xml")) as f:
+        response = HttpResponse(content_type="text/xml")
+        response.write(f.read())
+    return response
+
+
+def datasets(request):
     from django.core import serializers
     datasets = Dataset.objects.all()
     data = serializers.serialize('json', datasets)
@@ -281,12 +289,6 @@ def remove_from_group (request):
 def documentation (request):
     return HttpResponseRedirect('http://acrosby.github.io/sci-wms')
 
-def crossdomain (request):
-    f = open(config.staticspath + "crossdomain.xml")
-    test = f.read()
-    response = HttpResponse(content_type="text/xml")
-    response.write(test)
-    return response
 
 def lower_request (request):
     gettemp = request.GET.copy()

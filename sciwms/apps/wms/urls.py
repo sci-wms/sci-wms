@@ -18,7 +18,6 @@ This file is part of SCI-WMS.
 '''
 
 from django.conf.urls import patterns, url
-from django.conf import settings
 
 urlpatterns = patterns( '',
 
@@ -36,8 +35,6 @@ urlpatterns = patterns( '',
                         url(r'^openlayers/(?P<filepath>.*)', 'sciwms.apps.wms.views.openlayers'),
                         url(r'^simple', 'sciwms.apps.wms.views.simpleclient', name='simpleclient'),
                         url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient', name='leafletclient'),
-
-                        url(r'^crossdomain.xml', 'sciwms.apps.wms.views.crossdomain'),
 
                         url(r'^update', 'sciwms.apps.wms.views.update'),
                         url(r'^add_dataset', 'sciwms.apps.wms.views.add'),  # This is a POST based view

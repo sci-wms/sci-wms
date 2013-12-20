@@ -3,54 +3,56 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
-<style type="text/css">
-    body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    }
-    p {
-    background-color:#6495ed;
-    padding: 0px;
-    margin-right:5px;
-    margin-left:5px;
-    }
-    h2 {
-    padding: 10px;
-    position: static;
-    background-position: left top;
-    width: 100%;
-    background-color: #002242;
-    color: #b0c4de;
-    text-align: left;
-    margin-top:0px;
-    }
-    li {
-    list-style-type: none;
-    padding: 10px;
-    background-color:#b0c4de;
-    margin-top:-12px;
-    margin-bottom:0px;
-    margin-right:5px;
-    margin-left:5px;
-    padding-left: 20px;
-    }
-    he {
-    text-decoration:underline;
-    font-size:20px;
-    padding: 20px;
-    line-height: 150%;
-    margin-top:-12px;
-    margin-bottom:0px;
-    margin-right:0px;
-    margin-left:0px;
-    }
-    li.foot {
-    margin-top:0px;
-    padding: 0px;
-    }
-</style>
-    <title>{% block title %}Sci-wms: A Python WMS service for geospatial gridded data{% endblock %}</title>
+    <title>Sci-wms: A Python WMS service for geospatial gridded data</title>
+    {% load static from staticfiles %}
+    <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
+    <style type="text/css">
+        body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        }
+        p {
+        background-color:#6495ed;
+        padding: 0px;
+        margin-right:5px;
+        margin-left:5px;
+        }
+        h2 {
+        padding: 10px;
+        position: static;
+        background-position: left top;
+        width: 100%;
+        background-color: #002242;
+        color: #b0c4de;
+        text-align: left;
+        margin-top:0px;
+        }
+        li {
+        list-style-type: none;
+        padding: 10px;
+        background-color:#b0c4de;
+        margin-top:-12px;
+        margin-bottom:0px;
+        margin-right:5px;
+        margin-left:5px;
+        padding-left: 20px;
+        }
+        he {
+        text-decoration:underline;
+        font-size:20px;
+        padding: 20px;
+        line-height: 150%;
+        margin-top:-12px;
+        margin-bottom:0px;
+        margin-right:0px;
+        margin-left:0px;
+        }
+        li.foot {
+        margin-top:0px;
+        padding: 0px;
+        }
+    </style>
 </head>
 
 <body>

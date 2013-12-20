@@ -96,9 +96,11 @@ STATIC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sta
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
+COMMON_STATIC_FILES = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common_static"))
+
 # Additional locations of static files
 STATICFILES_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common_static")),
+    COMMON_STATIC_FILES,
 )
 
 # List of finder classes that know how to find static files in
