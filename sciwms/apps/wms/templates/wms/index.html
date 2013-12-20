@@ -6,84 +6,74 @@
     <title>Sci-wms: A Python WMS service for geospatial gridded data</title>
     {% load static from staticfiles %}
     <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
-    <style type="text/css">
-        body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        }
-        p {
-        background-color:#6495ed;
-        padding: 0px;
-        margin-right:5px;
-        margin-left:5px;
-        }
-        h2 {
-        padding: 10px;
-        position: static;
-        background-position: left top;
-        width: 100%;
-        background-color: #002242;
-        color: #b0c4de;
-        text-align: left;
-        margin-top:0px;
-        }
-        li {
-        list-style-type: none;
-        padding: 10px;
-        background-color:#b0c4de;
-        margin-top:-12px;
-        margin-bottom:0px;
-        margin-right:5px;
-        margin-left:5px;
-        padding-left: 20px;
-        }
-        he {
-        text-decoration:underline;
-        font-size:20px;
-        padding: 20px;
-        line-height: 150%;
-        margin-top:-12px;
-        margin-bottom:0px;
-        margin-right:0px;
-        margin-left:0px;
-        }
-        li.foot {
-        margin-top:0px;
-        padding: 0px;
-        }
-    </style>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 </head>
 
 <body>
 
-    <h2>Sci-wms: A Python WMS service for geospatial gridded data</h2>
-    {% for dataset in datasets %}
-        <p>
-        <he><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities"><b>{{ dataset.name }}</b></a><he>
-        {% if dataset.online %}
-            <li>URI: <a href="{{ dataset.uri }}.html">{{ dataset.uri }}</a> </li>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header">
+                    <h1>sci-wms <small>A Python WMS service for geospatial gridded data</small></h1>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <ul class="nav nav-pills">
+                <li><a href="{% url 'documentation' %}">Documentation</a></li>
+                    <li><a href="{% url 'simpleclient' %}">Client</a></li>
+                    <li><a href="{% url 'leafletclient' %}">Client (beta)</a></li>
+                    <li><a href="/admin">Admin</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <hr />
+
+        {% if datasets %}
+
+            {% for dataset in datasets %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">{{ dataset.name }} - {{ dataset.title }}</a></h3>
+                        </div>
+                        <div class="panel-body">
+                            {{ dataset.abstract }}
+                        </div>
+
+                        <ul class="list-group">
+                            {% if dataset.online %}
+                                <li class="list-group-item">URI: <a href="{{ dataset.uri }}.html">{{ dataset.uri }}</a> </li>
+                            {% else %}
+                                <li class="list-group-item">URI: {{ dataset.uri }}</li>
+                            {% endif %}
+                            <li class="list-group-item">Update?: {{ dataset.keep_up_to_date }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
         {% else %}
-            <li>URI: {{ dataset.uri }}</li>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">No datasets found.  Add datasets using the Admin link above.</a></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         {% endif %}
-        <li>Update?: {{ dataset.keep_up_to_date }}</li>
-        </p>
-    {% endfor %}
 
-    <li class="foot">
-    <a href="/admin">To add or remove datasets, use the admin interface</a>
-    </li>
-    <li class="foot">
-    <a href="{% url 'simpleclient' %}">Test the services with a simple client</a>
-    </li>
-    <li class="foot">
-    <a href="{% url 'leafletclient' %}">Test the services with the BETA client</a>
-    </li>
-    </li>
-    <li class="foot">
-    <a href="{% url 'documentation' %}">Documentation can be found here</a>
-    </li>
-
-
+    </div>
 </body>
 </html>
