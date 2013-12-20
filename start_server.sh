@@ -1,4 +1,2 @@
 #!/bin/bash
-cd src/pywms/
-gunicorn_django -c config_public.py &
-#python manage.py run_gunicorn -c config_public.py &
+gunicorn -c gunicorn_config_prod.py sciwms.wsgi:application

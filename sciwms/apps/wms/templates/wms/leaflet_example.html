@@ -1,0 +1,71 @@
+<html>
+<head>
+	<title>Leaflet mobile example</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.css" />
+	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+
+	<script src="http://leafletjs.com/dist/leaflet.js"></script>
+
+	<style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+		html, body, #map {
+			height: 100%;
+		}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script>
+		var map = L.map('map');
+
+		L.tileLayer('http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery Â© <a href="http://cloudmade.com">CloudMade</a>'
+		}).addTo(map);
+                {% for dataset in datasets %}
+                var {{dataset.name}} = L.tileLayer.wms("{% url 'dataset' dataset=dataset.name %}", {
+                        layers: '{{dataset.test_layer}}',
+                        format: 'image/png',
+                        transparent: 'true',
+                        attribution: "Alexander Crosby is awesome",
+                        styles: '{{ dataset.test_style|default:"pcolor_average_jet_None_None_grid_False" }}'});
+                        
+                {{dataset.name}}.setParams({
+                        TIME: '{{dataset.test_date}}',
+                        ELEVATION: '0'});
+                {% endfor %}
+		function onLocationFound(e) {
+			var radius = e.accuracy / 2;
+
+			L.marker(e.latlng).addTo(map)
+				.bindPopup("You are within " + radius + " meters from this point").openPopup();
+
+			L.circle(e.latlng, radius).addTo(map);
+		}
+
+		function onLocationError(e) {
+			alert(e.message);
+		}
+
+		map.on('locationfound', onLocationFound);
+		map.on('locationerror', onLocationError);
+
+		map.locate({setView: true, maxZoom: 16});
+                
+                var overlayMaps = {
+                    {% for dataset in datasets %}
+                    "{{dataset.name}}":{{dataset.name}},
+                    {% endfor %}
+                    };
+                
+                L.control.layers(overlayMaps).addTo(map);
+	</script>
+</body>
+</html>
