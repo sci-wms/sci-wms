@@ -26,11 +26,3 @@ TEMPLATE_DEBUG = True
 TOPOLOGY_PATH = "/data/sci-wms-topology"
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
-
-# Mostly the below is for testing purposes only:
-# If LOCALDATASET is populated, the service will use the cached
-# TOPOLOGY for schema/grid information and LOCALDATASETPATH for actual data extraction.
-LOCALDATASET     = False
-#LOCALDATASETPATH = {
-#    '30yr_gom3' : "/home/user/Data/FVCOM/gom3_197802.nc",
-#}
