@@ -32,6 +32,7 @@ import traceback
 import subprocess
 import multiprocessing
 import time as timeobj
+from urlparse import urlparse
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
@@ -107,12 +108,14 @@ def groups(request, group):
             reqtype = request.GET['request']
         except:
             group = Group.objects.get(name=group)
-            datasets = list(Dataset.objects.filter(group=group))
+            datasets = Dataset.objects.filter(group=group)
             for dataset in datasets:
-                if dataset.uri[0:4] != "http":
-                    dataset.uri = "..." + os.path.basename(dataset.uri)
+                dataset.uri = dataset.path()
+                if urlparse(dataset.uri).scheme != "":
+                    # Used in template to linkify to URI
+                    dataset.online = True
             context = { "datasets" : datasets }
-            return dshorts.render_to_response('index.html', context)
+            return dshorts.render_to_response('wms/index.html', context)
     if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
         group = Group.objects.get(name=group)
         caps = wms_reqs.groupGetCapabilities(request, group, logger)
@@ -131,11 +134,12 @@ def groups(request, group):
 
 def index(request):
     import django.shortcuts as dshorts
-    datasets = Dataset.objects.values()
+    datasets = Dataset.objects.all()
     for dataset in datasets:
-        if dataset["uri"][0:4] == "http":
+        dataset.uri = dataset.path()
+        if urlparse(dataset.uri).scheme != "":
             # Used in template to linkify to URI
-            dataset["online"] = True
+            dataset.online = True
     context = { "datasets" : datasets }
     return dshorts.render_to_response('wms/index.html', context)
 
@@ -471,7 +475,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     ET.SubElement(layer, "Abstract").text   = Dataset.objects.get(name=dataset).abstract
     ET.SubElement(layer, "SRS").text        = "EPSG:3857"
     ET.SubElement(layer, "SRS").text        = "MERCATOR"
-    nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).uri)
+    nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).path())
     topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
     list_timesteps = Dataset.objects.get(name=dataset).display_all_timesteps
     for variable in nc.variables.keys():
@@ -799,7 +803,7 @@ def getLegendGraphic(request, dataset):
     if settings.LOCALDATASET:
         url = settings.LOCALDATASETPATH[dataset]
     else:
-        url = Dataset.objects.get(name=dataset).uri
+        url = Dataset.objects.get(name=dataset).path()
     nc = netCDF4.Dataset(url)
 
     """
@@ -1044,7 +1048,7 @@ def getFeatureInfo(request, dataset):
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
 
-    url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).path()
     datasetnc = netCDF4.Dataset(url)
 
     varis = deque()
@@ -1207,7 +1211,7 @@ def getMap(request, dataset):
     #loglist = []
 
     # direct the service to the dataset
-    url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).path()
 
     # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])

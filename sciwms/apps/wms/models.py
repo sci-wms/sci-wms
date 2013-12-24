@@ -16,8 +16,11 @@ This file is part of SCI-WMS.
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
+import os
+from urlparse import urlparse
 
 from django.db import models
+from django.conf import settings
 
 
 class Dataset(models.Model):
@@ -34,6 +37,13 @@ class Dataset(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def path(self):
+        if urlparse(self.uri).scheme == "" and not self.uri.startswith("/"):
+            # We have a relative path, make it absolute to the sciwms directory.
+            return os.path.realpath(os.path.join(settings.PROJECT_ROOT, self.uri))
+        else:
+            return self.uri
 
 
 class VirtualLayer(models.Model):

@@ -60,7 +60,7 @@ def init_all_datasets():
     datasets = Dataset.objects.all()
     for dataset in datasets:
         name = dataset.name
-        uri = dataset.uri
+        uri = dataset.path()
         logger.info("Initializing: " + uri)
         create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
 
@@ -68,7 +68,7 @@ def init_all_datasets():
 def init_dataset_topology(dataset_name):
     dataset = Dataset.objects.get(name=dataset_name)
     name = dataset.name
-    uri = dataset.uri
+    uri = dataset.path()
     logger.info("Initializing: " + uri)
     create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
 
@@ -344,7 +344,7 @@ def do(datasets):
         if type(dataset) != dict:
             dataset = Dataset.objects.filter(name=dataset)[0]
             name = dataset.name
-            uri = dataset.uri
+            uri = dataset.path()
         else:
             name = dataset["name"]
             uri = dataset["uri"]
