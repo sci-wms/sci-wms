@@ -144,7 +144,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'markup_deprecated',
     'sciwms.apps.wms',
     'south'
 )

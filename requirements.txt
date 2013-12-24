@@ -4,9 +4,8 @@ Shapely
 greenlet>=0.3.1
 gevent>=0.13.6
 gunicorn>=0.13.4
+python-dateutil
 matplotlib>=1.2.0
 netCDF4>=1.0.2
 rtree
 south
-Pygments
-django_markup
