@@ -23,3 +23,10 @@ DEBUG          = False
 TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS  = ["*"]
+
+"""
+# Where to store the Topology data?
+TOPOLOGY_PATH = "/data/sci-wms-topology"
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+"""

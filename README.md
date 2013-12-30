@@ -127,6 +127,22 @@ bash stop_server.sh
 
 In production, you will also need to use a webserver (apache or ngnix) to serve static assets inside of sci-wms.  See [this nginx](http://docs.gunicorn.org/en/latest/deploy.html#nginx-configuration) example to get started.
 
+### Locking down the deployment
+You should edit the `sciwms/settings/prod.py` file after deployment and replace the `*` in `ALLOWED_HOSTS` with specific host(s) that that server should be accessible on. Example:
+```python
+#ALLOWED_HOSTS  = ["*"]
+ALLOWED_HOSTS  = ["sciwms.external-host.com", "YOUR_IP_ADDRESS", "sciwms.internal-host"]
+```
+
+## Local cache data
+Sci-wms caches data on disk so it does not have to read static data from each dataset every request.  By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.  To change this, edit the `sciwms/settings/dev.py` or `sciwms/settings/prod.py` files and add a TOPOLOGY_PATH variable.
+
+```python
+# Where to store the Topology data?
+TOPOLOGY_PATH = "/data/sci-wms-topology"
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+```
 
 ##Caveats:
 

@@ -21,8 +21,3 @@ from .defaults import *
 
 DEBUG          = True
 TEMPLATE_DEBUG = True
-
-# Where to store the Topology data?
-TOPOLOGY_PATH = "/data/sci-wms-topology"
-if not os.path.exists(TOPOLOGY_PATH):
-    os.makedirs(TOPOLOGY_PATH)
