@@ -56,23 +56,6 @@ logger.addHandler(handler)
 time_units = 'hours since 1970-01-01'
 
 
-def init_all_datasets():
-    datasets = Dataset.objects.all()
-    for dataset in datasets:
-        name = dataset.name
-        uri = dataset.path()
-        logger.info("Initializing: " + uri)
-        create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
-
-
-def init_dataset_topology(dataset_name):
-    dataset = Dataset.objects.get(name=dataset_name)
-    name = dataset.name
-    uri = dataset.path()
-    logger.info("Initializing: " + uri)
-    create_topology(name, uri, dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
-
-
 def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
     try:
         #with s1:
@@ -320,78 +303,57 @@ def create_topology_from_config():
     """
     Initialize topology upon server start up for each of the datasets listed in LOCALDATASETPATH dictionary
     """
-    datasets = Dataset.objects.values()
-    for dataset in datasets:
+    for dataset in Dataset.objects.all():
         print "Adding: " + dataset["name"]
         create_topology(dataset["name"], dataset["uri"])
 
 
-def check_topology_age():
-    try:
-        datasets = Dataset.objects.values()
-        #p = multiprocessing.Process(target=do, args=(list(datasets),))
-        #p.daemon = True
-        #p.start()
-        do(datasets)
-    except Exception:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-
-
-def do(datasets):
-    #with s:
-    for dataset in datasets:
-        if type(dataset) != dict:
-            dataset = Dataset.objects.filter(name=dataset)[0]
-            name = dataset.name
-            uri = dataset.path()
-        else:
-            name = dataset["name"]
-            uri = dataset["uri"]
+def update_datasets():
+    for d in Dataset.objects.all():
         try:
-            try:
-                #get_lock()
-                filemtime = datetime.fromtimestamp(
-                    os.path.getmtime(
-                        os.path.join(
-                            settings.TOPOLOGY_PATH, name + ".nc"
-                        )))
-                #print filemtime
-                difference = datetime.now() - filemtime
-                if dataset["keep_up_to_date"]:
-                    if difference.seconds > .5*3600 or difference.days > 0:
-                        #print "true"
-                        nc = ncDataset(uri)
-                        topo = ncDataset(os.path.join(
-                            settings.TOPOLOGY_PATH, name + ".nc"))
-
-                        time1 = nc.variables['time'][-1]
-                        time2 = topo.variables['time'][-1]
-                        #print time1, time2
-                        nc.close()
-                        topo.close()
-                        if time1 != time2:
-                            check = True
-                            logger.info("Updating: " + uri)
-                            create_topology(name, uri)
-                            #while check:
-                            #    try:
-                            #        check_nc = ncDataset(nclocalpath)
-                            #        check_nc.close()
-                            #        check = False
-                            #    except: # TODO: Catch the specific file corrupt error im looking for here
-                            #        create_topology(name, dataset["uri"])
-            except:
-                logger.info("Initializing: " + uri)
-                create_topology(name, uri)
-            try:
-                nc.close()
-                topo.close()
-            except:
-                pass
+            logger.info("Updating %s" % d.name)
+            update_dataset_cache(d)
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+
+
+def update_dataset_cache(dataset):
+    try:
+        try:
+            filemtime = datetime.fromtimestamp(
+                os.path.getmtime(
+                    os.path.join(
+                        settings.TOPOLOGY_PATH, dataset.name + ".nc"
+                    )))
+            if dataset.keep_up_to_date:
+                try:
+                    nc = ncDataset(dataset.path())
+                    topo = ncDataset(os.path.join(
+                        settings.TOPOLOGY_PATH, dataset.name + ".nc"))
+
+                    time1 = nc.variables['time'][-1]
+                    time2 = topo.variables['time'][-1]
+                    if time1 != time2:
+                        logger.info("Updating: " + dataset.path())
+                        create_topology(dataset.name, dataset.path(), dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
+                    else:
+                        logger.info("No new time values found in dataset, nothing to update!")
+                except Exception:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+                finally:
+                    nc.close()
+                    topo.close()
+            else:
+                logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
+        except Exception:
+            logger.info("No cache found, Initializing: " + dataset.path())
+            create_topology(dataset.name, dataset.path(), dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
+
+    except Exception:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
 
 
 def create_domain_polygon(filename):

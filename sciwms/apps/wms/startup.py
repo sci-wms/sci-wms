@@ -1,8 +1,9 @@
 def run():
-    print "Initializing datasets topologies..."
-    from sciwms.libs.data.grid_init_script import init_all_datasets
+    print "Updating datasets..."
+    from sciwms.libs.data.caching import update_datasets
+
     try:
-        init_all_datasets()
+        update_datasets()
     except BaseException:
         print '\n    ###################################################\n' +\
               '    #                                                 #\n' +\

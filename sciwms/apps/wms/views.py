@@ -166,37 +166,39 @@ def leafletclient(request):
 
 
 def authenticate_view(request):
+    if request.user.is_authenticated():
+        return True
+
     if request.method == 'POST':
-        uname = request.POST['username']
-        passw = request.POST['password']
+        uname = request.POST.get('username', None)
+        passw = request.POST.get('password', None)
     elif request.method == 'GET':
-        uname = request.GET['username']
-        passw = request.GET['password']
+        uname = request.GET.get('username', None)
+        passw = request.GET.get('password'. None)
+
     user = authenticate(username=uname, password=passw)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            return True
-        else:
-            return False
+
+    if user is not None and user.is_active:
+        login(request, user)
+        return True
     else:
         return False
-
 
 def logout_view(request):
     logout(request)
 
-
-def update(request):
-    logger.info("Adding new datasets and checking for updates on old ones...")
-    #grid_cache.check_topology_age()
-    # possibly use import os; os.__file__ for better compatibility?
-    manager_path = os.path.join(settings.PROJECT_ROOT)
-    cmd = 'cd '+manager_path+' && '+sys.executable+' manage.py updatecache'
-    subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
-    logger.info("...Finished updating")
-    return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
-
+def update_dataset(request, dataset):
+    if authenticate_view(request):
+        if dataset is None:
+            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), mimetype='application/json')
+        else:
+            d = Dataset.objects.get(name=dataset)
+            d.update_cache()
+            return HttpResponse(json.dumps({ "message" : "scheduled" }), mimetype='application/json')
+    else:
+        return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
+        
+    logout_view(request)
 
 def add(request):
     if authenticate_view(request):

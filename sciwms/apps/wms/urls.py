@@ -29,6 +29,7 @@ urlpatterns = patterns( '',
                         # Datasets
                         url(r'^datasets$',  'sciwms.apps.wms.views.datasets'),
                         url(r'^datasets/$', 'sciwms.apps.wms.views.datasets'),
+                        url(r'^datasets/(?P<dataset>.*)/update', 'sciwms.apps.wms.views.update_dataset', name="update_dataset"),
                         url(r'^datasets/(?P<dataset>.*)/', 'sciwms.apps.wms.views.wms', name="dataset"),
 
                         # Clients
@@ -36,7 +37,6 @@ urlpatterns = patterns( '',
                         url(r'^simple', 'sciwms.apps.wms.views.simpleclient', name='simpleclient'),
                         url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient', name='leafletclient'),
 
-                        url(r'^update', 'sciwms.apps.wms.views.update'),
                         url(r'^add_dataset', 'sciwms.apps.wms.views.add'),  # This is a POST based view
                         url(r'^add_to_group', 'sciwms.apps.wms.views.add_to_group'),
                         url(r'^remove_dataset', 'sciwms.apps.wms.views.remove'),

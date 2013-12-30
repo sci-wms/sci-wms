@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+    <style>
+        table { table-layout: fixed; }
+        table th, table td { overflow: hidden; }
+        hr { margin-top: 10px; margin-bottom: 10px; }
+    </style>
+
 </head>
 
 <body>
@@ -36,29 +43,68 @@
 
         {% if datasets %}
 
-            {% for dataset in datasets %}
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">{{ dataset.name }} - {{ dataset.title }}</a></h3>
-                        </div>
-                        <div class="panel-body">
-                            {{ dataset.abstract }}
-                        </div>
+            <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
+                <thead>
+                    <tr>
+                        <th style="width: 300px">Description</th>
+                        <th style="width: 125px">Preview</th>
+                        <th style="width: 225px">Info</th>
+                        <th style="width: 100px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dataset in datasets %}
+                    <tr>
+                        <td>
+                            <h4>{{ dataset.name | truncatechars:28 }}</h4>
+                            <span>{{ dataset.title }}</span>
+                            <hr />
+                            <span>{{ dataset.abstract }}</span>
+                        </td>
 
-                        <ul class="list-group">
+                        <td>
+                            <a href="#" class="thumbnail" alt="{{ dataset.name }} thumbnail">n/a</a>
+                        </td>
+
+                        <td>
+                            <a class="row" href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">
+                                <span class="glyphicon glyphicon-new-window"></span> GetCaps
+                            </a>
                             {% if dataset.online %}
-                                <li class="list-group-item">URI: <a href="{{ dataset.uri }}.html">{{ dataset.uri }}</a> </li>
+                                <a class="row" href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
                             {% else %}
-                                <li class="list-group-item">URI: {{ dataset.uri }}</li>
+                                <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
                             {% endif %}
-                            <li class="list-group-item">Update?: {{ dataset.keep_up_to_date }}</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+
+                            <!-- Update -->
+                            <hr />
+                            {% if dataset.cache_last_updated %}
+                                <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
+                            {% else %}
+                                <span class="row">Updated: never</span>
+                            {% endif %}
+                            <span class="row">
+                                <span>Keep up to date:</span> 
+                                {% if dataset.keep_up_to_date %}
+                                    <span style="color: green" class="glyphicon glyphicon-ok"></span> 
+                                {% else %}
+                                    <span style="color: red" class="glyphicon glyphicon-remove"></span> 
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        <td>
+                            <a href="{% url 'update_dataset' dataset.name %}">
+                                <button type="button" class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-refresh"></span> Update
+                                </button>
+                            </a>
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
         {% else %}
 
