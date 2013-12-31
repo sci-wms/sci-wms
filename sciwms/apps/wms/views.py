@@ -174,7 +174,7 @@ def authenticate_view(request):
         passw = request.POST.get('password', None)
     elif request.method == 'GET':
         uname = request.GET.get('username', None)
-        passw = request.GET.get('password'. None)
+        passw = request.GET.get('password', None)
 
     user = authenticate(username=uname, password=passw)
 
@@ -194,9 +194,9 @@ def update_dataset(request, dataset):
         else:
             d = Dataset.objects.get(name=dataset)
             d.update_cache()
-            return HttpResponse(json.dumps({ "message" : "scheduled" }), mimetype='application/json')
+            return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
     else:
-        return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
+        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
         
     logout_view(request)
 
