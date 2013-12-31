@@ -170,7 +170,11 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
     else:
         zi = griddata(lon, lat, mag, xi, yi, interp='nn')
     fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
-    m.imshow(zi, norm=norm, cmap=cmap, clip_path=patch1, interpolation="nearest")
+
+    # Should we draw anything?
+    if patch1 is not None:
+        m.imshow(zi, norm=norm, cmap=cmap, clip_path=patch1, interpolation="nearest")
+
     #from matplotlib.backends.backend_agg import FigureCanvasAgg
     #canvas = FigureCanvasAgg(fig)
     #canvas.print_png("testing_yay.png")
@@ -432,19 +436,25 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
                                                  shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
     else:
         box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
+
     # Find the intersection of the dataset domain and view extent
-    domain = domain.intersection(box)
+    intersects = domain.intersection(box)
     # Create a path out of the polygon for clipping
-    if domain.geom_type == "Polygon":
-        x, y = domain.exterior.xy
+    p = None
+
+    # Does not intersect
+    if intersects.geom_type == "GeometryCollection" and len(intersects) == 0:
+        return None
+    elif intersects.geom_type == "Polygon":
+        x, y = intersects.exterior.xy
         x = np.asarray(x)
         # Correct continous
         x = correct_continuous(x, continuous, lonmin, latmin, lonmax, latmax)
         x, y = m(x, y)
-        x = np.hstack((np.asarray(x),x[0]))
-        y = np.hstack((np.asarray(y),y[0]))
+        x = np.hstack((np.asarray(x), x[0]))
+        y = np.hstack((np.asarray(y), y[0]))
         allcodes = create_path_codes(x)
-        for hole in domain.interiors:
+        for hole in intersects.interiors:
             holex, holey = hole.xy
             holex = np.asarray(holex)
             # Correct continous
@@ -453,9 +463,9 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
             allcodes = add_path_codes(holex, allcodes)
             x = np.concatenate((x, holex))
             y = np.concatenate((y, holey))
-        p = mpath.Path(np.asarray((x,y)).T, codes = allcodes)
-    elif domain.geom_type == "MultiPolygon":
-        for i, part in enumerate(domain.geoms):
+        p = mpath.Path(np.asarray((x, y)).T, codes=allcodes)
+    elif intersects.geom_type == "MultiPolygon":
+        for i, part in enumerate(intersects.geoms):
             x1, y1 = part.exterior.xy
             x1 = np.asarray(x1)
             # Correct continous
@@ -466,8 +476,8 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
                 x = np.concatenate((x, x1))
                 y = np.concatenate((y, y1))
             else:
-                x = np.hstack((np.asarray(x1),x1[0]))
-                y = np.hstack((np.asarray(y1),y1[0]))
+                x = np.hstack((np.asarray(x1), x1[0]))
+                y = np.hstack((np.asarray(y1), y1[0]))
                 allcodes = create_path_codes(x)
             try:
                 for hole in part.interiors:
@@ -481,7 +491,8 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
                     y = np.concatenate((y, holey))
             except:
                 pass
-            p = mpath.Path(np.asarray((x,y)).T, codes = allcodes)
+            p = mpath.Path(np.asarray((x, y)).T, codes=allcodes)
+
     return p
 
 def prepare_axes(m, lonmin, latmin, lonmax, latmax):
@@ -521,6 +532,7 @@ def figure2array(fig):
     del fig
     return im
 
+
 def cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, cont):
     import matplotlib.patches as mpatches
 
@@ -534,10 +546,15 @@ def cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, c
 
     # Get the current extent of the dataset domain as path
     p = get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, cont)
-    patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
 
-    # Clip the image to the dataset's domain
-    m.ax.add_patch(patch1)
-    fig.figimage(im, clip_path=patch1)
-    patch1.set_color('none')
-    return fig, m, patch1 # Return a new fig instance
+    try:
+        patch1 = mpatches.PathPatch(p, facecolor='none', edgecolor='none')
+        # Clip the image to the dataset's domain
+        m.ax.add_patch(patch1)
+        fig.figimage(im, clip_path=patch1)
+        patch1.set_color('none')
+    except AttributeError:
+        # 'p' was None:
+        patch1 = None
+    finally:
+        return fig, m, patch1 # Return a new fig instance
