@@ -199,6 +199,12 @@ of the sci-wms gunicorn configuration files,  you can also use <code>tornado</co
 pip install tornado
 </code></pre>
 
+<h3 id="run-migrations">Run Migrations</h3>
+<p>Be sure to run the the <code>south</code> database migrations after setting up your environment.  This will add sample data and allow you to set the default user for sci-wms.</p>
+<pre><code class="bash">python manage.py syncdb       # Prompts to create superuser account
+python manage.py migrate
+</code></pre>
+
 <h2 id="developing">Developing</h2>
 <h3 id="testing">Testing</h3>
 <p>To make sure that dependencies have been installed correctly, and that sci-wms is fully functional.
@@ -229,5 +235,19 @@ A helper script for starting a gunicorn sci-wms server is included with the sour
 
 <p><code>start_server.sh</code> loads the config file <code>gunicorn_config_prod.py</code> that is in the root of the sci-wms source tree.  Please look at the gunicorn documentation for additional config options and edit this file as necessary.</p>
 <p>In production, you will also need to use a webserver (apache or ngnix) to serve static assets inside of sci-wms.  See <a href="http://docs.gunicorn.org/en/latest/deploy.html#nginx-configuration">this nginx</a> example to get started.</p>
+<h3 id="locking-down-the-deployment">Locking down the deployment</h3>
+<p>You should edit the <code>sciwms/settings/prod.py</code> file after deployment and replace the <code>*</code> in <code>ALLOWED_HOSTS</code> with specific host(s) that that server should be accessible on. Example:</p>
+<pre><code class="python">#ALLOWED_HOSTS  = [&quot;*&quot;]
+ALLOWED_HOSTS  = [&quot;sciwms.external-host.com&quot;, &quot;YOUR_IP_ADDRESS&quot;, &quot;sciwms.internal-host&quot;]
+</code></pre>
+
+<h2 id="local-cache-data">Local cache data</h2>
+<p>Sci-wms caches data on disk so it does not have to read static data from each dataset every request.  By default, the path is <code>SCIWMS_ROOT/sciwms/apps/wms/topology</code>.  To change this, edit the <code>sciwms/settings/dev.py</code> or <code>sciwms/settings/prod.py</code> files and add a TOPOLOGY_PATH variable.</p>
+<pre><code class="python"># Where to store the Topology data?
+TOPOLOGY_PATH = &quot;/data/sci-wms-topology&quot;
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+</code></pre>
+
 <h2 id="caveats">Caveats:</h2>
 <p>Look at <a href="https://github.com/asascience-open/sci-wms/issues?state=open">https://github.com/asascience-open/sci-wms/issues?state=open</a> for a list of known issues and problems.</p></body></html>

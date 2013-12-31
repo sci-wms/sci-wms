@@ -89,6 +89,14 @@ pip install eventlet
 pip install tornado
 ```
 
+
+### Run Migrations
+Be sure to run the the `south` database migrations after setting up your environment.  This will add sample data and allow you to set the default user for sci-wms.
+```bash
+python manage.py syncdb       # Prompts to create superuser account
+python manage.py migrate
+```
+
 ## Developing
 
 ### Testing
