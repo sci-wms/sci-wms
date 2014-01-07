@@ -16,8 +16,12 @@ This file is part of SCI-WMS.
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
+import os
+from urlparse import urlparse
+from datetime import datetime
 
 from django.db import models
+from django.conf import settings
 
 
 class Dataset(models.Model):
@@ -31,9 +35,23 @@ class Dataset(models.Model):
     display_all_timesteps   = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)")
     latitude_variable       = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
     longitude_variable      = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
+    cache_last_updated      = models.DateTimeField(null=True, editable=False)
 
     def __unicode__(self):
         return self.name
+
+    def path(self):
+        if urlparse(self.uri).scheme == "" and not self.uri.startswith("/"):
+            # We have a relative path, make it absolute to the sciwms directory.
+            return os.path.realpath(os.path.join(settings.PROJECT_ROOT, self.uri))
+        else:
+            return self.uri
+
+    def update_cache(self):
+        from sciwms.libs.data.caching import update_dataset_cache
+        update_dataset_cache(self)
+        self.cache_last_updated = datetime.now()
+        self.save()
 
 
 class VirtualLayer(models.Model):

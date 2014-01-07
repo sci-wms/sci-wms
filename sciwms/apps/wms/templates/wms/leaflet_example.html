@@ -1,11 +1,14 @@
 <html>
 <head>
 	<title>Leaflet mobile example</title>
+    {% load static from staticfiles %}
+    <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.css" />
 	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+
 
 	<script src="http://leafletjs.com/dist/leaflet.js"></script>
 
@@ -36,7 +39,7 @@
                         transparent: 'true',
                         attribution: "Alexander Crosby is awesome",
                         styles: '{{ dataset.test_style|default:"pcolor_average_jet_None_None_grid_False" }}'});
-                        
+
                 {{dataset.name}}.setParams({
                         TIME: '{{dataset.test_date}}',
                         ELEVATION: '0'});
@@ -58,13 +61,13 @@
 		map.on('locationerror', onLocationError);
 
 		map.locate({setView: true, maxZoom: 16});
-                
+
                 var overlayMaps = {
                     {% for dataset in datasets %}
                     "{{dataset.name}}":{{dataset.name}},
                     {% endfor %}
                     };
-                
+
                 L.control.layers(overlayMaps).addTo(map);
 	</script>
 </body>

@@ -3,81 +3,123 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
-<style type="text/css">
-    body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    }
-    p {
-    background-color:#6495ed;
-    padding: 0px;
-    margin-right:5px;
-    margin-left:5px;
-    }
-    h2 {
-    padding: 10px;
-    position: static;
-    background-position: left top;
-    width: 100%;
-    background-color: #002242;
-    color: #b0c4de;
-    text-align: left;
-    margin-top:0px;
-    }
-    li {
-    list-style-type: none;
-    padding: 10px;
-    background-color:#b0c4de;
-    margin-top:-12px;
-    margin-bottom:0px;
-    margin-right:5px;
-    margin-left:5px;
-    padding-left: 20px;
-    }
-    he {
-    text-decoration:underline;
-    font-size:20px;
-    padding: 20px;
-    line-height: 150%;
-    margin-top:-12px;
-    margin-bottom:0px;
-    margin-right:0px;
-    margin-left:0px;
-    }
-    li.foot {
-    margin-top:0px;
-    padding: 0px;
-    }
-</style>
-    <title>{% block title %}Sci-wms: A Python WMS service for geospatial gridded data{% endblock %}</title>
+    <title>Sci-wms: A Python WMS service for geospatial gridded data</title>
+    {% load static from staticfiles %}
+    <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+    <style>
+        table { table-layout: fixed; }
+        table th, table td { overflow: hidden; }
+        hr { margin-top: 10px; margin-bottom: 10px; }
+    </style>
+
 </head>
 
 <body>
 
-    <h2>Sci-wms: A Python WMS service for geospatial gridded data</h2>
-    {% for dataset in datasets %}
-        <p>
-        <he><a href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities"><b>{{dataset.name}}</b></a><he>
-        <li>URI: <a href="{{dataset.uri}}.html">{{dataset.uri}}</a> </li>
-        <li>Update?: {{dataset.keep_up_to_date}} </li>
-        </p>
-    {% endfor %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header">
+                    <h1>sci-wms <small>A Python WMS service for geospatial gridded data</small></h1>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <ul class="nav nav-pills">
+                <li><a href="{% url 'documentation' %}">Documentation</a></li>
+                    <li><a href="{% url 'simpleclient' %}">Client</a></li>
+                    <li><a href="{% url 'leafletclient' %}">Client (beta)</a></li>
+                    <li><a href="/admin">Admin</a></li>
+                </ul>
+            </div>
+        </div>
 
-    <li class="foot">
-    <a href="/admin">To add or remove datasets, use the admin interface</a>
-    </li>
-    <li class="foot">
-    <a href="{% url 'simpleclient' %}">Test the services with a simple client</a>
-    </li>
-    <li class="foot">
-    <a href="{% url 'leafletclient' %}">Test the services with the BETA client</a>
-    </li>
-    </li>
-    <li class="foot">
-    <a href="{% url 'documentation' %}">Documentation can be found here</a>
-    </li>
+        <hr />
 
+        {% if datasets %}
 
+            <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
+                <thead>
+                    <tr>
+                        <th style="width: 300px">Description</th>
+                        <th style="width: 125px">Preview</th>
+                        <th style="width: 225px">Info</th>
+                        <th style="width: 100px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dataset in datasets %}
+                    <tr>
+                        <td>
+                            <h4>{{ dataset.name | truncatechars:28 }}</h4>
+                            <span>{{ dataset.title }}</span>
+                            <hr />
+                            <span>{{ dataset.abstract }}</span>
+                        </td>
+
+                        <td>
+                            <a href="#" class="thumbnail" alt="{{ dataset.name }} thumbnail">n/a</a>
+                        </td>
+
+                        <td>
+                            <a class="row" href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">
+                                <span class="glyphicon glyphicon-new-window"></span> GetCaps
+                            </a>
+                            {% if dataset.online %}
+                                <a class="row" href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
+                            {% else %}
+                                <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
+                            {% endif %}
+
+                            <!-- Update -->
+                            <hr />
+                            {% if dataset.cache_last_updated %}
+                                <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
+                            {% else %}
+                                <span class="row">Updated: never</span>
+                            {% endif %}
+                            <span class="row">
+                                <span>Keep up to date:</span> 
+                                {% if dataset.keep_up_to_date %}
+                                    <span style="color: green" class="glyphicon glyphicon-ok"></span> 
+                                {% else %}
+                                    <span style="color: red" class="glyphicon glyphicon-remove"></span> 
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        <td>
+                            <a href="{% url 'update_dataset' dataset.name %}">
+                                <button type="button" class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-refresh"></span> Update
+                                </button>
+                            </a>
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">No datasets found.  Add datasets using the Admin link above.</a></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+    </div>
 </body>
 </html>

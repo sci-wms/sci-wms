@@ -24,6 +24,15 @@ WSGI_APPLICATION = "sciwms.wsgi.application"
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
+# LOCALDATASET is for testing purposes
+# If LOCALDATASET is populated, the service will use the cached
+# TOPOLOGY for schema/grid information and LOCALDATASETPATH for actual data extraction
+LOCALDATASET     = False
+#LOCALDATASETPATH = {
+#    '30yr_gom3' : "/home/user/Data/FVCOM/gom3_197802.nc",
+#}
+
+
 # Where to store the Topology data?
 TOPOLOGY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
@@ -96,9 +105,11 @@ STATIC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sta
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
+COMMON_STATIC_FILES = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common_static"))
+
 # Additional locations of static files
 STATICFILES_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common_static")),
+    COMMON_STATIC_FILES,
 )
 
 # List of finder classes that know how to find static files in
@@ -142,7 +153,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'markup_deprecated',
     'sciwms.apps.wms',
     'south'
 )

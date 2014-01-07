@@ -21,8 +21,25 @@ Created on Sep 1, 2011
 @author: ACrosby
 '''
 
+import os
+import gc
+import sys
 import json
-import sys, os, gc, bisect, math, datetime, numpy, netCDF4, subprocess, multiprocessing, logging, traceback, copy
+import bisect
+import logging
+import datetime
+import traceback
+import subprocess
+import multiprocessing
+import time as timeobj
+from urlparse import urlparse
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
+
+import numpy
+import netCDF4
 
 # Import from matplotlib and set backend
 import matplotlib
@@ -35,28 +52,17 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 # Other random "from" imports
 from rtree import index as rindex
 from collections import deque
-from StringIO import StringIO # will be deprecated in Python3, use io.byteIO instead
-import time as timeobj
-try:
-    import cPickle as pickle
-except ImportError:
-    import Pickle as pickle
-try:
-    import xml.etree.cElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
-
-# Import from sci-wms
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
-from django.contrib.sites.models import Site
-from django.contrib.auth import authenticate, login, logout
-import sciwms.libs.data.grid_init_script as grid_cache
-from sciwms.libs.data import cgrid, ugrid
-from django.http import HttpResponse, HttpResponseRedirect
-import sciwms.apps.wms.wms_requests as wms_reqs
+from StringIO import StringIO  # will be deprecated in Python3, use io.byteIO instead
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.template.loader import get_template
+from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth import authenticate, login, logout
+
+from sciwms.libs.data import cgrid, ugrid
+import sciwms.apps.wms.wms_requests as wms_reqs
+from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 
 output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
 # Set up Logger
@@ -67,22 +73,32 @@ formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def datasets (request):
+
+def crossdomain(request):
+    with open(os.path.join(settings.COMMON_STATIC_FILES, "common", "crossdomain.xml")) as f:
+        response = HttpResponse(content_type="text/xml")
+        response.write(f.read())
+    return response
+
+
+def datasets(request):
     from django.core import serializers
     datasets = Dataset.objects.all()
     data = serializers.serialize('json', datasets)
     return HttpResponse(data, mimetype='application/json')
 
-def grouptest (request, group):
+
+def grouptest(request, group):
     from django.template import Context
     sites = Site.objects.values()
     #print group
     group = Group.objects.get(name=group)
-    dict1 = Context({ 'localsite':sites[0]['domain'],
-                      'datasets':list(Dataset.objects.filter(group=group))})
+    dict1 = Context({ 'localsite' : sites[0]['domain'],
+                      'datasets'  : list(Dataset.objects.filter(group=group))})
     return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
 
-def groups (request, group):
+
+def groups(request, group):
     import django.shortcuts as dshorts
     reqtype = None
     try:
@@ -92,17 +108,19 @@ def groups (request, group):
             reqtype = request.GET['request']
         except:
             group = Group.objects.get(name=group)
-            datasets = list(Dataset.objects.filter(group=group))
+            datasets = Dataset.objects.filter(group=group)
             for dataset in datasets:
-                if dataset.uri[0:4] != "http":
-                    dataset.uri = "..." + os.path.basename(dataset.uri)
-            context = { "datasets":datasets}
-            return dshorts.render_to_response('index.html', context)
-    if reqtype.lower() == "getcapabilities": # Do GetCapabilities
+                dataset.uri = dataset.path()
+                if urlparse(dataset.uri).scheme != "":
+                    # Used in template to linkify to URI
+                    dataset.online = True
+            context = { "datasets" : datasets }
+            return dshorts.render_to_response('wms/index.html', context)
+    if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
         group = Group.objects.get(name=group)
         caps = wms_reqs.groupGetCapabilities(request, group, logger)
         return caps
-    elif reqtype != None:
+    elif reqtype is not None:
         try:
             layers = request.GET["LAYERS"]
         except:
@@ -113,17 +131,15 @@ def groups (request, group):
         request.GET["layers"] = layers.replace(dataset+"/", "")
         return wms(request, dataset)
 
-def testdb (request):
-    #print dir(Dataset.objects.get(name='necofs'))
-    return HttpResponse(str(Dataset.objects.get(name='necofs').uri), content_type='text')
-
 
 def index(request):
     import django.shortcuts as dshorts
-    datasets = Dataset.objects.values()
+    datasets = Dataset.objects.all()
     for dataset in datasets:
-        if dataset["uri"][0:4] != "http":
-            dataset["uri"] = "..." + os.path.basename(dataset["uri"])
+        dataset.uri = dataset.path()
+        if urlparse(dataset.uri).scheme != "":
+            # Used in template to linkify to URI
+            dataset.online = True
     context = { "datasets" : datasets }
     return dshorts.render_to_response('wms/index.html', context)
 
@@ -148,39 +164,43 @@ def leafletclient(request):
                       'datasets'  : Dataset.objects.values()})
     return HttpResponse(get_template('wms/leaflet_example.html').render(dict1))
 
+
 def authenticate_view(request):
+    if request.user.is_authenticated():
+        return True
+
     if request.method == 'POST':
-        uname = request.POST['username']
-        passw = request.POST['password']
+        uname = request.POST.get('username', None)
+        passw = request.POST.get('password', None)
     elif request.method == 'GET':
-        uname = request.GET['username']
-        passw = request.GET['password']
+        uname = request.GET.get('username', None)
+        passw = request.GET.get('password', None)
+
     user = authenticate(username=uname, password=passw)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            return True
-        else:
-            return False
+
+    if user is not None and user.is_active:
+        login(request, user)
+        return True
     else:
         return False
 
 def logout_view(request):
     logout(request)
 
+def update_dataset(request, dataset):
+    if authenticate_view(request):
+        if dataset is None:
+            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), mimetype='application/json')
+        else:
+            d = Dataset.objects.get(name=dataset)
+            d.update_cache()
+            return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
+    else:
+        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
+        
+    logout_view(request)
 
-def update(request):
-    logger.info("Adding new datasets and checking for updates on old ones...")
-    #grid_cache.check_topology_age()
-    # possibly use import os; os.__file__ for better compatibility?
-    manager_path = os.path.join(settings.PROJECT_ROOT)
-    cmd = 'cd '+manager_path+' && '+sys.executable+' manage.py updatecache'
-    subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
-    logger.info("...Finished updating")
-    return HttpResponse("Updating Started, for large datasets or many datasets this may take a while")
-
-
-def add (request):
+def add(request):
     if authenticate_view(request):
         dataset_endpoint = request.POST.get("uri", None)
         dataset_id = request.POST.get("id", None)
@@ -188,28 +208,27 @@ def add (request):
         dataset_abstract = request.POST.get("abstract", None)
         dataset_update = bool(request.POST.get("update", False))
         memberof_groups = request.POST.get("groups", None)
-        if memberof_groups == None:
+        if memberof_groups is None:
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-        if dataset_id == None:
+        if dataset_id is None:
             return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
-        elif dataset_endpoint == None:
+        elif dataset_endpoint is None:
             return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
-        elif dataset_abstract == None:
+        elif dataset_abstract is None:
             return HttpResponse("Exception: Please include 'abstract' parameter in POST request.", status=500)
-        elif dataset_update == None:
+        elif dataset_update is None:
             return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
         else:
             if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
                 dataset = Dataset.objects.get(name = dataset_id)
             else:
                 dataset = Dataset.objects.create(name = dataset_id,
-                                             title = dataset_title,
-                                             abstract = dataset_abstract,
-                                             uri = dataset_endpoint,
-                                             keep_up_to_date = dataset_update,
-                                             )
+                                                 title = dataset_title,
+                                                 abstract = dataset_abstract,
+                                                 uri = dataset_endpoint,
+                                                 keep_up_to_date = dataset_update)
                 dataset.save()
             for groupname in memberof_groups:
                 if len(list(Group.objects.filter(name = groupname))) > 0:
@@ -219,15 +238,16 @@ def add (request):
                 return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
     logout_view(request)
 
-def add_to_group (request):
+
+def add_to_group(request):
     if authenticate_view(request):
         dataset_id = request.GET.get("id", None)
         memberof_groups = request.GET.get("groups", None)
-        if memberof_groups == None:
+        if memberof_groups is None:
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-        if dataset_id == None:
+        if dataset_id is None:
             return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
         else:
             if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
@@ -242,10 +262,11 @@ def add_to_group (request):
                 return HttpResponse("Success: Dataset %s added to %s groups." % (dataset_id, memberof_groups.__str__()))
     logout_view(request)
 
-def remove (request):
+
+def remove(request):
     if authenticate_view(request):
         dataset_id = request.GET.get("id", None)
-        if dataset_id == None:
+        if dataset_id is None:
             return HttpResponse("Exception: Please include 'id' parameter in GET request.")
         else:
             dataset = Dataset.objects.get(name=dataset_id)
@@ -255,15 +276,16 @@ def remove (request):
         return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
     logout_view(request)
 
-def remove_from_group (request):
+
+def remove_from_group(request):
     if authenticate_view(request):
         dataset_id = request.GET.get("id", None)
         memberof_groups = request.GET.get("groups", None)
-        if memberof_groups == None:
+        if memberof_groups is None:
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-            if dataset_id == None:
+            if dataset_id is None:
                 return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
             else:
                 if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
@@ -278,24 +300,20 @@ def remove_from_group (request):
             return HttpResponse()
     logout_view(request)
 
-def documentation (request):
+
+def documentation(request):
     return HttpResponseRedirect('http://acrosby.github.io/sci-wms')
 
-def crossdomain (request):
-    f = open(config.staticspath + "crossdomain.xml")
-    test = f.read()
-    response = HttpResponse(content_type="text/xml")
-    response.write(test)
-    return response
 
-def lower_request (request):
+def lower_request(request):
     gettemp = request.GET.copy()
     for key in request.GET.iterkeys():
         gettemp[key.lower()] = request.GET[key]
     request._set_get(gettemp)
     return request
 
-def database_request_interaction (request, dataset):
+
+def database_request_interaction(request, dataset):
     if VirtualLayer.objects.filter(datasets__name = dataset):
         vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer_expression = request.GET['layers'])
         request.GET['layers'] = vlayer[0].layer_expression
@@ -459,7 +477,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     ET.SubElement(layer, "Abstract").text   = Dataset.objects.get(name=dataset).abstract
     ET.SubElement(layer, "SRS").text        = "EPSG:3857"
     ET.SubElement(layer, "SRS").text        = "MERCATOR"
-    nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).uri)
+    nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).path())
     topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
     list_timesteps = Dataset.objects.get(name=dataset).display_all_timesteps
     for variable in nc.variables.keys():
@@ -472,7 +490,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                 location = "node"
         if location == "face":
             location = "cell"
-        if True:#try:
+        if True:
             #nc.variables[variable].location
             layer1 = ET.SubElement(layer, "Layer")
             layer1.attrib["queryable"] = "1"
@@ -534,13 +552,13 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                 #print topology.variables["time"][0], len(topology.variables["time"])
                 #print topology.variables["time"][-1]
                     if len(topology.variables["time"]) == 1:
-                        time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z"
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
                     else:
                         if list_timesteps:
                             temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
-                            time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                            time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
                 except:
                     if len(topology.variables["time"]) == 1:
                         time_extent.text = str(topology.variables["time"][0])
@@ -552,8 +570,8 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
             if topology.grid.lower() == 'false':
                 if nc.variables[variable].ndim > 2:
                     try:
-                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
-                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
+                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
+                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
                     except:
                         ET.SubElement(layer1, "DepthLayers").text = ""
                     try:
@@ -569,11 +587,11 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     ET.SubElement(layer1, "DepthLayers").text = "0"
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
                     elev_extent.text = "0"
-            elif topology.grid.lower() =='cgrid':
+            elif topology.grid.lower() == 'cgrid':
                 if nc.variables[variable].ndim > 3:
                     try:
-                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
-                        elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
+                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
+                        elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
                     except:
                         ET.SubElement(layer1, "DepthLayers").text = ""
                     try:
@@ -626,14 +644,14 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     layer1.attrib["queryable"] = "1"
                     layer1.attrib["opaque"] = "0"
                     ET.SubElement(layer1, "Name").text = layername
-                    ET.SubElement(layer1, "Title").text = layername#"current velocity (u,v)"
+                    ET.SubElement(layer1, "Title").text = layername  # current velocity (u,v)"
                     if layertype == "*":
                         typetext = "3 band true color composite"
                     elif layertype == "+":
                         typetext = "sum or addition of two layers"
                     elif layertype == ",":
                         typetext = "magnitude or vector layer"
-                    ET.SubElement(layer1, "Abstract").text = "Virtual Layer, "+typetext#"Magnitude of current velocity from u and v components"
+                    ET.SubElement(layer1, "Abstract").text = "Virtual Layer, "+typetext  # "Magnitude of current velocity from u and v components"
                     ET.SubElement(layer1, "SRS").text = "EPSG:4326"
                     llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
                     llbbox.attrib["minx"] = str(numpy.nanmin(templon))
@@ -663,13 +681,13 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                             temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
-                            time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                            time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
                     except:
                         time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
                     if nc.variables[variable].ndim > 2:
                         try:
-                            ET.SubElement(layer1, "DepthLayers").text =  str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
-                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
+                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
+                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
                         except:
                             ET.SubElement(layer1, "DepthLayers").text = ""
                         try:
@@ -722,7 +740,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                 #legend_onlineresource.attrib["xlink:type"] = "simple"
                 #legend_onlineresource.attrib["xlink:href"] = href
                 #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-        if True:#except:
+        if True:  # except:
             pass
     nc.close()
     tree = ET.ElementTree(root)
@@ -741,7 +759,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
             except:
                 pass
             response = HttpResponse(content_type="text/javascript")
-            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',', ': '), allow_nan=True) + ")"
             response.write(output_str)
         else:
             # Return the response
@@ -754,6 +772,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
         response.write(r'<?xml version="1.0" encoding="utf-8"?>')
         tree.write(response)
     return response
+
 
 def getLegendGraphic(request, dataset):
     """
@@ -778,7 +797,6 @@ def getLegendGraphic(request, dataset):
     except:
         climits = (None, None)
     variables = request.GET["layer"].split(",")
-    topology_type = styles[5]
     plot_type = styles[0]
     colormap = styles[2].replace('-', '_')
 
@@ -787,7 +805,7 @@ def getLegendGraphic(request, dataset):
     if settings.LOCALDATASET:
         url = settings.LOCALDATASETPATH[dataset]
     else:
-        url = Dataset.objects.get(name=dataset).uri
+        url = Dataset.objects.get(name=dataset).path()
     nc = netCDF4.Dataset(url)
 
     """
@@ -807,16 +825,16 @@ def getLegendGraphic(request, dataset):
         units = nc.variables[variables[0]].units
     except:
         units = ''
-    if climits[0] is None or climits[1] is None: # TODO: NOT SUPPORTED RESPONSE
+    if climits[0] is None or climits[1] is None:  # TODO: NOT SUPPORTED RESPONSE
             #going to have to get the data here to figure out bounds
             #need elevation, bbox, time, magnitudebool
-            CNorm=None
+            CNorm = None
             ax = fig.add_axes([0, 0, 1, 1])
             ax.grid(False)
-            ax.text(.5,.5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
-    elif plot_type not in ["contours", "filledcontours",]:
+            ax.text(.5, .5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
+    elif plot_type not in ["contours", "filledcontours"]:
         #use limits described by the style
-        ax = fig.add_axes([.01, .05, .2, .8])#, xticks=[], yticks=[])
+        ax = fig.add_axes([.01, .05, .2, .8])  # xticks=[], yticks=[])
         CNorm = matplotlib.colors.Normalize(vmin=climits[0],
                                             vmax=climits[1],
                                             clip=False,
@@ -827,27 +845,26 @@ def getLegendGraphic(request, dataset):
                                               orientation='vertical',
                                               )
         cb.set_label(units)
-    else:#plot type somekind of contour
+    else:  # plot type somekind of contour
         if plot_type == "contours":
             #this should perhaps be a legend...
             #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=True)
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=True)
             #levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
             levs = numpy.linspace(climits[0], climits[1], 11)
-            x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
+            x, y = numpy.meshgrid(numpy.arange(10), numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
-            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0])
-                for pc in cs.collections]
+            proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 
             fig.legend(proxy, levs,
                        #bbox_to_anchor = (0, 0, 1, 1),
                        #bbox_transform = fig.transFigure,
                        loc = 6,
                        title = units,
-                       prop = {'size':8},
+                       prop = { 'size' : 8 },
                        frameon = False,
                        )
         elif plot_type == "filledcontours":
@@ -855,16 +872,15 @@ def getLegendGraphic(request, dataset):
             #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0],vmax=climits[1],clip=False,)
+            CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=False,)
             #levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
             levs = numpy.linspace(climits[0], climits[1], 10)
             levs = numpy.hstack(([-99999], levs, [99999]))
 
-            x, y = numpy.meshgrid(numpy.arange(10),numpy.arange(10))
+            x, y = numpy.meshgrid(numpy.arange(10), numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
-            proxy = [plt.Rectangle((0,0),0,0,fc = pc.get_facecolor()[0])
-                for pc in cs.collections]
+            proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 
             levels = []
             for i, value in enumerate(levs):
@@ -884,7 +900,7 @@ def getLegendGraphic(request, dataset):
                        #bbox_transform = fig.transFigure,
                        loc = 6,
                        title = units,
-                       prop = {'size':6},
+                       prop = { 'size' : 6 },
                        frameon = False,
                        )
 
@@ -912,14 +928,8 @@ def getFeatureInfo(request, dataset):
     height = float(request.GET["height"])
     width = float(request.GET["width"])
     styles = request.GET["styles"].split(",")[0].split("_")
-    #print styles
-    #LAYERS = request.GET['LAYERS']
-    #FORMAT =  request.GET['FORMAT']
-    #TRANSPARENT =
     QUERY_LAYERS = request.GET['query_layers'].split(",")
-    INFO_FORMAT = "text/csv" # request.GET['INFO_FORMAT']
-    projection = 'merc'#request.GET['SRS']
-    #TIME = request.GET['TIME']
+
     try:
         elevation = int(request.GET['elevation'])
     #print elevation
@@ -929,8 +939,8 @@ def getFeatureInfo(request, dataset):
     mi = pyproj.Proj("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs ")
     # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
     lon, lat = mi(lonmin+((lonmax-lonmin)*(X/width)),
-                            latmax-((latmax-latmin)*(Y/height)),
-                            inverse=True)
+                  latmax-((latmax-latmin)*(Y/height)),
+                  inverse=True)
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
@@ -949,15 +959,15 @@ def getFeatureInfo(request, dataset):
             #lats = topology.variables['latc'][:]
             #lons = topology.variables['lonc'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
-            test_point = Point(lon,lat)
+            test_point = Point(lon, lat)
             test = -1
-            for ii,i in enumerate(nindex):
+            for ii, i in enumerate(nindex):
                 lons = i.object[0]
                 lats = i.object[1]
-                test_cell = Polygon([(lons[0],lats[0]),
-                                    (lons[1],lats[1]),
-                                    (lons[2],lats[2]),
-                                    (lons[0],lats[0]),
+                test_cell = Polygon([(lons[0], lats[0]),
+                                    (lons[1],  lats[1]),
+                                    (lons[2],  lats[2]),
+                                    (lons[0],  lats[0]),
                                     ])
                 if test_cell.contains(test_point):
                     test_index = ii
@@ -972,25 +982,25 @@ def getFeatureInfo(request, dataset):
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]][0], lats[nindex[0].object[0],nindex[0].object[1]][0]
+        selected_longitude, selected_latitude = lons[nindex[0].object[0], nindex[0].object[1]][0], lats[nindex[0].object[0], nindex[0].object[1]][0]
         index = nindex[0].object
         tree.close()
         index = numpy.asarray(index)
-    #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
+
     try:
         TIME = request.GET["time"]
         if TIME == "":
             now = date.today().isoformat()
-            TIME = now + "T00:00:00"#
+            TIME = now + "T00:00:00"
     except:
         now = date.today().isoformat()
-        TIME = now + "T00:00:00"#
-        #print "here"
+        TIME = now + "T00:00:00"
+
     TIMES = TIME.split("/")
-    #print TIMES
+
     for i in range(len(TIMES)):
-##            print TIMES[i]
-        TIMES[i] = TIMES[i].replace("Z","")
+
+        TIMES[i] = TIMES[i].replace("Z", "")
         if len(TIMES[i]) == 16:
             TIMES[i] = TIMES[i] + ":00"
         elif len(TIMES[i]) == 13:
@@ -1006,12 +1016,12 @@ def getFeatureInfo(request, dataset):
         dateend = netCDF4.date2num(dateend, units=time_units)
         time1 = bisect.bisect_right(times, datestart)
         time2 = bisect.bisect_right(times, dateend)
-##            print time2
+
         if time1 == -1:
             time1 = 0
         if time2 == -1:
             time2 = len(times)
-##            print time2
+
         time = range(time1, time2)
         if len(time) < 1:
             time = [len(times) - 1]
@@ -1026,7 +1036,6 @@ def getFeatureInfo(request, dataset):
         else:
             time = [time1-1]
 
-    pvar = deque()
     def getvar(nc, t, layer, var, ind):
         #nc = netCDF4.Dataset(url, 'r')
         if var == "time":
@@ -1041,7 +1050,7 @@ def getFeatureInfo(request, dataset):
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
 
-    url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).path()
     datasetnc = netCDF4.Dataset(url)
 
     varis = deque()
@@ -1079,12 +1088,11 @@ def getFeatureInfo(request, dataset):
     """
     #print request.GET["INFO_FORMAT"]
     if request.GET["INFO_FORMAT"].lower() == "image/png":
-        import matplotlib.dates as mdates
         response = HttpResponse(content_type=request.GET["INFO_FORMAT"].lower())
         from matplotlib.figure import Figure
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.plot(varis[0],varis[1]) # Actually make line plot
+        ax.plot(varis[0], varis[1])  # Actually make line plot
         tdelta = varis[0][-1]-varis[0][0]
         if tdelta.total_seconds()/3600. <= 36:
             if tdelta.total_seconds()/3600. <= 12:
@@ -1120,10 +1128,10 @@ def getFeatureInfo(request, dataset):
         ax.set_ylabel(QUERY_LAYERS[0] + "(" + units + ")")
         canvas = FigureCanvasAgg(fig)
         canvas.print_png(response)
-    elif request.GET["info_format"].lower() == "application/json":
+    elif request.GET["INFO_FORMAT"].lower() == "application/json":
         import json
         response = HttpResponse("Response MIME Type application/json not supported at this time")
-    elif request.GET["info_format"].lower() == "text/javascript":
+    elif request.GET["INFO_FORMAT"].lower() == "text/javascript":
         """
         http://docs.geoserver.org/latest/en/user/services/wms/reference.html#getfeatureinfo
         """
@@ -1133,12 +1141,12 @@ def getFeatureInfo(request, dataset):
         output_dict = {}
         output_dict2 = {}
         output_dict["type"] = "Feature"
-        output_dict["geometry"] = {"type":"Point", "coordinates":[float(selected_longitude),float(selected_latitude)]}
+        output_dict["geometry"] = { "type" : "Point", "coordinates" : [float(selected_longitude), float(selected_latitude)] }
         varis[0] = [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]
         output_dict2["time"] = {"units": "iso", "values": varis[0]}
-        output_dict2["latitude"] = {"units":"degrees_north", "values":float(selected_latitude)}
-        output_dict2["longitude"] = {"units":"degrees_east", "values":float(selected_longitude)}
-        for i, var in enumerate(QUERY_LAYERS): # TODO: use map to convert to floats
+        output_dict2["latitude"]  = { "units" : "degrees_north", "values" : float(selected_latitude) }
+        output_dict2["longitude"] = { "units" : "degrees_east",  "values" : float(selected_longitude) }
+        for i, var in enumerate(QUERY_LAYERS):  # TODO: use map to convert to floats
             varis[i+1] = list(varis[i+1])
             for q, v in enumerate(varis[i+1]):
                 if numpy.isnan(v):
@@ -1147,9 +1155,9 @@ def getFeatureInfo(request, dataset):
                     varis[i+1][q] = float(varis[i+1][q])
             output_dict2[var] = {"units": datasetnc.variables[var].units, "values": varis[i+1]}
         output_dict["properties"] = output_dict2
-        output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+        output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',', ': '), allow_nan=True) + ")"
         response.write(output_str)
-    elif request.GET["info_format"].lower() == "text/csv":
+    elif request.GET["INFO_FORMAT"].lower() == "text/csv":
         import csv
         buffer = StringIO()
         response = HttpResponse()
@@ -1172,19 +1180,20 @@ def getFeatureInfo(request, dataset):
                         thisline.append(varis[k][i])
                     except:
                         thisline.append(varis[k])
-                else: # If the variable is not changing with type, like bathy
+                else:  # If the variable is not changing with type, like bathy
                     thisline.append(varis[k])
             c.writerow(thisline)
         dat = buffer.getvalue()
         buffer.close()
         response.write(dat)
     else:
-        response = HttpResponse("Response MIME Type %s not supported at this time" % request.GET["info_format"].lower())
+        response = HttpResponse("Response MIME Type %s not supported at this time" % request.GET["INFO_FORMAT"].lower())
     datasetnc.close()
     topology.close()
     return response
 
-def getMap (request, dataset):
+
+def getMap(request, dataset):
     '''
     the meat and bones of getMap
     '''
@@ -1204,7 +1213,7 @@ def getMap (request, dataset):
     #loglist = []
 
     # direct the service to the dataset
-    url = Dataset.objects.get(name=dataset).uri
+    url = Dataset.objects.get(name=dataset).path()
 
     # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])
@@ -1219,7 +1228,7 @@ def getMap (request, dataset):
     dateend = request.GET["dateend"]
     layer = request.GET["layer"]
     layer = layer.split(",")
-    for i,l in enumerate(layer):
+    for i, l in enumerate(layer):
     #    layer[i] = int(l)-1
         layer = int(l)
     layer = numpy.asarray(layer)
@@ -1227,7 +1236,7 @@ def getMap (request, dataset):
     actions = set(actions.split(","))
 
     # Get the colormap requested, the color limits/scaling
-    colormap = request.GET["colormap"]#.lower()
+    colormap = request.GET["colormap"]
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
     else:
@@ -1245,13 +1254,13 @@ def getMap (request, dataset):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    if "kml" in actions: # TODO: REMOVE THIS!
+    if "kml" in actions:  # TODO: REMOVE THIS!
         pass
     else:
         # Open topology cache file, and the actualy data endpoint
         topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
         datasetnc = netCDF4.Dataset(url)
-        gridtype = topology.grid # Grid type found in topology file
+        gridtype = topology.grid  # Grid type found in topology file
         logger.info("gridtype: " + gridtype)
         if gridtype != 'False':
             toplatc, toplonc = 'lat', 'lon'
@@ -1271,9 +1280,9 @@ def getMap (request, dataset):
                 lon = topology.variables[toplonc][:]
                 #wher = numpy.where(lon<lonmin)
                 if gridtype != 'False':
-                    lon[lon<0] = lon[lon<0] + 360
+                    lon[lon < 0] = lon[lon < 0] + 360
                 else:
-                    lon[lon<lonmin] = lon[lon<lonmin] + 360
+                    lon[lon < lonmin] = lon[lon < lonmin] + 360
             else:
                 lon = topology.variables[toplonc][:]
             lat = topology.variables[toplatc][:]
@@ -1285,17 +1294,16 @@ def getMap (request, dataset):
 
         if index is not None:
             if ("facets" in actions) or \
-            ("regrid" in actions) or \
-            ("shape" in actions) or \
-            ("contours" in actions) or \
-            ("interpolate" in actions) or \
-            ("filledcontours" in actions) or \
-            ("pcolor" in actions) or \
-            (topology_type.lower()=='node'):
-                if gridtype == 'False': # If ugrid
+               ("regrid" in actions) or \
+               ("shape" in actions) or \
+               ("contours" in actions) or \
+               ("interpolate" in actions) or \
+               ("filledcontours" in actions) or \
+               ("pcolor" in actions) or \
+               (topology_type.lower() == 'node'):
+                if gridtype == 'False':  # If ugrid
                     # If the nodes are important, get the node coords, and
                     # topology array
-                    import matplotlib.tri as Tri
                     nv = ugrid.get_topologyarray(topology, index)
                     latn, lonn = ugrid.get_nodes(topology)
                     if topology_type.lower() == "node":
@@ -1308,14 +1316,14 @@ def getMap (request, dataset):
                         else:
                             lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
                 else:
-                    pass # If regular grid, do nothing
+                    pass  # If regular grid, do nothing
             else:
                 nv = None
                 lonn, latn = None, None
 
             times = topology.variables['time'][:]
-            datestart = datetime.datetime.strptime( datestart, "%Y-%m-%dT%H:%M:%S" ) # datestr --> datetime obj
-            datestart = netCDF4.date2num(datestart, units=topology.variables['time'].units) # datetime obj --> netcdf datenum
+            datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
+            datestart = netCDF4.date2num(datestart, units=topology.variables['time'].units)  # datetime obj --> netcdf datenum
             time = bisect.bisect_right(times, datestart) - 1
             if settings.LOCALDATASET:
                 time = [1]
@@ -1324,8 +1332,8 @@ def getMap (request, dataset):
             else:
                 time = [time]
             if dateend != datestart:
-                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" ) # datestr --> datetime obj
-                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units) # datetime obj --> netcdf datenum
+                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
+                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)  # datetime obj --> netcdf datenum
                 time.append(bisect.bisect_right(times, dateend) - 1)
                 if settings.LOCALDATASET:
                     time[1] = 1
@@ -1334,7 +1342,7 @@ def getMap (request, dataset):
                 else:
                     time[1] = time[1]
                 time = range(time[0], time[1]+1)
-            t = time # TODO: ugh this is bad
+            t = time  # TODO: ugh this is bad
             #loglist.append('time index requested ' + str(time))
 
             # Get the data and appropriate resulting shape from the data source
@@ -1344,8 +1352,8 @@ def getMap (request, dataset):
                 index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
 
-            if latmin != latmax: # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
-                if gridtype == 'False': # TODO: Should take a look at this
+            if latmin != latmax:  # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
+                if gridtype == 'False':  # TODO: Should take a look at this
                     # This is averaging in time over all timesteps downloaded
                     if "composite" in actions:
                         pass
@@ -1386,18 +1394,18 @@ def getMap (request, dataset):
                 fig.set_alpha(0)
                 projection = request.GET["projection"]
                 m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                        urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                        resolution=None,
-                        lat_ts = 0.0,
-                        suppress_ticks=True)
+                            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                            resolution=None,
+                            lat_ts = 0.0,
+                            suppress_ticks=True)
                 m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-                try: # Fail gracefully if not standard_name, should do this a little better than a try
+                try:  # Fail gracefully if not standard_name, should do this a little better than a try
                     if 'direction' in datasetnc.variables[variables[1]].standard_name:
                         #assign new var1,var2 as u,v components
                         var2 = 450 - var2
-                        var2[var2>360] = var2[var2>360] - 360
-                        var2 = numpy.sin(numpy.radians(var2)) * var1 # var 2 needs to come first so that
-                        var1 = numpy.cos(numpy.radians(var2)) * var1 # you arn't multiplying by the wrong var1 val
+                        var2[var2 > 360] = var2[var2 > 360] - 360
+                        var2 = numpy.sin(numpy.radians(var2)) * var1  # var 2 needs to come first so that
+                        var1 = numpy.cos(numpy.radians(var2)) * var1  # you arn't multiplying by the wrong var1 val
                 except:
                     pass
 
@@ -1413,32 +1421,32 @@ def getMap (request, dataset):
                 else:
                     if magnitude.lower() == "log":
                         CNorm = matplotlib.colors.LogNorm(vmin=climits[0],
-                                                        vmax=climits[1],
-                                                        clip=True,
-                                                        )
+                                                          vmax=climits[1],
+                                                          clip=True,
+                                                         )
                     else:
                         CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                        vmax=climits[1],
-                                                        clip=True,
-                                                        )
+                                                            vmax=climits[1],
+                                                            clip=True,
+                                                           )
                 # Plot to the projected figure axes!
                 if gridtype == 'cgrid':
                     lon, lat = m(lon, lat)
                     cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
-                                aspect = m.aspect,
-                                height = height,
-                                width = width,
-                                norm = CNorm,
-                                cmin = climits[0],
-                                cmax = climits[1],
-                                magnitude = magnitude,
-                                cmap = colormap,
-                                basemap = m,
-                                lonmin = lonmin,
-                                latmin = latmin,
-                                lonmax = lonmax,
-                                latmax = latmax,
-                                projection = projection)
+                               aspect = m.aspect,
+                               height = height,
+                               width = width,
+                               norm = CNorm,
+                               cmin = climits[0],
+                               cmax = climits[1],
+                               magnitude = magnitude,
+                               cmap = colormap,
+                               basemap = m,
+                               lonmin = lonmin,
+                               latmin = latmin,
+                               lonmax = lonmax,
+                               latmax = latmax,
+                               projection = projection)
                 elif gridtype == 'False':
                     fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
                                         aspect = m.aspect,
@@ -1456,15 +1464,14 @@ def getMap (request, dataset):
                                         latmax = latmax,
                                         dataset = dataset,
                                         continuous = continuous,
-                                        projection = projection,
-                                        )
+                                        projection = projection)
                 lonmax, latmax = m(lonmax, latmax)
                 lonmin, latmin = m(lonmin, latmin)
                 m.ax.set_xlim(lonmin, lonmax)
                 m.ax.set_ylim(latmin, latmax)
                 m.ax.set_frame_on(False)
                 m.ax.set_clip_on(False)
-                m.ax.set_position([0,0,1,1])
+                m.ax.set_position([0, 0, 1, 1])
                 canvas = FigureCanvasAgg(fig)
                 response = HttpResponse(content_type='image/png')
                 canvas.print_png(response)
@@ -1476,7 +1483,7 @@ def getMap (request, dataset):
             fig.set_figwidth(width/5.0)
             ax.set_frame_on(False)
             ax.set_clip_on(False)
-            ax.set_position([0,0,1,1])
+            ax.set_position([0, 0, 1, 1])
             canvas = FigureCanvasAgg(fig)
             response = HttpResponse(content_type='image/png')
             canvas.print_png(response)
@@ -1485,5 +1492,3 @@ def getMap (request, dataset):
     #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     #logger.info(str(loglist))
     return response
-
-

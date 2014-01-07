@@ -8,6 +8,4 @@
 # Default Topology location
 sciwms/apps/wms/topology/
 
-sciwms/static/*
-
 !.gitkeep

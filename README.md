@@ -41,7 +41,7 @@ they are required by some of the module dependencies installed in the next secti
 
 ##Installation
 
-[Download the compressed project](http://acrosby.github.com/sci-wms) and unpack or clone this github project into the location the installation will run.
+[Download the compressed project](http://acrosby.github.com/sci-wms) and unpack or clone this github project into the location the installation will run: `git clone https://github.com/asascience-open/sci-wms.git`.cat re
 
 Install the following Python dependencies using `pip`, `easy_install`, or equivalent.
 If you are using [virtualenv](http://www.virtualenv.org/en/latest/), just make
@@ -58,7 +58,6 @@ pip install matplotlib>=1.2.0
 pip install netCDF4>=1.0.2
 pip install rtree
 pip install south
-pip install django_markup
 ```
 
 You also need to ensure that you have basemap matplotlib toolkit installed,
@@ -90,21 +89,39 @@ pip install eventlet
 pip install tornado
 ```
 
-##Test
+
+### Run Migrations
+Be sure to run the the `south` database migrations after setting up your environment.  This will add sample data and allow you to set the default user for sci-wms.
+```bash
+python manage.py syncdb       # Prompts to create superuser account
+python manage.py migrate
+```
+
+## Developing
+
+### Testing
 To make sure that dependencies have been installed correctly, and that sci-wms is fully functional.
 Run the following command from the root sci-wms directory to run the tests.
 ```bash
 python manage.py test
 ```
 
-##Start the services
+### Running
 You can start a development/testing service on port 8000 from the command line by using the following command.
 ```bash
 python manage.py runserver
 ```
 
-You should NOT run the development service on a production server!  You will need to run all production servers using gunicorn.
-[Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/).
+### Static assets
+If you make changes to any of the static assets within sci-wms, run the following command and commit the results:
+```bash
+python manage.py collectstatic
+```
+
+## Deployment
+
+### Start the services
+You should NOT run the development service on a production server!  You will need to run all production sci-wms application servers using gunicorn. [Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/).
 A helper script for starting a gunicorn sci-wms server is included with the source.  To manage the service, you may use two helper scripts included with sci-wms:
 ```bash
 bash start_server.sh
@@ -114,9 +131,26 @@ and
 bash stop_server.sh
 ```
 
-`start_server.sh` loads the config file `gunicorn_config_prod.py` that is in the root of the sci-wms source tree.  Please look at the gunicorn documentation for additional config options
-and edit this file as necessary.
+`start_server.sh` loads the config file `gunicorn_config_prod.py` that is in the root of the sci-wms source tree.  Please look at the gunicorn documentation for additional config options and edit this file as necessary.
 
+In production, you will also need to use a webserver (apache or ngnix) to serve static assets inside of sci-wms.  See [this nginx](http://docs.gunicorn.org/en/latest/deploy.html#nginx-configuration) example to get started.
+
+### Locking down the deployment
+You should edit the `sciwms/settings/prod.py` file after deployment and replace the `*` in `ALLOWED_HOSTS` with specific host(s) that that server should be accessible on. Example:
+```python
+#ALLOWED_HOSTS  = ["*"]
+ALLOWED_HOSTS  = ["sciwms.external-host.com", "YOUR_IP_ADDRESS", "sciwms.internal-host"]
+```
+
+## Local cache data
+Sci-wms caches data on disk so it does not have to read static data from each dataset every request.  By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.  To change this, edit the `sciwms/settings/dev.py` or `sciwms/settings/prod.py` files and add a TOPOLOGY_PATH variable.
+
+```python
+# Where to store the Topology data?
+TOPOLOGY_PATH = "/data/sci-wms-topology"
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+```
 
 ##Caveats:
 

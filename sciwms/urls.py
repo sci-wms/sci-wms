@@ -34,9 +34,10 @@ urlpatterns = patterns( '',
                         url(r'^index', 'sciwms.apps.wms.views.index', name="index"),
                         url(r'^$', 'sciwms.apps.wms.views.index', name="index"),
 
+                        url(r'^crossdomain\.xml$', 'sciwms.apps.wms.views.crossdomain'),
+
                         url(r'^wms$', 'django.shortcuts.redirect', {'/wms/'}),
                         url(r'^wms/', include('sciwms.apps.wms.urls')),
-
                     )
 
 # So we don't have to run "collectstatic" in development mode

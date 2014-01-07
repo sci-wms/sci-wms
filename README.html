@@ -158,7 +158,7 @@ they are required by some of the module dependencies installed in the next secti
 <h2 id="community">Community</h2>
 <p><a href="https://groups.google.com/forum/?fromgroups#!forum/sci-wms">We have started a Google Group for the sci-wms project located here.</a></p>
 <h2 id="installation">Installation</h2>
-<p><a href="http://acrosby.github.com/sci-wms">Download the compressed project</a> and unpack or clone this github project into the location the installation will run.</p>
+<p><a href="http://acrosby.github.com/sci-wms">Download the compressed project</a> and unpack or clone this github project into the location the installation will run: <code>git clone https://github.com/asascience-open/sci-wms.git</code>.cat re</p>
 <p>Install the following Python dependencies using <code>pip</code>, <code>easy_install</code>, or equivalent.
 If you are using <a href="http://www.virtualenv.org/en/latest/">virtualenv</a>, just make
 sure you have the environment activated before you try to install the packages
@@ -173,7 +173,6 @@ pip install matplotlib&gt;=1.2.0
 pip install netCDF4&gt;=1.0.2
 pip install rtree
 pip install south
-pip install django_markup
 </code></pre>
 
 <p>You also need to ensure that you have basemap matplotlib toolkit installed,
@@ -200,19 +199,32 @@ of the sci-wms gunicorn configuration files,  you can also use <code>tornado</co
 pip install tornado
 </code></pre>
 
-<h2 id="test">Test</h2>
+<h3 id="run-migrations">Run Migrations</h3>
+<p>Be sure to run the the <code>south</code> database migrations after setting up your environment.  This will add sample data and allow you to set the default user for sci-wms.</p>
+<pre><code class="bash">python manage.py syncdb       # Prompts to create superuser account
+python manage.py migrate
+</code></pre>
+
+<h2 id="developing">Developing</h2>
+<h3 id="testing">Testing</h3>
 <p>To make sure that dependencies have been installed correctly, and that sci-wms is fully functional.
 Run the following command from the root sci-wms directory to run the tests.</p>
 <pre><code class="bash">python manage.py test
 </code></pre>
 
-<h2 id="start-the-services">Start the services</h2>
+<h3 id="running">Running</h3>
 <p>You can start a development/testing service on port 8000 from the command line by using the following command.</p>
 <pre><code class="bash">python manage.py runserver
 </code></pre>
 
-<p>You should NOT run the development service on a production server!  You will need to run all production servers using gunicorn.
-<a href="http://gunicorn.org/">Learn about gunicorn wsgi server configuration by clicking here.</a>.
+<h3 id="static-assets">Static assets</h3>
+<p>If you make changes to any of the static assets within sci-wms, run the following command and commit the results:</p>
+<pre><code class="bash">python manage.py collectstatic
+</code></pre>
+
+<h2 id="deployment">Deployment</h2>
+<h3 id="start-the-services">Start the services</h3>
+<p>You should NOT run the development service on a production server!  You will need to run all production sci-wms application servers using gunicorn. <a href="http://gunicorn.org/">Learn about gunicorn wsgi server configuration by clicking here.</a>.
 A helper script for starting a gunicorn sci-wms server is included with the source.  To manage the service, you may use two helper scripts included with sci-wms:</p>
 <pre><code class="bash">bash start_server.sh
 </code></pre>
@@ -221,7 +233,21 @@ A helper script for starting a gunicorn sci-wms server is included with the sour
 <pre><code class="bash">bash stop_server.sh
 </code></pre>
 
-<p><code>start_server.sh</code> loads the config file <code>gunicorn_config_prod.py</code> that is in the root of the sci-wms source tree.  Please look at the gunicorn documentation for additional config options
-and edit this file as necessary.</p>
+<p><code>start_server.sh</code> loads the config file <code>gunicorn_config_prod.py</code> that is in the root of the sci-wms source tree.  Please look at the gunicorn documentation for additional config options and edit this file as necessary.</p>
+<p>In production, you will also need to use a webserver (apache or ngnix) to serve static assets inside of sci-wms.  See <a href="http://docs.gunicorn.org/en/latest/deploy.html#nginx-configuration">this nginx</a> example to get started.</p>
+<h3 id="locking-down-the-deployment">Locking down the deployment</h3>
+<p>You should edit the <code>sciwms/settings/prod.py</code> file after deployment and replace the <code>*</code> in <code>ALLOWED_HOSTS</code> with specific host(s) that that server should be accessible on. Example:</p>
+<pre><code class="python">#ALLOWED_HOSTS  = [&quot;*&quot;]
+ALLOWED_HOSTS  = [&quot;sciwms.external-host.com&quot;, &quot;YOUR_IP_ADDRESS&quot;, &quot;sciwms.internal-host&quot;]
+</code></pre>
+
+<h2 id="local-cache-data">Local cache data</h2>
+<p>Sci-wms caches data on disk so it does not have to read static data from each dataset every request.  By default, the path is <code>SCIWMS_ROOT/sciwms/apps/wms/topology</code>.  To change this, edit the <code>sciwms/settings/dev.py</code> or <code>sciwms/settings/prod.py</code> files and add a TOPOLOGY_PATH variable.</p>
+<pre><code class="python"># Where to store the Topology data?
+TOPOLOGY_PATH = &quot;/data/sci-wms-topology&quot;
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+</code></pre>
+
 <h2 id="caveats">Caveats:</h2>
 <p>Look at <a href="https://github.com/asascience-open/sci-wms/issues?state=open">https://github.com/asascience-open/sci-wms/issues?state=open</a> for a list of known issues and problems.</p></body></html>
