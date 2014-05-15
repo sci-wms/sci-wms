@@ -1404,8 +1404,9 @@ def getMap(request, dataset):
                         #assign new var1,var2 as u,v components
                         var2 = 450 - var2
                         var2[var2 > 360] = var2[var2 > 360] - 360
-                        var2 = numpy.sin(numpy.radians(var2)) * var1  # var 2 needs to come first so that
-                        var1 = numpy.cos(numpy.radians(var2)) * var1  # you arn't multiplying by the wrong var1 val
+                        origvar2 = var2
+                        var2 = numpy.sin(numpy.radians(origvar2)) * var1  # var 2 needs to come first so that
+                        var1 = numpy.cos(numpy.radians(origvar2)) * var1  # you arn't multiplying by the wrong var1 val
                 except:
                     pass
 
