@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Dataset.jsonblob'
-        db.add_column(u'wms_dataset', 'jsonblob',
+        # Adding field 'Dataset.json'
+        db.add_column(u'wms_dataset', 'json',
                       self.gf('jsonfield.fields.JSONField')(null=True, blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Dataset.jsonblob'
-        db.delete_column(u'wms_dataset', 'jsonblob')
+        # Deleting field 'Dataset.json'
+        db.delete_column(u'wms_dataset', 'json')
 
 
     models = {
@@ -26,7 +26,7 @@ class Migration(SchemaMigration):
             'cache_last_updated': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'display_all_timesteps': ('django.db.models.fields.BooleanField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'jsonblob': ('jsonfield.fields.JSONField', [], {'null': 'True', 'blank': 'True'}),
+            'json': ('jsonfield.fields.JSONField', [], {'null': 'True', 'blank': 'True'}),
             'keep_up_to_date': ('django.db.models.fields.BooleanField', [], {}),
             'latitude_variable': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
             'longitude_variable': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
