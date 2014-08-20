@@ -18,6 +18,7 @@ This file is part of SCI-WMS.
 '''
 import os
 import pytz
+import glob
 from urlparse import urlparse
 from datetime import datetime
 
@@ -57,6 +58,10 @@ class Dataset(models.Model):
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
 
+    def clear_cache(self):
+        cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.name + '*'))
+        for cache_file in cache_file_list:
+            os.remove(cache_file)
 
 class VirtualLayer(models.Model):
     layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
