@@ -17,6 +17,7 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
+import pytz
 from urlparse import urlparse
 from datetime import datetime
 
@@ -53,7 +54,7 @@ class Dataset(models.Model):
     def update_cache(self):
         from sciwms.libs.data.caching import update_dataset_cache
         update_dataset_cache(self)
-        self.cache_last_updated = datetime.now()
+        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
 
 
