@@ -7,5 +7,5 @@ gunicorn>=0.13.4
 python-dateutil
 matplotlib>=1.2.0
 netCDF4>=1.0.2
-rtree
+rtree==0.7.0
 south
