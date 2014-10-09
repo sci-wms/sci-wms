@@ -946,16 +946,17 @@ def getFeatureInfo(request, dataset):
 
     topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
     gridtype = topology.grid
-    if gridtype == 'False':
+
+    if gridtype == u'False':
         test_index = 0
         if 'node' in styles:
-            tree = rindex.Index(dataset+'_nodes')
+            tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_nodes'))
             #lats = topology.variables['lat'][:]
             #lons = topology.variables['lon'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         else:
             from shapely.geometry import Polygon, Point
-            tree = rindex.Index(dataset+'_cells')
+            tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_cells'))
             #lats = topology.variables['latc'][:]
             #lons = topology.variables['lonc'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
@@ -978,7 +979,7 @@ def getFeatureInfo(request, dataset):
         index = nindex[test_index].id
         tree.close()
     else:
-        tree = rindex.Index(dataset+'_nodes')
+        tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_nodes'))
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))

@@ -25,12 +25,6 @@ from datetime import datetime
 
 def build_from_nc(filename):
 
-    # Make this True to enable timing
-    timing = False
-
-    if timing:
-        timer = datetime.now()
-
     nc = netCDF4.Dataset(filename)
     if nc.grid == 'cgrid':
         lat = nc.variables['lat'][:]
@@ -48,8 +42,6 @@ def build_from_nc(filename):
 
         filename = filename[:-3]
         tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
         tree.close()
     else:
         lat = nc.variables['lat'][:]
@@ -57,26 +49,21 @@ def build_from_nc(filename):
         latc = nc.variables['latc'][:]
         lonc = nc.variables['lonc'][:]
         nv = nc.variables['nv'][:]  # (3, long)
-        #print nv.shape, lonc.shape
         nc.close()
 
-        def generator_nodes():
-            for i, coord in enumerate(zip(lon, lat, lon, lat)):
-                yield(i, coord, None)
-
-        def generator_cells():
-            for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
-                yield( i, coord, (lon[nv[:, i]-1], lat[nv[:, i]-1],) )
-
         filename = filename[:-3]
-        tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
+
+        # Nodes
+        tree = index.Index(filename+'_nodes', overwrite=True, pagesize=2**17)
+        for i, coord in enumerate(zip(lon, lat, lon, lat)):
+            tree.insert(i, coord, None)
         tree.close()
-        tree = index.Index(filename+'_cells', generator_cells(), overwrite=True, pagesize=2**17)
+
+        # Cells
+        tree = index.Index(filename+'_cells', overwrite=True, pagesize=2**17)
+        for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
+            tree.insert(i, coord, (lon[nv[:, i]-1], lat[nv[:, i]-1],))
         tree.close()
-        if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
 
 if __name__ == "__main__":
     filename = sys.argv[1]
