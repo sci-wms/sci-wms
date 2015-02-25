@@ -1013,10 +1013,10 @@ def getFeatureInfo(request, dataset):
         dateend = datetime.datetime.strptime(TIMES[1], "%Y-%m-%dT%H:%M:%S" )
         times = topology.variables['time'][:]
         time_units = topology.variables['time'].units
-        datestart = netCDF4.date2num(datestart, units=time_units)
-        dateend = netCDF4.date2num(dateend, units=time_units)
-        time1 = bisect.bisect_right(times, datestart)
-        time2 = bisect.bisect_right(times, dateend)
+        datestart = round(netCDF4.date2num(datestart, units=time_units))
+        dateend = round(netCDF4.date2num(dateend, units=time_units))
+        time1 = bisect.bisect_right(times, datestart) - 1
+        time2 = bisect.bisect_right(times, dateend) - 1
 
         if time1 == -1:
             time1 = 0
@@ -1030,8 +1030,8 @@ def getFeatureInfo(request, dataset):
         datestart = datetime.datetime.strptime(TIMES[0], "%Y-%m-%dT%H:%M:%S" )
         times = topology.variables['time'][:]
         time_units = topology.variables['time'].units
-        datestart = netCDF4.date2num(datestart, units=time_units)
-        time1 = bisect.bisect_right(times, datestart)
+        datestart = round(netCDF4.date2num(datestart, units=time_units))
+        time1 = bisect.bisect_right(times, datestart) - 1
         if time1 == -1:
             time = [0]
         else:
@@ -1324,7 +1324,7 @@ def getMap(request, dataset):
 
             times = topology.variables['time'][:]
             datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-            datestart = netCDF4.date2num(datestart, units=topology.variables['time'].units)  # datetime obj --> netcdf datenum
+            datestart = round(netCDF4.date2num(datestart, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
             time = bisect.bisect_right(times, datestart) - 1
             if settings.LOCALDATASET:
                 time = [1]
@@ -1334,7 +1334,7 @@ def getMap(request, dataset):
                 time = [time]
             if dateend != datestart:
                 dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-                dateend = netCDF4.date2num(dateend, units=topology.variables['time'].units)  # datetime obj --> netcdf datenum
+                dateend = round(netCDF4.date2num(dateend, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
                 time.append(bisect.bisect_right(times, dateend) - 1)
                 if settings.LOCALDATASET:
                     time[1] = 1
@@ -1405,8 +1405,9 @@ def getMap(request, dataset):
                         #assign new var1,var2 as u,v components
                         var2 = 450 - var2
                         var2[var2 > 360] = var2[var2 > 360] - 360
-                        var2 = numpy.sin(numpy.radians(var2)) * var1  # var 2 needs to come first so that
-                        var1 = numpy.cos(numpy.radians(var2)) * var1  # you arn't multiplying by the wrong var1 val
+                        origvar2 = var2
+                        var2 = numpy.sin(numpy.radians(origvar2)) * var1  # var 2 needs to come first so that
+                        var1 = numpy.cos(numpy.radians(origvar2)) * var1  # you arn't multiplying by the wrong var1 val
                 except:
                     pass
 

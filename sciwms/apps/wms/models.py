@@ -23,6 +23,8 @@ from datetime import datetime
 from django.db import models
 from django.conf import settings
 
+from jsonfield import JSONField
+
 
 class Dataset(models.Model):
     uri             = models.CharField(max_length=1000)
@@ -36,7 +38,8 @@ class Dataset(models.Model):
     latitude_variable       = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
     longitude_variable      = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
     cache_last_updated      = models.DateTimeField(null=True, editable=False)
-
+    json            = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
+    
     def __unicode__(self):
         return self.name
 

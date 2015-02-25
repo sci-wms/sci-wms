@@ -308,7 +308,7 @@ def unit_vectors(lon, lat, var1, var2, mag, ax, norm, cmap, magnitude):
     else:
         arrowsize = float(magnitude)
     stride = 1
-    theta = np.degrees(np.arctan(var2/var1))
+    theta = np.degrees(np.arctan2(var2,var1))
     var1 = np.cos(np.radians(theta))# u
     var2 = np.sin(np.radians(theta))# v
     ax.quiver(lon[::stride,::stride], lat[::stride,::stride], var1.squeeze()[::stride,::stride], var2.squeeze()[::stride,::stride], mag.squeeze()[::stride,::stride],

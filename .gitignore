@@ -7,5 +7,5 @@
 
 # Default Topology location
 sciwms/apps/wms/topology/
-
+sciwms/sci-wms.db
 !.gitkeep
