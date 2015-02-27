@@ -160,7 +160,7 @@ TEMPLATE_DIRS = (
     os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -173,7 +173,7 @@ INSTALLED_APPS = (
     'sciwms.apps.wmsrest',
     'rest_framework',
     'south'
-)
+]
 
 REST_FRAMEWORK = {
                   'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
