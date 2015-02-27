@@ -43,15 +43,7 @@ except:
     import Pickle as pickle
 
 from django.conf import settings
-
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+from sciwms import logger
 
 time_units = 'hours since 1970-01-01'
 

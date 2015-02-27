@@ -65,15 +65,7 @@ from django.contrib.auth import authenticate, login, logout
 from sciwms.libs.data import cgrid, ugrid
 import sciwms.apps.wms.wms_requests as wms_reqs
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
-
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.ERROR)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+from sciwms.apps.wms import logger
 
 
 def crossdomain(request):
@@ -1209,15 +1201,6 @@ def getMap(request, dataset):
     '''
     from mpl_toolkits.basemap import pyproj
     from matplotlib.figure import Figure
-
-    #output_path = os.path.join(config.fullpath_to_wms, 'src', 'pywms', 'sciwms_wms')
-    # Set up Logger
-    #logger = multiprocessing.get_logger()
-    #logger.setLevel(logging.ERROR)
-    #handler = logging.FileHandler('%s.log' % output_path)
-    #formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-    #handler.setFormatter(formatter)
-    #logger.addHandler(handler)
 
     #totaltimer = timeobj.time()
     #loglist = []
