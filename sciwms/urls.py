@@ -38,6 +38,7 @@ urlpatterns = patterns( '',
 
                         url(r'^wms$', 'django.shortcuts.redirect', {'/wms/'}),
                         url(r'^wms/', include('sciwms.apps.wms.urls')),
+                        url(r'^rest/', include('sciwms.apps.wmsrest.urls')),
                     )
 
 # So we don't have to run "collectstatic" in development mode

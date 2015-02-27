@@ -25,6 +25,8 @@ import os
 import gc
 import sys
 import json
+import ast
+import urllib
 import bisect
 import logging
 import datetime
@@ -57,7 +59,7 @@ from StringIO import StringIO  # will be deprecated in Python3, use io.byteIO in
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.template.loader import get_template
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth import authenticate, login, logout
 
 from sciwms.libs.data import cgrid, ugrid
@@ -201,6 +203,13 @@ def update_dataset(request, dataset):
     logout_view(request)
 
 def add(request):
+    # some hijacking of django's default behavior to get this to work
+    # this functions will be gradually taken over by the wmsrest app
+    if len(request.POST) < 1:
+        request_body = request.body
+        body = ast.literal_eval(request_body)
+        encoded_body = urllib.urlencode(body)
+        request.POST = QueryDict(encoded_body)
     if authenticate_view(request):
         dataset_endpoint = request.POST.get("uri", None)
         dataset_id = request.POST.get("id", None)

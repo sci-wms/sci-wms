@@ -27,18 +27,18 @@ from jsonfield import JSONField
 
 
 class Dataset(models.Model):
-    uri             = models.CharField(max_length=1000)
-    name            = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
-    title           = models.CharField(max_length=200, help_text="Human Readable Title")
-    abstract        = models.CharField(max_length=2000, help_text="Short Description of Dataset")
+    uri = models.CharField(max_length=1000)
+    name = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
+    title = models.CharField(max_length=200, help_text="Human Readable Title")
+    abstract = models.CharField(max_length=2000, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField(help_text="Check this box to keep the dataset up-to-date if changes are made to it on disk or remote server.")
-    test_layer      = models.CharField(max_length=200, help_text="Optional", blank=True)
-    test_style      = models.CharField(max_length=200, help_text="Optional", blank=True)
-    display_all_timesteps   = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)")
-    latitude_variable       = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
-    longitude_variable      = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
-    cache_last_updated      = models.DateTimeField(null=True, editable=False)
-    json            = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
+    test_layer = models.CharField(max_length=200, help_text="Optional", blank=True)
+    test_style = models.CharField(max_length=200, help_text="Optional", blank=True)
+    display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
+    latitude_variable = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
+    longitude_variable = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
+    cache_last_updated = models.DateTimeField(null=True, editable=False)
+    json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
     
     def __unicode__(self):
         return self.name
@@ -60,7 +60,11 @@ class Dataset(models.Model):
 class VirtualLayer(models.Model):
     layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
     layer_expression = models.CharField(max_length=200, help_text="Like u,v or Band1*Band2*Band3")
-    datasets = models.ManyToManyField(Dataset, help_text="Choose the datasets that this virtual layer applies to")
+    datasets = models.ManyToManyField(Dataset, 
+                                      help_text="Choose the datasets that this virtual layer applies to",
+                                      blank=True,
+                                      related_name='dataset_lyr_rel'
+                                      )
 
     def __unicode__(self):
         return self.layer
@@ -77,18 +81,18 @@ class Group(models.Model):
 
 class Server(models.Model):
     # Server
-    title    = models.CharField(max_length=1000, help_text="Server Title", blank=True)
+    title = models.CharField(max_length=1000, help_text="Server Title", blank=True)
     abstract = models.CharField(max_length=2000, help_text="Server Abstract", blank=True)
     keywords = models.CharField(max_length=2000, help_text="Comma Separated List of Keywords", blank=True)
 
     # Contact
-    contact_person          = models.CharField(max_length=1000, help_text="Person to Contact (Optional)", blank=True)
-    contact_organization    = models.CharField(max_length=1000, help_text="Contact Organization (Optional)", blank=True)
-    contact_position        = models.CharField(max_length=1000, help_text="Contact Position (Optional)", blank=True)
-    contact_street_address  = models.CharField(max_length=1000, help_text="Street Address (Optional)", blank=True)
-    contact_city_address    = models.CharField(max_length=1000, help_text="Address: City (Optional)", blank=True)
-    contact_state_address   = models.CharField(max_length=1000, help_text="Address: State or Providence (Optional)", blank=True)
-    contact_code_address    = models.CharField(max_length=1000, help_text="Address: Postal Code (Optional)", blank=True)
+    contact_person = models.CharField(max_length=1000, help_text="Person to Contact (Optional)", blank=True)
+    contact_organization = models.CharField(max_length=1000, help_text="Contact Organization (Optional)", blank=True)
+    contact_position = models.CharField(max_length=1000, help_text="Contact Position (Optional)", blank=True)
+    contact_street_address = models.CharField(max_length=1000, help_text="Street Address (Optional)", blank=True)
+    contact_city_address = models.CharField(max_length=1000, help_text="Address: City (Optional)", blank=True)
+    contact_state_address = models.CharField(max_length=1000, help_text="Address: State or Providence (Optional)", blank=True)
+    contact_code_address = models.CharField(max_length=1000, help_text="Address: Postal Code (Optional)", blank=True)
     contact_country_address = models.CharField(max_length=1000, help_text="Address: Country (Optional)", blank=True)
-    contact_telephone       = models.CharField(max_length=1000, help_text="Contact Telephone Number (Optional)", blank=True)
-    contact_email           = models.CharField(max_length=1000, help_text="Contact Email Address (Optional)", blank=True)
+    contact_telephone = models.CharField(max_length=1000, help_text="Contact Telephone Number (Optional)", blank=True)
+    contact_email = models.CharField(max_length=1000, help_text="Contact Email Address (Optional)", blank=True)
