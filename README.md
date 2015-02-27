@@ -154,4 +154,4 @@ if not os.path.exists(TOPOLOGY_PATH):
 
 ##Caveats:
 
-Look at [https://github.com/asascience-open/sci-wms/issues?state=open](https://github.com/asascience-open/sci-wms/issues?state=open) for a list of known issues and problems.
+Look at [https://github.com/sci-wms/sci-wms/issues?state=open](https://github.com/sci-wms/sci-wms/issues?state=open) for a list of known issues and problems.
