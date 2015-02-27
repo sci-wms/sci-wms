@@ -187,11 +187,11 @@ def update_dataset(request, dataset):
             return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), mimetype='application/json')
         else:
             d = Dataset.objects.get(name=dataset)
-            d.update_cache()
+            d.update_cache(force=True)
             return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
     else:
         return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
-        
+
     logout_view(request)
 
 def add(request):
@@ -358,11 +358,14 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
 
     """
+
+    dataset = Dataset.objects.get(name=dataset)
+
     # Create the object to be encoded to xml later
     root = ET.Element('WMT_MS_Capabilities')
     root.attrib["version"] = "1.1.1"
-    href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset + "/?"
-    virtual_layers = VirtualLayer.objects.filter(datasets__name=dataset)
+    href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset.name + "/?"
+    virtual_layers = VirtualLayer.objects.filter(datasets__name=dataset.name)
     expected_configurations = {"u"       : ("u,v", ","),
                                "u-vel"   : ("u-vel,v-vel", ","),
                                "ua"      : ("ua,va", ","),
@@ -474,13 +477,13 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     onlineresource.attrib["href"] = href
     # Layers
     layer = ET.SubElement(capability, "Layer")
-    ET.SubElement(layer, "Title").text      = Dataset.objects.get(name=dataset).title
-    ET.SubElement(layer, "Abstract").text   = Dataset.objects.get(name=dataset).abstract
+    ET.SubElement(layer, "Title").text      = dataset.title
+    ET.SubElement(layer, "Abstract").text   = dataset.abstract
     ET.SubElement(layer, "SRS").text        = "EPSG:3857"
     ET.SubElement(layer, "SRS").text        = "MERCATOR"
-    nc = netCDF4.Dataset(Dataset.objects.get(name=dataset).path())
-    topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
-    list_timesteps = Dataset.objects.get(name=dataset).display_all_timesteps
+
+    nc = netCDF4.Dataset(dataset.path())
+    topology = netCDF4.Dataset(dataset.topology_file)
     for variable in nc.variables.keys():
         try:
             location = nc.variables[variable].location
@@ -555,7 +558,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     if len(topology.variables["time"]) == 1:
                         time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
                     else:
-                        if list_timesteps:
+                        if dataset.display_all_timesteps:
                             temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
@@ -678,7 +681,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     elev_extent.attrib["default"] = "0"
                     try:
                         units = topology.variables["time"].units
-                        if list_timesteps:
+                        if dataset.display_all_timesteps:
                             temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
@@ -918,6 +921,9 @@ def getFeatureInfo(request, dataset):
     """
     from datetime import date
     from mpl_toolkits.basemap import pyproj
+
+    dataset = Dataset.objects.get(name=dataset)
+
     X = float(request.GET['x'])
     Y = float(request.GET['y'])
     box = request.GET["bbox"]
@@ -945,19 +951,19 @@ def getFeatureInfo(request, dataset):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
+    topology = netCDF4.Dataset(dataset.topology_file)
     gridtype = topology.grid
 
     if gridtype == u'False':
         test_index = 0
         if 'node' in styles:
-            tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_nodes'))
+            tree = rindex.Index(dataset.node_tree_index_file)
             #lats = topology.variables['lat'][:]
             #lons = topology.variables['lon'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         else:
             from shapely.geometry import Polygon, Point
-            tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_cells'))
+            tree = rindex.Index(dataset.cell_tree_index_file)
             #lats = topology.variables['latc'][:]
             #lons = topology.variables['lonc'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
@@ -980,7 +986,7 @@ def getFeatureInfo(request, dataset):
         index = nindex[test_index].id
         tree.close()
     else:
-        tree = rindex.Index(os.path.join(settings.TOPOLOGY_PATH, dataset+'_nodes'))
+        tree = rindex.Index(dataset.node_tree_index_file)
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
@@ -1052,7 +1058,7 @@ def getFeatureInfo(request, dataset):
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
 
-    url = Dataset.objects.get(name=dataset).path()
+    url = dataset.path()
     datasetnc = netCDF4.Dataset(url)
 
     varis = deque()
@@ -1206,7 +1212,8 @@ def getMap(request, dataset):
     #loglist = []
 
     # direct the service to the dataset
-    url = Dataset.objects.get(name=dataset).path()
+    dataset = Dataset.objects.get(name=dataset)
+    url = dataset.path()
 
     # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])
@@ -1251,7 +1258,7 @@ def getMap(request, dataset):
         pass
     else:
         # Open topology cache file, and the actualy data endpoint
-        topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
+        topology = netCDF4.Dataset(dataset.topology_file)
         datasetnc = netCDF4.Dataset(url)
         gridtype = topology.grid  # Grid type found in topology file
         logger.info("gridtype: " + gridtype)

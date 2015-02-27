@@ -423,7 +423,7 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
     except ImportError:
         import Pickle as pickle
     # Open domain
-    f = open(os.path.join(settings.TOPOLOGY_PATH, dataset + '.domain'))
+    f = open(os.path.join(dataset.domain_file))
     domain = pickle.load(f)
     f.close()
     # convert extent bbox to Shapely Polygon object
