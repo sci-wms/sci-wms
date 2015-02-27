@@ -83,9 +83,6 @@ class TestDatasetList(APITestCase):
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(layer_relationship, [1, 2])
         
-    def tearDown(self):
-        self.ac.logout()
-        
 
 class TestDatasetDetail(APITestCase):
     
@@ -132,9 +129,6 @@ class TestDatasetDetail(APITestCase):
         response = self.ac.delete(self.url)
         status_code = response.status_code
         self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)
-        
-    def tearDown(self):
-        self.ac.logout()
         
 
 class TestVirtualLayerList(APITestCase):
@@ -198,9 +192,6 @@ class TestVirtualLayerList(APITestCase):
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(datasets, [1, 2])
         
-    def tearDown(self):
-        self.ac.logout()
-        
         
 class TestVirtualLayerDetail(APITestCase):
     
@@ -240,10 +231,4 @@ class TestVirtualLayerDetail(APITestCase):
     def test_delete_virtuallayer(self):
         response = self.ac.delete(self.url)
         status_code = response.status_code
-        self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)
-        
-    def tearDown(self):
-        self.ac.logout()
-        
-        
-        
+        self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)        
