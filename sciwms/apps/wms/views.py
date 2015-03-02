@@ -79,7 +79,7 @@ def datasets(request):
     from django.core import serializers
     datasets = Dataset.objects.all()
     data = serializers.serialize('json', datasets)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def grouptest(request, group):
@@ -184,13 +184,13 @@ def logout_view(request):
 def update_dataset(request, dataset):
     if authenticate_view(request):
         if dataset is None:
-            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), mimetype='application/json')
+            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
         else:
             d = Dataset.objects.get(name=dataset)
             d.update_cache(force=True)
-            return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
+            return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
     else:
-        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
+        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), content_type='application/json')
 
     logout_view(request)
 
@@ -204,7 +204,7 @@ def add(request):
         request.POST = QueryDict(encoded_body)
     if authenticate_view(request):
         dataset_endpoint = request.POST.get("uri", None)
-        dataset_id = request.POST.get("id", None)
+        dataset_name = request.POST.get("name", None)
         dataset_title = request.POST.get("title", None)
         dataset_abstract = request.POST.get("abstract", None)
         dataset_update = bool(request.POST.get("update", False))
@@ -213,7 +213,7 @@ def add(request):
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-        if dataset_id is None:
+        if dataset_name is None:
             return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
         elif dataset_endpoint is None:
             return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
@@ -222,21 +222,26 @@ def add(request):
         elif dataset_update is None:
             return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
         else:
-            if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
-                dataset = Dataset.objects.get(name = dataset_id)
-            else:
-                dataset = Dataset.objects.create(name = dataset_id,
-                                                 title = dataset_title,
-                                                 abstract = dataset_abstract,
-                                                 uri = dataset_endpoint,
-                                                 keep_up_to_date = dataset_update)
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+            except Dataset.DoesNotExist:
+                dataset = Dataset.objects.create(name=dataset_name,
+                                                 title=dataset_title,
+                                                 abstract=dataset_abstract,
+                                                 uri=dataset_endpoint,
+                                                 keep_up_to_date=dataset_update)
                 dataset.save()
             for groupname in memberof_groups:
-                if len(list(Group.objects.filter(name = groupname))) > 0:
-                    group = Group.objects.get(name = groupname)
-                    dataset.groups.add(group)
-                    dataset.save()
-                return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
+                if len(list(Group.objects.filter(name=groupname))) > 0:
+                    try:
+                        group = Group.objects.get(name=groupname)
+                        dataset.groups.add(group)
+                    except Group.DoesNotExist:
+                        pass
+                dataset.save()
+            return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset.pk, memberof_groups.__str__()))
+    else:
+        return HttpResponse("Not authenticated")
     logout_view(request)
 
 
@@ -274,7 +279,7 @@ def remove(request):
             dataset.delete()
             return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
     else:
-        return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
+        return HttpResponse(json.dumps({ "message" : "authentication failed" }), content_type='application/json')
     logout_view(request)
 
 
@@ -306,11 +311,11 @@ def documentation(request):
     return HttpResponseRedirect('http://acrosby.github.io/sci-wms')
 
 
-def lower_request(request):
+def normalize_get_params(request):
     gettemp = request.GET.copy()
     for key in request.GET.iterkeys():
         gettemp[key.lower()] = request.GET[key]
-    request._set_get(gettemp)
+    request.GET = gettemp
     return request
 
 
@@ -323,7 +328,7 @@ def database_request_interaction(request, dataset):
 
 def wms(request, dataset):
     try:
-        request = lower_request(request)
+        request = normalize_get_params(request)
         reqtype = request.GET['request']
         if reqtype.lower() == 'getmap':
             request = database_request_interaction(request, dataset)
