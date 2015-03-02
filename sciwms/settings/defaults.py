@@ -156,8 +156,7 @@ INSTALLED_APPS = [
     'django.contrib.admindocs',
     'sciwms.apps.wms',
     'sciwms.apps.wmsrest',
-    'rest_framework',
-    'south'
+    'rest_framework'
 ]
 
 REST_FRAMEWORK = {
