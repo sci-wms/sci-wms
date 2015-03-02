@@ -157,7 +157,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'sciwms.urls'
 
 TEMPLATE_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "templates")),
 )
 
 INSTALLED_APPS = [
@@ -172,8 +172,9 @@ INSTALLED_APPS = [
     'sciwms.apps.wms',
     'sciwms.apps.wmsrest',
     'rest_framework',
-    'south'
 ]
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 REST_FRAMEWORK = {
                   'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),

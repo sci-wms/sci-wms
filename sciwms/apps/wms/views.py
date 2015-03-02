@@ -310,7 +310,7 @@ def lower_request(request):
     gettemp = request.GET.copy()
     for key in request.GET.iterkeys():
         gettemp[key.lower()] = request.GET[key]
-    request._set_get(gettemp)
+    request.GET = gettemp
     return request
 
 
