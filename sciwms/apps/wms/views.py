@@ -204,7 +204,7 @@ def add(request):
         request.POST = QueryDict(encoded_body)
     if authenticate_view(request):
         dataset_endpoint = request.POST.get("uri", None)
-        dataset_id = request.POST.get("id", None)
+        dataset_name = request.POST.get("name", None)
         dataset_title = request.POST.get("title", None)
         dataset_abstract = request.POST.get("abstract", None)
         dataset_update = bool(request.POST.get("update", False))
@@ -213,7 +213,7 @@ def add(request):
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-        if dataset_id is None:
+        if dataset_name is None:
             return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
         elif dataset_endpoint is None:
             return HttpResponse("Exception: Please include 'uri' parameter in POST request.", status=500)
@@ -222,21 +222,26 @@ def add(request):
         elif dataset_update is None:
             return HttpResponse("Exception: Please include 'update' parameter in POST request.", status=500)
         else:
-            if len(list(Dataset.objects.filter(name=dataset_id))) > 0:
-                dataset = Dataset.objects.get(name = dataset_id)
-            else:
-                dataset = Dataset.objects.create(name = dataset_id,
-                                                 title = dataset_title,
-                                                 abstract = dataset_abstract,
-                                                 uri = dataset_endpoint,
-                                                 keep_up_to_date = dataset_update)
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+            except Dataset.DoesNotExist:
+                dataset = Dataset.objects.create(name=dataset_name,
+                                                 title=dataset_title,
+                                                 abstract=dataset_abstract,
+                                                 uri=dataset_endpoint,
+                                                 keep_up_to_date=dataset_update)
                 dataset.save()
             for groupname in memberof_groups:
-                if len(list(Group.objects.filter(name = groupname))) > 0:
-                    group = Group.objects.get(name = groupname)
-                    dataset.groups.add(group)
-                    dataset.save()
-                return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset_id, memberof_groups.__str__()))
+                if len(list(Group.objects.filter(name=groupname))) > 0:
+                    try:
+                        group = Group.objects.get(name=groupname)
+                        dataset.groups.add(group)
+                    except Group.DoesNotExist:
+                        pass
+                dataset.save()
+            return HttpResponse("Success: Dataset %s added to the server, and to %s groups." % (dataset.pk, memberof_groups.__str__()))
+    else:
+        return HttpResponse("Not authenticated")
     logout_view(request)
 
 
