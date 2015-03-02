@@ -10,3 +10,4 @@ rtree==0.7.0
 south
 jsonfield
 pytz
+djangorestframework
