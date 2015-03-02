@@ -92,7 +92,7 @@ class wms_handler(object):
                           u'magnitude': magnitude_bool,
                           } )
         if float(lonmax)-float(lonmin) < .0001:
-            requestobj == None
+            requestobj = None
         return requestobj
 
 
