@@ -79,7 +79,7 @@ def datasets(request):
     from django.core import serializers
     datasets = Dataset.objects.all()
     data = serializers.serialize('json', datasets)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def grouptest(request, group):
@@ -184,13 +184,13 @@ def logout_view(request):
 def update_dataset(request, dataset):
     if authenticate_view(request):
         if dataset is None:
-            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), mimetype='application/json')
+            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
         else:
             d = Dataset.objects.get(name=dataset)
             d.update_cache(force=True)
-            return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
+            return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
     else:
-        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
+        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), content_type='application/json')
 
     logout_view(request)
 
@@ -279,7 +279,7 @@ def remove(request):
             dataset.delete()
             return HttpResponse("Dataset %s removed from this wms server." % dataset_id)
     else:
-        return HttpResponse(json.dumps({ "message" : "authentication failed" }), mimetype='application/json')
+        return HttpResponse(json.dumps({ "message" : "authentication failed" }), content_type='application/json')
     logout_view(request)
 
 
