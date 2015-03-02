@@ -77,8 +77,8 @@ class wms_handler(object):
         climits = styles[3:5]
         topology_type = styles[5]
         magnitude_bool = styles[6]
-
-        requestobj._set_get( {u'latmax':latmax, u'lonmax':lonmax,
+        
+        requestobj.GET = {u'latmax':latmax, u'lonmax':lonmax,
                           u'projection':u'merc', u'layer':levels,
                           u'datestart':timestart, u'dateend':timeend,
                           u'lonmin':lonmin, u'latmin':latmin,
@@ -90,7 +90,8 @@ class wms_handler(object):
                           u'variables': layers,
                           u'topologytype': topology_type,
                           u'magnitude': magnitude_bool,
-                          } )
+                          }
+        
         if float(lonmax)-float(lonmin) < .0001:
             requestobj == None
         return requestobj
