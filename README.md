@@ -41,7 +41,7 @@ they are required by some of the module dependencies installed in the next secti
 
 ##Installation
 
-[Download the compressed project](http://acrosby.github.com/sci-wms) and unpack or clone this github project into the location the installation will run: `git clone https://github.com/asascience-open/sci-wms.git`.cat re
+[Download the compressed project](http://acrosby.github.com/sci-wms) and unpack or clone this github project into the location the installation will run: `git clone https://github.com/asascience-open/sci-wms.git`.
 
 Install the following Python dependencies using `pip`, `easy_install`, or equivalent.
 If you are using [virtualenv](http://www.virtualenv.org/en/latest/), just make
@@ -121,7 +121,7 @@ python manage.py collectstatic
 ## Deployment
 
 ### Start the services
-You should NOT run the development service on a production server!  You will need to run all production sci-wms application servers using gunicorn. [Learn about gunicorn wsgi server configuration by clicking here.](http://gunicorn.org/).
+You should NOT run the development service on a production server!  You will need to run all production sci-wms application servers using gunicorn. [Learn about gunicorn wsgi server configuration by clicking here](http://gunicorn.org/).
 A helper script for starting a gunicorn sci-wms server is included with the source.  To manage the service, you may use two helper scripts included with sci-wms:
 ```bash
 bash start_server.sh

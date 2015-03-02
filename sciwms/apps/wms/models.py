@@ -17,6 +17,8 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
+import pytz
+import glob
 from urlparse import urlparse
 from datetime import datetime
 
@@ -39,7 +41,7 @@ class Dataset(models.Model):
     longitude_variable = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
     cache_last_updated = models.DateTimeField(null=True, editable=False)
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
-    
+
     def __unicode__(self):
         return self.name
 
@@ -50,11 +52,53 @@ class Dataset(models.Model):
         else:
             return self.uri
 
-    def update_cache(self):
+    def update_cache(self, force=False):
         from sciwms.libs.data.caching import update_dataset_cache
-        update_dataset_cache(self)
-        self.cache_last_updated = datetime.now()
+        update_dataset_cache(self, force=force)
+        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
+
+    def clear_cache(self):
+        cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.safe_filename + '*'))
+        for cache_file in cache_file_list:
+            os.remove(cache_file)
+
+    @property
+    def safe_filename(self):
+        return "".join(c for c in self.name if c.isalnum()).rstrip()
+
+    @property
+    def topology_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.nc'.format(self.safe_filename))
+
+    @property
+    def domain_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.domain'.format(self.safe_filename))
+
+    @property
+    def node_tree_root(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.nodes').format(self.safe_filename)
+
+    @property
+    def cell_tree_root(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
+
+    @property
+    def node_index_file(self):
+        return '{}.idx'.format(self.node_tree_root)
+
+    @property
+    def node_data_file(self):
+        return '{}.dat'.format(self.node_tree_root)
+
+    @property
+    def cell_index_file(self):
+        return '{}.idx'.format(self.cell_tree_root)
+
+    @property
+    def cell_data_file(self):
+        return '{}.dat'.format(self.cell_tree_root)
+
 
 
 class VirtualLayer(models.Model):

@@ -93,12 +93,12 @@ def getvar(datasetnc, t, layer, variables, index):
             #var2[np.isnan(var1)] = np.nan
             var1 = var1 + var2
             var2 = None
-        if var1 != None:
+        if var1 is not None:
             ncvar1 = datasetnc.variables[variables[0]]
             if "additional_fill_values" in ncvar1.ncattrs():
                 for fillval in map(float, ncvar1.additional_fill_values.split(",")):
                     var1[var1==fillval] = np.nan
-        if var2 != None:
+        if var2 is not None:
             ncvar2 = datasetnc.variables[variables[1]]
             if "additional_fill_values" in ncvar2.ncattrs():
                 for fillval in map(float, ncvar2.additional_fill_values.split(",")):
@@ -423,7 +423,7 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
     except ImportError:
         import Pickle as pickle
     # Open domain
-    f = open(os.path.join(settings.TOPOLOGY_PATH, dataset + '.domain'))
+    f = open(os.path.join(dataset.domain_file))
     domain = pickle.load(f)
     f.close()
     # convert extent bbox to Shapely Polygon object

@@ -29,6 +29,7 @@ import sys
 import os
 import numpy
 import logging
+import tempfile
 import traceback
 from datetime import datetime
 import numpy as np
@@ -43,25 +44,19 @@ except:
     import Pickle as pickle
 
 from django.conf import settings
-
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+from sciwms import logger
 
 time_units = 'hours since 1970-01-01'
 
 
-def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
+def create_topology(dataset):
     try:
         #with s1:
-        nclocalpath = os.path.join(settings.TOPOLOGY_PATH, dataset_name+".nc.updating")
-        nc = ncDataset(url)
-        nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
+        nclocalpath = tempfile.NamedTemporaryFile()
+        nclocalpath.close()
+        nc = ncDataset(dataset.uri)
+
+        nclocal = ncDataset(nclocalpath.name, mode="w", clobber=True)
         if "nv" in nc.variables:
             logger.info("identified as fvcom")
             grid = 'False'
@@ -202,7 +197,8 @@ def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
             logger.info("data written to file")
         else:
             logger.info("identified as grid")
-            latname, lonname = lat_var, lon_var
+            latname = dataset.latitude_variable
+            lonname = dataset.longitude_variable
             if latname not in nc.variables:
                 for key in nc.variables.iterkeys():
                     try:
@@ -271,18 +267,16 @@ def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
                 nclocal.sync()
             nclocal.sync()
 
-        shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
-        if not ((os.path.exists(nclocalpath.replace(".updating", "").replace(".nc", '_nodes.dat')) and os.path.exists(nclocalpath.replace(".updating", "").replace(".nc", "_nodes.idx")))):
-            #with s1:
-            build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
+        nclocal.close()
+        shutil.move(nclocalpath.name, dataset.topology_file)
+        if not os.path.exists(dataset.node_index_file) or not os.path.exists(dataset.node_data_file):
+            build_tree.build_from_nc(dataset)
         if grid == 'False':
-            if not os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '.domain'):
-                #with s2:
-                create_domain_polygon(nclocalpath.replace(".updating", ""))
+            if not os.path.exists(dataset.domain_file):
+                create_domain_polygon(dataset)
 
     except Exception:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+        logger.exception("Could not create_topology for Dataset '{}'".format(dataset.name))
         try:
             nclocal.close()
         except:
@@ -291,12 +285,18 @@ def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
             nc.close()
         except:
             pass
-        if os.path.exists(nclocalpath):
-            os.unlink(nclocalpath)
+        if os.path.exists(nclocalpath.name):
+            os.unlink(nclocalpath.name)
         raise
     finally:
-        nclocal.close()
-        nc.close()
+        try:
+            nclocal.close()
+        except:
+            pass
+        try:
+            nc.close()
+        except:
+            pass
 
 
 def create_topology_from_config():
@@ -305,7 +305,7 @@ def create_topology_from_config():
     """
     for dataset in Dataset.objects.all():
         print "Adding: " + dataset["name"]
-        create_topology(dataset["name"], dataset["uri"])
+        create_topology(dataset)
 
 
 def update_datasets():
@@ -318,49 +318,40 @@ def update_datasets():
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
 
 
-def update_dataset_cache(dataset):
+def update_dataset_cache(dataset, force=False):
     try:
-        try:
-            filemtime = datetime.fromtimestamp(
-                os.path.getmtime(
-                    os.path.join(
-                        settings.TOPOLOGY_PATH, dataset.name + ".nc"
-                    )))
-            if dataset.keep_up_to_date:
-                try:
-                    nc = ncDataset(dataset.path())
-                    topo = ncDataset(os.path.join(
-                        settings.TOPOLOGY_PATH, dataset.name + ".nc"))
-
-                    time1 = nc.variables['time'][-1]
-                    time2 = topo.variables['time'][-1]
-                    if time1 != time2:
-                        logger.info("Updating: " + dataset.path())
-                        create_topology(dataset.name, dataset.path(), dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
-                    else:
-                        logger.info("No new time values found in dataset, nothing to update!")
-                except Exception:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-                finally:
-                    nc.close()
-                    topo.close()
+        if dataset.keep_up_to_date or force is True:
+            try:
+                topo = ncDataset(dataset.topology_file)
+            except BaseException:
+                logger.info("No cache found, Initializing: " + dataset.topology_file)
+                create_topology(dataset)
             else:
-                logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
-        except Exception:
-            logger.info("No cache found, Initializing: " + dataset.path())
-            create_topology(dataset.name, dataset.path(), dataset.latitude_variable or 'lat', dataset.longitude_variable or 'lon')
-
+                nc = ncDataset(dataset.path())
+                time1 = nc.variables['time'][-1]
+                time2 = topo.variables['time'][-1]
+                nc.close()
+                if time1 != time2:
+                    logger.info("Updating: " + dataset.path())
+                    create_topology(dataset)
+                else:
+                    logger.info("No new time values found in dataset, nothing to update!")
+            finally:
+                try:
+                    topo.close()
+                except BaseException:
+                    pass
+        else:
+            logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
     except Exception:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+        logger.exception("Could not update Dataset {} cache".format(dataset.pk))
 
 
-def create_domain_polygon(filename):
+def create_domain_polygon(dataset):
     from shapely.geometry import Polygon
     from shapely.ops import cascaded_union
 
-    nc = ncDataset(filename)
+    nc = ncDataset(dataset.topology_file)
     nv = nc.variables['nv'][:, :].T-1
     #print np.max(np.max(nv))
     latn = nc.variables['lat'][:]
@@ -425,7 +416,7 @@ def create_domain_polygon(filename):
         logger.error("Domain file creation - No data in topology file Length of positive:%u Length of negative:%u" % (len(index_pos), len(index_neg)))
         raise ValueError("No data in file")
 
-    f = open(filename[:-3] + '.domain', 'w')
+    f = open(dataset.domain_file, 'w')
     pickle.dump(domain, f)
     f.close()
     nc.close()
