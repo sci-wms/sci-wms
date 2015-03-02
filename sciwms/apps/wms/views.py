@@ -311,11 +311,11 @@ def documentation(request):
     return HttpResponseRedirect('http://acrosby.github.io/sci-wms')
 
 
-def lower_request(request):
+def normalize_get_params(request):
     gettemp = request.GET.copy()
     for key in request.GET.iterkeys():
         gettemp[key.lower()] = request.GET[key]
-    request._set_get(gettemp)
+    request.GET = gettemp
     return request
 
 
@@ -328,7 +328,7 @@ def database_request_interaction(request, dataset):
 
 def wms(request, dataset):
     try:
-        request = lower_request(request)
+        request = normalize_get_params(request)
         reqtype = request.GET['request']
         if reqtype.lower() == 'getmap':
             request = database_request_interaction(request, dataset)

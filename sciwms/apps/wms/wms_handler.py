@@ -78,24 +78,33 @@ class wms_handler(object):
         topology_type = styles[5]
         magnitude_bool = styles[6]
 
-        requestobj._set_get( {u'latmax':latmax, u'lonmax':lonmax,
-                          u'projection':u'merc', u'layer':levels,
-                          u'datestart':timestart, u'dateend':timeend,
-                          u'lonmin':lonmin, u'latmin':latmin,
-                          u'height':height, u'width':width,
-                          u'actions':("image," + \
-                          "," + styles[0] + "," + styles[1]),
-                          u'colormap': colormap,
-                          u'climits': climits,
-                          u'variables': layers,
-                          u'topologytype': topology_type,
-                          u'magnitude': magnitude_bool,
-                          } )
+        tempget = requestobj.GET.copy()
+        tempget.clear()
+        values = {
+                    u'latmax':       latmax,
+                    u'lonmax':       lonmax,
+                    u'projection':   u'merc',
+                    u'layer':        levels,
+                    u'datestart':    timestart,
+                    u'dateend':      timeend,
+                    u'lonmin':       lonmin,
+                    u'latmin':       latmin,
+                    u'height':       height,
+                    u'width':        width,
+                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),
+                    u'colormap':     colormap,
+                    u'climits':      climits,
+                    u'variables':    layers,
+                    u'topologytype': topology_type,
+                    u'magnitude':    magnitude_bool,
+                 }
+        for k, v in values.iteritems():
+            tempget[k] = v
+        requestobj.GET = tempget.copy()
+
         if float(lonmax)-float(lonmin) < .0001:
             requestobj = None
         return requestobj
-
-
 
     def __init__(self, requestobj):
         '''
