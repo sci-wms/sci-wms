@@ -19,7 +19,6 @@ This file is part of SCI-WMS.
 
 # Django settings for fvcom_compute project.
 import os
-from sys import argv
 
 WSGI_APPLICATION = "sciwms.wsgi.application"
 
@@ -54,27 +53,12 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-# check to see if running tests (i.e. manage.py test)a
-# allow use of a different databases for testing and development
-if argv and len(argv) > 1:
-    RUNNING_TESTS = 'test' in argv
-else:
-    RUNNING_TESTS = False
-
-if RUNNING_TESTS:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-            'NAME': os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms-testing.db"))  # Or path to database file if using sqlite3.
-        }
-    }   
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-            'NAME': os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms.db"))  # Or path to database file if using sqlite3.
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms.db"))  # Or path to database file if using sqlite3.
     }
+}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
