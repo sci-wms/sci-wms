@@ -142,7 +142,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'sciwms.urls'
 
 TEMPLATE_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "templates")),
 )
 
 INSTALLED_APPS = [
