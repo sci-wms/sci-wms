@@ -1262,7 +1262,7 @@ def getMap(request, dataset):
     if "kml" in actions:  # TODO: REMOVE THIS!
         pass
     else:
-        # Open topology cache file, and the actualy data endpoint
+        # Open topology cache file, and the actual data endpoint
         topology = netCDF4.Dataset(dataset.topology_file)
         datasetnc = netCDF4.Dataset(url)
         gridtype = topology.grid  # Grid type found in topology file
