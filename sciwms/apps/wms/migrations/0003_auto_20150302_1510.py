@@ -10,24 +10,24 @@ def forwards(apps, schema_editor):
     resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
 
     Dataset = apps.get_model("wms", "Dataset")
-    d1 = Dataset(uri                   = os.path.join(resource_path, "nasa_scb20111015.nc"),
-                 name                  = "CGridTest",
-                 title                 = "CGrid Test dataset",
-                 abstract              = "CGrid Test data set for sci-wms",
-                 display_all_timesteps = False,
-                 keep_up_to_date       = False,
-                 test_layer            = "u,v",
-                 test_style            = "facets_average_jet_None_None_grid_False" )
+    d1 = Dataset(uri=os.path.join(resource_path, "nasa_scb20111015.nc"),
+                 name="CGridTest",
+                 title="CGrid Test dataset",
+                 abstract="CGrid Test data set for sci-wms",
+                 display_all_timesteps=False,
+                 keep_up_to_date=False,
+                 test_layer="u,v",
+                 test_style="facets_average_jet_None_None_grid_False" )
     d1.save()
 
-    d2 = Dataset(uri                   = os.path.join(resource_path, "201220109.nc"),
-                 name                  = "UGridTest",
-                 title                 = "UGrid Test dataset",
-                 abstract              = "UGrid Test data set for sci-wms",
-                 display_all_timesteps = False,
-                 keep_up_to_date       = False,
-                 test_layer            = "u,v",
-                 test_style            = "facets_average_jet_None_None_node_False" )
+    d2 = Dataset(uri=os.path.join(resource_path, "201220109.nc"),
+                 name="UGridTest",
+                 title="UGrid Test dataset",
+                 abstract="UGrid Test data set for sci-wms",
+                 display_all_timesteps=False,
+                 keep_up_to_date = False,
+                 test_layer="u,v",
+                 test_style="facets_average_jet_None_None_node_False" )
     d2.save()
 
     VirtualLayer = apps.get_model('wms', 'VirtualLayer')
@@ -39,7 +39,10 @@ def forwards(apps, schema_editor):
 
     bands = VirtualLayer(layer="RGB Band Images", layer_expression="Band1*Band2*Band3")
     bands.save()
-
+    
+    Server = apps.get_model('wms', 'Server')
+    server = Server(title='Sci-wms Server')
+    server.save()
 
 class Migration(migrations.Migration):
 
