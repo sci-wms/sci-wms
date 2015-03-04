@@ -7,5 +7,9 @@
 
 # Default Topology location
 sciwms/apps/wms/topology/
-sciwms/sci-wms.db
+sciwms/*.db
 !.gitkeep
+
+#dev environment stuff
+.pydevproject
+.project
