@@ -41,7 +41,7 @@ import shutil
 try:
     import cPickle as pickle
 except:
-    import Pickle as pickle
+    import pickle as pickle
 
 from django.conf import settings
 from sciwms import logger
