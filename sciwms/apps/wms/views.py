@@ -42,6 +42,7 @@ except ImportError:
 
 import numpy
 import netCDF4
+from pyugrid import UGrid
 
 # Import from matplotlib and set backend
 import matplotlib
