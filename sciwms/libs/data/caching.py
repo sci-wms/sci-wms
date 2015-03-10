@@ -58,8 +58,8 @@ def create_topology(dataset):
 
         nclocal = ncDataset(nclocalpath.name, mode="w", clobber=True)
         if "nv" in nc.variables:
-            logger.info("identified as fvcom")
-            grid = 'False'
+            logger.info("identified as fvcom")  # finite volume community ocean model
+            grid = 'False'  # if False, it might be a UGRID
 
             nclocal.createDimension('cell', nc.variables['latc'].shape[0])
             nclocal.createDimension('node', nc.variables['lat'].shape[0])
@@ -111,7 +111,7 @@ def create_topology(dataset):
             logger.info("data written to file")
 
         elif "element" in nc.variables:
-            logger.info("identified as adcirc")
+            logger.info("identified as adcirc")  # advanced circulation model
             grid = 'False'
             nclocal.createDimension('node', nc.variables['x'].shape[0])
             nclocal.createDimension('cell', nc.variables['element'].shape[0])
@@ -156,7 +156,7 @@ def create_topology(dataset):
                 if "mesh" in varname:
                     meshcoords = nc.variables[varname].node_coordinates.split(" ")
                     lonname, latname = meshcoords[0], meshcoords[1]
-            logger.info("identified as selfe")
+            logger.info("identified as selfe")  # semi-implicit Eulerian-Lagrangian finite-element model
             grid = 'False'
             nclocal.createDimension('node', nc.variables['x'].shape[0])
             nclocal.createDimension('cell', nc.variables['ele'].shape[1])
@@ -199,7 +199,7 @@ def create_topology(dataset):
             logger.info("identified as grid")
             latname = dataset.latitude_variable
             lonname = dataset.longitude_variable
-            if latname not in nc.variables:
+            if latname not in nc.variables:  # look for the lat and lon variables if the database lat/lon names are absent or incorrect
                 for key in nc.variables.iterkeys():
                     try:
                         nc.variables[key].__getattr__('units')
@@ -243,7 +243,7 @@ def create_topology(dataset):
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
             if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])
+                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
                 grid = 'cgrid'
             else:
                 lon[:] = lontemp

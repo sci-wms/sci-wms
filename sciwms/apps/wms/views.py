@@ -42,6 +42,7 @@ except ImportError:
 
 import numpy
 import netCDF4
+from pyugrid.read_netcdf import find_mesh_names
 from pyugrid import UGrid
 
 # Import from matplotlib and set backend
@@ -1307,7 +1308,7 @@ def getMap(request, dataset):
                ("filledcontours" in actions) or \
                ("pcolor" in actions) or \
                (topology_type.lower() == 'node'):
-                if gridtype == 'False':  # If ugrid
+                if gridtype == 'False' or len(find_mesh_names(datasetnc)) > 0:  # If ugrid
                     # If the nodes are important, get the node coords, and
                     # topology array
                     nv = ugrid.get_topologyarray(topology, index)
