@@ -64,10 +64,10 @@ class wms_handler(object):
             timeend = time[0]
         box = requestobj.GET["bbox"]
         box = box.split(",")
-        latmin = box[1]
-        latmax = box[3]
-        lonmin = box[0]
-        lonmax = box[2]
+        latmin = box[1]  # ymin
+        latmax = box[3]  # ymax
+        lonmin = box[0]  # xmin
+        lonmax = box[2]  # xmax
 
         height = requestobj.GET["height"]
         width = requestobj.GET["width"]
