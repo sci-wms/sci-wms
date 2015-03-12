@@ -523,8 +523,13 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                 ET.SubElement(layer1, "Abstract").text = variable
             ET.SubElement(layer1, "SRS").text = "EPSG:3857"
             llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-            templon = topology.variables["lon"][:]
-            templat = topology.variables["lat"][:]
+            # stuff added for experimentation
+            ug = UGrid()
+            ds = ug.from_nc_dataset(nc=nc)
+            templon = ds.nodes[:, 0][:]
+            templat = ds.nodes[:, 1][1]
+            #templon = topology.variables["lon"][:]
+            #templat = topology.variables["lat"][:]
             #templon = templon[not numpy.isnan(templon)]
             #templat = templat[not numpy.isnan(templat)]
             llbbox.attrib["minx"] = str(numpy.nanmin(templon))
@@ -1312,7 +1317,11 @@ def getMap(request, dataset):
                     # If the nodes are important, get the node coords, and
                     # topology array
                     nv = ugrid.get_topologyarray(topology, index)
-                    latn, lonn = ugrid.get_nodes(topology)
+                    ug = UGrid()
+                    ug_ds = ug.from_nc_dataset(datasetnc)
+                    nodes = ug_ds.nodes
+                    lonn = nodes[:, 0]
+                    latn = nodes[:, 1]
                     if topology_type.lower() == "node":
                         index = range(len(latn))
                     # Deal with global out of range datasets in the node longitudes

@@ -45,6 +45,7 @@ except:
 
 from django.conf import settings
 from sciwms import logger
+from pyugrid import UGrid
 
 time_units = 'hours since 1970-01-01'
 
@@ -195,7 +196,7 @@ def create_topology(dataset):
             nclocal.grid = grid
             nclocal.sync()
             logger.info("data written to file")
-        else:
+        else:  # both cgrids and ugrid go through this statement
             logger.info("identified as grid")
             latname = dataset.latitude_variable
             lonname = dataset.longitude_variable
@@ -242,9 +243,15 @@ def create_topology(dataset):
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
-            if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
-                grid = 'cgrid'
+            if grid == 'rgrid':  # ugrid compliant and cgrid datasets go through this
+                ds_ugrid = UGrid.from_nc_dataset(nc=nc)
+                ds_nodes = ds_ugrid.nodes
+                longitude_n = ds_nodes[:, 1][:]
+                latitude_n = ds_nodes[:, 1][:]
+                lon = longitude_n
+                lat = latitude_n
+                # lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
+                grid = 'ugrid'
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables[latname][:]
