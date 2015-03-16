@@ -53,8 +53,10 @@ class Dataset(models.Model):
             return self.uri
 
     def update_cache(self, force=False):
-        from sciwms.libs.data.caching import update_dataset_cache
-        update_dataset_cache(self, force=force)
+        # from sciwms.libs.data.caching import update_dataset_cache
+        # update_dataset_cache(self, force=force)
+        from sciwms.libs.data.caching import create_ugrid_topology
+        create_ugrid_topology(self.name, self.uri)
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
 

@@ -28,14 +28,12 @@ from netCDF4 import date2num
 import sys
 import os
 import numpy
-import logging
 import tempfile
 import traceback
 from datetime import datetime
 import numpy as np
 from sciwms.apps.wms.models import Dataset
 from sciwms.libs.data import build_tree
-import multiprocessing
 from collections import deque
 import shutil
 try:
@@ -46,10 +44,46 @@ except:
 from django.conf import settings
 from sciwms import logger
 from pyugrid import UGrid
+from utils import get_nc_variable_values
 
 time_units = 'hours since 1970-01-01'
 
 
+def create_ugrid_topology(dataset_name, dataset_url):
+    try:
+        nc = ncDataset(dataset_url)
+        ug = UGrid.from_nc_dataset(nc=nc)
+        
+        # create the path for the netCDF cache file
+        cache_filename = '{0}.nc'.format(dataset_name)
+        cache_path = os.path.join(settings.TOPOLOGY_PATH, cache_filename)
+        ug.save_as_netcdf(cache_path)
+        # add time to the cached topology
+        cached_nc = ncDataset(cache_path, mode='a')
+        time_name = 'time'
+        time_vals = get_nc_variable_values(nc, time_name)
+        if time_vals is not None:
+            time_vals_size = time_vals.shape[0]
+            cached_nc.createDimension(time_name, size=time_vals_size)
+            if time_vals.ndim > 1:  # deal with one dimensional time for now
+                pass
+            else:
+                time_var =  cached_nc.createVariable(varname=time_name, 
+                                                     datatype='f8',
+                                                     dimensions=(time_name,)
+                                                     )
+                time_var[:] = time_vals[:]  # put the time values from the original nc file to the cache
+                time_var.units = time_units
+        cached_nc.close()
+    except:
+        raise('Failed to cache UGRID dataset.')
+    
+    
+def create_sgrid_topology():
+    raise NotImplementedError
+        
+
+# DEPRECATED
 def create_topology(dataset):
     try:
         #with s1:
@@ -314,7 +348,7 @@ def create_topology_from_config():
         print "Adding: " + dataset["name"]
         create_topology(dataset)
 
-
+'''
 def update_datasets():
     for d in Dataset.objects.all():
         try:
@@ -323,8 +357,9 @@ def update_datasets():
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+'''
 
-
+'''
 def update_dataset_cache(dataset, force=False):
     try:
         if dataset.keep_up_to_date or force is True:
@@ -352,6 +387,7 @@ def update_dataset_cache(dataset, force=False):
             logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
     except Exception:
         logger.exception("Could not update Dataset {} cache".format(dataset.pk))
+'''
 
 
 def create_domain_polygon(dataset):
