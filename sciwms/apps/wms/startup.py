@@ -1,6 +1,9 @@
 def run():
     print "Updating datasets..."
-    from sciwms.libs.data.caching import update_datasets
+    try:
+        from sciwms.libs.data.caching import update_datasets
+    except ImportError:
+        pass
 
     try:
         update_datasets()

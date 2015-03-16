@@ -65,6 +65,7 @@ from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth import authenticate, login, logout
 
 from sciwms.libs.data import cgrid, ugrid
+from sciwms.libs.data.custom_exceptions import NonCompliantDataset
 import sciwms.apps.wms.wms_requests as wms_reqs
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 from sciwms.apps.wms import logger
@@ -484,110 +485,207 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     onlineresource.attrib["href"] = href
     # Layers
     layer = ET.SubElement(capability, "Layer")
-    ET.SubElement(layer, "Title").text      = dataset.title
-    ET.SubElement(layer, "Abstract").text   = dataset.abstract
-    ET.SubElement(layer, "SRS").text        = "EPSG:3857"
-    ET.SubElement(layer, "SRS").text        = "MERCATOR"
+    ET.SubElement(layer, "Title").text = dataset.title
+    ET.SubElement(layer, "Abstract").text = dataset.abstract
+    ET.SubElement(layer, "SRS").text = "EPSG:3857"
+    ET.SubElement(layer, "SRS").text = "MERCATOR"
 
     nc = netCDF4.Dataset(dataset.path())
     topology = netCDF4.Dataset(dataset.topology_file)
     for variable in nc.variables.keys():
         try:
-            location = nc.variables[variable].location
-        except:
-            if topology.grid != 'False':
-                location = "grid"
+            if topology.variables['Mesh'] is not None:  # identify as a UGRID compliant file
+                location = 'node'
+                grid_type = 'ugrid'
+                ug = UGrid()
+                ds = ug.from_nc_dataset(nc=nc)
             else:
-                location = "node"
+                location = 'grid'
+                grid_type = 'sgrid'
+        except KeyError:
+            raise NonCompliantDataset(dataset.name, dataset.uri)  # dataset is neither UGRID or SGRID compliant
         if location == "face":
             location = "cell"
-        if True:
-            #nc.variables[variable].location
-            layer1 = ET.SubElement(layer, "Layer")
-            layer1.attrib["queryable"] = "1"
-            layer1.attrib["opaque"] = "0"
-            ET.SubElement(layer1, "Name").text = variable
+
+        layer1 = ET.SubElement(layer, "Layer")
+        layer1.attrib["queryable"] = "1"
+        layer1.attrib["opaque"] = "0"
+        ET.SubElement(layer1, "Name").text = variable
+        try:
             try:
-                try:
-                    ET.SubElement(layer1, "Title").text = nc.variables[variable].standard_name
-                except:
-                    ET.SubElement(layer1, "Title").text = nc.variables[variable].long_name
+                ET.SubElement(layer1, "Title").text = nc.variables[variable].standard_name
             except:
-                ET.SubElement(layer1, "Title").text = variable
+                ET.SubElement(layer1, "Title").text = nc.variables[variable].long_name
+        except:
+            ET.SubElement(layer1, "Title").text = variable
+        try:
             try:
-                try:
-                    ET.SubElement(layer1, "Abstract").text = nc.variables[variable].summary
-                except:
-                    ET.SubElement(layer1, "Abstract").text = nc.variables[variable].long_name
+                ET.SubElement(layer1, "Abstract").text = nc.variables[variable].summary
             except:
-                ET.SubElement(layer1, "Abstract").text = variable
-            ET.SubElement(layer1, "SRS").text = "EPSG:3857"
-            llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-            # stuff added for experimentation
-            ug = UGrid()
-            ds = ug.from_nc_dataset(nc=nc)
-            templon = ds.nodes[:, 0][:]
-            templat = ds.nodes[:, 1][1]
-            #templon = topology.variables["lon"][:]
-            #templat = topology.variables["lat"][:]
-            #templon = templon[not numpy.isnan(templon)]
-            #templat = templat[not numpy.isnan(templat)]
-            llbbox.attrib["minx"] = str(numpy.nanmin(templon))
-            llbbox.attrib["miny"] = str(numpy.nanmin(templat))
-            llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
-            llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
-            #llbbox.attrib["minx"] = str(templon.min())
-            #llbbox.attrib["miny"] = str(templat.min())
-            #llbbox.attrib["maxx"] = str(templon.max())
-            #llbbox.attrib["maxy"] = str(templat.max())
-            llbbox = ET.SubElement(layer1, "BoundingBox")
-            llbbox.attrib["SRS"] = "EPSG:4326"
-            #llbbox.attrib["minx"] = str(templon.min())
-            #llbbox.attrib["miny"] = str(templat.min())
-            #llbbox.attrib["maxx"] = str(templon.max())
-            #llbbox.attrib["maxy"] = str(templat.max())
-            llbbox.attrib["minx"] = str(numpy.nanmin(templon))
-            llbbox.attrib["miny"] = str(numpy.nanmin(templat))
-            llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
-            llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
-            time_dimension = ET.SubElement(layer1, "Dimension")
-            time_dimension.attrib["name"] = "time"
-            time_dimension.attrib["units"] = "ISO8601"
-            elev_dimension = ET.SubElement(layer1, "Dimension")
-            elev_dimension.attrib["name"] = "elevation"
-            elev_dimension.attrib["units"] = "EPSG:5030"
-            time_extent = ET.SubElement(layer1, "Extent")
-            time_extent.attrib["name"] = "time"
-            elev_extent = ET.SubElement(layer1, "Extent")
-            elev_extent.attrib["name"] = "elevation"
-            elev_extent.attrib["default"] = "0"
+                ET.SubElement(layer1, "Abstract").text = nc.variables[variable].long_name
+        except:
+            ET.SubElement(layer1, "Abstract").text = variable
+        ET.SubElement(layer1, "SRS").text = "EPSG:3857"
+        llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
+        # stuff added for experimentation
+        templon = ds.nodes[:, 0][:]
+        templat = ds.nodes[:, 1][1]
+        llbbox.attrib["minx"] = str(numpy.nanmin(templon))
+        llbbox.attrib["miny"] = str(numpy.nanmin(templat))
+        llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
+        llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
+        llbbox = ET.SubElement(layer1, "BoundingBox")
+        llbbox.attrib["SRS"] = "EPSG:4326"
+        time_dimension = ET.SubElement(layer1, "Dimension")
+        time_dimension.attrib["name"] = "time"
+        time_dimension.attrib["units"] = "ISO8601"
+        elev_dimension = ET.SubElement(layer1, "Dimension")
+        elev_dimension.attrib["name"] = "elevation"
+        elev_dimension.attrib["units"] = "EPSG:5030"
+        time_extent = ET.SubElement(layer1, "Extent")
+        time_extent.attrib["name"] = "time"
+        elev_extent = ET.SubElement(layer1, "Extent")
+        elev_extent.attrib["name"] = "elevation"
+        elev_extent.attrib["default"] = "0"
+        try:
             try:
+                units = topology.variables["time"].units
+            #print units
+            #print topology.variables["time"][0], len(topology.variables["time"])
+            #print topology.variables["time"][-1]
+                if len(topology.variables["time"]) == 1:
+                    time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
+                else:
+                    if dataset.display_all_timesteps:
+                        temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
+                        time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
+                    else:
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
+            except:
+                if len(topology.variables["time"]) == 1:
+                    time_extent.text = str(topology.variables["time"][0])
+                else:
+                    time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
+        except:
+            pass
+        ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
+        if grid_type == 'ugrid':
+            if nc.variables[variable].ndim > 2:
+                try:
+                    ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
+                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
+                except:
+                    ET.SubElement(layer1, "DepthLayers").text = ""
+                try:
+                    if nc.variables["siglay"].positive.lower() == "up":
+                        ET.SubElement(layer1, "DepthDirection").text = "Down"
+                    elif nc.variables["siglay"].positive.lower() == "down":
+                        ET.SubElement(layer1, "DepthDirection").text = "Up"
+                    else:
+                        ET.SubElement(layer1, "DepthDirection").text = ""
+                except:
+                    ET.SubElement(layer1, "DepthDirection").text = ""
+            else:
+                ET.SubElement(layer1, "DepthLayers").text = "0"
+                ET.SubElement(layer1, "DepthDirection").text = "Down"
+                elev_extent.text = "0"
+        elif grid_type == 'sgrid':
+            if nc.variables[variable].ndim > 3:
+                try:
+                    ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
+                    elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
+                except:
+                    ET.SubElement(layer1, "DepthLayers").text = ""
+                try:
+                    #if nc.variables["depth"].positive.lower() == "up":
+                    #    ET.SubElement(layer1, "DepthDirection").text = "Down"
+                    #elif nc.variables["depth"].positive.lower() == "down":
+                    #    ET.SubElement(layer1, "DepthDirection").text = "Up"
+                    #else:
+                    #    ET.SubElement(layer1, "DepthDirection").text = ""
+                    ET.SubElement(layer1, "DepthDirection").text = ""
+                except:
+                    ET.SubElement(layer1, "DepthDirection").text = ""
+            else:
+                ET.SubElement(layer1, "DepthLayers").text = "0"
+                ET.SubElement(layer1, "DepthDirection").text = "Down"
+                elev_extent.text = "0"
+        else:
+            ET.SubElement(layer1, "DepthLayers").text = "0"
+            ET.SubElement(layer1, "DepthDirection").text = "Down"
+            elev_extent.text = "0"
+        ##
+
+        for style in ["filledcontours", "contours", "pcolor", "facets"]:
+            style_code = style + "_average_jet_None_None_" + location + "_False"
+            style = ET.SubElement(layer1, "Style")
+            ET.SubElement(style, "Name").text = style_code
+            ET.SubElement(style, "Title").text = style_code
+            ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
+            legendurl = ET.SubElement(style, "LegendURL")
+            legendurl.attrib["width"] = "50"
+            legendurl.attrib["height"] = "80"
+            ET.SubElement(legendurl, "Format").text = "image/png"
+        for configurations in [expected_configurations, virtual_configurations]:
+            if variable in configurations:
+                layername, layertype = configurations[variable]
+                try:
+                    location = nc.variables[variable].location
+                except:
+                    if topology.grid != 'False':
+                        location = "grid"
+                    else:
+                        location = "node"
+                if location == "face":
+                    location = "cell"
+                layer1 = ET.SubElement(layer, "Layer")
+                layer1.attrib["queryable"] = "1"
+                layer1.attrib["opaque"] = "0"
+                ET.SubElement(layer1, "Name").text = layername
+                ET.SubElement(layer1, "Title").text = layername  # current velocity (u,v)"
+                if layertype == "*":
+                    typetext = "3 band true color composite"
+                elif layertype == "+":
+                    typetext = "sum or addition of two layers"
+                elif layertype == ",":
+                    typetext = "magnitude or vector layer"
+                ET.SubElement(layer1, "Abstract").text = "Virtual Layer, "+typetext  # "Magnitude of current velocity from u and v components"
+                ET.SubElement(layer1, "SRS").text = "EPSG:4326"
+                llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
+                llbbox.attrib["minx"] = str(numpy.nanmin(templon))
+                llbbox.attrib["miny"] = str(numpy.nanmin(templat))
+                llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
+                llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
+                llbbox = ET.SubElement(layer1, "BoundingBox")
+                llbbox.attrib["SRS"] = "EPSG:4326"
+                llbbox.attrib["minx"] = str(numpy.nanmin(templon))
+                llbbox.attrib["miny"] = str(numpy.nanmin(templat))
+                llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
+                llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
+                time_dimension = ET.SubElement(layer1, "Dimension")
+                time_dimension.attrib["name"] = "time"
+                time_dimension.attrib["units"] = "ISO8601"
+                elev_dimension = ET.SubElement(layer1, "Dimension")
+                elev_dimension.attrib["name"] = "elevation"
+                elev_dimension.attrib["units"] = "EPSG:5030"
+                time_extent = ET.SubElement(layer1, "Extent")
+                time_extent.attrib["name"] = "time"
+                elev_extent = ET.SubElement(layer1, "Extent")
+                elev_extent.attrib["name"] = "elevation"
+                elev_extent.attrib["default"] = "0"
                 try:
                     units = topology.variables["time"].units
-                #print units
-                #print topology.variables["time"][0], len(topology.variables["time"])
-                #print topology.variables["time"][-1]
-                    if len(topology.variables["time"]) == 1:
-                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
+                    if dataset.display_all_timesteps:
+                        temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
+                        time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                     else:
-                        if dataset.display_all_timesteps:
-                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
-                            time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
-                        else:
-                            time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
                 except:
-                    if len(topology.variables["time"]) == 1:
-                        time_extent.text = str(topology.variables["time"][0])
-                    else:
-                        time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-            except:
-                pass
-            ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
-            if topology.grid.lower() == 'false':
+                    time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
                 if nc.variables[variable].ndim > 2:
                     try:
-                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
-                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
+                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
+                        elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
                     except:
                         ET.SubElement(layer1, "DepthLayers").text = ""
                     try:
@@ -601,126 +699,21 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                         ET.SubElement(layer1, "DepthDirection").text = ""
                 else:
                     ET.SubElement(layer1, "DepthLayers").text = "0"
-                    ET.SubElement(layer1, "DepthDirection").text = "Down"
                     elev_extent.text = "0"
-            elif topology.grid.lower() == 'cgrid':
-                if nc.variables[variable].ndim > 3:
-                    try:
-                        ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
-                        elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
-                    except:
-                        ET.SubElement(layer1, "DepthLayers").text = ""
-                    try:
-                        #if nc.variables["depth"].positive.lower() == "up":
-                        #    ET.SubElement(layer1, "DepthDirection").text = "Down"
-                        #elif nc.variables["depth"].positive.lower() == "down":
-                        #    ET.SubElement(layer1, "DepthDirection").text = "Up"
-                        #else:
-                        #    ET.SubElement(layer1, "DepthDirection").text = ""
-                        ET.SubElement(layer1, "DepthDirection").text = ""
-                    except:
-                        ET.SubElement(layer1, "DepthDirection").text = ""
-                else:
-                    ET.SubElement(layer1, "DepthLayers").text = "0"
                     ET.SubElement(layer1, "DepthDirection").text = "Down"
-                    elev_extent.text = "0"
-            else:
-                ET.SubElement(layer1, "DepthLayers").text = "0"
-                ET.SubElement(layer1, "DepthDirection").text = "Down"
-                elev_extent.text = "0"
-            ##
-
-            for style in ["filledcontours", "contours", "pcolor", "facets"]:
-                style_code = style + "_average_jet_None_None_" + location + "_False"
-                style = ET.SubElement(layer1, "Style")
-                ET.SubElement(style, "Name").text = style_code
-                ET.SubElement(style, "Title").text = style_code
-                ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
-                legendurl = ET.SubElement(style, "LegendURL")
-                legendurl.attrib["width"] = "50"
-                legendurl.attrib["height"] = "80"
-                ET.SubElement(legendurl, "Format").text = "image/png"
-                #legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
-                #legend_onlineresource.attrib["xlink:type"] = "simple"
-                #legend_onlineresource.attrib["xlink:href"] = href
-                #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-            for configurations in [expected_configurations, virtual_configurations]:
-                if variable in configurations:
-                    layername, layertype = configurations[variable]
-                    try:
-                        location = nc.variables[variable].location
-                    except:
-                        if topology.grid != 'False':
-                            location = "grid"
-                        else:
-                            location = "node"
-                    if location == "face":
-                        location = "cell"
-                    layer1 = ET.SubElement(layer, "Layer")
-                    layer1.attrib["queryable"] = "1"
-                    layer1.attrib["opaque"] = "0"
-                    ET.SubElement(layer1, "Name").text = layername
-                    ET.SubElement(layer1, "Title").text = layername  # current velocity (u,v)"
-                    if layertype == "*":
-                        typetext = "3 band true color composite"
-                    elif layertype == "+":
-                        typetext = "sum or addition of two layers"
-                    elif layertype == ",":
-                        typetext = "magnitude or vector layer"
-                    ET.SubElement(layer1, "Abstract").text = "Virtual Layer, "+typetext  # "Magnitude of current velocity from u and v components"
-                    ET.SubElement(layer1, "SRS").text = "EPSG:4326"
-                    llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-                    llbbox.attrib["minx"] = str(numpy.nanmin(templon))
-                    llbbox.attrib["miny"] = str(numpy.nanmin(templat))
-                    llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
-                    llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
-                    llbbox = ET.SubElement(layer1, "BoundingBox")
-                    llbbox.attrib["SRS"] = "EPSG:4326"
-                    llbbox.attrib["minx"] = str(numpy.nanmin(templon))
-                    llbbox.attrib["miny"] = str(numpy.nanmin(templat))
-                    llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
-                    llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
-                    time_dimension = ET.SubElement(layer1, "Dimension")
-                    time_dimension.attrib["name"] = "time"
-                    time_dimension.attrib["units"] = "ISO8601"
-                    elev_dimension = ET.SubElement(layer1, "Dimension")
-                    elev_dimension.attrib["name"] = "elevation"
-                    elev_dimension.attrib["units"] = "EPSG:5030"
-                    time_extent = ET.SubElement(layer1, "Extent")
-                    time_extent.attrib["name"] = "time"
-                    elev_extent = ET.SubElement(layer1, "Extent")
-                    elev_extent.attrib["name"] = "elevation"
-                    elev_extent.attrib["default"] = "0"
-                    try:
-                        units = topology.variables["time"].units
-                        if dataset.display_all_timesteps:
-                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
-                            time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
-                        else:
-                            time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
-                    except:
-                        time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-                    if nc.variables[variable].ndim > 2:
-                        try:
-                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
-                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
-                        except:
-                            ET.SubElement(layer1, "DepthLayers").text = ""
-                        try:
-                            if nc.variables["siglay"].positive.lower() == "up":
-                                ET.SubElement(layer1, "DepthDirection").text = "Down"
-                            elif nc.variables["siglay"].positive.lower() == "down":
-                                ET.SubElement(layer1, "DepthDirection").text = "Up"
-                            else:
-                                ET.SubElement(layer1, "DepthDirection").text = ""
-                        except:
-                            ET.SubElement(layer1, "DepthDirection").text = ""
-                    else:
-                        ET.SubElement(layer1, "DepthLayers").text = "0"
-                        elev_extent.text = "0"
-                        ET.SubElement(layer1, "DepthDirection").text = "Down"
-                    if layertype == "*":
-                        style = "composite"
+                if layertype == "*":
+                    style = "composite"
+                    style_code = style + "_average_jet_None_None_" + location + "_False"
+                    style = ET.SubElement(layer1, "Style")
+                    ET.SubElement(style, "Name").text = style_code
+                    ET.SubElement(style, "Title").text = style_code
+                    ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
+                    legendurl = ET.SubElement(style, "LegendURL")
+                    legendurl.attrib["width"] = "50"
+                    legendurl.attrib["height"] = "80"
+                    ET.SubElement(legendurl, "Format").text = "image/png"
+                elif layertype == "+":
+                    for style in ["pcolor", "facets", "filledcontours", "contours"]:
                         style_code = style + "_average_jet_None_None_" + location + "_False"
                         style = ET.SubElement(layer1, "Style")
                         ET.SubElement(style, "Name").text = style_code
@@ -730,34 +723,17 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                         legendurl.attrib["width"] = "50"
                         legendurl.attrib["height"] = "80"
                         ET.SubElement(legendurl, "Format").text = "image/png"
-                    elif layertype == "+":
-                        for style in ["pcolor", "facets", "filledcontours", "contours"]:
-                            style_code = style + "_average_jet_None_None_" + location + "_False"
-                            style = ET.SubElement(layer1, "Style")
-                            ET.SubElement(style, "Name").text = style_code
-                            ET.SubElement(style, "Title").text = style_code
-                            ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
-                            legendurl = ET.SubElement(style, "LegendURL")
-                            legendurl.attrib["width"] = "50"
-                            legendurl.attrib["height"] = "80"
-                            ET.SubElement(legendurl, "Format").text = "image/png"
-                    elif layertype == ",":
-                        for style in ["vectors", "barbs", "pcolor", "facets", "filledcontours", "contours"]:
-                            style_code = style + "_average_jet_None_None_" + location + "_False"
-                            style = ET.SubElement(layer1, "Style")
-                            ET.SubElement(style, "Name").text = style_code
-                            ET.SubElement(style, "Title").text = style_code
-                            ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
-                            legendurl = ET.SubElement(style, "LegendURL")
-                            legendurl.attrib["width"] = "50"
-                            legendurl.attrib["height"] = "80"
-                            ET.SubElement(legendurl, "Format").text = "image/png"
-                #legend_onlineresource = ET.SubElement(legendurl, "OnlineResource")
-                #legend_onlineresource.attrib["xlink:type"] = "simple"
-                #legend_onlineresource.attrib["xlink:href"] = href
-                #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-        if True:  # except:
-            pass
+                elif layertype == ",":
+                    for style in ["vectors", "barbs", "pcolor", "facets", "filledcontours", "contours"]:
+                        style_code = style + "_average_jet_None_None_" + location + "_False"
+                        style = ET.SubElement(layer1, "Style")
+                        ET.SubElement(style, "Name").text = style_code
+                        ET.SubElement(style, "Title").text = style_code
+                        ET.SubElement(style, "Abstract").text = "http://" + Site.objects.values()[0]['domain'] + "/doc"
+                        legendurl = ET.SubElement(style, "LegendURL")
+                        legendurl.attrib["width"] = "50"
+                        legendurl.attrib["height"] = "80"
+                        ET.SubElement(legendurl, "Format").text = "image/png"
     nc.close()
     tree = ET.ElementTree(root)
     try:
