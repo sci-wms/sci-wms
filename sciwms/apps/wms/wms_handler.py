@@ -71,13 +71,17 @@ class wms_handler(object):
 
         height = requestobj.GET["height"]
         width = requestobj.GET["width"]
+        # styles take the following form:
+        # {matplotlib style}_{statistical processing options}_{colormap}_{lower color normalization bound}_{upper color normalization bound}_{topology type}_{magnitude boolean}
+        # not total sure what the magnitude boolean does as of 03/17/2015
+        # start handling of styles
         styles = requestobj.GET["styles"].split(",")[0].split("_")
-
         colormap = styles[2].replace("-", "_")
         climits = styles[3:5]
         topology_type = styles[5]
         magnitude_bool = styles[6]
-
+        # end handling of styles
+        
         tempget = requestobj.GET.copy()
         tempget.clear()
         values = {
@@ -91,7 +95,7 @@ class wms_handler(object):
                     u'latmin':       latmin,
                     u'height':       height,
                     u'width':        width,
-                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),
+                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),  # 
                     u'colormap':     colormap,
                     u'climits':      climits,
                     u'variables':    layers,

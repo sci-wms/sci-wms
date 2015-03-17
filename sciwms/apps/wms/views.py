@@ -67,6 +67,7 @@ from django.contrib.auth import authenticate, login, logout
 from sciwms.libs.data import cgrid, ugrid
 from sciwms.libs.data.custom_exceptions import NonCompliantDataset
 import sciwms.apps.wms.wms_requests as wms_reqs
+from sciwms.libs.data.utils import get_nc_variable, get_nc_variable_values
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 from sciwms.apps.wms import logger
 
@@ -494,11 +495,9 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     topology = netCDF4.Dataset(dataset.topology_file)
     for variable in nc.variables.keys():
         try:
-            if topology.variables['Mesh'] is not None:  # identify as a UGRID compliant file
+            if get_nc_variable(topology, 'Mesh') is not None:  # identify as a UGRID compliant file
                 location = 'node'
                 grid_type = 'ugrid'
-                ug = UGrid()
-                ds = ug.from_nc_dataset(nc=nc)
             else:
                 location = 'grid'
                 grid_type = 'sgrid'
@@ -528,8 +527,8 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
         ET.SubElement(layer1, "SRS").text = "EPSG:3857"
         llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
         # stuff added for experimentation
-        templon = ds.nodes[:, 0][:]
-        templat = ds.nodes[:, 1][1]
+        templon = get_nc_variable_values(topology, 'Mesh_node_lon')
+        templat = get_nc_variable_values(topology, 'Mesh_node_lat')
         llbbox.attrib["minx"] = str(numpy.nanmin(templon))
         llbbox.attrib["miny"] = str(numpy.nanmin(templat))
         llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
@@ -1221,7 +1220,7 @@ def getMap(request, dataset):
         layer = int(l)
     layer = numpy.asarray(layer)
     actions = request.GET["actions"]
-    actions = set(actions.split(","))
+    actions = set(actions.split(","))  # set of unique actions
 
     # Get the colormap requested, the color limits/scaling
     colormap = request.GET["colormap"]
@@ -1248,15 +1247,22 @@ def getMap(request, dataset):
         # Open topology cache file, and the actual data endpoint
         topology = netCDF4.Dataset(dataset.topology_file)
         datasetnc = netCDF4.Dataset(url)
-        gridtype = topology.grid  # Grid type found in topology file
-        logger.info("gridtype: " + gridtype)
+        # gridtype = topology.grid  # Grid type found in topology file
+        if get_nc_variable(topology, 'Mesh') is not None:
+            grid_type = 'ugrid'
+            lat = get_nc_variable_values(topology, 'Mesh_node_lat')
+            lon = get_nc_variable_values(topology, 'Mesh_node_lon')
+        else:
+            grid_type = 'sgrid'
+        logger.info("gridtype: " + grid_type)
+        '''
         if gridtype != 'False':
             toplatc, toplonc = 'lat', 'lon'
             #toplatn, toplonn = 'lat', 'lon'
         else:
             toplatc, toplonc = 'latc', 'lonc'
             #toplatn, toplonn = 'lat', 'lon'
-
+        '''
         # If the request is not a box, then do nothing.
         if latmax != latmin:
             # Pull cell coords out of cache.
@@ -1265,21 +1271,28 @@ def getMap(request, dataset):
             if lonmin > lonmax:
                 lonmax = lonmax + 360
                 continuous = True
-                lon = topology.variables[toplonc][:]
+                #lon = topology.variables[toplonc][:]
                 #wher = numpy.where(lon<lonmin)
-                if gridtype != 'False':
+                if grid_type == 'ugrid' or grid_type == 'sgrid':
                     lon[lon < 0] = lon[lon < 0] + 360
                 else:
                     lon[lon < lonmin] = lon[lon < lonmin] + 360
+            # else:
+            #     lon = topology.variables[toplonc][:]
+            # lat = topology.variables[toplatc][:]
+            if grid_type == 'ugrid':
+                index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
+            elif grid_type == 'sgrid':
+                pass
             else:
-                lon = topology.variables[toplonc][:]
-            lat = topology.variables[toplatc][:]
+                pass
+            '''
             if gridtype != 'False':
                 if gridtype == 'cgrid':
                     index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
             else:
                 index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-
+            '''
         if index is not None:
             if ("facets" in actions) or \
                ("regrid" in actions) or \
@@ -1289,15 +1302,12 @@ def getMap(request, dataset):
                ("filledcontours" in actions) or \
                ("pcolor" in actions) or \
                (topology_type.lower() == 'node'):
-                if gridtype == 'False' or len(find_mesh_names(datasetnc)) > 0:  # If ugrid
+                if grid_type == 'ugrid':  # If ugrid
                     # If the nodes are important, get the node coords, and
                     # topology array
-                    nv = ugrid.get_topologyarray(topology, index)
-                    ug = UGrid()
-                    ug_ds = ug.from_nc_dataset(datasetnc)
-                    nodes = ug_ds.nodes
-                    lonn = nodes[:, 0]
-                    latn = nodes[:, 1]
+                    lonn = lon
+                    latn = lat
+                    nv = get_nc_variable_values(topology, 'Mesh_face_nodes')  # get face nodes, returns None if face nodes are unavailable
                     if topology_type.lower() == "node":
                         index = range(len(latn))
                     # Deal with global out of range datasets in the node longitudes
@@ -1312,11 +1322,13 @@ def getMap(request, dataset):
             else:
                 nv = None
                 lonn, latn = None, None
-
-            times = topology.variables['time'][:]
+            # get the requested time slice
+            # times = topology.variables['time'][:]
+            times = get_nc_variable_values(topology, 'time')
             datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-            datestart = round(netCDF4.date2num(datestart, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
-            time = bisect.bisect_right(times, datestart) - 1
+            time_units = topology.variables['time'].units
+            datestart = round(netCDF4.date2num(datestart, units=time_units))  # datetime obj --> netcdf datenum
+            time = bisect.bisect_right(times, datestart) - 1  # index where the requested time slice "would belong"
             if settings.LOCALDATASET:
                 time = [1]
             elif time == -1:
@@ -1325,7 +1337,7 @@ def getMap(request, dataset):
                 time = [time]
             if dateend != datestart:
                 dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-                dateend = round(netCDF4.date2num(dateend, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
+                dateend = round(netCDF4.date2num(dateend, units=time_units))  # datetime obj --> netcdf datenum
                 time.append(bisect.bisect_right(times, dateend) - 1)
                 if settings.LOCALDATASET:
                     time[1] = 1
@@ -1334,18 +1346,19 @@ def getMap(request, dataset):
                 else:
                     time[1] = time[1]
                 time = range(time[0], time[1]+1)
-            t = time  # TODO: ugh this is bad
+            time_indices = time  # TODO: ugh this is bad
             #loglist.append('time index requested ' + str(time))
 
             # Get the data and appropriate resulting shape from the data source
-            if gridtype == 'False':
-                var1, var2 = ugrid.getvar(datasetnc, t, layer, variables, index)
-            if gridtype == 'cgrid':
+            if grid_type == 'ugrid':
+                var1, var2 = ugrid.getvar(datasetnc, time_indices, layer, variables, index)
+            if grid_type == 'sgrid':
                 index = numpy.asarray(index)
-                var1, var2 = cgrid.getvar(datasetnc, t, layer, variables, index)
+                var1, var2 = cgrid.getvar(datasetnc, time_indices, layer, variables, index)
 
             if latmin != latmax:  # TODO: REMOVE THIS CHECK ALREADY DONE ABOVE
-                if gridtype == 'False':  # TODO: Should take a look at this
+            # Start latmin != latmax check
+                if grid_type == 'ugrid':  # TODO: Should take a look at this
                     # This is averaging in time over all timesteps downloaded
                     if "composite" in actions:
                         pass
@@ -1423,7 +1436,7 @@ def getMap(request, dataset):
                                                             clip=True,
                                                            )
                 # Plot to the projected figure axes!
-                if gridtype == 'cgrid':
+                if grid_type == 'sgrid':
                     lon, lat = m(lon, lat)
                     cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
                                aspect = m.aspect,
@@ -1440,7 +1453,7 @@ def getMap(request, dataset):
                                lonmax = lonmax,
                                latmax = latmax,
                                projection = projection)
-                elif gridtype == 'False':
+                elif grid_type == 'ugrid':
                     fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
                                         aspect = m.aspect,
                                         height = height,
