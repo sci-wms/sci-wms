@@ -128,15 +128,28 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
                 mag = var1
         mag = mag.squeeze()
         if "facets" in actions:
-            facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs)
+            facet(lon=lon, lat=lat, lonn=lonn, latn=latn, mag=mag, nv=nv, m=m, 
+                  ax=ax, norm=norm, cmin=cmin, cmax=cmax, cmap=cmap, 
+                  topology_type=topology_type
+                  )
         elif "vectors" in actions:
-            vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
+            vectors(lon=lon, lat=lat, lonn=lonn, latn=latn, 
+                    var1=var1, var2=var2, mag=mag, nv=nv, 
+                    m=m, ax=ax, norm=norm, cmap=cmap, magnitude=magnitude, 
+                    topology_type=topology_type
+                    )
         elif "unitvectors" in actions:
-            unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
+            unit_vectors(lon=lon, lat=lat, lonn=lonn, latn=latn, var1=var1, 
+                         var2=var2, mag=mag, nv=nv, m=m, ax=ax, norm=norm, 
+                         cmap=cmap, magnitude=magnitude, topology_type=topology_type
+                         )
         #elif "streamlines" in actions:
         #    streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         elif "barbs" in actions:
-            barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type)
+            barbs(lon=lon, lat=lat, lonn=lonn, latn=latn, var1=var1, 
+                  var2=var2, mag=mag, m=m, ax=ax, norm=norm, cmin=cmin, nv=nv, 
+                  cmax=cmax, cmap=cmap, magnitude=magnitude, topology_type=topology_type
+                  )
         else:
             lonmin = kwargs.get("lonmin")
             latmin = kwargs.get("latmin")
@@ -146,14 +159,33 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
             continuous = kwargs.get("continuous")
             projection = kwargs.get("projection")
             if "pcolor" in actions:
-                fig, m = pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+                fig, m = pcolor(lon=lon, lat=lat, lonn=lonn, latn=latn, mag=mag, 
+                                nv=nv, m=m, ax=ax, norm=norm, cmap=cmap, topology_type=topology_type, 
+                                fig=fig, height=height, width=width, lonmin=lonmin, latmin=latmin, 
+                                lonmax=lonmax, latmax=latmax, dataset=dataset, continuous=continuous, 
+                                projection=projection
+                                )
             elif "filledcontours" in actions:
-                fig, m = fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+                fig, m = fcontour(lon=lon, lat=lat, lonn=lonn, latn=latn, mag=mag, 
+                                  nv=nv, m=m, ax=ax, norm=norm, cmin=cmin, cmax=cmax, 
+                                  cmap=cmap, topology_type=topology_type, fig=fig, 
+                                  height=height, width=width, lonmin=lonmin, latmin=latmin, 
+                                  lonmax=lonmax, latmax=latmax, dataset=dataset, 
+                                  continuous=continuous, projection=projection
+                                  )
             elif "contours" in actions:
-                fig, m = contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
+                fig, m = contour(lon=lon, lat=lat, lonn=lonn, latn=latn, mag=mag, 
+                                 nv=nv, m=m, ax=ax, norm=norm, cmin=cmin, cmax=cmax, 
+                                 cmap=cmap, topology_type=topology_type, fig=fig, 
+                                 height=height, width=width, lonmin=lonmin, latmin=latmin, 
+                                 lonmax=lonmax, latmax=latmax, dataset=dataset, 
+                                 continuous=continuous, projection=projection
+                                 )
     return fig, m
 
-def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
+def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, 
+           fig, height, width, lonmin, latmin, lonmax, latmax, dataset, 
+           continuous, projection):
     from matplotlib.mlab import griddata
     if topology_type.lower() == "cell":
         lon, lat = m(lon, lat)
@@ -180,7 +212,10 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
     #canvas.print_png("testing_yay.png")
     return fig, m
 
-def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
+def contour(lon, lat, lonn, latn, mag, nv, m, ax, 
+            norm, cmin, cmax, cmap, topology_type, 
+            fig, height, width, lonmin, latmin, 
+            lonmax, latmax, dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
         levs = None
     else:
@@ -196,7 +231,9 @@ def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topolo
         m.ax.tricontour(tri, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(cmap))
     return fig, m
 
-def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
+def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, 
+             topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, 
+             dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
         levs = None
     else:
@@ -213,7 +250,7 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topol
         m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
     return fig, m
 
-def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs):
+def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type):
     lonn, latn = m(lonn, latn)
     tri = Tri.Triangulation(lonn,latn,triangles=nv)
     if topology_type.lower() == 'cell':
@@ -239,7 +276,8 @@ def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology
                        cmap=cmap,
                        )
 
-def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
+def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, 
+            ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
@@ -275,7 +313,8 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnit
             scale_units='inches',
             )
 
-def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
+def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, 
+                 m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
@@ -314,7 +353,8 @@ def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, m
             scale_units='inches',
             )
 
-def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
+def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, 
+                norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
@@ -345,7 +385,8 @@ def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnit
             norm=norm,
             )
 
-def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type):
+def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, 
+          nv, cmin, cmax, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
     elif magnitude == "False":
