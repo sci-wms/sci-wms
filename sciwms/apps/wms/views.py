@@ -62,10 +62,12 @@ from django.template.loader import get_template
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth import authenticate, login, logout
 
+from pyugrid import UGrid
+
 from sciwms.libs.data import cgrid, ugrid
 from sciwms.libs.data.custom_exceptions import NonCompliantDataset
 import sciwms.apps.wms.wms_requests as wms_reqs
-from sciwms.libs.data.utils import get_nc_variable, get_nc_variable_values
+from sciwms.libs.data.utils import (get_nc_variable, get_nc_variable_values)
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 from sciwms.apps.wms import logger
 
@@ -491,6 +493,8 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
 
     nc = netCDF4.Dataset(dataset.path())
     topology = netCDF4.Dataset(dataset.topology_file)
+    ug = UGrid()
+    topology_ug = ug.from_nc_dataset(nc=topology)
     for variable in nc.variables.keys():
         try:
             if get_nc_variable(topology, 'Mesh') is not None:  # identify as a UGRID compliant file
@@ -524,8 +528,11 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
             ET.SubElement(layer1, "Abstract").text = variable
         ET.SubElement(layer1, "SRS").text = "EPSG:3857"
         llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-        templon = get_nc_variable_values(topology, 'Mesh_node_lon')
-        templat = get_nc_variable_values(topology, 'Mesh_node_lat')
+        ug_nodes = topology_ug.nodes
+        templat = ug_nodes[:, 1]
+        templon = ug_nodes[:, 0]
+        # templon = get_nc_variable_values(topology, 'Mesh_node_lon')
+        # templat = get_nc_variable_values(topology, 'Mesh_node_lat')
         llbbox.attrib["minx"] = str(numpy.nanmin(templon))
         llbbox.attrib["miny"] = str(numpy.nanmin(templat))
         llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
@@ -1242,13 +1249,18 @@ def getMap(request, dataset):
         pass
     else:
         # Open topology cache file, and the actual data endpoint
+        ug = UGrid()
         topology = netCDF4.Dataset(dataset.topology_file)
+        topology_ug = ug.from_nc_dataset(nc=topology)
         datasetnc = netCDF4.Dataset(url)
         # gridtype = topology.grid  # Grid type found in topology file
-        if get_nc_variable(topology, 'Mesh') is not None:
+        if ug.mesh_name is not None:
             grid_type = 'ugrid'
-            lat = get_nc_variable_values(topology, 'Mesh_node_lat')
-            lon = get_nc_variable_values(topology, 'Mesh_node_lon')
+            ug_nodes = topology_ug.nodes
+            lon = ug_nodes[:, 0]
+            lat = ug_nodes[:, 1]
+            # lat = get_nc_variable_values(topology, 'Mesh_node_lat')
+            # lon = get_nc_variable_values(topology, 'Mesh_node_lon')
         else:
             grid_type = 'sgrid'
         logger.info("gridtype: " + grid_type)
@@ -1304,7 +1316,8 @@ def getMap(request, dataset):
                     # topology array
                     lonn = lon
                     latn = lat
-                    nv = get_nc_variable_values(topology, 'Mesh_face_nodes')  # get face nodes, returns None if face nodes are unavailable
+                    nv = topology_ug.faces
+                    #nv = get_nc_variable_values(topology, 'Mesh_face_nodes')  # get face nodes, returns None if face nodes are unavailable
                     if topology_type.lower() == "node":
                         index = range(len(latn))
                     # Deal with global out of range datasets in the node longitudes
@@ -1351,7 +1364,15 @@ def getMap(request, dataset):
             if grid_type == 'sgrid':
                 index = numpy.asarray(index)
                 var1, var2 = cgrid.getvar(datasetnc, time_indices, layer, variables, index)
-            
+            # var1_nan_mask = create_nan_mask(var1)
+            # print(var1_nan_mask.shape)
+            # print(var1)
+            # var1 = filter_array(var1, var1_nan_mask)
+            # print(lon.shape)
+            # lon = filter_array(lon, var1_nan_mask)
+            # lat = filter_array(lat, var1_nan_mask)
+            # lonn = filter_array(lonn, var1_nan_mask)
+            # latn = filter_array(latn, var1_nan_mask)
             if grid_type == 'ugrid':  # TODO: Should take a look at this
                 # This is averaging in time over all timesteps downloaded
                 if "composite" in actions:
@@ -1391,7 +1412,17 @@ def getMap(request, dataset):
             # Setup the basemap/matplotlib figure
             fig = Figure(dpi=80, facecolor='none', edgecolor='none')
             fig.set_alpha(0)
+            # print('var 1 again')
+            # var1_nan_mask = create_nan_mask(var1)
+            # var1 = filter_array(var1, var1_nan_mask)
+            # lon = filter_array(lon, var1_nan_mask)
+            # lat = filter_array(lat, var1_nan_mask)
+            # lonn = filter_array(lonn, var1_nan_mask)
+            # latn = filter_array(latn, var1_nan_mask)
             projection = request.GET["projection"]
+            # print('nv: {0}'.format(nv))
+            # nv_shape = nv.shape
+            # print('nv shape: {0}'.format(nv_shape))
             m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
                         urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
                         resolution=None,

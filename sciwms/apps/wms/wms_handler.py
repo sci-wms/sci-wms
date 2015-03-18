@@ -46,7 +46,6 @@ class wms_handler(object):
             now = date.today().isoformat()
             time = now + "T00:00:00"#
         time = time.split("/")
-        #print time
         for i in range(len(time)):
             #print time[i]
             time[i] = time[i].replace("Z", "")
@@ -84,6 +83,8 @@ class wms_handler(object):
         
         tempget = requestobj.GET.copy()
         tempget.clear()
+        print('Skitty')
+        print(timestart)
         values = {
                     u'latmax':       latmax,
                     u'lonmax':       lonmax,
