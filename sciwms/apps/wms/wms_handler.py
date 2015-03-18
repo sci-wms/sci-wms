@@ -83,8 +83,6 @@ class wms_handler(object):
         
         tempget = requestobj.GET.copy()
         tempget.clear()
-        print('Skitty')
-        print(timestart)
         values = {
                     u'latmax':       latmax,
                     u'lonmax':       lonmax,
