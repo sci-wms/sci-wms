@@ -1259,19 +1259,9 @@ def getMap(request, dataset):
             ug_nodes = topology_ug.nodes
             lon = ug_nodes[:, 0]
             lat = ug_nodes[:, 1]
-            # lat = get_nc_variable_values(topology, 'Mesh_node_lat')
-            # lon = get_nc_variable_values(topology, 'Mesh_node_lon')
         else:
             grid_type = 'sgrid'
         logger.info("gridtype: " + grid_type)
-        '''
-        if gridtype != 'False':
-            toplatc, toplonc = 'lat', 'lon'
-            #toplatn, toplonn = 'lat', 'lon'
-        else:
-            toplatc, toplonc = 'latc', 'lonc'
-            #toplatn, toplonn = 'lat', 'lon'
-        '''
         # If the request is not a box, then do nothing.
         if latmax != latmin:
             # Pull cell coords out of cache.
@@ -1295,13 +1285,6 @@ def getMap(request, dataset):
                 pass
             else:
                 pass
-            '''
-            if gridtype != 'False':
-                if gridtype == 'cgrid':
-                    index, lat, lon = cgrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-            else:
-                index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-            '''
         if index is not None:
             if ("facets" in actions) or \
                ("regrid" in actions) or \
