@@ -23,7 +23,7 @@ class NonCompliantDataset(Exception):
     
     
 def deprecated(deprecated_function):
-    @functools.warps(deprecated_function)
+    @functools.wraps(deprecated_function)
     def new_func(*args, **kwargs):
         warnings.warn_explicit('Call to deprecated function: {0}'.format(deprecated_function.__name__),
                                category=DeprecationWarning,

@@ -250,12 +250,6 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap,
         fig, m, patch1 = cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, continuous)
     else:
         lonn, latn = m(lonn, latn)
-        lonn_shape = lonn.shape
-        latn_shape = latn.shape
-        print('lonn: {0}'.format(lonn))
-        print('lonn shape: {0}'.format(lonn_shape))
-        print('latn: {0}'.format(latn))
-        print('latn_shape: {0}'.format(latn_shape))
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
         m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
     return fig, m
