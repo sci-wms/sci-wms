@@ -45,6 +45,7 @@ from django.conf import settings
 from sciwms import logger
 from pyugrid import UGrid
 from utils import get_nc_variable_values
+from custom_exceptions import deprecated
 
 time_units = 'hours since 1970-01-01'
 
@@ -348,7 +349,8 @@ def create_topology_from_config():
         print "Adding: " + dataset["name"]
         create_topology(dataset)
 
-'''
+
+@deprecated
 def update_datasets():
     for d in Dataset.objects.all():
         try:
@@ -357,9 +359,9 @@ def update_datasets():
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-'''
 
-'''
+
+@deprecated
 def update_dataset_cache(dataset, force=False):
     try:
         if dataset.keep_up_to_date or force is True:
@@ -387,7 +389,6 @@ def update_dataset_cache(dataset, force=False):
             logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
     except Exception:
         logger.exception("Could not update Dataset {} cache".format(dataset.pk))
-'''
 
 
 def create_domain_polygon(dataset):
