@@ -45,7 +45,7 @@ from django.conf import settings
 from sciwms import logger
 from pyugrid import UGrid
 from utils import get_nc_variable_values
-from custom_exceptions import deprecated
+from custom_exceptions import deprecated, NonCompliantDataset
 
 time_units = 'hours since 1970-01-01'
 
@@ -77,7 +77,7 @@ def create_ugrid_topology(dataset_name, dataset_url):
                 time_var.units = time_units
         cached_nc.close()
     except:
-        raise('Failed to cache UGRID dataset.')
+        raise NonCompliantDataset(dataset_name, dataset_url)
     
     
 def create_sgrid_topology():
