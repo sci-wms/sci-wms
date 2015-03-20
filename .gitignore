@@ -9,7 +9,3 @@
 sciwms/apps/wms/topology/
 sciwms/*.db
 !.gitkeep
-
-#dev environment stuff
-.pydevproject
-.project
