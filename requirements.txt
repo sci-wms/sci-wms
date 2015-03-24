@@ -10,3 +10,4 @@ jsonfield
 pytz
 djangorestframework
 pyugrid
+basemap
