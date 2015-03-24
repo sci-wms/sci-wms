@@ -1,5 +1,5 @@
 from django.test import TestCase
-from sciwms.apps.wms.tests import *
+from sciwms.apps.wms.tests import add_server, add_group, add_user, add_dataset
 
 
 class TestUgrid(TestCase):

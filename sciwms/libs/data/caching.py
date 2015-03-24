@@ -28,14 +28,12 @@ from netCDF4 import date2num
 import sys
 import os
 import numpy
-import logging
 import tempfile
 import traceback
 from datetime import datetime
 import numpy as np
 from sciwms.apps.wms.models import Dataset
 from sciwms.libs.data import build_tree
-import multiprocessing
 from collections import deque
 import shutil
 try:
@@ -45,10 +43,48 @@ except:
 
 from django.conf import settings
 from sciwms import logger
+from pyugrid import UGrid
+from utils import get_nc_variable_values
+from custom_exceptions import deprecated, NonCompliantDataset
 
 time_units = 'hours since 1970-01-01'
 
 
+def create_ugrid_topology(dataset_name, dataset_url):
+    try:
+        nc = ncDataset(dataset_url)
+        ug = UGrid.from_nc_dataset(nc=nc)
+        
+        # create the path for the netCDF cache file
+        cache_filename = '{0}.nc'.format(dataset_name)
+        cache_path = os.path.join(settings.TOPOLOGY_PATH, cache_filename)
+        ug.save_as_netcdf(cache_path)
+        # add time to the cached topology
+        cached_nc = ncDataset(cache_path, mode='a')
+        time_name = 'time'
+        time_vals = get_nc_variable_values(nc, time_name)
+        if time_vals is not None:
+            time_vals_size = time_vals.shape[0]
+            cached_nc.createDimension(time_name, size=time_vals_size)
+            if time_vals.ndim > 1:  # deal with one dimensional time for now
+                pass
+            else:
+                time_var =  cached_nc.createVariable(varname=time_name, 
+                                                     datatype='f8',
+                                                     dimensions=(time_name,)
+                                                     )
+                time_var[:] = time_vals[:]  # put the time values from the original nc file to the cache
+                time_var.units = time_units
+        cached_nc.close()
+    except:
+        raise NonCompliantDataset(dataset_name, dataset_url)
+    
+    
+def create_sgrid_topology():
+    raise NotImplementedError
+        
+
+# DEPRECATED
 def create_topology(dataset):
     try:
         #with s1:
@@ -195,7 +231,7 @@ def create_topology(dataset):
             nclocal.grid = grid
             nclocal.sync()
             logger.info("data written to file")
-        else:
+        else:  # both cgrids and ugrid go through this statement
             logger.info("identified as grid")
             latname = dataset.latitude_variable
             lonname = dataset.longitude_variable
@@ -242,9 +278,15 @@ def create_topology(dataset):
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
-            if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
-                grid = 'cgrid'
+            if grid == 'rgrid':  # ugrid compliant and cgrid datasets go through this
+                ds_ugrid = UGrid.from_nc_dataset(nc=nc)
+                ds_nodes = ds_ugrid.nodes
+                longitude_n = ds_nodes[:, 1][:]
+                latitude_n = ds_nodes[:, 1][:]
+                lon = longitude_n
+                lat = latitude_n
+                # lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
+                grid = 'ugrid'
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables[latname][:]
@@ -308,6 +350,7 @@ def create_topology_from_config():
         create_topology(dataset)
 
 
+@deprecated
 def update_datasets():
     for d in Dataset.objects.all():
         try:
@@ -318,6 +361,7 @@ def update_datasets():
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
 
 
+@deprecated
 def update_dataset_cache(dataset, force=False):
     try:
         if dataset.keep_up_to_date or force is True:
