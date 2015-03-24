@@ -490,7 +490,8 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     ET.SubElement(layer, "SRS").text        = "EPSG:3857"
     ET.SubElement(layer, "SRS").text        = "MERCATOR"
 
-    nc = netCDF4.Dataset(dataset.path())
+    nc = dataset.netcdf4_dataset()
+
     topology = netCDF4.Dataset(dataset.topology_file)
     for variable in nc.variables.keys():
         try:
@@ -1221,7 +1222,6 @@ def getMap(request, dataset):
 
     # direct the service to the dataset
     dataset = Dataset.objects.get(name=dataset)
-    url = dataset.path()
 
     # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])
@@ -1267,7 +1267,9 @@ def getMap(request, dataset):
     else:
         # Open topology cache file, and the actual data endpoint
         topology = netCDF4.Dataset(dataset.topology_file)
-        datasetnc = netCDF4.Dataset(url)
+
+        datasetnc = dataset.netcdf4_dataset()
+
         gridtype = topology.grid  # Grid type found in topology file
         logger.info("gridtype: " + gridtype)
         if gridtype != 'False':

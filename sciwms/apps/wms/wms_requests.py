@@ -147,7 +147,9 @@ def groupGetCapabilities(req, group, logger): # TODO move get capabilities to te
     ET.SubElement(layer, "SRS").text = "EPSG:3857"
     ET.SubElement(layer, "SRS").text = "MERCATOR"
     for dataset in datasets:
-        nc = netCDF4.Dataset(dataset.path())
+
+        nc = dataset.netcdf4_dataset()
+
         topology = netCDF4.Dataset(os.path.join(settings.TOPOLOGY_PATH, dataset.name + '.nc'))
         for variable in nc.variables.keys():
             try:
