@@ -90,7 +90,8 @@ def create_topology(dataset):
         #with s1:
         nclocalpath = tempfile.NamedTemporaryFile()
         nclocalpath.close()
-        nc = ncDataset(dataset.uri)
+
+        nc = dataset.netcdf4_dataset()
 
         nclocal = ncDataset(nclocalpath.name, mode="w", clobber=True)
         if "nv" in nc.variables:
@@ -371,7 +372,8 @@ def update_dataset_cache(dataset, force=False):
                 logger.info("No cache found, Initializing: " + dataset.topology_file)
                 create_topology(dataset)
             else:
-                nc = ncDataset(dataset.path())
+                nc = dataset.netcdf4_dataset()
+
                 time1 = nc.variables['time'][-1]
                 time2 = topo.variables['time'][-1]
                 nc.close()

@@ -491,7 +491,8 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     ET.SubElement(layer, "SRS").text = "EPSG:3857"
     ET.SubElement(layer, "SRS").text = "MERCATOR"
 
-    nc = netCDF4.Dataset(dataset.path())
+    nc = dataset.netcdf4_dataset()
+
     topology = netCDF4.Dataset(dataset.topology_file)
     ug = UGrid()
     try:
@@ -1222,7 +1223,6 @@ def getMap(request, dataset):
 
     # direct the service to the dataset
     dataset = Dataset.objects.get(name=dataset)
-    url = dataset.path()
 
     # Get the size of image requested and the geographic extent in webmerc
     width = float(request.GET["width"])
@@ -1270,7 +1270,7 @@ def getMap(request, dataset):
         ug = UGrid()
         topology = netCDF4.Dataset(dataset.topology_file)
         topology_ug = ug.from_nc_dataset(nc=topology)
-        datasetnc = netCDF4.Dataset(url)
+        datasetnc = dataset.netcdf4_dataset()
         # gridtype = topology.grid  # Grid type found in topology file
         if ug.mesh_name is not None:
             grid_type = 'ugrid'

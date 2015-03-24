@@ -22,6 +22,8 @@ import glob
 from urlparse import urlparse
 from datetime import datetime
 
+import netCDF4
+
 from django.db import models
 from django.conf import settings
 
@@ -48,9 +50,15 @@ class Dataset(models.Model):
     def path(self):
         if urlparse(self.uri).scheme == "" and not self.uri.startswith("/"):
             # We have a relative path, make it absolute to the sciwms directory.
-            return os.path.realpath(os.path.join(settings.PROJECT_ROOT, self.uri))
+            return str(os.path.realpath(os.path.join(settings.PROJECT_ROOT, self.uri)))
         else:
-            return self.uri
+            return str(self.uri)
+
+    def netcdf4_dataset(self):
+        try:
+            return netCDF4.Dataset(self.path())
+        except:
+            return netCDF4.MFDataset(self.path(), aggdim='time')
 
     def update_cache(self, force=False):
         # from sciwms.libs.data.caching import update_dataset_cache
