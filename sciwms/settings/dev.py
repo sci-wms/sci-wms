@@ -83,10 +83,9 @@ INSTALLED_APPS += [
     'django_extensions'
 ]
 
+LOCAL_APPS = ()
 try:
     from local_settings import *
 except ImportError:
-    LOCAL_APPS = tuple()
-
-if LOCAL_APPS:
-    INSTALLED_APPS += LOCAL_APPS
+    pass
+INSTALLED_APPS += LOCAL_APPS
