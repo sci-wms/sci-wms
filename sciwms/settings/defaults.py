@@ -163,11 +163,3 @@ REST_FRAMEWORK = {
                   'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
                   'PAGINATE_BY': 10
                   }
-
-try:
-    from local_settings import *
-except ImportError:
-    LOCAL_APPS = tuple()
-    
-if LOCAL_APPS:
-    INSTALLED_APPS += LOCAL_APPS
