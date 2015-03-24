@@ -28,20 +28,12 @@ from netCDF4 import date2num
 import sys
 import os
 import numpy
-<<<<<<< HEAD
-=======
-import logging
->>>>>>> sw_upstream/master
 import tempfile
 import traceback
 from datetime import datetime
 import numpy as np
 from sciwms.apps.wms.models import Dataset
 from sciwms.libs.data import build_tree
-<<<<<<< HEAD
-=======
-import multiprocessing
->>>>>>> sw_upstream/master
 from collections import deque
 import shutil
 try:
@@ -51,17 +43,13 @@ except:
 
 from django.conf import settings
 from sciwms import logger
-<<<<<<< HEAD
 from pyugrid import UGrid
 from utils import get_nc_variable_values
 from custom_exceptions import deprecated, NonCompliantDataset
-=======
->>>>>>> sw_upstream/master
 
 time_units = 'hours since 1970-01-01'
 
 
-<<<<<<< HEAD
 def create_ugrid_topology(dataset_name, dataset_url):
     try:
         nc = ncDataset(dataset_url)
@@ -97,8 +85,6 @@ def create_sgrid_topology():
         
 
 # DEPRECATED
-=======
->>>>>>> sw_upstream/master
 def create_topology(dataset):
     try:
         #with s1:
@@ -245,11 +231,7 @@ def create_topology(dataset):
             nclocal.grid = grid
             nclocal.sync()
             logger.info("data written to file")
-<<<<<<< HEAD
         else:  # both cgrids and ugrid go through this statement
-=======
-        else:
->>>>>>> sw_upstream/master
             logger.info("identified as grid")
             latname = dataset.latitude_variable
             lonname = dataset.longitude_variable
@@ -296,7 +278,6 @@ def create_topology(dataset):
             lontemp = nc.variables[lonname][:]
             lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
 
-<<<<<<< HEAD
             if grid == 'rgrid':  # ugrid compliant and cgrid datasets go through this
                 ds_ugrid = UGrid.from_nc_dataset(nc=nc)
                 ds_nodes = ds_ugrid.nodes
@@ -306,11 +287,6 @@ def create_topology(dataset):
                 lat = latitude_n
                 # lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
                 grid = 'ugrid'
-=======
-            if grid == 'rgrid':
-                lon[:], lat[:] = np.meshgrid(lontemp, nc.variables[latname][:])  # replace all elements of the lon/lat arrays
-                grid = 'cgrid'
->>>>>>> sw_upstream/master
             else:
                 lon[:] = lontemp
                 lat[:] = nc.variables[latname][:]
@@ -374,10 +350,7 @@ def create_topology_from_config():
         create_topology(dataset)
 
 
-<<<<<<< HEAD
 @deprecated
-=======
->>>>>>> sw_upstream/master
 def update_datasets():
     for d in Dataset.objects.all():
         try:
@@ -388,10 +361,7 @@ def update_datasets():
             logger.error("Disabling Error: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
 
 
-<<<<<<< HEAD
 @deprecated
-=======
->>>>>>> sw_upstream/master
 def update_dataset_cache(dataset, force=False):
     try:
         if dataset.keep_up_to_date or force is True:

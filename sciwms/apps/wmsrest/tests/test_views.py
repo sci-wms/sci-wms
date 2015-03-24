@@ -5,17 +5,11 @@ Created on Feb 27, 2015
 '''
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-<<<<<<< HEAD
 from django.db.models import signals
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from sciwms.apps.wms.models import Dataset, VirtualLayer
 from sciwms.apps.wms.signals import dataset_post_save
-=======
-from rest_framework.test import APITestCase, APIClient
-from rest_framework import status
-from sciwms.apps.wms.models import Dataset, VirtualLayer
->>>>>>> sw_upstream/master
 
 
 class TestDatasetList(APITestCase):
@@ -50,11 +44,8 @@ class TestDatasetList(APITestCase):
         self.ac = APIClient()
         self.ac.login(username=self.username, password=self.pwd)
         self.url = reverse('dataset-list')
-<<<<<<< HEAD
         # just want to test ability to post, so disable caching signal
         signals.post_save.disconnect(receiver=dataset_post_save, sender=Dataset)
-=======
->>>>>>> sw_upstream/master
         
     def test_view_get_response(self):
         response = self.ac.get(self.url)
