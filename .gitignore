@@ -13,3 +13,5 @@ sciwms/*.db
 #dev environment stuff
 .pydevproject
 .project
+
+/static
