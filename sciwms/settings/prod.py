@@ -31,6 +31,11 @@ if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 """
 
+production_log = os.path.join(PROJECT_ROOT, "logs", "sci-wms.log")
+if not os.path.exists(os.path.dirname(production_log)):
+    os.makedirs(os.path.dirname(production_log))
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -57,7 +62,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'backupCount': 5,
             'maxBytes': 1024*1024*20,  # 20MB
-            'filename': os.path.join(PROJECT_DIR, 'logs', 'sci-wms.log'),
+            'filename': production_log,
             'formatter': 'verbose'
         },
         'mail_admins': {

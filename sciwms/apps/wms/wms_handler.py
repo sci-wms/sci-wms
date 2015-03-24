@@ -46,6 +46,10 @@ class wms_handler(object):
             now = date.today().isoformat()
             time = now + "T00:00:00"#
         time = time.split("/")
+<<<<<<< HEAD
+=======
+        #print time
+>>>>>>> sw_upstream/master
         for i in range(len(time)):
             #print time[i]
             time[i] = time[i].replace("Z", "")
@@ -70,17 +74,26 @@ class wms_handler(object):
 
         height = requestobj.GET["height"]
         width = requestobj.GET["width"]
+<<<<<<< HEAD
         # styles take the following form:
         # {matplotlib style}_{statistical processing options}_{colormap}_{lower color normalization bound}_{upper color normalization bound}_{topology type}_{magnitude boolean}
         # not total sure what the magnitude boolean does as of 03/17/2015
         # start handling of styles
         styles = requestobj.GET["styles"].split(",")[0].split("_")
+=======
+        styles = requestobj.GET["styles"].split(",")[0].split("_")
+
+>>>>>>> sw_upstream/master
         colormap = styles[2].replace("-", "_")
         climits = styles[3:5]
         topology_type = styles[5]
         magnitude_bool = styles[6]
+<<<<<<< HEAD
         # end handling of styles
         
+=======
+
+>>>>>>> sw_upstream/master
         tempget = requestobj.GET.copy()
         tempget.clear()
         values = {
@@ -94,7 +107,11 @@ class wms_handler(object):
                     u'latmin':       latmin,
                     u'height':       height,
                     u'width':        width,
+<<<<<<< HEAD
                     u'actions':      ("image," + "," + styles[0] + "," + styles[1]),  # 
+=======
+                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),
+>>>>>>> sw_upstream/master
                     u'colormap':     colormap,
                     u'climits':      climits,
                     u'variables':    layers,

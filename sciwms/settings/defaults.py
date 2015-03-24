@@ -34,7 +34,7 @@ LOCALDATASET     = False
 
 
 # Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "wms", "topology"))
+TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "apps", "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
