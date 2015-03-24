@@ -9,3 +9,4 @@ south
 jsonfield
 pytz
 djangorestframework
+pyugrid
