@@ -31,7 +31,7 @@ if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 """
 
-production_log = os.path.join(PROJECT_ROOT, "logs", "sci-wms.log")
+production_log = os.path.join(PROJECT_ROOT, "..", "logs", "sci-wms.log")
 if not os.path.exists(os.path.dirname(production_log)):
     os.makedirs(os.path.dirname(production_log))
 

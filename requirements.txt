@@ -1,8 +1,6 @@
 numpy
 Django>=1.7
 Shapely
-greenlet>=0.3.1
-gevent>=0.13.6
 python-dateutil
 matplotlib>=1.2.0
 netCDF4>=1.0.2
@@ -11,3 +9,4 @@ south
 jsonfield
 pytz
 djangorestframework
+pyugrid
