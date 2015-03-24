@@ -56,7 +56,6 @@ def varfromnc(nc, t, layer, var):
         return nc.variables[var][:]
 
 def getvar(datasetnc, t, layer, variables, index):
-    print('Variables: {0}'.format(variables))
     special_function = ""
     #print index
     if index is None:
