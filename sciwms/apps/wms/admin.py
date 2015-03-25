@@ -27,22 +27,41 @@ from django.contrib import admin
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
 
 
-class DatasetAdmin(admin.ModelAdmin):
-    list_display = ('name', 'title', 'keep_up_to_date')
-    list_filter = ('keep_up_to_date',)
-
-
 class ServerAdmin(admin.ModelAdmin):
     list_display = ('title', 'keywords', 'contact_person', 'contact_email')
 
 
+class VirtualLayerInline(admin.StackedInline):
+    extra = 0
+    model = VirtualLayer.datasets.through
+
+
+class GroupInline(admin.StackedInline):
+    extra = 0
+    model = Group.datasets.through
+
+
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'abstract')
-    #list_display = ('datasets',)
+    inlines = [
+        GroupInline,
+    ]
+
+
+class DatasetAdmin(admin.ModelAdmin):
+    list_display = ('name', 'title', 'keep_up_to_date')
+    list_filter = ('keep_up_to_date',)
+    inlines = [
+        VirtualLayerInline,
+        GroupInline,
+    ]
 
 
 class VirtualLayerAdmin(admin.ModelAdmin):
     list_display = ('layer', 'layer_expression')
+    inlines = [
+        VirtualLayerInline,
+    ]
 
 admin.site.register(Dataset, DatasetAdmin)
 admin.site.register(Server, ServerAdmin)
