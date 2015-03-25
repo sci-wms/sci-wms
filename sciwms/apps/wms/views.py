@@ -792,32 +792,44 @@ def getLegendGraphic(request, dataset):
     &SRS=EPSG%3A3857
     &LAYER=hs
     """
-    styles = request.GET["styles"].split("_")
+    if 'styles' in request.GET:
+        styles = request.GET["styles"].split("_")
+    elif 'style' in request.GET:
+        styles = request.GET["style"].split("_")
+       
     try:
         climits = (float(styles[3]), float(styles[4]))
-    except:
-        climits = (None, None)
+    except BaseException:
+	try:
+            climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
+        except BaseException:
+            climits = (None, None)
     variables = request.GET["layer"].split(",")
     plot_type = styles[0]
     colormap = styles[2].replace('-', '_')
-
-    # direct the service to the dataset
-    # make changes to server_local_config.py
-    if settings.LOCALDATASET:
-        url = settings.LOCALDATASETPATH[dataset]
-    else:
-        url = Dataset.objects.get(name=dataset).path()
-    nc = netCDF4.Dataset(url)
+    
+    dataset = Dataset.objects.get(name=dataset)
+    nc = dataset.netcdf4_dataset()
 
     """
     Create figure and axes for small legend image
     """
     #from matplotlib.figure import Figure
     from matplotlib.pylab import get_cmap
-    fig = Figure(dpi=100., facecolor='none', edgecolor='none')
+    dpi = 96.
+
+    width = 124
+    if 'width' in request.GET:
+        width = int(request.GET['width'])
+ 
+    height = 188
+    if 'height' in request.GET:
+       height = int(request.GET['height'])
+
+    fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figwidth(1*1.3)
-    fig.set_figheight(1.5*1.3)
+    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height/dpi)
 
     """
     Create the colorbar or legend and add to axis
@@ -895,7 +907,6 @@ def getLegendGraphic(request, dataset):
                     #levels.append(str(value) + "-" + str(levs[i+1]))
                     text = '%.2f-%.2f' % (value, levs[i+1])
                     levels.append(text)
-            logger.info( str((levels, levs)) )
             fig.legend(proxy, levels,
                        #bbox_to_anchor = (0, 0, 1, 1),
                        #bbox_transform = fig.transFigure,
@@ -907,7 +918,7 @@ def getLegendGraphic(request, dataset):
 
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
+    canvas.print_png(response, dpi=dpi)
     nc.close()
     return response
 
@@ -1070,8 +1081,7 @@ def getFeatureInfo(request, dataset):
             elif len(nc.variables[var].shape) == 1:
                 return nc.variables[var][ind]
 
-    url = dataset.path()
-    datasetnc = netCDF4.Dataset(url)
+    datasetnc = dataset.netcdf4_dataset()
 
     varis = deque()
     varis.append(getvar(topology, time, elevation, "time", index))
