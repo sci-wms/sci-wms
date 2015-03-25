@@ -326,9 +326,9 @@ def normalize_get_params(request):
 def database_request_interaction(request, dataset):
     try:
         vlayer = VirtualLayer.objects.prefetch_related().get(datasets__name=dataset, layer_expression= request.GET['layers'])
-        request.GET['layers'] = vlayer[0].layer_expression
+        request.GET['layers'] = vlayer.layer_expression
     except (VirtualLayer.MultipleObjectsReturned, VirtualLayer.DoesNotExist):
-        pass    
+        pass
     return request
 
 
