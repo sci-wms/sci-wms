@@ -324,9 +324,11 @@ def normalize_get_params(request):
 
 
 def database_request_interaction(request, dataset):
-    if VirtualLayer.objects.filter(datasets__name = dataset):
-        vlayer = VirtualLayer.objects.filter(datasets__name=dataset).filter(layer_expression = request.GET['layers'])
+    try:
+        vlayer = VirtualLayer.objects.prefetch_related().get(datasets__name=dataset, layer_expression= request.GET['layers'])
         request.GET['layers'] = vlayer[0].layer_expression
+    except (VirtualLayer.MultipleObjectsReturned, VirtualLayer.DoesNotExist):
+        pass    
     return request
 
 
