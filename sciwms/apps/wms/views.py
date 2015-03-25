@@ -986,7 +986,7 @@ def getFeatureInfo(request, dataset):
             nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         else:
             from shapely.geometry import Polygon, Point
-            tree = rindex.Index(dataset.cell_tree_index_file)
+            tree = rindex.Index(dataset.cell_tree_root)
             #lats = topology.variables['latc'][:]
             #lons = topology.variables['lonc'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
