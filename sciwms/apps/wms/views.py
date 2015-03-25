@@ -980,7 +980,7 @@ def getFeatureInfo(request, dataset):
     if grid_type == 'ugrid':
         test_index = 0
         if 'node' in styles:
-            tree = rindex.Index(dataset.node_tree_index_file)
+            tree = rindex.Index(dataset.node_tree_root)
             #lats = topology.variables['lat'][:]
             #lons = topology.variables['lon'][:]
             nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
@@ -1009,7 +1009,7 @@ def getFeatureInfo(request, dataset):
         index = nindex[test_index].id
         tree.close()
     else:
-        tree = rindex.Index(dataset.node_tree_index_file)
+        tree = rindex.Index(dataset.node_tree_root)
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
