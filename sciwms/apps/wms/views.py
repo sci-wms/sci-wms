@@ -494,10 +494,13 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     nc = netCDF4.Dataset(dataset.path())
     topology = netCDF4.Dataset(dataset.topology_file)
     ug = UGrid()
-    topology_ug = ug.from_nc_dataset(nc=topology)
+    try:
+        topology_ug = ug.from_nc_dataset(nc=topology)
+    except:
+        topology_ug = None
     for variable in nc.variables.keys():
         try:
-            if get_nc_variable(topology, 'Mesh') is not None:  # identify as a UGRID compliant file
+            if topology_ug is not None:  # identify as a UGRID compliant file
                 location = 'node'
                 grid_type = 'ugrid'
             else:
@@ -635,7 +638,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                 try:
                     location = nc.variables[variable].location
                 except:
-                    if topology.grid != 'False':
+                    if grid_type == 'sgrid':
                         location = "grid"
                     else:
                         location = "node"
@@ -943,9 +946,24 @@ def getFeatureInfo(request, dataset):
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
     topology = netCDF4.Dataset(dataset.topology_file)
-    gridtype = topology.grid
+    ug = UGrid()
+    try:
+        topology_grid = ug.from_nc_dataset(topology)
+    except:
+        topology_grid = None
+    # gridtype = topology.grid
+    
+    try:
+        mesh_name = topology_grid.mesh_name
+    except AttributeError:
+        mesh_name = None
+        
+    if mesh_name is not None:
+        grid_type = 'ugrid'
+    else:
+        grid_type = 'sgrid'
 
-    if gridtype == u'False':
+    if grid_type == 'ugrid':
         test_index = 0
         if 'node' in styles:
             tree = rindex.Index(dataset.node_tree_index_file)
@@ -1054,7 +1072,7 @@ def getFeatureInfo(request, dataset):
 
     varis = deque()
     varis.append(getvar(topology, time, elevation, "time", index))
-    if gridtype == 'False':
+    if grid_type == 'ugrid':
         for var in QUERY_LAYERS:
             varis.append(getvar(datasetnc, time, elevation, var, index))
             try:
