@@ -67,10 +67,10 @@
                 {% endfor %}
 
                 map.setCenter(
-                    new OpenLayers.LonLat(30, 60).transform(
+                    new OpenLayers.LonLat(-70, 30).transform(
                         new OpenLayers.Projection("EPSG:4326"),
                         map.getProjectionObject()
-                    ), 8
+                    ), 3
                 );
 
                 map.addControl(new OpenLayers.Control.LayerSwitcher());
