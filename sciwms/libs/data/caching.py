@@ -365,7 +365,7 @@ def update_datasets():
 @deprecated
 def update_dataset_cache(dataset, force=False):
     try:
-        if dataset.keep_up_to_date or force is True:
+        if not os.path.isfile(dataset.topology_file) or force is True or dataset.keep_up_to_date:
             try:
                 topo = ncDataset(dataset.topology_file)
             except BaseException:
@@ -388,7 +388,7 @@ def update_dataset_cache(dataset, force=False):
                 except BaseException:
                     pass
         else:
-            logger.info("Dataset not marked for update ('keep_up_to_date' is False).  Not doing anything.")
+            logger.info("Dataset not marked for update ('keep_up_to_date' is False) and topolgy file already exists.  Not doing anything.")
     except Exception:
         logger.exception("Could not update Dataset {} cache".format(dataset.pk))
 
