@@ -791,6 +791,7 @@ def getLegendGraphic(request, dataset):
     &TIME=2012-06-20T18%3A00%3A00
     &SRS=EPSG%3A3857
     &LAYER=hs
+    &UNITS=text
     """
     if 'styles' in request.GET:
         styles = request.GET["styles"].split("_")
@@ -834,10 +835,14 @@ def getLegendGraphic(request, dataset):
     """
     Create the colorbar or legend and add to axis
     """
-    try:
-        units = nc.variables[variables[0]].units
-    except:
-        units = ''
+    units = ''
+    if 'units' in request.GET:
+        units = request.GET['units']
+    else:
+        try:
+            units = nc.variables[variables[0]].units
+        except BaseException:
+            pass
     if climits[0] is None or climits[1] is None:  # TODO: NOT SUPPORTED RESPONSE
             #going to have to get the data here to figure out bounds
             #need elevation, bbox, time, magnitudebool
