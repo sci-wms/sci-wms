@@ -60,12 +60,12 @@ class TestDatasetList(APITestCase):
                      'abstract': u'a third fake abstract',
                      'keep_up_to_date': False,
                      'dataset_lyr_rel': [],
-                     'id': 3,
                      'display_all_timesteps': False,
                      }
         response = self.ac.post(self.url, test_data, format='json')
         status_code = response.status_code
         response_data = response.data
+        del response_data['id']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(response_data, test_data)
         
@@ -77,12 +77,12 @@ class TestDatasetList(APITestCase):
                      'abstract': u'a fourth fake abstract',
                      'keep_up_to_date': False,
                      'dataset_lyr_rel': [1, 2],
-                     'id': 4,
                      'display_all_timesteps': False,
                      }
         response = self.ac.post(url, test_data, format='json')
         status_code = response.status_code
         response_data = response.data
+        del response_data['id']
         layer_relationship = response_data['dataset_lyr_rel']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(layer_relationship, [1, 2])
