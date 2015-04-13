@@ -1,17 +1,22 @@
 from django.test import TestCase
 from sciwms.apps.wms.tests import add_server, add_group, add_user, add_dataset
+from sciwms.apps.wms.models import Dataset
 
 
 class TestUgrid(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         add_server()
         add_group()
         add_user()
-        self.dataset = add_dataset("201220109.nc")
+        add_dataset("201220109.nc")
 
-    def tearDown(self):
-        self.dataset.clear_cache()
+    @classmethod
+    def tearDownClass(cls):
+        d = Dataset.objects.get(name='test')
+        d.clear_cache()
+        d.delete()
 
     def test_web_remove(self):
         response = self.client.get('/wms/remove_dataset/?id=test&username=testuser&password=test')
