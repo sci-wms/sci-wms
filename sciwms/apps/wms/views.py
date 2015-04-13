@@ -351,14 +351,14 @@ def wms(request, dataset):
             response = getLegendGraphic(request, dataset)
         elif reqtype.lower() == 'getcapabilities':
             response = getCapabilities(request, dataset)
-        logger.info(str(request.GET))
+        else:
+            raise KeyError('Requests of type "{}" are not supported.'.format(reqtype))
         return response
-    except Exception:
-        raise
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        str_exc_descr = repr(traceback.format_exception(exc_type, exc_value, exc_traceback)) + '\n' + str(request)
-        logger.error("Status 500 Error: " + str_exc_descr)
-        return HttpResponse("<pre>Error: " + str_exc_descr + "</pre>", status=500)
+    except Exception as e:
+        logger.exception("Status 500 Error")
+        if settings.DEBUG is True:
+            raise
+        return HttpResponse("<pre>Error:{!s}</pre>".format(e), status=500)
 
 
 def getCapabilities(req, dataset):  # TODO move get capabilities to template system like sciwps
