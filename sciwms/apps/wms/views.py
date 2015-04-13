@@ -792,6 +792,7 @@ def getLegendGraphic(request, dataset):
     &SRS=EPSG%3A3857
     &LAYER=hs
     &UNITS=text
+    &SHOWLABEL=true/false
     """
     if 'styles' in request.GET:
         styles = request.GET["styles"].split("_")
@@ -805,6 +806,11 @@ def getLegendGraphic(request, dataset):
             climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
         except BaseException:
             climits = (None, None)
+
+    show_label = True
+    if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
+        show_label = False
+
     variables = request.GET["layer"].split(",")
     plot_type = styles[0]
     colormap = styles[2].replace('-', '_')
@@ -862,7 +868,8 @@ def getLegendGraphic(request, dataset):
                                               norm=CNorm,
                                               orientation='vertical',
                                               )
-        cb.set_label(units)
+        if show_label:
+            cb.set_label(units)
     else:  # plot type somekind of contour
         if plot_type == "contours":
             #this should perhaps be a legend...
@@ -877,14 +884,13 @@ def getLegendGraphic(request, dataset):
 
             proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 
-            fig.legend(proxy, levs,
-                       #bbox_to_anchor = (0, 0, 1, 1),
-                       #bbox_transform = fig.transFigure,
-                       loc = 6,
-                       title = units,
-                       prop = { 'size' : 8 },
-                       frameon = False,
-                       )
+            legend = fig.legend(proxy,
+                                levs,
+                                loc = 10,
+                                prop = { 'size' : 8 },
+                                frameon = False)
+            if show_label:
+                legend.set_title(units)
         elif plot_type == "filledcontours":
             #this should perhaps be a legend...
             #ax = fig.add_axes([0,0,1,1])
@@ -912,14 +918,13 @@ def getLegendGraphic(request, dataset):
                     #levels.append(str(value) + "-" + str(levs[i+1]))
                     text = '%.2f-%.2f' % (value, levs[i+1])
                     levels.append(text)
-            fig.legend(proxy, levels,
-                       #bbox_to_anchor = (0, 0, 1, 1),
-                       #bbox_transform = fig.transFigure,
-                       loc = 6,
-                       title = units,
-                       prop = { 'size' : 6 },
-                       frameon = False,
-                       )
+            legend = fig.legend(proxy,
+                                levels,
+                                loc = 10,
+                                prop = { 'size' : 6 },
+                                frameon = False)
+            if show_label:
+                legend.set_title(units)
 
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
