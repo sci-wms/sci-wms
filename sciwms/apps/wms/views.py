@@ -791,6 +791,7 @@ def getLegendGraphic(request, dataset):
     &TIME=2012-06-20T18%3A00%3A00
     &SRS=EPSG%3A3857
     &LAYER=hs
+    &COLORSCALERANGE=min,max
     &UNITS=text
     &SHOWLABEL=true/false
     """
@@ -798,14 +799,18 @@ def getLegendGraphic(request, dataset):
         styles = request.GET["styles"].split("_")
     elif 'style' in request.GET:
         styles = request.GET["style"].split("_")
-       
-    try:
-        climits = (float(styles[3]), float(styles[4]))
-    except BaseException:
-	try:
+
+    climits = (None, None)
+    if 'colorscalerange' in request.GET:
+        try:
             climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
         except BaseException:
-            climits = (None, None)
+            pass
+    else:
+        try:
+            climits = (float(styles[3]), float(styles[4]))
+        except BaseException:
+            pass
 
     show_label = True
     if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
@@ -814,7 +819,7 @@ def getLegendGraphic(request, dataset):
     variables = request.GET["layer"].split(",")
     plot_type = styles[0]
     colormap = styles[2].replace('-', '_')
-    
+
     dataset = Dataset.objects.get(name=dataset)
     nc = dataset.netcdf4_dataset()
 
@@ -1270,6 +1275,8 @@ def getMap(request, dataset):
     colormap = request.GET["colormap"]
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
+    elif 'colorscalerange' in request.GET:
+        climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
     else:
         climits = ["None", "None"]
 
