@@ -350,14 +350,14 @@ def wms(request, dataset):
             response = getLegendGraphic(request, dataset)
         elif reqtype.lower() == 'getcapabilities':
             response = getCapabilities(request, dataset)
-        logger.info(str(request.GET))
+        else:
+            raise KeyError('Requests of type "{}" are not supported.'.format(reqtype))
         return response
-    except Exception:
-        raise
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        str_exc_descr = repr(traceback.format_exception(exc_type, exc_value, exc_traceback)) + '\n' + str(request)
-        logger.error("Status 500 Error: " + str_exc_descr)
-        return HttpResponse("<pre>Error: " + str_exc_descr + "</pre>", status=500)
+    except Exception as e:
+        logger.exception("Status 500 Error")
+        if settings.DEBUG is True:
+            raise
+        return HttpResponse("<pre>Error:{!s}</pre>".format(e), status=500)
 
 
 def getCapabilities(req, dataset):  # TODO move get capabilities to template system like sciwps
@@ -805,23 +805,35 @@ def getLegendGraphic(request, dataset):
     &TIME=2012-06-20T18%3A00%3A00
     &SRS=EPSG%3A3857
     &LAYER=hs
+    &COLORSCALERANGE=min,max
+    &UNITS=text
+    &SHOWLABEL=true/false
     """
     if 'styles' in request.GET:
         styles = request.GET["styles"].split("_")
     elif 'style' in request.GET:
         styles = request.GET["style"].split("_")
-       
-    try:
-        climits = (float(styles[3]), float(styles[4]))
-    except BaseException:
-	try:
+
+    climits = (None, None)
+    if 'colorscalerange' in request.GET:
+        try:
             climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
         except BaseException:
-            climits = (None, None)
+            pass
+    else:
+        try:
+            climits = (float(styles[3]), float(styles[4]))
+        except BaseException:
+            pass
+
+    show_label = True
+    if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
+        show_label = False
+
     variables = request.GET["layer"].split(",")
     plot_type = styles[0]
     colormap = styles[2].replace('-', '_')
-    
+
     dataset = Dataset.objects.get(name=dataset)
     nc = dataset.netcdf4_dataset()
 
@@ -835,10 +847,10 @@ def getLegendGraphic(request, dataset):
     width = 124
     if 'width' in request.GET:
         width = int(request.GET['width'])
- 
+
     height = 188
     if 'height' in request.GET:
-       height = int(request.GET['height'])
+        height = int(request.GET['height'])
 
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
@@ -848,20 +860,25 @@ def getLegendGraphic(request, dataset):
     """
     Create the colorbar or legend and add to axis
     """
-    try:
-        units = nc.variables[variables[0]].units
-    except:
-        units = ''
+    units = ''
+    if 'units' in request.GET:
+        units = request.GET['units']
+    else:
+        try:
+            units = nc.variables[variables[0]].units
+        except BaseException:
+            pass
+
     if climits[0] is None or climits[1] is None:  # TODO: NOT SUPPORTED RESPONSE
-            #going to have to get the data here to figure out bounds
-            #need elevation, bbox, time, magnitudebool
+            # going to have to get the data here to figure out bounds
+            # need elevation, bbox, time, magnitudebool
             CNorm = None
             ax = fig.add_axes([0, 0, 1, 1])
             ax.grid(False)
             ax.text(.5, .5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
     elif plot_type not in ["contours", "filledcontours"]:
-        #use limits described by the style
-        ax = fig.add_axes([.01, .05, .2, .8])  # xticks=[], yticks=[])
+        # use limits described by climits
+        ax = fig.add_axes([0.1, 0.08, 0.1, 0.8])  # xticks=[], yticks=[])
         CNorm = matplotlib.colors.Normalize(vmin=climits[0],
                                             vmax=climits[1],
                                             clip=False,
@@ -871,36 +888,30 @@ def getLegendGraphic(request, dataset):
                                               norm=CNorm,
                                               orientation='vertical',
                                               )
-        cb.set_label(units)
+        if show_label:
+            cb.set_label(units)
     else:  # plot type somekind of contour
         if plot_type == "contours":
-            #this should perhaps be a legend...
-            #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
             CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=True)
-            #levs = numpy.arange(0, 12)*(climits[1]-climits[0])/10
             levs = numpy.linspace(climits[0], climits[1], 11)
             x, y = numpy.meshgrid(numpy.arange(10), numpy.arange(10))
             cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
 
             proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 
-            fig.legend(proxy, levs,
-                       #bbox_to_anchor = (0, 0, 1, 1),
-                       #bbox_transform = fig.transFigure,
-                       loc = 6,
-                       title = units,
-                       prop = { 'size' : 8 },
-                       frameon = False,
-                       )
+            legend = fig.legend(proxy,
+                                levs,
+                                loc = 10,
+                                prop = { 'size' : 8 },
+                                frameon = False)
+            if show_label:
+                legend.set_title(units)
         elif plot_type == "filledcontours":
-            #this should perhaps be a legend...
-            #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
             CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=False,)
-            #levs = numpy.arange(1, 12)*(climits[1]-(climits[0]))/10
             levs = numpy.linspace(climits[0], climits[1], 10)
             levs = numpy.hstack(([-99999], levs, [99999]))
 
@@ -911,24 +922,20 @@ def getLegendGraphic(request, dataset):
 
             levels = []
             for i, value in enumerate(levs):
-                #if i == 0:
-                #    levels[i] = "<" + str(value)
                 if i == len(levs)-2 or i == len(levs)-1:
                     levels.append("> " + str(value))
                 elif i == 0:
                     levels.append("< " + str(levs[i+1]))
                 else:
-                    #levels.append(str(value) + "-" + str(levs[i+1]))
                     text = '%.2f-%.2f' % (value, levs[i+1])
                     levels.append(text)
-            fig.legend(proxy, levels,
-                       #bbox_to_anchor = (0, 0, 1, 1),
-                       #bbox_transform = fig.transFigure,
-                       loc = 6,
-                       title = units,
-                       prop = { 'size' : 6 },
-                       frameon = False,
-                       )
+            legend = fig.legend(proxy,
+                                levels,
+                                loc = 10,
+                                prop = { 'size' : 6 },
+                                frameon = False)
+            if show_label:
+                legend.set_title(units)
 
     canvas = FigureCanvasAgg(fig)
     response = HttpResponse(content_type='image/png')
@@ -1259,6 +1266,8 @@ def getMap(request, dataset):
     colormap = request.GET["colormap"]
     if request.GET["climits"][0] != "None":
         climits = [float(lim) for lim in request.GET["climits"]]
+    elif 'colorscalerange' in request.GET:
+        climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
     else:
         climits = ["None", "None"]
 

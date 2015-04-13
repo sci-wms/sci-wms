@@ -11,7 +11,7 @@ from sciwms.apps.wms.models import Dataset, VirtualLayer
 
 
 class TestDatasetList(APITestCase):
-    
+
     def setUp(self):
         self.username = 'tester_tdl'
         self.user_email = 'tester_tdl@email.com'
@@ -42,13 +42,13 @@ class TestDatasetList(APITestCase):
         self.ac = APIClient()
         self.ac.login(username=self.username, password=self.pwd)
         self.url = reverse('dataset-list')
-        
+
     def test_view_get_response(self):
         response = self.ac.get(self.url)
         status_code = response.status_code
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertContains(response, 'fake_file_2.nc')
-        
+
     def test_view_post_response(self):
         test_data = {'uri': u'fake_file_3.nc',
                      'name': u'a third fake file',
@@ -56,15 +56,15 @@ class TestDatasetList(APITestCase):
                      'abstract': u'a third fake abstract',
                      'keep_up_to_date': False,
                      'dataset_lyr_rel': [],
-                     'id': 3,
                      'display_all_timesteps': False,
                      }
         response = self.ac.post(self.url, test_data, format='json')
         status_code = response.status_code
         response_data = response.data
+        del response_data['id']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(response_data, test_data)
-        
+
     def test_view_post_response_with_layers(self):
         url = reverse('dataset-list')
         test_data = {'uri': u'fake_file_4.nc',
@@ -73,19 +73,19 @@ class TestDatasetList(APITestCase):
                      'abstract': u'a fourth fake abstract',
                      'keep_up_to_date': False,
                      'dataset_lyr_rel': [1, 2],
-                     'id': 4,
                      'display_all_timesteps': False,
                      }
         response = self.ac.post(url, test_data, format='json')
         status_code = response.status_code
         response_data = response.data
+        del response_data['id']
         layer_relationship = response_data['dataset_lyr_rel']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(layer_relationship, [1, 2])
-        
+
 
 class TestDatasetDetail(APITestCase):
-    
+
     def setUp(self):
         self.username = 'tester_tdd'
         self.user_email = 'tester_tdd@email.com'
@@ -101,14 +101,14 @@ class TestDatasetDetail(APITestCase):
         self.ac = APIClient()
         self.ac.login(username=self.username, password=self.pwd)
         self.url = reverse('dataset-detail', kwargs={'pk': 1})
-        
+
     def test_get_dataset(self):
         response = self.ac.get(self.url)
         status_code = response.status_code
         resp_uri = response.data['uri']
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertEqual(resp_uri, 'fake_file_1.nc')
-        
+
     def test_put_dataset(self):
         new_filename = u'updated_file_1.nc'
         test_data = {'uri': new_filename,
@@ -118,21 +118,21 @@ class TestDatasetDetail(APITestCase):
                      'keep_up_to_date': False,
                      'dataset_lyr_rel': [],
                      'display_all_timesteps': False,
-                     }    
+                     }
         response = self.ac.put(self.url, test_data, format='json')
         status_code = response.status_code
         resp_uri = response.data['uri']
         self.assertEqual(resp_uri, new_filename)
         self.assertEqual(status_code, status.HTTP_200_OK)
-        
+
     def test_delete_dataset(self):
         response = self.ac.delete(self.url)
         status_code = response.status_code
         self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)
-        
+
 
 class TestVirtualLayerList(APITestCase):
-    
+
     def setUp(self):
         self.username = 'tester_vll'
         self.email = 'tester_vll@email.com'
@@ -163,13 +163,13 @@ class TestVirtualLayerList(APITestCase):
         self.ac = APIClient()
         self.ac.login(username=self.username, password=self.pwd)
         self.url = reverse('virtuallayers-list')
-        
+
     def test_virtuallayer_get(self):
         response = self.ac.get(self.url)
         status_code = response.status_code
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertContains(response, 'fake layer 1')
-        
+
     def test_virtuallayer_post(self):
         test_data = {'layer': 'Ruthenium(III) chloride',
                      'layer_expression': 'RuCl3',
@@ -180,7 +180,7 @@ class TestVirtualLayerList(APITestCase):
         new_layer = response.data['layer']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(new_layer, 'Ruthenium(III) chloride')
-        
+
     def test_virtuallayer_post_with_ds_rel(self):
         test_data = {'layer': 'Sulfur hexafluoride',
                      'layer_expression': 'SF6',
@@ -191,10 +191,10 @@ class TestVirtualLayerList(APITestCase):
         datasets = response.data['datasets']
         self.assertEqual(status_code, status.HTTP_201_CREATED)
         self.assertEqual(datasets, [1, 2])
-        
-        
+
+
 class TestVirtualLayerDetail(APITestCase):
-    
+
     def setUp(self):
         self.username = 'tester_vld'
         self.email = 'tester_vld@email.com'
@@ -207,14 +207,14 @@ class TestVirtualLayerDetail(APITestCase):
                                            layer_expression='NbCl5')
         self.virtuallayer_1.save()
         self.url = reverse('virtuallayers-detail', kwargs={'pk': 1})
-        
+
     def test_get_virtuallayer(self):
         response = self.ac.get(self.url)
         status_code = response.status_code
         layer = response.data['layer']
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertEqual(layer, 'Niobium(V) chloride')
-        
+
     def test_put_virtuallayer(self):
         test_data = {'layer': 'Niobium pentachloride',
                      'layer_expression': 'NbCl5',
@@ -227,8 +227,8 @@ class TestVirtualLayerDetail(APITestCase):
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertEqual(layer, 'Niobium pentachloride')
         self.assertEqual(layer_id, 1)
-        
+
     def test_delete_virtuallayer(self):
         response = self.ac.delete(self.url)
         status_code = response.status_code
-        self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)        
+        self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)
