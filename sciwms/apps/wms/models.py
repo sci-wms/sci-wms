@@ -58,7 +58,10 @@ class Dataset(models.Model):
         try:
             return netCDF4.Dataset(self.path())
         except:
-            return netCDF4.MFDataset(self.path(), aggdim='time')
+            try:
+                return netCDF4.MFDataset(self.path(), aggdim='time')
+            except:
+                return None
 
     def update_cache(self, force=False):
         # from sciwms.libs.data.caching import update_dataset_cache

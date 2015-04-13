@@ -92,6 +92,9 @@ def create_topology(dataset):
         nclocalpath.close()
 
         nc = dataset.netcdf4_dataset()
+        if nc is None:
+            logger.warning("Could not create_topology for Dataset '{}'".format(dataset.name))
+            return
 
         nclocal = ncDataset(nclocalpath.name, mode="w", clobber=True)
         if "nv" in nc.variables:
