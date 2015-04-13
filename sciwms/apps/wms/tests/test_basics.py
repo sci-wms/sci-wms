@@ -1,11 +1,11 @@
 import os
-from django.test import TestCase, Client
+from django.test import Client, TransactionTestCase
 from sciwms.apps.wms.tests import *
 
 from sciwms.apps.wms.models import Dataset
 
 
-class BasicTest(TestCase):
+class BasicTest(TransactionTestCase):
     def test_post_add(self):
         user = add_user()
         user.set_password('posting_dataset')

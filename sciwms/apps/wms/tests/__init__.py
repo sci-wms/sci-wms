@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
+from django.db import IntegrityError
 
 from sciwms.apps.wms.models import Dataset, Group, Server
 
@@ -35,13 +36,13 @@ def add_dataset(filename):
 
 
 def add_user():
-    u = User(username="testuser",
-             first_name="test",
-             last_name="user",
-             email="test@yser.comn",
-             password=hashpass.make_password("test"),
-             is_active=True,
-             is_superuser=True,
-            )
-    u.save()
-    return u
+    try:
+        return User.objects.create(username="testuser",
+                                   first_name="test",
+                                   last_name="user",
+                                   email="test@yser.comn",
+                                   password=hashpass.make_password("test"),
+                                   is_active=True,
+                                   is_superuser=True)
+    except IntegrityError:
+        return User.objects.filter(username='testuser').first()
