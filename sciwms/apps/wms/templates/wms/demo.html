@@ -72,11 +72,11 @@
               <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
                 <div class="panel-body">
                   <div class="list-group">
-                    <a href="#" class="list-group-item layers" data-layer="{{ dataset.test_layer }}" data-style="{{ dataset.test_style }}" data-dataset="{{dataset.name}}">{{dataset.test_layer | truncatechars:40}}</a>
-                    {% for key,value in dataset.layers.items %}
+                    {% for vl in dataset.dataset_lyr_rel.all %}
+                    <a href="#" class="list-group-item layers" data-layer="{{ vl.layer_expression }}" data-style="{{ dataset.test_style }}" data-dataset="{{dataset.name}}">{{vl.layer | truncatechars:40}}</a>
+                    {% endfor %}
                     {% if value.standard_name and value.style %}
                     {% endif %}
-                    {% endfor %}
                   </div>
                 </div>
               </div>
