@@ -25,6 +25,7 @@ urlpatterns = patterns( '',
                         url(r'^$', 'sciwms.apps.wms.views.index'),
 
                         url(r'^documentation/', 'sciwms.apps.wms.views.documentation', name='documentation'),
+                        url(r'^demo', 'sciwms.apps.wms.views.demo', name='demo'),
 
                         # Datasets
                         url(r'^datasets$',  'sciwms.apps.wms.views.datasets'),

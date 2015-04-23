@@ -59,6 +59,7 @@ from StringIO import StringIO  # will be deprecated in Python3, use io.byteIO in
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.template.loader import get_template
+from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth import authenticate, login, logout
 
@@ -1545,3 +1546,9 @@ def getMap(request, dataset):
     #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))
     #logger.info(str(loglist))
     return response
+
+def demo(request):
+    import django.shortcuts as dshorts
+    context = { 'datasets'  : Dataset.objects.all()}
+    return dshorts.render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
+

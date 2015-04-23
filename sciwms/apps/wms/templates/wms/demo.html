@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <title>Sci-wms demo - Leaflet WMS client</title>
+    {% load static from staticfiles %}
+    <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.ie.css" />
+<![endif]-->
+    <style>
+    body, html {
+        min-height: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    html {
+        height: 100%;
+    }
+    #menu {
+        height: 500px;
+        width: 100%;
+        overflow-y: auto;
+    }
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="page-header">
+            <h1>sci-wms <small>a Python WMS service for geospatial gridded data</small></h1>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-10">
+          <ul class="nav nav-pills">
+            <li><a href="{% url 'index' %}"><span class="glyphicon glyphicon-align-justify"></span> datasets</a></li>
+            <li><a href="{% url 'documentation' %}"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
+            <li><a href="{% url 'demo' %}"><span style="color: green" class="glyphicon glyphicon-leaf"></span> demo (Leaflet WMS client)</a></li>
+            {% if user.is_authenticated %}
+            <li><a href="/wms/logout" data-toggle="modal"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
+            {% else %}
+            <li><a href="#login" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> admin</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="row">
+        <div class="col-md-4">  
+          <div class="panel-group" id="menu">
+            {% for dataset in datasets %}
+            <div class="panel panel-default">
+              <div class="panel-heading" role="tab" id="heading-{{dataset.name}}">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{dataset.name}}" aria-expanded="false" aria-controls="collapse-{{dataset.name}}">{{dataset.name}}</a>
+                </h4>
+              </div>
+              <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
+                <div class="panel-body">
+                  <div class="list-group">
+                    <a href="#" class="list-group-item layers" data-layer="{{ dataset.test_layer }}" data-style="{{ dataset.test_style }}" data-dataset="{{dataset.name}}">{{dataset.test_layer | truncatechars:40}}</a>
+                    {% for key,value in dataset.layers.items %}
+                    {% if value.standard_name and value.style %}
+                    {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %} 
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+    var map = new L.map('map');
+    openStreetMap = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: 'Map data &copy; OpenStreetMap contributors'});
+
+    var displayed_layers = L.layerGroup();
+    displayed_layers.addTo(map);
+
+    // one layer per dataset, we'll modify the layer and style with the click
+    {% for dataset in datasets %}
+    var {{dataset.name}} = L.tileLayer.wms("{% url 'dataset' dataset=dataset.name %}", {
+        //layers: '{{dataset.test_layer}}',
+        format: 'image/png',
+        transparent: 'true',
+        attribution: "Sci-wms - Python WMS service",
+        opacity: 0.7,
+        styles: '{{ dataset.test_style|default:"pcolor_average_jet_None_None_grid_False" }}'
+    });
+    //{{dataset.name}}.setParams({
+    //    TIME: '{{dataset.test_date}}',
+    //    ELEVATION: '0'
+    //});
+    {% endfor %}
+
+    var bounds = new L.LatLngBounds(new L.LatLng(32, -126), new L.LatLng(50, -64));
+    map.addLayer(openStreetMap).fitBounds(bounds);
+
+    $(".layers").click(function(e) {
+        e.preventDefault();
+        $(".layers").removeClass("active");
+        $(e.target).addClass("active");
+        // -- get {{dataset.name}} from panel-title
+        dataset_name = $(this).data('dataset');
+        layer = $(this).data('layer');
+        style = $(this).data('style');
+
+        l = eval(dataset_name);
+        l.setParams({
+            layers: layer,
+            styles: style
+        });
+
+        // -- clear existing layers
+        displayed_layers.clearLayers();
+        // -- add this layer
+        displayed_layers.addLayer(l);
+
+    });
+
+    </script>
+  </body>
+</html>
