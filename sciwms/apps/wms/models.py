@@ -115,8 +115,13 @@ class Dataset(models.Model):
 class Layer(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
-    style       = models.CharField(max_length=200, help_text="WMS style string")
     dataset     = models.ForeignKey(Dataset)
+    active      = models.BooleanField(default=True)
+
+class Style(models.Model):
+    description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
+    style       = models.CharField(max_length=200, help_text="WMS style string")
+    layer       = models.ForeignKey(Layer)
 
 class VirtualLayer(models.Model):
     layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
