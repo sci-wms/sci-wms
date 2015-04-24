@@ -117,10 +117,24 @@ class Layer(models.Model):
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
     dataset     = models.ForeignKey(Dataset)
     active      = models.BooleanField(default=True)
-
 class Style(models.Model):
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
-    style       = models.CharField(max_length=200, help_text="WMS style string")
+    image_type  = models.CharField(max_length=200, default="filledcontours", choices=(("filledcontours","filledcontours"),
+                                                                                      ("contours","contours"),
+                                                                                      ("pcolor","pcolor"),
+                                                                                      ("facets","facets"),
+                                                                                      ("composite","composite"),
+                                                                                      ("vectors","vectors"),
+                                                                                      ("barbs","barbs")))
+    # @TODO: pull from colormaps_reference.py http://matplotlib.org/examples/color/colormaps_reference.html
+    colormap    = models.CharField(max_length=200, default="jet", choices=(("jet", "jet"),
+                                                                           ("rainbow", "rainbow"),
+                                                                           ("hsv", "hsv"),
+                                                                           ("terrain", "terrain"),
+                                                                           ("ocean", "ocean")))
+    param_loc   = models.CharField(max_length=200, default="grid")
+    wildcard    = models.CharField(max_length=200, default="False")
+
     layer       = models.ForeignKey(Layer)
 
 class VirtualLayer(models.Model):

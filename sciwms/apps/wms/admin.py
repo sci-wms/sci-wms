@@ -49,7 +49,7 @@ class GroupAdmin(admin.ModelAdmin):
     ]
 
 class StyleInline(NestedTabularInline):
-    ordering = ('style', 'description')
+    ordering = ('image_type', 'colormap', 'description',)
     model = Style
     extra = 1
     fk_name = 'layer'
