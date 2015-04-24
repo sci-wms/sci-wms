@@ -24,7 +24,7 @@ Created on Sep 6, 2011
 #import fvcom_compute.wms.grid_init_script as gridinit
 from django.contrib import admin
 #from django.db import models
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
+from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer
 
 
 class ServerAdmin(admin.ModelAdmin):
@@ -63,7 +63,12 @@ class VirtualLayerAdmin(admin.ModelAdmin):
         VirtualLayerInline,
     ]
 
+class LayerAdmin(admin.ModelAdmin):
+    list_display = ('var_name', 'style', 'description')
+
+
 admin.site.register(Dataset, DatasetAdmin)
 admin.site.register(Server, ServerAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(VirtualLayer, VirtualLayerAdmin)
+admin.site.register(Layer, LayerAdmin) 
