@@ -17,19 +17,19 @@ def add_server():
 
 
 def add_group():
-    g = Group.objects.create(name='MyTestGroup',)
+    g, _ = Group.objects.get_or_create(name='MyTestGroup',)
     g.save()
     return g
 
 
 def add_dataset(filename):
     add_group()
-    d = Dataset.objects.create(uri                   = os.path.join(resource_path, filename),
-                               name                  = "test",
-                               title                 = "Test dataset",
-                               abstract              = "Test data set for sci-wms tests.",
-                               display_all_timesteps = False,
-                               keep_up_to_date       = False,)
+    d, _ = Dataset.objects.get_or_create(uri                   = os.path.join(resource_path, filename),
+                                         name                  = "test",
+                                         title                 = "Test dataset",
+                                         abstract              = "Test data set for sci-wms tests.",
+                                         display_all_timesteps = False,
+                                         keep_up_to_date       = False,)
     d.update_cache(force=True)
     d.save()
     return d
