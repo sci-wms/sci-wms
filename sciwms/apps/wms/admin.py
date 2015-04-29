@@ -50,7 +50,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 class LayerInline(admin.TabularInline):
     model = Layer
-    extra = 1
+    extra = 0
     filter_horizontal = ('styles',)
 
 
@@ -72,8 +72,3 @@ class VirtualLayerAdmin(admin.ModelAdmin):
     inlines = [
         VirtualLayerInline,
     ]
-
-
-@admin.register(Style)
-class StyleAdmin(admin.ModelAdmin):
-    list_display = ('image_type', 'colormap', 'description')
