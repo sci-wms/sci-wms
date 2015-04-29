@@ -154,7 +154,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'nested_inline',
     'sciwms.apps.wms',
     'sciwms.apps.wmsrest',
     'rest_framework'

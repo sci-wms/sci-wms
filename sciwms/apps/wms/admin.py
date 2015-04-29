@@ -21,7 +21,6 @@ Created on Sep 6, 2011
 @author: ACrosby
 '''
 from django.contrib import admin
-from nested_inline.admin import NestedModelAdmin, NestedStackedInline
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer, Style
 
 

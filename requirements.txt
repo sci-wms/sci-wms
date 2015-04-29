@@ -11,4 +11,3 @@ pytz
 djangorestframework
 pyugrid
 basemap
-django-nested-inline>=0.3.4
