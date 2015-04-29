@@ -22,14 +22,14 @@ import glob
 from urlparse import urlparse
 from datetime import datetime
 
-import netCDF4
-
 from django.db import models
 from django.conf import settings
 
 from jsonfield import JSONField
 
 import matplotlib.pyplot as plt
+
+from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 
 class Dataset(models.Model):
@@ -54,10 +54,10 @@ class Dataset(models.Model):
 
     def netcdf4_dataset(self):
         try:
-            return netCDF4.Dataset(self.path())
+            return EnhancedDataset(self.path())
         except:
             try:
-                return netCDF4.MFDataset(self.path(), aggdim='time')
+                return EnhancedMFDataset(self.path(), aggdim='time')
             except:
                 return None
 

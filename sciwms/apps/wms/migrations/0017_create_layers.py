@@ -7,7 +7,7 @@ from django.db import migrations
 from django.conf import settings
 
 import os
-import netCDF4
+from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 
 def path(dataset):
@@ -20,10 +20,10 @@ def path(dataset):
 
 def netcdf4_dataset(dataset):
     try:
-        return netCDF4.Dataset(path(dataset))
+        return EnhancedDataset(path(dataset))
     except:
         try:
-            return netCDF4.MFDataset(path(dataset), aggdim='time')
+            return EnhancedMFDataset(path(dataset), aggdim='time')
         except:
             return None
 
