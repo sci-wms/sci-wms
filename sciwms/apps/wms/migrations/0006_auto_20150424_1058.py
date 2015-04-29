@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='layer',
             name='active',
-            field=models.BooleanField(default=True),
+            field=models.BooleanField(default=False),
             preserve_default=True,
         ),
     ]

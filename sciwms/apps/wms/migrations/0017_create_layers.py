@@ -48,10 +48,11 @@ def process_layers(Style, Layer, dataset):
                 std_name = nc_var.standard_name
                 l.std_name = std_name
 
-                # Set some standard styles
-                l.styles = Style.objects.filter(colormap='jet', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
-                l.save()
+                if len(nc_var.dimensions) > 1:
+                    l.active = True
 
+            # Set some standard styles
+            l.styles = Style.objects.filter(colormap='jet', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
             l.save()
 
         nc.close()
@@ -68,7 +69,7 @@ def forward(apps, schema_editor):
     try:
         d = Dataset.objects.get(name='UGridTest')
         for l in d.layer_set.all():
-            if l.var_name not in ['z', 'surface_temp', 'surface_salt', 'std_temp', 'std_salt', 'elev']:
+            if l.var_name not in ['surface_temp', 'surface_salt', 'avg_temp', 'avg_salt', 'elev']:
                 l.delete()
     except Dataset.DoesNotExist:
         pass

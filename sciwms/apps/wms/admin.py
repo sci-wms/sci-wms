@@ -21,7 +21,7 @@ Created on Sep 6, 2011
 @author: ACrosby
 '''
 from django.contrib import admin
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer, Style
+from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer
 
 
 @admin.register(Server)
@@ -30,8 +30,9 @@ class ServerAdmin(admin.ModelAdmin):
 
 
 class VirtualLayerInline(admin.StackedInline):
-    model = VirtualLayer.datasets.through
-    extra = 1
+    model = VirtualLayer
+    extra = 0
+    filter_horizontal = ('styles',)
 
 
 class GroupInline(admin.TabularInline):
@@ -52,6 +53,9 @@ class LayerInline(admin.StackedInline):
     extra = 0
     filter_horizontal = ('styles',)
 
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(Dataset)
 class DatasetAdmin(admin.ModelAdmin):
@@ -61,13 +65,4 @@ class DatasetAdmin(admin.ModelAdmin):
         LayerInline,
         VirtualLayerInline,
         GroupInline,
-    ]
-
-
-@admin.register(VirtualLayer)
-class VirtualLayerAdmin(admin.ModelAdmin):
-    list_display = ('layer', 'layer_expression')
-    filter_horizontal = ('styles',)
-    inlines = [
-        VirtualLayerInline,
     ]

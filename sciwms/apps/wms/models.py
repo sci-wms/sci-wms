@@ -74,6 +74,46 @@ class Dataset(models.Model):
         for cache_file in cache_file_list:
             os.remove(cache_file)
 
+    def analyze_virtual_layers(self):
+        nc = self.netcdf4_dataset()
+        if nc is not None:
+            # Earth Projected Sea Water Velocity
+            u_names = ['eastward_sea_water_velocity', 'eastward_sea_water_velocity_assuming_no_tide']
+            v_names = ['northward_sea_water_velocity', 'northward_sea_water_velocity_assuming_no_tide']
+            us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
+            vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+            VirtualLayer.make_vector_layer(us, vs, 'sea_water_velocity', 'vectors', self.id)
+
+            # Grid projected Sea Water Velocity
+            u_names = ['x_sea_water_velocity', 'grid_eastward_sea_water_velocity']
+            v_names = ['y_sea_water_velocity', 'grid_northward_sea_water_velocity']
+            us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
+            vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+            VirtualLayer.make_vector_layer(us, vs, 'grid_sea_water_velocity', 'vectors', self.id)
+
+            # Earth projected Winds
+            u_names = ['eastward_wind']
+            v_names = ['northward_wind']
+            us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
+            vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+            VirtualLayer.make_vector_layer(us, vs, 'winds', 'barbs', self.id)
+
+            # Grid projected Winds
+            u_names = ['x_wind', 'grid_eastward_wind']
+            v_names = ['northward_wind', 'grid_northward_wind']
+            us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
+            vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+            VirtualLayer.make_vector_layer(us, vs, 'grid_winds', 'barbs', self.id)
+
+            # Earth projected Ice velocity
+            u_names = ['eastward_sea_ice_velocity']
+            v_names = ['northward_sea_ice_velocity']
+            us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
+            vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+            VirtualLayer.make_vector_layer(us, vs, 'sea_ice_velocity', 'vectors', self.id)
+
+            nc.close()
+
     def process_layers(self):
         nc = self.netcdf4_dataset()
         if nc is not None:
@@ -94,6 +134,9 @@ class Dataset(models.Model):
                 if hasattr(nc_var, 'standard_name'):
                     std_name = nc_var.standard_name
                     l.std_name = std_name
+
+                    if len(nc_var.dimensions) > 1:
+                        l.active = True
 
                 # Set some standard styles
                 l.styles = Style.defaults()
@@ -138,15 +181,49 @@ class Dataset(models.Model):
         return '{}.dat'.format(self.cell_tree_root)
 
 
-class Layer(models.Model):
+class LayerBase(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
-    std_name    = models.CharField(max_length=200, blank=True,help_text="The 'standard_name' from the dataset variable")
+    std_name    = models.CharField(max_length=200, blank=True, help_text="The 'standard_name' from the dataset variable")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
     dataset     = models.ForeignKey('Dataset')
-    active      = models.BooleanField(default=True)
+    active      = models.BooleanField(default=False)
     styles      = models.ManyToManyField('Style')
     default_min = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the min.  If None, autoscale is used.")
     default_max = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the max.  If None, autoscale is used.")
+
+    class Meta:
+        abstract = True
+        ordering = ('var_name',)
+
+    def __unicode__(self):
+        z = self.var_name
+        z += ' ({})'.format(self.std_name) if self.std_name else ''
+        z += ' - Active: {}'.format(self.active)
+        return z
+
+
+class Layer(LayerBase):
+    pass
+
+
+class VirtualLayer(LayerBase):
+
+    @classmethod
+    def make_vector_layer(cls, us, vs, std_name, style, dataset_id):
+        for u in us:
+            for v in vs:
+                if u.standard_name.split('_')[1:] == v.standard_name.split('_')[1:]:
+                    try:
+                        vl = VirtualLayer.objects.create(var_name='{},{}'.format(u._name, v._name),
+                                                         std_name=std_name,
+                                                         description="U ({}) and V ({}) vectors".format(u._name, v._name),
+                                                         dataset_id=dataset_id,
+                                                         active=True)
+                        vl.styles.add(Style.objects.get(colormap='jet', image_type=style))
+                        vl.save()
+                        break
+                    except:
+                        raise
 
 
 class Style(models.Model):
@@ -168,20 +245,6 @@ class Style(models.Model):
 
     def __unicode__(self):
         return '{}_{}'.format(self.image_type, self.colormap)
-
-
-class VirtualLayer(models.Model):
-    layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
-    layer_expression = models.CharField(max_length=200, help_text="Like u,v or Band1*Band2*Band3")
-    datasets = models.ManyToManyField('Dataset',
-                                      help_text="Choose the datasets that this virtual layer applies to",
-                                      blank=True,
-                                      related_name='dataset_lyr_rel'
-                                      )
-    styles = models.ManyToManyField('Style')
-
-    def __unicode__(self):
-        return '{} ({})'.format(self.layer, self.layer_expression)
 
 
 class Group(models.Model):
