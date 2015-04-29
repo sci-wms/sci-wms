@@ -34,7 +34,7 @@ class VirtualLayerInline(admin.StackedInline):
     extra = 1
 
 
-class GroupInline(admin.StackedInline):
+class GroupInline(admin.TabularInline):
     model = Group.datasets.through
     extra = 1
 
@@ -47,7 +47,7 @@ class GroupAdmin(admin.ModelAdmin):
     ]
 
 
-class LayerInline(admin.TabularInline):
+class LayerInline(admin.StackedInline):
     model = Layer
     extra = 0
     filter_horizontal = ('styles',)
