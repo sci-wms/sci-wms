@@ -243,6 +243,10 @@ class Style(models.Model):
     def defaults(cls):
         return Style.objects.filter(colormap='jet', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
 
+    @property
+    def code(self):
+        return '{}_{}'.format(self.image_type, self.colormap)
+
     def __unicode__(self):
         return '{}_{}'.format(self.image_type, self.colormap)
 
