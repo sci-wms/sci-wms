@@ -91,6 +91,10 @@ class Dataset(models.Model):
                 if hasattr(nc_var, 'valid_max'):
                     l.default_max = nc_var.valid_max
 
+                if hasattr(nc_var, 'standard_name'):
+                    std_name = nc_var.standard_name
+                    l.std_name = std_name
+
                 l.save()
 
             nc.close()
@@ -134,6 +138,7 @@ class Dataset(models.Model):
 
 class Layer(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
+    std_name    = models.CharField(max_length=200, blank=True,help_text="The 'standard_name' from the dataset variable")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
     dataset     = models.ForeignKey('Dataset')
     active      = models.BooleanField(default=True)
