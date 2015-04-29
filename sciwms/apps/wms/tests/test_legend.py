@@ -10,7 +10,7 @@ class TestGetLegendGraphic(TestCase):
         add_server()
         add_group()
         add_user()
-        add_dataset("nasa_scb20111015.nc")
+        add_dataset("selfe_ugrid.nc")
 
     @classmethod
     def tearDownClass(cls):
