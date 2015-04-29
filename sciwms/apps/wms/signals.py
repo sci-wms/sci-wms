@@ -8,3 +8,4 @@ from sciwms.apps.wms.models import Dataset
 def dataset_post_save(sender, instance, created, **kwargs):
     if created is True:
         instance.update_cache()
+        instance.process_layers()

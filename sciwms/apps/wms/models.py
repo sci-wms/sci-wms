@@ -29,6 +29,8 @@ from django.conf import settings
 
 from jsonfield import JSONField
 
+import matplotlib.pyplot as plt
+
 
 class Dataset(models.Model):
     uri = models.CharField(max_length=1000)
@@ -36,11 +38,7 @@ class Dataset(models.Model):
     title = models.CharField(max_length=200, help_text="Human Readable Title")
     abstract = models.CharField(max_length=2000, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField(help_text="Check this box to keep the dataset up-to-date if changes are made to it on disk or remote server.", default=True)
-    test_layer = models.CharField(max_length=200, help_text="Optional", blank=True)
-    test_style = models.CharField(max_length=200, help_text="Optional", blank=True)
     display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
-    latitude_variable = models.CharField(blank=True, max_length=200, help_text="Name of latitude variable. Default: lat")
-    longitude_variable = models.CharField(blank=True, max_length=200, help_text="Name of longitude variable. Default: lon")
     cache_last_updated = models.DateTimeField(null=True, editable=False)
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
 
@@ -75,6 +73,27 @@ class Dataset(models.Model):
         cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.safe_filename + '*'))
         for cache_file in cache_file_list:
             os.remove(cache_file)
+
+    def process_layers(self):
+        nc = self.netcdf4_dataset()
+        if nc is not None:
+
+            for v in nc.variables:
+                l, _ = Layer.objects.get_or_create(dataset_id=self.id, var_name=v)
+
+                nc_var = nc.variables[v]
+                if hasattr(nc_var, 'valid_range'):
+                    l.default_min = nc_var.valid_range[0]
+                    l.default_max = nc_var.valid_range[-1]
+                # valid_min and valid_max take presendence
+                if hasattr(nc_var, 'valid_min'):
+                    l.default_min = nc_var.valid_min
+                if hasattr(nc_var, 'valid_max'):
+                    l.default_max = nc_var.valid_max
+
+                l.save()
+
+            nc.close()
 
     @property
     def safe_filename(self):
@@ -112,42 +131,46 @@ class Dataset(models.Model):
     def cell_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
 
+
 class Layer(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
-    dataset     = models.ForeignKey(Dataset)
+    dataset     = models.ForeignKey('Dataset')
     active      = models.BooleanField(default=True)
-class Style(models.Model):
-    description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
-    image_type  = models.CharField(max_length=200, default="filledcontours", choices=(("filledcontours","filledcontours"),
-                                                                                      ("contours","contours"),
-                                                                                      ("pcolor","pcolor"),
-                                                                                      ("facets","facets"),
-                                                                                      ("composite","composite"),
-                                                                                      ("vectors","vectors"),
-                                                                                      ("barbs","barbs")))
-    # @TODO: pull from colormaps_reference.py http://matplotlib.org/examples/color/colormaps_reference.html
-    colormap    = models.CharField(max_length=200, default="jet", choices=(("jet", "jet"),
-                                                                           ("rainbow", "rainbow"),
-                                                                           ("hsv", "hsv"),
-                                                                           ("terrain", "terrain"),
-                                                                           ("ocean", "ocean")))
-    param_loc   = models.CharField(max_length=200, default="grid")
-    wildcard    = models.CharField(max_length=200, default="False")
+    styles      = models.ManyToManyField('Style')
+    default_min = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the min.  If None, autoscale is used.")
+    default_max = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the max.  If None, autoscale is used.")
 
-    layer       = models.ForeignKey(Layer)
+
+class Style(models.Model):
+    description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this style, optional")
+    colormap    = models.CharField(max_length=200,
+                                   help_text="The matplotlib colormaps. See: http://matplotlib.org/1.2.1/examples/pylab_examples/show_colormaps.html.",
+                                   choices=sorted((m, m) for m in plt.cm.datad if not m.endswith("_r")))
+    image_type  = models.CharField(max_length=200, default="filledcontours", choices=(("filledcontours", "filledcontours"),
+                                                                                      ("contours", "contours"),
+                                                                                      ("pcolor", "pcolor"),
+                                                                                      ("facets", "facets"),
+                                                                                      ("composite", "composite"),
+                                                                                      ("vectors", "vectors"),
+                                                                                      ("barbs", "barbs")))
+
+    def __unicode__(self):
+        return '{}_{}'.format(self.image_type, self.colormap)
+
 
 class VirtualLayer(models.Model):
     layer = models.CharField(max_length=200, help_text="Layer designation for the expression")
     layer_expression = models.CharField(max_length=200, help_text="Like u,v or Band1*Band2*Band3")
-    datasets = models.ManyToManyField(Dataset, 
+    datasets = models.ManyToManyField('Dataset',
                                       help_text="Choose the datasets that this virtual layer applies to",
                                       blank=True,
                                       related_name='dataset_lyr_rel'
                                       )
+    styles = models.ManyToManyField('Style')
 
     def __unicode__(self):
-        return self.layer
+        return '{} ({})'.format(self.layer, self.layer_expression)
 
 
 class Group(models.Model):

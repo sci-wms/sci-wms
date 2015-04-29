@@ -20,51 +20,42 @@ Created on Sep 6, 2011
 
 @author: ACrosby
 '''
-#from fvcom_compute.wms.models import Node, Cell, Time, Level
-#import fvcom_compute.wms.grid_init_script as gridinit
 from django.contrib import admin
-#from django.db import models
-from nested_inline.admin import NestedTabularInline, NestedModelAdmin, NestedStackedInline
+from nested_inline.admin import NestedModelAdmin, NestedStackedInline
 from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer, Style
 
 
+@admin.register(Server)
 class ServerAdmin(admin.ModelAdmin):
     list_display = ('title', 'keywords', 'contact_person', 'contact_email')
 
 
 class VirtualLayerInline(admin.StackedInline):
-    extra = 0
     model = VirtualLayer.datasets.through
+    extra = 1
 
 
 class GroupInline(admin.StackedInline):
-    extra = 0
     model = Group.datasets.through
+    extra = 1
 
 
+@admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'abstract')
     inlines = [
         GroupInline,
     ]
 
-class StyleInline(NestedTabularInline):
-    ordering = ('image_type', 'colormap', 'description',)
-    model = Style
-    extra = 1
-    fk_name = 'layer'
 
-class LayerInline(NestedStackedInline):
+class LayerInline(admin.TabularInline):
     model = Layer
     extra = 1
-    fk_name = 'dataset'
-    inlines = [
-        StyleInline
-    ]
+    filter_horizontal = ('styles',)
 
 
-class DatasetAdmin(NestedModelAdmin):
-    model = Dataset
+@admin.register(Dataset)
+class DatasetAdmin(admin.ModelAdmin):
     list_display = ('name', 'title', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
     inlines = [
@@ -74,18 +65,15 @@ class DatasetAdmin(NestedModelAdmin):
     ]
 
 
+@admin.register(VirtualLayer)
 class VirtualLayerAdmin(admin.ModelAdmin):
     list_display = ('layer', 'layer_expression')
+    filter_horizontal = ('styles',)
     inlines = [
         VirtualLayerInline,
     ]
 
-#class LayerAdmin(admin.ModelAdmin):
-#    list_display = ('var_name', 'active', 'description')
 
-
-admin.site.register(Dataset, DatasetAdmin)
-admin.site.register(Server, ServerAdmin)
-admin.site.register(Group, GroupAdmin)
-admin.site.register(VirtualLayer, VirtualLayerAdmin)
-#admin.site.register(Layer, LayerAdmin) 
+@admin.register(Style)
+class StyleAdmin(admin.ModelAdmin):
+    list_display = ('image_type', 'colormap', 'description')

@@ -237,23 +237,20 @@ def create_topology(dataset):
             logger.info("data written to file")
         else:  # both cgrids and ugrid go through this statement
             logger.info("identified as grid")
-            latname = dataset.latitude_variable
-            lonname = dataset.longitude_variable
-            if latname not in nc.variables:  # look for the lat and lon variables if the database lat/lon names are absent or incorrect
-                for key in nc.variables.iterkeys():
-                    try:
-                        nc.variables[key].__getattr__('units')
-                        temp_units = nc.variables[key].units
-                        if (not '_u' in key) and (not '_v' in key) and (not '_psi' in key):
-                            if 'degree' in temp_units:
-                                if 'east' in temp_units:
-                                    lonname = key
-                                elif 'north' in temp_units:
-                                    latname = key
-                                else:
-                                    raise ValueError("No valid coordinates found in source netcdf file")
-                    except:
-                        pass
+            for key in nc.variables.iterkeys():
+                try:
+                    nc.variables[key].__getattr__('units')
+                    temp_units = nc.variables[key].units
+                    if (not '_u' in key) and (not '_v' in key) and (not '_psi' in key):
+                        if 'degree' in temp_units:
+                            if 'east' in temp_units:
+                                lonname = key
+                            elif 'north' in temp_units:
+                                latname = key
+                            else:
+                                raise ValueError("No valid coordinates found in source netcdf file")
+                except:
+                    pass
             if nc.variables[latname].ndim > 1:
                 igrid = nc.variables[latname].shape[0]
                 jgrid = nc.variables[latname].shape[1]
