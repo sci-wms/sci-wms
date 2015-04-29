@@ -95,6 +95,8 @@ class Dataset(models.Model):
                     std_name = nc_var.standard_name
                     l.std_name = std_name
 
+                # Set some standard styles
+                l.styles = Style.defaults()
                 l.save()
 
             nc.close()
@@ -159,6 +161,10 @@ class Style(models.Model):
                                                                                       ("composite", "composite"),
                                                                                       ("vectors", "vectors"),
                                                                                       ("barbs", "barbs")))
+
+    @classmethod
+    def defaults(cls):
+        return Style.objects.filter(colormap='jet', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
 
     def __unicode__(self):
         return '{}_{}'.format(self.image_type, self.colormap)
