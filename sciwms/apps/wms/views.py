@@ -1122,13 +1122,7 @@ def getMap(request, dataset):
 
     # Get the colormap requested, the color limits/scaling
     colormap = request.GET["colormap"]
-    if request.GET["climits"][0] != "None":
-        climits = [float(lim) for lim in request.GET["climits"]]
-    elif 'colorscalerange' in request.GET:
-        climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
-    else:
-        climits = ["None", "None"]
-
+    climits = request.GET["climits"]
     # Get the absolute magnitude bool, the topological location of variable of
     # interest, and the variables of interest (comma sep, no spaces, limit 2)
     magnitude = request.GET["magnitude"]
@@ -1141,262 +1135,259 @@ def getMap(request, dataset):
     lonmin, latmin = mi(lonmin, latmin, inverse=True)
     lonmax, latmax = mi(lonmax, latmax, inverse=True)
 
-    if "kml" in actions:  # TODO: REMOVE THIS!
-        pass
+    # Open topology cache file, and the actual data endpoint
+    ug = UGrid()
+    topology = netCDF4.Dataset(dataset.topology_file)
+    topology_ug = ug.from_nc_dataset(nc=topology)
+    datasetnc = dataset.netcdf4_dataset()
+    # gridtype = topology.grid  # Grid type found in topology file
+    if ug.mesh_name is not None:
+        grid_type = 'ugrid'
+        ug_nodes = topology_ug.nodes
+        lon = ug_nodes[:, 0]
+        lat = ug_nodes[:, 1]
     else:
-        # Open topology cache file, and the actual data endpoint
-        ug = UGrid()
-        topology = netCDF4.Dataset(dataset.topology_file)
-        topology_ug = ug.from_nc_dataset(nc=topology)
-        datasetnc = dataset.netcdf4_dataset()
-        # gridtype = topology.grid  # Grid type found in topology file
-        if ug.mesh_name is not None:
-            grid_type = 'ugrid'
-            ug_nodes = topology_ug.nodes
-            lon = ug_nodes[:, 0]
-            lat = ug_nodes[:, 1]
+        grid_type = 'sgrid'
+    logger.info("gridtype: " + grid_type)
+    # If the request is not a box, then do nothing.
+    if latmax != latmin:
+        # Pull cell coords out of cache.
+        # Deal with the longitudes of a global file so that it adheres to
+        # the -180/180 convention.
+        if lonmin > lonmax:
+            lonmax = lonmax + 360
+            continuous = True
+            #lon = topology.variables[toplonc][:]
+            #wher = numpy.where(lon<lonmin)
+            if grid_type == 'ugrid' or grid_type == 'sgrid':
+                lon[lon < 0] = lon[lon < 0] + 360
+            else:
+                lon[lon < lonmin] = lon[lon < lonmin] + 360
+        # else:
+        #     lon = topology.variables[toplonc][:]
+        # lat = topology.variables[toplatc][:]
+        if grid_type == 'ugrid':
+            index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
+        elif grid_type == 'sgrid':
+            pass
         else:
-            grid_type = 'sgrid'
-        logger.info("gridtype: " + grid_type)
-        # If the request is not a box, then do nothing.
-        if latmax != latmin:
-            # Pull cell coords out of cache.
-            # Deal with the longitudes of a global file so that it adheres to
-            # the -180/180 convention.
-            if lonmin > lonmax:
-                lonmax = lonmax + 360
-                continuous = True
-                #lon = topology.variables[toplonc][:]
-                #wher = numpy.where(lon<lonmin)
-                if grid_type == 'ugrid' or grid_type == 'sgrid':
-                    lon[lon < 0] = lon[lon < 0] + 360
-                else:
-                    lon[lon < lonmin] = lon[lon < lonmin] + 360
-            # else:
-            #     lon = topology.variables[toplonc][:]
-            # lat = topology.variables[toplatc][:]
-            if grid_type == 'ugrid':
-                index, lat, lon = ugrid.subset(latmin, lonmin, latmax, lonmax, lat, lon)
-            elif grid_type == 'sgrid':
-                pass
+            pass
+    if index is not None:
+        if ("facets" in actions) or \
+           ("regrid" in actions) or \
+           ("shape" in actions) or \
+           ("contours" in actions) or \
+           ("interpolate" in actions) or \
+           ("filledcontours" in actions) or \
+           ("pcolor" in actions) or \
+           (topology_type.lower() == 'node'):
+            if grid_type == 'ugrid':  # If ugrid
+                # If the nodes are important, get the node coords, and
+                # topology array
+                lonn = lon
+                latn = lat
+                nv = topology_ug.faces
+                #nv = get_nc_variable_values(topology, 'Mesh_face_nodes')  # get face nodes, returns None if face nodes are unavailable
+                if topology_type.lower() == "node":
+                    index = range(len(latn))
+                # Deal with global out of range datasets in the node longitudes
+                if continuous is True:
+                    if lonmin < 0:
+                        lonn[numpy.where(lonn > 0)] = lonn[numpy.where(lonn > 0)] - 360
+                        lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
+                    else:
+                        lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
             else:
-                pass
-        if index is not None:
-            if ("facets" in actions) or \
-               ("regrid" in actions) or \
-               ("shape" in actions) or \
-               ("contours" in actions) or \
-               ("interpolate" in actions) or \
-               ("filledcontours" in actions) or \
-               ("pcolor" in actions) or \
-               (topology_type.lower() == 'node'):
-                if grid_type == 'ugrid':  # If ugrid
-                    # If the nodes are important, get the node coords, and
-                    # topology array
-                    lonn = lon
-                    latn = lat
-                    nv = topology_ug.faces
-                    #nv = get_nc_variable_values(topology, 'Mesh_face_nodes')  # get face nodes, returns None if face nodes are unavailable
-                    if topology_type.lower() == "node":
-                        index = range(len(latn))
-                    # Deal with global out of range datasets in the node longitudes
-                    if continuous is True:
-                        if lonmin < 0:
-                            lonn[numpy.where(lonn > 0)] = lonn[numpy.where(lonn > 0)] - 360
-                            lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
-                        else:
-                            lonn[numpy.where(lonn < lonmax-359)] = lonn[numpy.where(lonn < lonmax-359)] + 360
-                else:
-                    pass  # If regular grid, do nothing
-            else:
-                nv = None
-                lonn, latn = None, None
-            # get the requested time slice
-            times = get_nc_variable_values(topology, 'time')
-            datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-            time_units = topology.variables['time'].units
-            datestart = round(netCDF4.date2num(datestart, units=time_units))  # datetime obj --> netcdf datenum
-            time = bisect.bisect_right(times, datestart) - 1  # index where the requested time slice "would belong"
+                pass  # If regular grid, do nothing
+        else:
+            nv = None
+            lonn, latn = None, None
+        # get the requested time slice
+        times = get_nc_variable_values(topology, 'time')
+        datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
+        time_units = topology.variables['time'].units
+        datestart = round(netCDF4.date2num(datestart, units=time_units))  # datetime obj --> netcdf datenum
+        time = bisect.bisect_right(times, datestart) - 1  # index where the requested time slice "would belong"
+        if settings.LOCALDATASET:
+            time = [1]
+        elif time == -1:
+            time = [0]
+        else:
+            time = [time]
+        if dateend != datestart:
+            dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
+            dateend = round(netCDF4.date2num(dateend, units=time_units))  # datetime obj --> netcdf datenum
+            time.append(bisect.bisect_right(times, dateend) - 1)
             if settings.LOCALDATASET:
-                time = [1]
-            elif time == -1:
-                time = [0]
+                time[1] = 1
+            elif time[1] == -1:
+                time[1] = 0
             else:
-                time = [time]
-            if dateend != datestart:
-                dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
-                dateend = round(netCDF4.date2num(dateend, units=time_units))  # datetime obj --> netcdf datenum
-                time.append(bisect.bisect_right(times, dateend) - 1)
-                if settings.LOCALDATASET:
-                    time[1] = 1
-                elif time[1] == -1:
-                    time[1] = 0
-                else:
-                    time[1] = time[1]
-                time = range(time[0], time[1]+1)
-            time_indices = time  # TODO: ugh this is bad
-            #loglist.append('time index requested ' + str(time))
+                time[1] = time[1]
+            time = range(time[0], time[1]+1)
+        time_indices = time  # TODO: ugh this is bad
+        #loglist.append('time index requested ' + str(time))
 
-            # Get the data and appropriate resulting shape from the data source
-            if grid_type == 'ugrid':
-                var1, var2 = ugrid.getvar(datasetnc, time_indices, layer, variables, index)
-            if grid_type == 'sgrid':
-                index = numpy.asarray(index)
-                var1, var2 = cgrid.getvar(datasetnc, time_indices, layer, variables, index)
-            # var1_nan_mask = create_nan_mask(var1)
-            # print(var1_nan_mask.shape)
-            # print(var1)
-            # var1 = filter_array(var1, var1_nan_mask)
-            # print(lon.shape)
-            # lon = filter_array(lon, var1_nan_mask)
-            # lat = filter_array(lat, var1_nan_mask)
-            # lonn = filter_array(lonn, var1_nan_mask)
-            # latn = filter_array(latn, var1_nan_mask)
-            if grid_type == 'ugrid':  # TODO: Should take a look at this
-                # This is averaging in time over all timesteps downloaded
-                if "composite" in actions:
-                    pass
-                elif "average" in actions:
-                    if len(var1.shape) > 2:
-                        var1 = var1.mean(axis=0)
-                        var1 = var1.mean(axis=0)
-                        try:
-                            var2 = var2.mean(axis=0)
-                            var2 = var2.mean(axis=0)
-                        except:
-                            pass
-                    elif len(var1.shape) > 1:
-                        var1 = var1.mean(axis=0)
-                        try:
-                            var2 = var2.mean(axis=0)
-                        except:
-                            pass
-                # This finding max in time over all timesteps downloaded
-                elif "maximum" in actions:
-                    if len(var1.shape) > 2:
-                        var1 = numpy.abs(var1).max(axis=0)
-                        var1 = numpy.abs(var1).max(axis=0)
-                        try:
-                            var2 = numpy.abs(var2).max(axis=0)
-                            var2 = numpy.abs(var2).max(axis=0)
-                        except:
-                            pass
-                    elif len(var1.shape) > 1:
-                        var1 = numpy.abs(var1).max(axis=0)
-                        try:
-                            var2 = numpy.abs(var2).max(axis=0)
-                        except:
-                            pass
-
-            # Setup the basemap/matplotlib figure
-            fig = Figure(dpi=80, facecolor='none', edgecolor='none')
-            fig.set_alpha(0)
-            # print('var 1 again')
-            # var1_nan_mask = create_nan_mask(var1)
-            # var1 = filter_array(var1, var1_nan_mask)
-            # lon = filter_array(lon, var1_nan_mask)
-            # lat = filter_array(lat, var1_nan_mask)
-            # lonn = filter_array(lonn, var1_nan_mask)
-            # latn = filter_array(latn, var1_nan_mask)
-            projection = request.GET["projection"]
-            # print('nv: {0}'.format(nv))
-            # nv_shape = nv.shape
-            # print('nv shape: {0}'.format(nv_shape))
-            m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-                        urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-                        resolution=None,
-                        lat_ts = 0.0,
-                        suppress_ticks=True)
-            m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
-            try:  # Fail gracefully if not standard_name, should do this a little better than a try
-                if 'direction' in datasetnc.variables[variables[1]].standard_name:
-                    #assign new var1,var2 as u,v components
-                    var2 = 450 - var2
-                    var2[var2 > 360] = var2[var2 > 360] - 360
-                    origvar2 = var2
-                    var2 = numpy.sin(numpy.radians(origvar2)) * var1  # var 2 needs to come first so that
-                    var1 = numpy.cos(numpy.radians(origvar2)) * var1  # you arn't multiplying by the wrong var1 val
-            except:
+        # Get the data and appropriate resulting shape from the data source
+        if grid_type == 'ugrid':
+            var1, var2 = ugrid.getvar(datasetnc, time_indices, layer, variables, index)
+        if grid_type == 'sgrid':
+            index = numpy.asarray(index)
+            var1, var2 = cgrid.getvar(datasetnc, time_indices, layer, variables, index)
+        # var1_nan_mask = create_nan_mask(var1)
+        # print(var1_nan_mask.shape)
+        # print(var1)
+        # var1 = filter_array(var1, var1_nan_mask)
+        # print(lon.shape)
+        # lon = filter_array(lon, var1_nan_mask)
+        # lat = filter_array(lat, var1_nan_mask)
+        # lonn = filter_array(lonn, var1_nan_mask)
+        # latn = filter_array(latn, var1_nan_mask)
+        if grid_type == 'ugrid':  # TODO: Should take a look at this
+            # This is averaging in time over all timesteps downloaded
+            if "composite" in actions:
                 pass
+            elif "average" in actions:
+                if len(var1.shape) > 2:
+                    var1 = var1.mean(axis=0)
+                    var1 = var1.mean(axis=0)
+                    try:
+                        var2 = var2.mean(axis=0)
+                        var2 = var2.mean(axis=0)
+                    except:
+                        pass
+                elif len(var1.shape) > 1:
+                    var1 = var1.mean(axis=0)
+                    try:
+                        var2 = var2.mean(axis=0)
+                    except:
+                        pass
+            # This finding max in time over all timesteps downloaded
+            elif "maximum" in actions:
+                if len(var1.shape) > 2:
+                    var1 = numpy.abs(var1).max(axis=0)
+                    var1 = numpy.abs(var1).max(axis=0)
+                    try:
+                        var2 = numpy.abs(var2).max(axis=0)
+                        var2 = numpy.abs(var2).max(axis=0)
+                    except:
+                        pass
+                elif len(var1.shape) > 1:
+                    var1 = numpy.abs(var1).max(axis=0)
+                    try:
+                        var2 = numpy.abs(var2).max(axis=0)
+                    except:
+                        pass
 
-            # Close remote dataset and local cache
-            topology.close()
-            datasetnc.close()
+        # Setup the basemap/matplotlib figure
+        fig = Figure(dpi=80, facecolor='none', edgecolor='none')
+        fig.set_alpha(0)
+        # print('var 1 again')
+        # var1_nan_mask = create_nan_mask(var1)
+        # var1 = filter_array(var1, var1_nan_mask)
+        # lon = filter_array(lon, var1_nan_mask)
+        # lat = filter_array(lat, var1_nan_mask)
+        # lonn = filter_array(lonn, var1_nan_mask)
+        # latn = filter_array(latn, var1_nan_mask)
+        projection = request.GET["projection"]
+        # print('nv: {0}'.format(nv))
+        # nv_shape = nv.shape
+        # print('nv shape: {0}'.format(nv_shape))
+        m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
+                    urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                    resolution=None,
+                    lat_ts = 0.0,
+                    suppress_ticks=True)
+        m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
+        try:  # Fail gracefully if not standard_name, should do this a little better than a try
+            if 'direction' in datasetnc.variables[variables[1]].standard_name:
+                #assign new var1,var2 as u,v components
+                var2 = 450 - var2
+                var2[var2 > 360] = var2[var2 > 360] - 360
+                origvar2 = var2
+                var2 = numpy.sin(numpy.radians(origvar2)) * var1  # var 2 needs to come first so that
+                var1 = numpy.cos(numpy.radians(origvar2)) * var1  # you arn't multiplying by the wrong var1 val
+        except:
+            pass
 
-            if (climits[0] == "None") or (climits[1] == "None"):
-                if magnitude.lower() == "log":
-                    CNorm = matplotlib.colors.LogNorm()
-                else:
-                    CNorm = matplotlib.colors.Normalize()
+        # Close remote dataset and local cache
+        topology.close()
+        datasetnc.close()
+
+        if (climits[0] is None) or (climits[1] is None):
+            if magnitude.lower() == "log":
+                CNorm = matplotlib.colors.LogNorm()
             else:
-                if magnitude.lower() == "log":
-                    CNorm = matplotlib.colors.LogNorm(vmin=climits[0],
-                                                      vmax=climits[1],
-                                                      clip=True,
-                                                     )
-                else:
-                    CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                                        vmax=climits[1],
-                                                        clip=True,
-                                                       )
-            # Plot to the projected figure axes!
-            if grid_type == 'sgrid':
-                lon, lat = m(lon, lat)
-                cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
-                           aspect = m.aspect,
-                           height = height,
-                           width = width,
-                           norm = CNorm,
-                           cmin = climits[0],
-                           cmax = climits[1],
-                           magnitude = magnitude,
-                           cmap = colormap,
-                           basemap = m,
-                           lonmin = lonmin,
-                           latmin = latmin,
-                           lonmax = lonmax,
-                           latmax = latmax,
-                           projection = projection)
-            elif grid_type == 'ugrid':
-                fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
-                                    aspect = m.aspect,
-                                    height = height,
-                                    width = width,
-                                    norm = CNorm,
-                                    cmin = climits[0],
-                                    cmax = climits[1],
-                                    magnitude = magnitude,
-                                    cmap = colormap,
-                                    topology_type = topology_type,
-                                    lonmin = lonmin,
-                                    latmin = latmin,
-                                    lonmax = lonmax,
-                                    latmax = latmax,
-                                    dataset = dataset,
-                                    continuous = continuous,
-                                    projection = projection)
-            lonmax, latmax = m(lonmax, latmax)
-            lonmin, latmin = m(lonmin, latmin)
-            m.ax.set_xlim(lonmin, lonmax)
-            m.ax.set_ylim(latmin, latmax)
-            m.ax.set_frame_on(False)
-            m.ax.set_clip_on(False)
-            m.ax.set_position([0, 0, 1, 1])
-            canvas = FigureCanvasAgg(fig)
-            response = HttpResponse(content_type='image/png')
-            canvas.print_png(response)
+                CNorm = matplotlib.colors.Normalize()
         else:
-            fig = Figure(dpi=5, facecolor='none', edgecolor='none')
-            fig.set_alpha(0)
-            ax = fig.add_axes([0, 0, 1, 1])
-            fig.set_figheight(height/5.0)
-            fig.set_figwidth(width/5.0)
-            ax.set_frame_on(False)
-            ax.set_clip_on(False)
-            ax.set_position([0, 0, 1, 1])
-            canvas = FigureCanvasAgg(fig)
-            response = HttpResponse(content_type='image/png')
-            canvas.print_png(response)
+            if magnitude.lower() == "log":
+                CNorm = matplotlib.colors.LogNorm(vmin=climits[0],
+                                                  vmax=climits[1],
+                                                  clip=True,
+                                                 )
+            else:
+                CNorm = matplotlib.colors.Normalize(vmin=climits[0],
+                                                    vmax=climits[1],
+                                                    clip=True,
+                                                   )
+        # Plot to the projected figure axes!
+        if grid_type == 'sgrid':
+            lon, lat = m(lon, lat)
+            cgrid.plot(lon, lat, var1, var2, actions, m.ax, fig,
+                       aspect = m.aspect,
+                       height = height,
+                       width = width,
+                       norm = CNorm,
+                       cmin = climits[0],
+                       cmax = climits[1],
+                       magnitude = magnitude,
+                       cmap = colormap,
+                       basemap = m,
+                       lonmin = lonmin,
+                       latmin = latmin,
+                       lonmax = lonmax,
+                       latmax = latmax,
+                       projection = projection)
+        elif grid_type == 'ugrid':
+            fig, m = ugrid.plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, m.ax, fig,
+                                aspect = m.aspect,
+                                height = height,
+                                width = width,
+                                norm = CNorm,
+                                cmin = climits[0],
+                                cmax = climits[1],
+                                magnitude = magnitude,
+                                cmap = colormap,
+                                topology_type = topology_type,
+                                lonmin = lonmin,
+                                latmin = latmin,
+                                lonmax = lonmax,
+                                latmax = latmax,
+                                dataset = dataset,
+                                continuous = continuous,
+                                projection = projection)
+        lonmax, latmax = m(lonmax, latmax)
+        lonmin, latmin = m(lonmin, latmin)
+        m.ax.set_xlim(lonmin, lonmax)
+        m.ax.set_ylim(latmin, latmax)
+        m.ax.set_frame_on(False)
+        m.ax.set_clip_on(False)
+        m.ax.set_position([0, 0, 1, 1])
+        canvas = FigureCanvasAgg(fig)
+        response = HttpResponse(content_type='image/png')
+        canvas.print_png(response)
+    else:
+        fig = Figure(dpi=5, facecolor='none', edgecolor='none')
+        fig.set_alpha(0)
+        ax = fig.add_axes([0, 0, 1, 1])
+        fig.set_figheight(height/5.0)
+        fig.set_figwidth(width/5.0)
+        ax.set_frame_on(False)
+        ax.set_clip_on(False)
+        ax.set_position([0, 0, 1, 1])
+        canvas = FigureCanvasAgg(fig)
+        response = HttpResponse(content_type='image/png')
+        canvas.print_png(response)
 
     gc.collect()
     #loglist.append('final time to complete request ' + str(timeobj.time() - totaltimer))

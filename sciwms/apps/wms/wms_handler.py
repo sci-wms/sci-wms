@@ -70,17 +70,20 @@ class wms_handler(object):
 
         height = requestobj.GET["height"]
         width = requestobj.GET["width"]
-        # styles take the following form:
-        # {matplotlib style}_{statistical processing options}_{colormap}_{lower color normalization bound}_{upper color normalization bound}_{topology type}_{magnitude boolean}
-        # not total sure what the magnitude boolean does as of 03/17/2015
+
         # start handling of styles
         styles = requestobj.GET["styles"].split(",")[0].split("_")
-        colormap = styles[2].replace("-", "_")
-        climits = styles[3:5]
-        topology_type = styles[5]
-        magnitude_bool = styles[6]
+        colormap = '_'.join(styles[1:])
+        image_type = styles[0]
         # end handling of styles
-        
+
+        climits = (None, None)
+        if 'colorscalerange' in requestobj.GET:
+            try:
+                climits = map(lambda x: float(x), requestobj.GET["colorscalerange"].split(','))
+            except:
+                pass
+
         tempget = requestobj.GET.copy()
         tempget.clear()
         values = {
@@ -94,12 +97,13 @@ class wms_handler(object):
                     u'latmin':       latmin,
                     u'height':       height,
                     u'width':        width,
-                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),  # 
+                    u'actions':      ("image," + "," + styles[0] + "," + styles[1]),  #
                     u'colormap':     colormap,
                     u'climits':      climits,
+                    u'image_type':   image_type,
                     u'variables':    layers,
-                    u'topologytype': topology_type,
-                    u'magnitude':    magnitude_bool,
+                    u'topologytype': 'node',
+                    u'magnitude':    'normal'
                  }
         for k, v in values.iteritems():
             tempget[k] = v
