@@ -38,10 +38,6 @@ urlpatterns = patterns( '',
                         url(r'^simple', 'sciwms.apps.wms.views.simpleclient', name='simpleclient'),
                         url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient', name='leafletclient'),
 
-                        url(r'^add_dataset', 'sciwms.apps.wms.views.add'),  # This is a POST based view
-                        url(r'^add_to_group', 'sciwms.apps.wms.views.add_to_group'),
-                        url(r'^remove_dataset', 'sciwms.apps.wms.views.remove'),
-                        url(r'^remove_from_group', 'sciwms.apps.wms.views.remove_from_group'),
 
                         url(r'^groups/(?P<group>.*)/wmstest/$', 'sciwms.apps.wms.views.grouptest'),
                         url(r'^groups/(?P<group>.*)/wmstest', 'sciwms.apps.wms.views.grouptest'),

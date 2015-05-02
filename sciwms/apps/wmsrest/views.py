@@ -1,65 +1,78 @@
-'''
-Created on Feb 12, 2015
-
-@author: ayan
-'''
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+# -*- coding: utf-8 -*-
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from sciwms.apps.wms.models import Dataset, VirtualLayer
-from serializers import DatasetSerializer, VirtualLayerSerializer
+from sciwms.apps.wms.models import Dataset
+from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
 
 
-class DatasetList(ListCreateAPIView):
+class DatasetList(APIView):
     """
-    Get a list of Sci-WMS datasets.
-    Supports GET and POST methods.
-    
+    List all snippets, or create a new snippet.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    queryset = Dataset.objects.all()
-    serializer_class = DatasetSerializer
-    
-    
-class DatasetDetail(RetrieveUpdateDestroyAPIView):
+    def get(self, request, format=None):
+        snippets = Dataset.objects.select_related('layer_set__styles').all()
+        serializer = DatasetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        if 'ugrid' in request.data['type']:
+            request.data['type'] = 'wms.ugriddataset'
+            serializer = UGridDatasetSerializer(data=request.data)
+        elif 'sgrid' in request.data['type']:
+            request.data['type'] = 'wms.sgriddataset'
+            serializer = SGridDatasetSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DatasetDetail(APIView):
     """
     Get or update a specific Sci-WMS dataset.
     Supports GET, PUT, DELETE, and PATCH methods.
-    
+
     A DELETE on a dataset with a defined m2m relationship
     to another table will also delete that relationship.
-    
+
     PUT and PATCH requests with a defined m2m relations
     to another table will be updated accordingly.
-    
+
     """
     permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
 
+    def get_object(self, pk):
+        try:
+            return Dataset.objects.get(pk=pk)
+        except Dataset.DoesNotExist:
+            raise Http404
 
-class VirtualLayerList(ListCreateAPIView):
-    """
-    Get a list of virtual layers in Sci-WMS.
-    Supports GET and POST methods.
-    
-    """
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    queryset = VirtualLayer.objects.all()
-    serializer_class = VirtualLayerSerializer
-    
-    
-class VirtualLayerDetail(RetrieveUpdateDestroyAPIView):
-    """
-    Get or update a specific virtual layer in Sci-WMS
-    Supports GET, PUT, DELETE, and PATCH methods.
-    
-    A DELETE on a dataset with a defined m2m relationship
-    to another table will also delete that relationship.
-    
-    PUT and PATCH requests with a defined m2m relations
-    to another table will be updated accordingly.
-    
-    """
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    queryset = VirtualLayer.objects.all()
-    serializer_class= VirtualLayerSerializer
+    def get(self, request, pk, format=None):
+        dataset = self.get_object(pk)
+        serializer = DatasetSerializer(dataset)
+        return Response(serializer.data)
+
+    def put(self, request, pk, format=None):
+        dataset = self.get_object(pk)
+        if 'ugrid' in request.data['type']:
+            request.data['type'] = 'wms.ugriddataset'
+            serializer = UGridDatasetSerializer(dataset, data=request.data)
+        elif 'sgrid' in request.data['type']:
+            request.data['type'] = 'wms.sgriddataset'
+            serializer = SGridDatasetSerializer(dataset, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        dataset = self.get_object(pk)
+        dataset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
