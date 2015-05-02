@@ -41,6 +41,16 @@ def forwards(apps, schema_editor):
     bands.save()
 
 
+def backwards(apps, schema_editor):
+    Dataset = apps.get_model("wms", "Dataset")
+    Dataset.objects.filter(name='CGridTest').all().delete()
+    Dataset.objects.filter(name='UGridTest').all().delete()
+
+    VirtualLayer = apps.get_model('wms', 'VirtualLayer')
+    VirtualLayer.objects.filter(layer_expression='u,v').all().delete()
+    VirtualLayer.objects.filter(layer_expression="Band1*Band2*Band3").all().delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -48,5 +58,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(forwards),
+        migrations.RunPython(forwards, reverse_code=backwards),
     ]

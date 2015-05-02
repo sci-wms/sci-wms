@@ -4,12 +4,17 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
-def server_title(apps, schema_editor):
-    
+def forwards(apps, schema_editor):
+
     Server = apps.get_model('wms', 'Server')
     server_data = Server(title='Sci-wms Server')
     server_data.save()
-    
+
+
+def backwards(apps, schema_editor):
+    Server = apps.get_model('wms', 'Server')
+    Server.objects.filter(title='Sci-wms Server').all().delete()
+
 
 class Migration(migrations.Migration):
 
@@ -18,5 +23,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-                  migrations.RunPython(server_title),
+        migrations.RunPython(forwards, reverse_code=backwards),
     ]
