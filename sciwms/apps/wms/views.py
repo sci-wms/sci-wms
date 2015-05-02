@@ -132,28 +132,7 @@ def index(request):
             # Used in template to linkify to URI
             dataset.online = True
     context = { "datasets" : datasets }
-    return dshorts.render_to_response('wms/index.html', context)
-
-
-def openlayers(request, filepath):
-    return HttpResponse(get_template('wms/openlayers/%s' % filepath, content_type='text'))
-
-
-def simpleclient(request):
-    #grid_cache.check_topology_age()
-    from django.template import Context
-    sites = Site.objects.values()
-    dict1 = Context({ 'localsite' : sites[0]['domain'],
-                      'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
-
-
-def leafletclient(request):
-    from django.template import Context
-    sites = Site.objects.values()
-    dict1 = Context({ 'localsite' : sites[0]['domain'],
-                      'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/leaflet_example.html').render(dict1))
+    return dshorts.render_to_response('wms/index.html', context, context_instance=RequestContext(request))
 
 
 def authenticate_view(request):

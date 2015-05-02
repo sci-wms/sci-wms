@@ -35,6 +35,8 @@ urlpatterns = patterns( '',
 
                         url(r'^wms/', include('sciwms.apps.wms.urls')),
                         url(r'^rest/', include('sciwms.apps.wmsrest.urls')),
+
+                        url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout')
                     )
 
 # So we don't have to run "collectstatic" in development mode
