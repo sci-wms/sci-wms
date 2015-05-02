@@ -28,7 +28,6 @@ urlpatterns = patterns( '',
                         url(r'^demo', 'sciwms.apps.wms.views.demo', name='demo'),
 
                         # Datasets
-                        url(r'^datasets$',  'sciwms.apps.wms.views.datasets'),
                         url(r'^datasets/$', 'sciwms.apps.wms.views.datasets'),
                         url(r'^datasets/(?P<dataset>.*)/update', 'sciwms.apps.wms.views.update_dataset', name="update_dataset"),
                         url(r'^datasets/(?P<dataset>.*)/', 'sciwms.apps.wms.views.wms', name="dataset"),
@@ -39,8 +38,5 @@ urlpatterns = patterns( '',
                         url(r'^leaflet', 'sciwms.apps.wms.views.leafletclient', name='leafletclient'),
 
 
-                        url(r'^groups/(?P<group>.*)/wmstest/$', 'sciwms.apps.wms.views.grouptest'),
-                        url(r'^groups/(?P<group>.*)/wmstest', 'sciwms.apps.wms.views.grouptest'),
                         url(r'^groups/(?P<group>.*)/', 'sciwms.apps.wms.views.groups'),
-                        url(r'^groups/(?P<group>.*)', 'sciwms.apps.wms.views.groups')
                     )

@@ -89,16 +89,6 @@ def datasets(request):
     return HttpResponse(data, content_type='application/json')
 
 
-def grouptest(request, group):
-    from django.template import Context
-    sites = Site.objects.values()
-    #print group
-    group = Group.objects.get(name=group)
-    dict1 = Context({ 'localsite' : sites[0]['domain'],
-                      'datasets'  : list(Dataset.objects.filter(group=group))})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
-
-
 def groups(request, group):
     import django.shortcuts as dshorts
     reqtype = None
@@ -978,9 +968,6 @@ def getMap(request, dataset):
     from mpl_toolkits.basemap import pyproj
     from matplotlib.figure import Figure
 
-    #totaltimer = timeobj.time()
-    #loglist = []
-
     # direct the service to the dataset
     dataset = Dataset.objects.get(name=dataset)
 
@@ -998,7 +985,6 @@ def getMap(request, dataset):
     layer = request.GET["layer"]
     layer = layer.split(",")
     for i, l in enumerate(layer):
-    #    layer[i] = int(l)-1
         layer = int(l)
     layer = numpy.asarray(layer)
     actions = request.GET["actions"]
@@ -1278,8 +1264,8 @@ def getMap(request, dataset):
     #logger.info(str(loglist))
     return response
 
+
 def demo(request):
     import django.shortcuts as dshorts
     context = { 'datasets'  : Dataset.objects.all()}
     return dshorts.render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
-

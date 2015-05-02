@@ -112,9 +112,9 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
     width = kwargs.get('width')
     norm = kwargs.get('norm')
     cmap = get_cmap(kwargs.get('cmap', 'jet'))
-    cmin = kwargs.get('cmin', "None")
-    cmax = kwargs.get('cmax', "None")
-    magnitude = kwargs.get('magnitude', "False")
+    cmin = kwargs.get('cmin', None)
+    cmax = kwargs.get('cmax', None)
+    magnitude = kwargs.get('magnitude', False)
     topology_type = kwargs.get('topology_type', 'node')
     fig.set_figheight(height/80.0)
     fig.set_figwidth(width/80.0)
@@ -183,6 +183,7 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
                                  )
     return fig, m
 
+
 def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, 
            fig, height, width, lonmin, latmin, lonmax, latmax, dataset, 
            continuous, projection):
@@ -193,7 +194,7 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type,
     else:
         lon, lat = m(lonn, latn)
         lonn, latn = lon, lat
-    num = int( (lonmax - lonmin) *  320 )
+    num = int( (lonmax - lonmin) * 320 )
     xi = np.arange(m.xmin, m.xmax, num)
     yi = np.arange(m.ymin, m.ymax, num)
     if topology_type.lower() == "node":
@@ -212,11 +213,12 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type,
     #canvas.print_png("testing_yay.png")
     return fig, m
 
+
 def contour(lon, lat, lonn, latn, mag, nv, m, ax, 
             norm, cmin, cmax, cmap, topology_type, 
             fig, height, width, lonmin, latmin, 
             lonmax, latmax, dataset, continuous, projection):
-    if (cmin == "None") or (cmax == "None"):
+    if cmin is None or cmax is None:
         levs = None
     else:
         levs = np.arange(0, 12)*(cmax-cmin)/10
@@ -237,7 +239,7 @@ def contour(lon, lat, lonn, latn, mag, nv, m, ax,
 def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, 
              topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, 
              dataset, continuous, projection):
-    if (cmin == "None") or (cmax == "None"):
+    if cmin is None or cmax == None:
         levs = None
     else:
         levs = np.arange(1, 12)*(cmax-cmin)/10
@@ -250,7 +252,10 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap,
     else:
         lonn, latn = m(lonn, latn)
         tri = Tri.Triangulation(lonn, latn, triangles=nv)
-        m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
+        try:
+            m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
+        except ValueError:
+            pass
     return fig, m
 
 def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type):
@@ -283,9 +288,9 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m,
             ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
-    elif magnitude == "False":
+    elif magnitude is False:
         arrowsize = 2.
-    elif magnitude == "None":
+    elif magnitude is None:
         arrowsize = None
     else:
         arrowsize = float(magnitude)
@@ -320,9 +325,9 @@ def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv,
                  m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
-    elif magnitude == "False":
+    elif magnitude is False:
         arrowsize = 2.
-    elif magnitude == "None":
+    elif magnitude is None:
         arrowsize = None
     else:
         arrowsize = float(magnitude)
@@ -360,9 +365,9 @@ def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax,
                 norm, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
-    elif magnitude == "False":
+    elif magnitude is False:
         arrowsize = 2.
-    elif magnitude == "None":
+    elif magnitude is None:
         arrowsize = None
     else:
         arrowsize = float(magnitude)
@@ -392,13 +397,13 @@ def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm,
           nv, cmin, cmax, cmap, magnitude, topology_type):
     if magnitude == "True":
         arrowsize = None
-    elif magnitude == "False":
+    elif magnitude is False:
         arrowsize = 2.
-    elif magnitude == "None":
+    elif magnitude is None:
         arrowsize = None
     else:
         arrowsize = float(magnitude)
-    if (cmin == "None") or (cmax == "None"):
+    if cmin is None or cmax is None:
         full = 10.#.2
         flag = 50.#1.
     else:

@@ -27,17 +27,12 @@ admin.autodiscover()
 
 urlpatterns = patterns( '',
                         url(r'^grappelli/', include('grappelli.urls')),
-                        url(r'^admin/', include(admin.site.urls)),
-                        url(r'^admin', include(admin.site.urls)),
-                        url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-                        url(r'^admin/doc', include('django.contrib.admindocs.urls')),
+                        url(r'^admin/', include(admin.site.urls), name='admin'),
 
-                        url(r'^index', 'sciwms.apps.wms.views.index', name="index"),
-                        url(r'^$', 'sciwms.apps.wms.views.index', name="index"),
+                        url(r'^$', 'sciwms.apps.wms.views.index', name='index'),
 
                         url(r'^crossdomain\.xml$', 'sciwms.apps.wms.views.crossdomain'),
 
-                        url(r'^wms$', 'django.shortcuts.redirect', {'/wms/'}),
                         url(r'^wms/', include('sciwms.apps.wms.urls')),
                         url(r'^rest/', include('sciwms.apps.wmsrest.urls')),
                     )
