@@ -19,6 +19,7 @@ This file is part of SCI-WMS.
 
 # Django settings for fvcom_compute project.
 import os
+import sys
 
 WSGI_APPLICATION = "sciwms.wsgi.application"
 
@@ -175,3 +176,5 @@ REST_FRAMEWORK = {
                   'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
                   'PAGINATE_BY': 10
                   }
+
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

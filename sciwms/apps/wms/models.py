@@ -29,12 +29,19 @@ from jsonfield import JSONField
 
 import matplotlib.pyplot as plt
 
+from typedmodels import TypedModel
+from pyugrid import UGrid
+#from pysgrid import SGrid
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
+from sciwms.libs.data.custom_exceptions import NonCompliantDataset
+
+from sciwms.libs.data.utils import get_nc_variable_values
+from sciwms import logger
 
 
-class Dataset(models.Model):
+class Dataset(TypedModel):
     uri = models.CharField(max_length=1000)
-    name = models.CharField(max_length=200, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
+    name = models.CharField(max_length=200, unique=True, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
     title = models.CharField(max_length=200, help_text="Human Readable Title")
     abstract = models.CharField(max_length=2000, help_text="Short Description of Dataset")
     keep_up_to_date = models.BooleanField(help_text="Check this box to keep the dataset up-to-date if changes are made to it on disk or remote server.", default=True)
@@ -62,12 +69,7 @@ class Dataset(models.Model):
                 return None
 
     def update_cache(self, force=False):
-        # from sciwms.libs.data.caching import update_dataset_cache
-        # update_dataset_cache(self, force=force)
-        from sciwms.libs.data.caching import create_ugrid_topology
-        create_ugrid_topology(self.name, self.uri)
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
+        raise NotImplementedError("Implement in subclasses")
 
     def clear_cache(self):
         cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.safe_filename + '*'))
@@ -179,6 +181,81 @@ class Dataset(models.Model):
     @property
     def cell_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
+
+
+class UGridDataset(Dataset):
+    def update_cache(self, force=False):
+        try:
+            nc = self.netcdf4_dataset()
+            ug = UGrid.from_nc_dataset(nc=nc)
+            ug.save_as_netcdf(self.topology_file)
+
+            if not os.path.exists(self.topology_file):
+                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+                return
+
+            cached_nc = EnhancedDataset(self.topology_file, mode='a')
+
+            # add time to the cached topology
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            time_vals = time_var[:]
+            if time_vals is not None:
+                cached_nc.createDimension('time', size=time_vals.size)
+                if time_vals.ndim > 1:  # deal with one dimensional time for now
+                    pass
+                else:
+                    cached_time_var = cached_nc.createVariable(varname='time',
+                                                               datatype='f8',
+                                                               dimensions=('time',))
+                    cached_time_var[:] = time_vals[:]
+                    cached_time_var.units = time_var.units
+            cached_nc.close()
+        except:
+            raise
+        finally:
+            if nc is not None:
+                nc.close()
+
+        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
+        self.save()
+
+
+class SGridDataset(Dataset):
+    def update_cache(self, force=False):
+        return  # Remove this line after SGRID library is functional
+        try:
+            nc = self.netcdf4_dataset()
+            #sg = SGrid.from_nc_dataset(nc=nc)  # Uncomment after SGRID library is functional
+            #sg.save_as_netcdf(self.topology_file)  # Uncomment after SGRID library is functional
+
+            if not os.path.exists(self.topology_file):
+                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+                return
+
+            cached_nc = EnhancedDataset(self.topology_file, mode='a')
+
+            # add time to the cached topology
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            time_vals = time_var[:]
+            if time_vals is not None:
+                cached_nc.createDimension('time', size=time_vals.size)
+                if time_vals.ndim > 1:  # deal with one dimensional time for now
+                    pass
+                else:
+                    cached_time_var = cached_nc.createVariable(varname='time',
+                                                               datatype='f8',
+                                                               dimensions=('time',))
+                    cached_time_var[:] = time_vals[:]
+                    cached_time_var.units = time_var.units
+            cached_nc.close()
+        except:
+            raise
+        finally:
+            if nc is not None:
+                nc.close()
+
+        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
+        self.save()
 
 
 class LayerBase(models.Model):

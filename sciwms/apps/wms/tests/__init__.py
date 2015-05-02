@@ -5,7 +5,9 @@ from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
 from django.db import IntegrityError
 
-from sciwms.apps.wms.models import Dataset, Group, Server
+from sciwms.apps.wms.models import Dataset, Group, Server, UGridDataset, SGridDataset
+
+from sciwms import logger
 
 resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
 
@@ -22,14 +24,21 @@ def add_group():
     return g
 
 
-def add_dataset(filename):
+def add_dataset(name, klass, filename):
     add_group()
-    d, _ = Dataset.objects.get_or_create(uri                   = os.path.join(resource_path, filename),
-                                         name                  = "test",
-                                         title                 = "Test dataset",
-                                         abstract              = "Test data set for sci-wms tests.",
-                                         display_all_timesteps = False,
-                                         keep_up_to_date       = False,)
+
+    model_class = None
+    if klass.lower() == 'ugrid':
+        model_class = UGridDataset
+    elif klass.lower() == 'sgrid':
+        model_class = SGridDataset
+
+    d, _ = model_class.objects.get_or_create(uri                   = os.path.join(resource_path, filename),
+                                             name                  = name,
+                                             title                 = "Test dataset",
+                                             abstract              = "Test data set for sci-wms tests.",
+                                             display_all_timesteps = False,
+                                             keep_up_to_date       = False)
     d.update_cache(force=True)
     d.save()
     return d
