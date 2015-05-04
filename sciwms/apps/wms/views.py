@@ -997,7 +997,7 @@ def getMap(request, dataset):
         lat = ug_nodes[:, 1]
     else:
         grid_type = 'sgrid'
-    logger.info("gridtype: " + grid_type)
+
     # If the request is not a box, then do nothing.
     if latmax != latmin:
         # Pull cell coords out of cache.
