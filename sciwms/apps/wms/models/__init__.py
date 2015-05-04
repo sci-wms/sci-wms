@@ -7,3 +7,4 @@ from sciwms.apps.wms.models.layer import Layer, VirtualLayer
 from sciwms.apps.wms.models.datasets.base import Dataset
 from sciwms.apps.wms.models.datasets.ugrid import UGridDataset
 from sciwms.apps.wms.models.datasets.sgrid import SGridDataset
+from sciwms.apps.wms.models.datasets.rgrid import RGridDataset
