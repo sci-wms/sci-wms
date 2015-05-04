@@ -53,9 +53,3 @@ errorlog          = os.path.abspath(os.path.join(os.path.dirname(__file__), "log
 loglevel          = "warning"
 preload_app       = False
 proc_name         = "sciwms"
-
-
-def on_starting(server):
-    sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
-    import sciwms.apps.wms.startup as startup
-    startup.run()
