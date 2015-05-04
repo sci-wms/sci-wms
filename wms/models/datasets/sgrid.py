@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 
 
 class SGridDataset(Dataset):

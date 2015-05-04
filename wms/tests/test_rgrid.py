@@ -1,8 +1,8 @@
 import unittest
 
 from django.test import TestCase
-from sciwms.apps.wms.tests import add_server, add_group, add_user, add_dataset
-from sciwms.apps.wms.models import Dataset
+from wms.tests import add_server, add_group, add_user, add_dataset
+from wms.models import Dataset
 
 
 @unittest.skip("RGRID Datasets are not implemented yet")

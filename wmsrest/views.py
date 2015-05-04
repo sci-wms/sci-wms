@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer
 from rest_framework.response import Response
 from rest_framework import status

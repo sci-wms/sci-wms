@@ -2,7 +2,7 @@ from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 
-from sciwms.apps.wms.models import UGridDataset, SGridDataset
+from wms.models import UGridDataset, SGridDataset
 
 
 @receiver(post_save, sender=SGridDataset)

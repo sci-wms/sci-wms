@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
 from django.db import IntegrityError
 
-from sciwms.apps.wms.models import Dataset, Group, Server, UGridDataset, SGridDataset
+from wms.models import Dataset, Group, Server, UGridDataset, SGridDataset
 
 from sciwms import logger
 

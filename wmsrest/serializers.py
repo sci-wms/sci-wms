@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from sciwms.apps.wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset
+from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset
 
 
 class LayerSerializer(serializers.ModelSerializer):

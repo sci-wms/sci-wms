@@ -7,7 +7,7 @@ import pytz
 from pyugrid import UGrid
 from pyaxiom.netcdf import EnhancedDataset
 
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 from sciwms import logger
 
 

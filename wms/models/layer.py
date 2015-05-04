@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
-from sciwms.apps.wms.models import Style
+from wms.models import Style
 
 
 class LayerBase(models.Model):

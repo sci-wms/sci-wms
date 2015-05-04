@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from sciwms.apps.wms.models import UGridDataset, SGridDataset, VirtualLayer
-from sciwms.apps.wms.signals import ugrid_dataset_post_save, sgrid_dataset_post_save
+from wms.models import UGridDataset, SGridDataset, VirtualLayer
+from wms.signals import ugrid_dataset_post_save, sgrid_dataset_post_save
 
-from sciwms import logger
+from wms import logger
 
 
 class TestDatasetList(APITestCase):

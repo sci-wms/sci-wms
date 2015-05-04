@@ -35,7 +35,7 @@ LOCALDATASET     = False
 
 
 # Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "apps", "wms", "topology"))
+TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
@@ -167,8 +167,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'sciwms.apps.wms',
-    'sciwms.apps.wmsrest',
+    'wms',
+    'wmsrest',
     'rest_framework'
 ]
 

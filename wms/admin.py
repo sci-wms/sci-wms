@@ -21,7 +21,7 @@ Created on Sep 6, 2011
 @author: ACrosby
 '''
 from django.contrib import admin
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer, Layer
+from wms.models import Dataset, Server, Group, VirtualLayer, Layer
 
 
 @admin.register(Server)

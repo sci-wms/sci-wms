@@ -69,10 +69,11 @@ from pyugrid import UGrid
 
 from sciwms.libs.data import cgrid, ugrid
 from sciwms.libs.data.custom_exceptions import NonCompliantDataset
-import sciwms.apps.wms.wms_requests as wms_reqs
 from sciwms.libs.data.utils import (get_nc_variable, get_nc_variable_values)
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
-from sciwms.apps.wms import logger
+
+import wms.wms_requests as wms_reqs
+from wms.models import Dataset, Server, Group, VirtualLayer, Layer
+from wms import logger
 
 
 def crossdomain(request):
@@ -184,7 +185,7 @@ def wms(request, dataset):
         request = normalize_get_params(request)
         reqtype = request.GET['request']
         if reqtype.lower() == 'getmap':
-            import sciwms.apps.wms.wms_handler as wms
+            import wms.wms_handler as wms
             handler = wms.wms_handler(request)
             action_request = handler.make_action_request(request)
             if action_request is not None:

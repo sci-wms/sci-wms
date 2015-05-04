@@ -8,7 +8,7 @@ from django.conf import settings
 
 
 def forward(apps, schema_editor):
-    resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
+    resource_path = os.path.join(settings.PROJECT_ROOT, '..', 'wms', 'resources')
 
     Dataset = apps.get_model('wms', 'Dataset')
 
@@ -33,7 +33,7 @@ def forward(apps, schema_editor):
 
 
 def reverse(apps, schema_editor):
-    resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
+    resource_path = os.path.join(settings.PROJECT_ROOT, '..', 'wms', 'resources')
 
     Dataset = apps.get_model('wms', 'Dataset')
 

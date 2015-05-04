@@ -10,7 +10,7 @@ from jsonfield import JSONField
 
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
-from sciwms.apps.wms.models import VirtualLayer, Layer, Style
+from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
 
 

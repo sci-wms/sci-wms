@@ -21,16 +21,16 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns( '',
 
-                        url(r'^index', 'sciwms.apps.wms.views.index'),
-                        url(r'^$', 'sciwms.apps.wms.views.index'),
+                        url(r'^index', 'wms.views.index'),
+                        url(r'^$', 'wms.views.index'),
 
                         # Datasets
-                        url(r'^datasets/$', 'sciwms.apps.wms.views.datasets'),
-                        url(r'^datasets/(?P<dataset>.*)/update', 'sciwms.apps.wms.views.update_dataset', name="update_dataset"),
-                        url(r'^datasets/(?P<dataset>.*)/', 'sciwms.apps.wms.views.wms', name="dataset"),
+                        url(r'^datasets/$', 'wms.views.datasets'),
+                        url(r'^datasets/(?P<dataset>.*)/update', 'wms.views.update_dataset', name="update_dataset"),
+                        url(r'^datasets/(?P<dataset>.*)/', 'wms.views.wms', name="dataset"),
 
                         # Clients
-                        url(r'^demo', 'sciwms.apps.wms.views.demo', name='demo'),
+                        url(r'^demo', 'wms.views.demo', name='demo'),
 
-                        url(r'^groups/(?P<group>.*)/', 'sciwms.apps.wms.views.groups'),
+                        url(r'^groups/(?P<group>.*)/', 'wms.views.groups'),
                     )

@@ -29,12 +29,12 @@ urlpatterns = patterns( '',
                         url(r'^grappelli/', include('grappelli.urls')),
                         url(r'^admin/', include(admin.site.urls), name='admin'),
 
-                        url(r'^$', 'sciwms.apps.wms.views.index', name='index'),
+                        url(r'^$', 'wms.views.index', name='index'),
 
-                        url(r'^crossdomain\.xml$', 'sciwms.apps.wms.views.crossdomain'),
+                        url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
 
-                        url(r'^wms/', include('sciwms.apps.wms.urls')),
-                        url(r'^rest/', include('sciwms.apps.wmsrest.urls')),
+                        url(r'^wms/', include('wms.urls')),
+                        url(r'^rest/', include('wmsrest.urls')),
 
                         url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout')
                     )

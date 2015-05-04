@@ -32,7 +32,7 @@ import tempfile
 import traceback
 from datetime import datetime
 import numpy as np
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 from sciwms.libs.data import build_tree
 from collections import deque
 import shutil

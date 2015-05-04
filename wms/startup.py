@@ -1,19 +1,15 @@
 def run():
     print "Updating datasets..."
-    try:
-        from sciwms.libs.data.caching import update_datasets
-    except ImportError:
-        pass
-
-    try:
-        update_datasets()
-    except BaseException:
-        print '\n    ###################################################\n' +\
-              '    #                                                 #\n' +\
-              '    #  There was a problem initializing some of your  #\n' +\
-              '    #  datasets.  Please see the log for more details #\n' +\
-              '    #                                                 #\n' +\
-              '    ###################################################\n'
+    from django.apps import apps
+    Dataset = apps.get_model('wms.Dataset')
+    print "Updating datasets..."
+    for d in Dataset.objects.all():
+        print "Updating {}".format(d.name),
+        try:
+            d.update_cache()
+            print "... done"
+        except NotImplementedError:
+            print "... not supported!"
 
     print '\n    ##################################################\n' +\
           '    #                                                #\n' +\

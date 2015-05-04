@@ -7,7 +7,7 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
+    resource_path = os.path.join(settings.PROJECT_ROOT, '..', 'wms', 'resources')
 
     Dataset = apps.get_model("wms", "Dataset")
     d1 = Dataset(uri                   = os.path.join(resource_path, "nasa_scb20111015.nc"),

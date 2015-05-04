@@ -19,7 +19,7 @@ This file is part of SCI-WMS.
 
 
 import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
-from sciwms.apps.wms.models import Dataset, Server, Group
+from wms.models import Dataset, Server, Group
 from django.contrib.sites.models import Site
 from django.http import HttpResponse, HttpResponseRedirect
 
