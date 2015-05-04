@@ -41,6 +41,6 @@ class TestUgrid(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_create_layers(self):
-        # Layers created in creation signal
         d = Dataset.objects.get(name='ugrid_testing')
+        d.process_layers()
         assert d.layer_set.count() == 30
