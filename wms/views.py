@@ -334,8 +334,14 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
 
     all_layers = list(chain(dataset.layer_set.prefetch_related().all(), dataset.virtuallayer_set.prefetch_related().all()))
 
+    import re
     for dataset_layer in all_layers:
-        nc_var = nc.variables[dataset_layer.var_name]
+        if isinstance(dataset_layer, Layer):
+            nc_var = nc.variables[dataset_layer.var_name]
+        if isinstance(dataset_layer, VirtualLayer):
+            logger.info(re.findall(r"[^*,]+", dataset_layer.var_name)[0])
+            nc_var = nc.variables[re.findall(r"[^*,]+", dataset_layer.var_name)[0]]
+
         try:
             if topology_ug is not None:  # identify as a UGRID compliant file
                 location = 'node'
