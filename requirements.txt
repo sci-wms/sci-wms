@@ -13,3 +13,4 @@ pyugrid
 basemap
 pyaxiom
 django-grappelli
+django-typed-models
