@@ -1064,9 +1064,7 @@ def getMap(request, dataset):
         time_units = topology.variables['time'].units
         datestart = round(netCDF4.date2num(datestart, units=time_units))  # datetime obj --> netcdf datenum
         time = bisect.bisect_right(times, datestart) - 1  # index where the requested time slice "would belong"
-        if settings.LOCALDATASET:
-            time = [1]
-        elif time == -1:
+        if time == -1:
             time = [0]
         else:
             time = [time]

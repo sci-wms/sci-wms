@@ -25,15 +25,6 @@ WSGI_APPLICATION = "sciwms.wsgi.application"
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# LOCALDATASET is for testing purposes
-# If LOCALDATASET is populated, the service will use the cached
-# TOPOLOGY for schema/grid information and LOCALDATASETPATH for actual data extraction
-LOCALDATASET     = False
-#LOCALDATASETPATH = {
-#    '30yr_gom3' : "/home/user/Data/FVCOM/gom3_197802.nc",
-#}
-
-
 # Where to store the Topology data?
 TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
@@ -42,15 +33,7 @@ if not os.path.exists(TOPOLOGY_PATH):
 DEBUG = False
 TEMPLATE_DEBUG = False
 
-ADMINS = (
-    #('Your Name', 'youremail@domain.com'),
-)
-
-#EMAIL_HOST = ''
-#EMAIL_HOST_USER = ''
-#EMAIL_PORT = ''
-#EMAIL_HOST_PASSWORD = ''
-#EMAIL_SUBJECT_PREFIX = '[SCIWMS MESSAGE]'
+ADMINS = ()
 
 MANAGERS = ADMINS
 
