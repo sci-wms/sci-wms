@@ -9,8 +9,39 @@
 {% endblock %}
 
 
+{% block menu_items %}
+    {% if user.is_authenticated %}
+    <li><a data-toggle="collapse" href="#addDataset" aria-expanded="false" aria-controls="addDataset"><span style="color: green" class="glyphicon glyphicon-plus"></span> add dataset</a></li>
+    {% endif %}
+{% endblock %}
+
+
 {% block content %}
-<body>
+
+    {% if user.is_authenticated %}
+      <div id="dataset-add-messages">
+      </div>
+      <div class="collapse" id="addDataset">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form id="datasetForm" class="form-inline" action="{% url 'add_dataset' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="Name">
+              </div>
+              <div class="form-group">
+                <label for="uri">Dataset URI (file glob or DAP)</label>
+                <input type="text" class="form-control" name="uri" id="uri" placeholder="URI">
+              </div>
+              <label for="datasetSubmit">&nbsp;</label>
+              <button type="button" name="datasetSubmit" id="datasetSubmit" class="btn btn-default">add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
     {% if datasets %}
 
         <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
@@ -26,7 +57,10 @@
                 {% for dataset in datasets %}
                 <tr>
                     <td>
-                        <h4>{{ dataset.name | truncatechars:28 }}</h4>
+                        <div>
+                            <strong>{{ dataset.name | truncatechars:28 }}</strong>
+                            <span class="label label-default">{{ dataset.humanize }}</span>
+                        </div>
                         <span>{{ dataset.title }}</span>
                         <hr />
                         <span>{{ dataset.abstract }}</span>
@@ -89,5 +123,23 @@
 
     {% endif %}
 
-</body>
+    <script>
+    $("#datasetSubmit").click(function() {
+
+        var posting = $.ajax({
+                                type: "POST",
+                                url: $("#datasetForm").attr("action"),
+                                data: $("#datasetForm").serialize(),
+                                success: function(data) {
+                                    // We get the Dataset back... we could prepend to the table?
+                                    location.reload();
+                                },
+                                dataType: "text"
+                            }).fail(function(data) {
+                                console.log(data);
+                                $("#dataset-add-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                            });
+    });
+    </script>
+
 {% endblock %}

@@ -63,6 +63,10 @@ from django.template.loader import get_template
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth import authenticate, login, logout
+from django.core.urlresolvers import reverse
+from django.template.response import TemplateResponse
+from django.core import serializers
+from django.db.utils import IntegrityError
 
 from pyugrid import UGrid
 
@@ -124,7 +128,6 @@ def groups(request, group):
 
 
 def index(request):
-    import django.shortcuts as dshorts
     datasets = Dataset.objects.all()
     for dataset in datasets:
         dataset.uri = dataset.path()
@@ -132,7 +135,7 @@ def index(request):
             # Used in template to linkify to URI
             dataset.online = True
     context = { "datasets" : datasets }
-    return dshorts.render_to_response('wms/index.html', context, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'wms/index.html', context)
 
 
 def authenticate_view(request):
@@ -1252,3 +1255,32 @@ def demo(request):
     import django.shortcuts as dshorts
     context = { 'datasets'  : Dataset.objects.all()}
     return dshorts.render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
+
+
+from django.http import HttpResponse
+from django.views.generic import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
+
+
+class DatasetListView(View):
+
+    @method_decorator(csrf_protect)
+    def post(self, request):
+        try:
+            uri = request.POST['uri']
+            name = request.POST['name']
+            assert uri and name
+        except (AssertionError, KeyError):
+            return HttpResponse('URI and Name are required. Please try again.', status=500, reason="Could not process inputs", content_type="text/plain")
+
+        klass = Dataset.identify(uri)
+        if klass is not None:
+            try:
+                ds = klass.objects.create(uri=uri, name=name)
+            except IntegrityError:
+                return HttpResponse('Name is already taken, please choose another', status=500, reason="Could not process inputs", content_type="application/json")
+
+            return HttpResponse(serializers.serialize('json', [ds]), status=201, content_type="application/json")
+        else:
+            return HttpResponse('Could not process the URI with any of the available Dataset types. Please check the URI and try again', status=500, reason="Could not process inputs", content_type="application/json")

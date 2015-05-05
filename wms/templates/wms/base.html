@@ -45,6 +45,8 @@
               {% else %}
               <li><a href="{% url 'admin' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> admin</a></li>
               {% endif %}
+              {% block menu_items %}
+              {% endblock %}
             </ul>
           </div>
         </div>
@@ -52,9 +54,11 @@
         <hr />
       </div>
     </header>
+  </head>
+  <body>
     <div class="container">
       {% block content %}
       {% endblock %}
     </div>
-  </head>
+  </body>
 </html>

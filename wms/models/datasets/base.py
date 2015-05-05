@@ -168,3 +168,6 @@ class Dataset(TypedModel):
     @property
     def cell_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
+
+    def humanize(self):
+        return "Generic Dataset"

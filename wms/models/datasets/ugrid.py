@@ -15,6 +15,7 @@ class UGridDataset(Dataset):
 
     @staticmethod
     def is_valid(uri):
+        ds = None
         try:
             ds = EnhancedDataset(uri)
             return 'ugrid' in ds.Conventions.lower()
@@ -58,3 +59,6 @@ class UGridDataset(Dataset):
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
+
+    def humanize(self):
+        return "UGRID"

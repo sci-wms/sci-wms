@@ -16,7 +16,6 @@
 {% endblock %}
 
 {% block content %}
-<body>
     <div class="row">
         <div class="col-md-4">
           <div class="panel-group" id="menu">
@@ -24,7 +23,7 @@
             <div class="panel panel-default">
               <div class="panel-heading" role="tab" id="heading-{{dataset.name}}">
                 <h4 class="panel-title">
-                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{dataset.name}}" aria-expanded="false" aria-controls="collapse-{{dataset.name}}">{{dataset.name}}</a>
+                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{dataset.name}}" aria-expanded="false" aria-controls="collapse-{{dataset.name}}">{{dataset.name}}</a> <span class="label label-default">{{ dataset.humanize }}</span>
                 </h4>
               </div>
               <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
@@ -98,5 +97,4 @@
     });
 
     </script>
-  </body>
 {% endblock %}
