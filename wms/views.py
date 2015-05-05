@@ -1074,9 +1074,7 @@ def getMap(request, dataset):
             dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
             dateend = round(netCDF4.date2num(dateend, units=time_units))  # datetime obj --> netcdf datenum
             time.append(bisect.bisect_right(times, dateend) - 1)
-            if settings.LOCALDATASET:
-                time[1] = 1
-            elif time[1] == -1:
+            if time[1] == -1:
                 time[1] = 0
             else:
                 time[1] = time[1]
