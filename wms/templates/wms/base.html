@@ -38,7 +38,7 @@
           <div class="col-md-10">
             <ul class="nav nav-pills">
               <li><a href="{% url 'index' %}"><span class="glyphicon glyphicon-align-justify"></span> datasets</a></li>
-              <li><a href="http://sci-wms.github.io/sci-wms/docs/"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
+              <li><a href="http://sci-wms.github.io/sci-wms/docs/" target="_blank"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
               <li><a href="{% url 'demo' %}"><span style="color: green" class="glyphicon glyphicon-leaf"></span> demo (Leaflet WMS client)</a></li>
               {% if user.is_authenticated %}
               <li><a href="{% url 'logout' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
