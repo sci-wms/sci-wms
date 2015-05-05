@@ -27,27 +27,27 @@ class TestSgrid(TestCase):
         assert klass == SGridDataset
 
     def test_facets(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/sgrid_testing?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
 
     def test_pcolor(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/sgrid_testing?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=pcolor_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
 
     def test_contours(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contouts_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/sgrid_testing?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=contouts_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
 
     def test_filledcontours(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/sgrid_testing?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=filledcontours_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
 
     def test_vectors(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
+        response = self.client.get('/wms/datasets/sgrid_testing?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=vectors_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
         self.assertEqual(response.status_code, 200)
 
     def test_getCaps(self):
-        response = self.client.get('/wms/datasets/sgrid_testing/?REQUEST=GetCapabilities')
+        response = self.client.get('/wms/datasets/sgrid_testing?REQUEST=GetCapabilities')
         self.assertEqual(response.status_code, 200)
 
     def test_create_layers(self):
