@@ -161,3 +161,6 @@ REST_FRAMEWORK = {
                   }
 
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+
+import matplotlib
+matplotlib.use("Agg")

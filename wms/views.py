@@ -47,7 +47,6 @@ import netCDF4
 
 # Import from matplotlib and set backend
 import matplotlib
-matplotlib.use("Agg")
 from mpl_toolkits.basemap import Basemap
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
