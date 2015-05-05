@@ -13,6 +13,17 @@ from sciwms import logger
 
 class UGridDataset(Dataset):
 
+    @staticmethod
+    def is_valid(uri):
+        try:
+            ds = EnhancedDataset(uri)
+            return 'ugrid' in ds.Conventions.lower()
+        except (AttributeError, RuntimeError):
+            return False
+        finally:
+            if ds is not None:
+                ds.close()
+
     def update_cache(self, force=False):
         try:
             nc = self.netcdf4_dataset()

@@ -27,6 +27,18 @@ class Dataset(TypedModel):
     def __unicode__(self):
         return self.name
 
+    @classmethod
+    def identify(cls, uri):
+        def all_subclasses(klass):
+            return klass.__subclasses__() + [g for s in klass.__subclasses__()
+                                             for g in all_subclasses(s)]
+        for x in all_subclasses(cls):
+            try:
+                if x.is_valid(uri) is True:
+                    return x
+            except AttributeError:
+                pass
+
     def path(self):
         if urlparse(self.uri).scheme == "" and not self.uri.startswith("/"):
             # We have a relative path, make it absolute to the sciwms directory.

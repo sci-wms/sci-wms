@@ -2,7 +2,7 @@ import unittest
 
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset
-from wms.models import Dataset
+from wms.models import Dataset, SGridDataset
 
 
 @unittest.skip("SGRID Datasets are not implemented yet")
@@ -20,6 +20,11 @@ class TestSgrid(TestCase):
         d = Dataset.objects.get(name="sgrid_testing")
         d.clear_cache()
         d.delete()
+
+    def test_sgrid_identify(self):
+        d = Dataset.objects.get(name='sgrid_testing')
+        klass = Dataset.identify(d.uri)
+        assert klass == SGridDataset
 
     def test_facets(self):
         response = self.client.get('/wms/datasets/sgrid_testing/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')

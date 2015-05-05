@@ -1,6 +1,6 @@
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset
-from wms.models import Dataset
+from wms.models import Dataset, UGridDataset
 
 from sciwms import logger
 
@@ -19,6 +19,11 @@ class TestUgrid(TestCase):
         d = Dataset.objects.get(name="ugrid_testing")
         d.clear_cache()
         d.delete()
+
+    def test_ugrid_identify(self):
+        d = Dataset.objects.get(name='ugrid_testing')
+        klass = Dataset.identify(d.uri)
+        assert klass == UGridDataset
 
     def test_facets(self):
         response = self.client.get('/wms/datasets/ugrid_testing/?LAYERS=surface_temp&TRANSPARENT=TRUE&STYLES=facets_jet&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326')
