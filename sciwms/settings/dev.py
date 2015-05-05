@@ -80,7 +80,8 @@ LOGGING = {
 }
 
 INSTALLED_APPS += [
-    'django_extensions'
+    'django_extensions',
+    'debug_toolbar'
 ]
 
 LOCAL_APPS = ()

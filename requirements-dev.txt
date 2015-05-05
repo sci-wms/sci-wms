@@ -1,2 +1,4 @@
 django-extensions
 Werkzeug
+watchdog  # For better Werkzeug reloads
+django-debug-toolbar
