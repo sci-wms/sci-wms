@@ -9,7 +9,7 @@ from wms.models import Dataset, Group, Server, UGridDataset, SGridDataset
 
 from sciwms import logger
 
-resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
+resource_path = os.path.abspath(os.path.join(settings.PROJECT_ROOT, '..', 'wms', 'resources'))
 
 
 def add_server():
