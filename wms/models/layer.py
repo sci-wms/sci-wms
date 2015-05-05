@@ -34,8 +34,11 @@ class VirtualLayer(LayerBase):
     @classmethod
     def make_vector_layer(cls, us, vs, std_name, style, dataset_id):
         for u in us:
+            u_match = '_'.join([ x for x in u.standard_name.split('_') if x not in ['x', 'eastward']])
             for v in vs:
-                if u.standard_name.split('_')[1:] == v.standard_name.split('_')[1:]:
+                v_match = '_'.join([ x for x in v.standard_name.split('_') if x not in ['y', 'northward']])
+
+                if u_match == v_match:
                     try:
                         vl = VirtualLayer.objects.create(var_name='{},{}'.format(u._name, v._name),
                                                          std_name=std_name,
