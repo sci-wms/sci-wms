@@ -1,4 +1,5 @@
 {% extends "wms/base.html" %}
+{% load static from staticfiles %}
 
 {% block header %}
 <style>
@@ -6,6 +7,7 @@
     table th, table td { overflow: hidden; }
     hr { margin-top: 10px; margin-bottom: 10px; }
 </style>
+<script src="{% static 'wms/cookie.js' %}"></script>
 {% endblock %}
 
 
@@ -18,9 +20,10 @@
 
 {% block content %}
 
+    <div id="dataset-messages">
+    </div>
+
     {% if user.is_authenticated %}
-      <div id="dataset-add-messages">
-      </div>
       <div class="collapse" id="addDataset">
         <div class="panel panel-default">
           <div class="panel-body">
@@ -80,7 +83,6 @@
                             <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
                         {% endif %}
 
-                        <!-- Update -->
                         <hr />
                         {% if dataset.cache_last_updated %}
                             <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
@@ -88,21 +90,30 @@
                             <span class="row">Updated: never</span>
                         {% endif %}
                         <span class="row">
-                            <span>Keep up to date:</span> 
+                            <span>Keep up to date:</span>
                             {% if dataset.keep_up_to_date %}
-                                <span style="color: green" class="glyphicon glyphicon-ok"></span> 
+                                <span style="color: green" class="glyphicon glyphicon-ok"></span>
                             {% else %}
-                                <span style="color: red" class="glyphicon glyphicon-remove"></span> 
+                                <span style="color: red" class="glyphicon glyphicon-remove"></span>
                             {% endif %}
                         </span>
                     </td>
 
                     <td>
+                        <!-- Update -->
                         <a href="{% url 'update_dataset' dataset.name %}">
                             <button type="button" class="btn btn-default btn-xs">
                                 <span class="glyphicon glyphicon-refresh"></span> Update
                             </button>
                         </a>
+                        {% if user.is_authenticated %}
+                        <!-- Delete -->
+                        <a href="{% url 'dataset-detail' dataset.pk %}">
+                            <button type="button" class="deleteButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-trash"></span> Delete
+                            </button>
+                        </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -124,7 +135,11 @@
     {% endif %}
 
     <script>
+    {% if user.is_authenticated %}
     $("#datasetSubmit").click(function() {
+
+        but = $(this)
+        but.attr("disabled", "disabled");
 
         var posting = $.ajax({
                                 type: "POST",
@@ -132,14 +147,36 @@
                                 data: $("#datasetForm").serialize(),
                                 success: function(data) {
                                     // We get the Dataset back... we could prepend to the table?
+                                    but.attr("disabled", false);
                                     location.reload();
                                 },
                                 dataType: "text"
                             }).fail(function(data) {
-                                console.log(data);
-                                $("#dataset-add-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                                $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                                but.attr("disabled", false);
                             });
     });
+
+    $(".deleteButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        var posting = $.ajax({
+                                type: "DELETE",
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+                                },
+                                url: a_tag.attr("href"),
+                                success: function(data) {
+                                    a_tag.parent().parent().remove();
+                                    $("#dataset-messages").hide().html('<div class="alert alert-success">Dataset deleted</div>').fadeIn();
+                                }
+                            }).fail(function(data) {
+                                $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                            });
+    });
+    {% endif %}
     </script>
 
 {% endblock %}
