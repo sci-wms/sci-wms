@@ -10,7 +10,7 @@ jsonfield
 pytz
 djangorestframework
 pyugrid
-basemap
 pyaxiom
 django-grappelli
 django-typed-models
+pyproj

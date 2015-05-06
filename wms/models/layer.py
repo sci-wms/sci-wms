@@ -22,6 +22,10 @@ class LayerBase(models.Model):
         abstract = True
         ordering = ('var_name',)
 
+    @property
+    def access_name(self):
+        return self.var_name
+
     def __unicode__(self):
         z = self.var_name
         z += ' ({})'.format(self.std_name) if self.std_name else ''
@@ -72,9 +76,18 @@ class VirtualLayer(LayerBase):
                         raise
 
     @property
+    def access_name(self):
+        return self.single_layer.var_name
+
+    @property
     def single_layer(self):
         single_var = re.findall(r"[^*,]+", self.var_name)[0]
         return self.dataset.layer_set.filter(var_name=single_var).first()
+
+    @property
+    def layers(self):
+        all_vars = re.findall(r"[^*,]+", self.var_name)
+        return self.dataset.layer_set.filter(var_name__in=all_vars)
 
     def wgs84_bounds(self):
         return self.dataset.wgs84_bounds(self.single_layer)

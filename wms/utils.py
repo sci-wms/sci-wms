@@ -8,7 +8,7 @@ def get_layer_from_request(dataset, request):
     layer_objects = dataset.layer_set.filter(var_name=requested_layers)
     virtuallayer_objects = dataset.virtuallayer_set.filter(var_name=requested_layers)
 
-    return list(set(layer_objects) + set(virtuallayer_objects))
+    return (list(layer_objects) + list(virtuallayer_objects))[0]
 
 
 class DotDict(object):
