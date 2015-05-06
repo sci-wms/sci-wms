@@ -76,6 +76,7 @@ from sciwms.libs.data.utils import (get_nc_variable, get_nc_variable_values)
 
 import wms.wms_requests as wms_reqs
 from wms.models import Dataset, Server, Group, VirtualLayer, Layer
+from wms.utils import get_layer_from_request
 from wms import logger
 
 
@@ -180,318 +181,6 @@ def normalize_get_params(request):
         gettemp[key.lower()] = request.GET[key]
     request.GET = gettemp
     return request
-
-
-def wms(request, dataset):
-    try:
-        request = normalize_get_params(request)
-        reqtype = request.GET['request']
-        if reqtype.lower() == 'getmap':
-            import wms.wms_handler as wms
-            handler = wms.wms_handler(request)
-            action_request = handler.make_action_request(request)
-            if action_request is not None:
-                response = getMap(action_request, dataset)
-            else:
-                response = HttpResponse()
-        elif reqtype.lower() == 'getfeatureinfo':
-            response = getFeatureInfo(request, dataset)
-        elif reqtype.lower() == 'getlegendgraphic':
-            response = getLegendGraphic(request, dataset)
-        elif reqtype.lower() == 'getcapabilities':
-            response = getCapabilities(request, dataset)
-        else:
-            raise KeyError('Requests of type "{}" are not supported.'.format(reqtype))
-        return response
-    except Exception as e:
-        logger.exception("Status 500 Error")
-        if settings.DEBUG is True:
-            raise
-        return HttpResponse("<pre>Error:{!s}</pre>".format(e), status=500)
-
-
-def getCapabilities(req, dataset):  # TODO move get capabilities to template system like sciwps
-    """
-    get capabilities document based on this getcaps:
-
-
-    http://coastmap.com/ecop/wms.aspx?service=WMS&version=1.1.1&request=getcapabilities
-
-    """
-
-    dataset = Dataset.objects.get(name=dataset)
-
-    # Create the object to be encoded to xml later
-    root = ET.Element('WMT_MS_Capabilities')
-    root.attrib["version"] = "1.1.1"
-    href = "http://" + Site.objects.values()[0]['domain'] + "/wms/" + dataset.name + "/?"
-
-    # Plug into your generic implentation of sciwms template
-    # will have to pull these fields out of the database directly
-    # to ensure uptodate
-    service = ET.SubElement(root, 'Service')
-
-    servermetadata = Server.objects.values()[0]
-    ET.SubElement(service, "Name").text = "OGC:WMS"
-    ET.SubElement(service, "Title").text = servermetadata["title"]
-    ET.SubElement(service, "Abstract").text = servermetadata["abstract"]
-    keywordlist = ET.SubElement(service, "KeywordList")
-    keywords       = servermetadata["keywords"].split(",")
-    for keyword in keywords:
-        ET.SubElement(keywordlist, "Keyword").text = keyword
-    onlineresource = ET.SubElement(service, "OnlineResource")
-    onlineresource.attrib["xlink:type"] = "simple"
-    onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Contact Information
-    contactinformation = ET.SubElement(service, "ContactInformation")
-    primarycontact = ET.SubElement(contactinformation, "ContactPersonPrimary")
-    ET.SubElement(primarycontact, "ContactPerson").text = servermetadata["contact_person"]
-    ET.SubElement(primarycontact, "ContactOrganization").text = servermetadata["contact_organization"]
-    ET.SubElement(contactinformation, "ContactPosition").text = servermetadata["contact_position"]
-    contactaddress = ET.SubElement(contactinformation, "ContactAddress")
-    ET.SubElement(contactaddress, "AddressType").text = "postal"
-    ET.SubElement(contactaddress, "Address").text = servermetadata["contact_street_address"]
-    ET.SubElement(contactaddress, "City").text = servermetadata["contact_city_address"]
-    ET.SubElement(contactaddress, "StateOrProvince").text = servermetadata["contact_state_address"]
-    ET.SubElement(contactaddress, "PostCode").text = servermetadata['contact_code_address']
-    ET.SubElement(contactaddress, "Country").text = servermetadata['contact_country_address']
-    ET.SubElement(contactinformation, "ContactVoiceTelephone").text = servermetadata['contact_telephone']
-    ET.SubElement(contactinformation, "ContactElectronicMailAddress").text = servermetadata['contact_email']
-
-    # Capability elements (hardcoded)
-    capability = ET.SubElement(root, "Capability")
-    request = ET.SubElement(capability, "Request")
-    # GetCaps
-    getcaps = ET.SubElement(request, "GetCapabilities")
-    ET.SubElement(getcaps, "Format").text = "application/vnd.ogc.wms_xml"
-    ET.SubElement(getcaps, "Format").text = "text/xml"
-    getcaps_dcptype = ET.SubElement(getcaps, "DCPType")
-    getcaps_http = ET.SubElement(getcaps_dcptype, "HTTP")
-    getcaps_get = ET.SubElement(getcaps_http, "Get")
-    getcaps_onlineresource = ET.SubElement(getcaps_get, "OnlineResource")
-    getcaps_onlineresource.attrib["xlink:type"] = "simple"
-    getcaps_onlineresource.attrib["xlink:href"] = href
-    getcaps_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    # GetMap
-    getmap = ET.SubElement(request, "GetMap")
-    ET.SubElement(getmap, "Format").text = "image/png"
-    #ET.SubElement(getmap, "Format").text = "text/csv"
-    #ET.SubElement(getmap, "Format").text = "application/netcdf"
-    #ET.SubElement(getmap, "Format").text = "application/matlab-mat"
-    #ET.SubElement(getmap, "Format").text = "application/x-zip-esrishp"
-    getmap_dcptype = ET.SubElement(getmap, "DCPType")
-    getmap_http = ET.SubElement(getmap_dcptype, "HTTP")
-    getmap_get = ET.SubElement(getmap_http, "Get")
-    getmap_onlineresource = ET.SubElement(getmap_get, "OnlineResource")
-    getmap_onlineresource.attrib["xlink:type"] = "simple"
-    getmap_onlineresource.attrib["xlink:href"] = href
-    getmap_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    # GetFeatureInfo
-    gfi = ET.SubElement(request, "GetFeatureInfo")
-    ET.SubElement(gfi, "Format").text = "image/png"
-    ET.SubElement(gfi, "Format").text = "text/csv"
-    ET.SubElement(gfi, "Format").text = "text/javascript"
-    #ET.SubElement(gfi, "Format").text = "text/csv"
-    #ET.SubElement(gfi, "Format").text = "application/netcdf"
-    #ET.SubElement(gfi, "Format").text = "application/matlab-mat"
-    #ET.SubElement(gfi, "Format").text = "application/x-zip-esrishp"
-    gfi_dcptype = ET.SubElement(gfi, "DCPType")
-    gfi_http = ET.SubElement(gfi_dcptype, "HTTP")
-    gfi_get = ET.SubElement(gfi_http, "Get")
-    gfi_onlineresource = ET.SubElement(gfi_get, "OnlineResource")
-    gfi_onlineresource.attrib["xlink:type"] = "simple"
-    gfi_onlineresource.attrib["xlink:href"] = href
-    gfi_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    # GetLegendGraphic
-    getlegend = ET.SubElement(request, "GetLegendGraphic")
-    ET.SubElement(getlegend, "Format").text = "image/png"
-    getlegend_dcptype = ET.SubElement(getlegend, "DCPType")
-    getlegend_http = ET.SubElement(getlegend_dcptype, "HTTP")
-    getlegend_get = ET.SubElement(getlegend_http, "Get")
-    getlegend_onlineresource = ET.SubElement(getlegend_get, "OnlineResource")
-    getlegend_onlineresource.attrib["xlink:type"] = "simple"
-    getlegend_onlineresource.attrib["xlink:href"] = href
-    getlegend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Exception
-    exception = ET.SubElement(capability, "Exception")
-    ET.SubElement(exception, "Format").text = "text/html"
-
-    # Pull layer description directly from database
-    onlineresource.attrib["href"] = href
-    # Layers
-    layer = ET.SubElement(capability, "Layer")
-    ET.SubElement(layer, "Title").text = dataset.title
-    ET.SubElement(layer, "Abstract").text = dataset.abstract
-    ET.SubElement(layer, "SRS").text = "EPSG:3857"
-    ET.SubElement(layer, "SRS").text = "MERCATOR"
-
-    nc = dataset.netcdf4_dataset()
-
-    topology = netCDF4.Dataset(dataset.topology_file)
-    ug = UGrid()
-    try:
-        topology_ug = ug.from_nc_dataset(nc=topology)
-    except:
-        topology_ug = None
-
-    all_layers = list(chain(dataset.layer_set.prefetch_related().all(), dataset.virtuallayer_set.prefetch_related().all()))
-
-    import re
-    for dataset_layer in all_layers:
-        if isinstance(dataset_layer, Layer):
-            nc_var = nc.variables[dataset_layer.var_name]
-        if isinstance(dataset_layer, VirtualLayer):
-            logger.info(re.findall(r"[^*,]+", dataset_layer.var_name)[0])
-            nc_var = nc.variables[re.findall(r"[^*,]+", dataset_layer.var_name)[0]]
-
-        try:
-            if topology_ug is not None:  # identify as a UGRID compliant file
-                location = 'node'
-                grid_type = 'ugrid'
-            else:
-                location = 'grid'
-                grid_type = 'sgrid'
-        except KeyError:
-            raise NonCompliantDataset(dataset.name, dataset.uri)  # dataset is neither UGRID nor SGRID compliant
-        if location == "face":
-            location = "cell"
-
-        layer1 = ET.SubElement(layer, "Layer")
-        layer1.attrib["queryable"] = "1"
-        layer1.attrib["opaque"] = "0"
-        ET.SubElement(layer1, "Name").text = dataset_layer.var_name
-        ET.SubElement(layer1, "Title").text = dataset_layer.std_name
-        ET.SubElement(layer1, "Abstract").text = dataset_layer.description
-        ET.SubElement(layer1, "SRS").text = "EPSG:3857"
-        llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
-        ug_nodes = topology_ug.nodes
-        templat = ug_nodes[:, 1]
-        templon = ug_nodes[:, 0]
-        # templon = get_nc_variable_values(topology, 'Mesh_node_lon')
-        # templat = get_nc_variable_values(topology, 'Mesh_node_lat')
-        llbbox.attrib["minx"] = str(numpy.nanmin(templon))
-        llbbox.attrib["miny"] = str(numpy.nanmin(templat))
-        llbbox.attrib["maxx"] = str(numpy.nanmax(templon))
-        llbbox.attrib["maxy"] = str(numpy.nanmax(templat))
-        llbbox = ET.SubElement(layer1, "BoundingBox")
-        llbbox.attrib["SRS"] = "EPSG:4326"
-        time_dimension = ET.SubElement(layer1, "Dimension")
-        time_dimension.attrib["name"] = "time"
-        time_dimension.attrib["units"] = "ISO8601"
-        elev_dimension = ET.SubElement(layer1, "Dimension")
-        elev_dimension.attrib["name"] = "elevation"
-        elev_dimension.attrib["units"] = "EPSG:5030"
-        time_extent = ET.SubElement(layer1, "Extent")
-        time_extent.attrib["name"] = "time"
-        elev_extent = ET.SubElement(layer1, "Extent")
-        elev_extent.attrib["name"] = "elevation"
-        elev_extent.attrib["default"] = "0"
-        try:
-            try:
-                units = topology.variables["time"].units
-                if len(topology.variables["time"]) == 1:
-                    time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
-                else:
-                    if dataset.display_all_timesteps:
-                        temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
-                        time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
-                    else:
-                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
-            except:
-                if len(topology.variables["time"]) == 1:
-                    time_extent.text = str(topology.variables["time"][0])
-                else:
-                    time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
-        except:
-            pass
-        ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
-        if grid_type == 'ugrid':
-            if nc_var.ndim > 2:
-                try:
-                    ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
-                    elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
-                except:
-                    ET.SubElement(layer1, "DepthLayers").text = ""
-                try:
-                    if nc.variables["siglay"].positive.lower() == "up":
-                        ET.SubElement(layer1, "DepthDirection").text = "Down"
-                    elif nc.variables["siglay"].positive.lower() == "down":
-                        ET.SubElement(layer1, "DepthDirection").text = "Up"
-                    else:
-                        ET.SubElement(layer1, "DepthDirection").text = ""
-                except:
-                    ET.SubElement(layer1, "DepthDirection").text = ""
-            else:
-                ET.SubElement(layer1, "DepthLayers").text = "0"
-                ET.SubElement(layer1, "DepthDirection").text = "Down"
-                elev_extent.text = "0"
-        elif grid_type == 'sgrid':
-            if nc_var.ndim > 3:
-                try:
-                    ET.SubElement(layer1, "DepthLayers").text = str(range(nc_var.shape[1])).replace("[", "").replace("]", "").replace(" ", "")
-                    elev_extent.text = str(range(nc_var.shape[1])).replace("[", "").replace("]", "").replace(" ", "")
-                except:
-                    ET.SubElement(layer1, "DepthLayers").text = ""
-                try:
-                    #if nc.variables["depth"].positive.lower() == "up":
-                    #    ET.SubElement(layer1, "DepthDirection").text = "Down"
-                    #elif nc.variables["depth"].positive.lower() == "down":
-                    #    ET.SubElement(layer1, "DepthDirection").text = "Up"
-                    #else:
-                    #    ET.SubElement(layer1, "DepthDirection").text = ""
-                    ET.SubElement(layer1, "DepthDirection").text = ""
-                except:
-                    ET.SubElement(layer1, "DepthDirection").text = ""
-            else:
-                ET.SubElement(layer1, "DepthLayers").text = "0"
-                ET.SubElement(layer1, "DepthDirection").text = "Down"
-                elev_extent.text = "0"
-        else:
-            ET.SubElement(layer1, "DepthLayers").text = "0"
-            ET.SubElement(layer1, "DepthDirection").text = "Down"
-            elev_extent.text = "0"
-        ##
-
-        for style_model_object in dataset_layer.styles.all():
-            style = ET.SubElement(layer1, "Style")
-            ET.SubElement(style, "Name").text = style_model_object.code
-            ET.SubElement(style, "Title").text = style_model_object.code
-            ET.SubElement(style, "Abstract").text = style_model_object.description
-            legendurl = ET.SubElement(style, "LegendURL")
-            legendurl.attrib["width"] = "50"
-            legendurl.attrib["height"] = "80"
-            ET.SubElement(legendurl, "Format").text = "image/png"
-
-    nc.close()
-    tree = ET.ElementTree(root)
-    try:
-        if req.GET["FORMAT"].lower() == "text/javascript":
-            import json
-            output_dict = {}
-            output_dict["capabilities"] = r'<?xml version="1.0" encoding="utf-8"?>' + ET.tostring(root)
-            callback = "parseResponse"
-            try:
-                callback = request.GET["CALLBACK"]
-            except:
-                pass
-            try:
-                callback = request.GET["callback"]
-            except:
-                pass
-            response = HttpResponse(content_type="text/javascript")
-            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',', ': '), allow_nan=True) + ")"
-            response.write(output_str)
-        else:
-            # Return the response
-            response = HttpResponse(content_type="text/xml")
-            response.write(r'<?xml version="1.0" encoding="utf-8"?>')
-            tree.write(response)
-    except:
-        # Return the response
-        response = HttpResponse(content_type="text/xml")
-        response.write(r'<?xml version="1.0" encoding="utf-8"?>')
-        tree.write(response)
-    return response
 
 
 def getLegendGraphic(request, dataset):
@@ -1282,3 +971,29 @@ class DatasetListView(View):
             return HttpResponse(serializers.serialize('json', [ds]), status=201, content_type="application/json")
         else:
             return HttpResponse('Could not process the URI with any of the available Dataset types. Please check the URI and try again', status=500, reason="Could not process inputs", content_type="application/json")
+
+
+class WmsView(View):
+
+    def get(self, request, dataset):
+        dataset = Dataset.objects.filter(name=dataset).first()
+        request = normalize_get_params(request)
+        reqtype = request.GET['request']
+
+        # This calls the passed in 'request' method on a Dataset and returns the response
+        try:
+            if reqtype.lower() == 'getcapabilities':
+                return TemplateResponse(request, 'wms/getcapabilities.xml', dict(dataset=dataset, server=Server.objects.first()), content_type='application/xml')
+            else:
+                layer = get_layer_from_request(self, request)
+                if not layer:
+                    raise ValueError('Could not find a layer named "{}"'.format(request.GET.get('layers')))
+                response = getattr(dataset, reqtype.lower())(layer, request)
+                # Test formats, etc. before returning?
+                return response
+        except ValueError as e:
+            return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
+        except AttributeError:
+            return HttpResponse('A function named "{}" was not found on {}'.format(reqtype, dataset.__class__.__name__), status=500, reason="Could not process inputs", content_type="application/json")
+        except NotImplementedError:
+            return HttpResponse('"{}" is not implemented for a {}'.format(reqtype, dataset.__class__.__name__), status=500, reason="Could not process inputs", content_type="application/json")

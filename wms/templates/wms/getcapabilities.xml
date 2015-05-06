@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?><WMT_MS_Capabilities version="1.1.1">
+    <Service>
+        <Name>OGC:WMS</Name>
+        <Title>{{ server.title }}</Title>
+        <Abstract>{{ server.abstract }}</Abstract>
+        <KeywordList>
+            {% for k in server.keyword_list %}
+            <Keyword>{{ k }}</Keyword>
+            {% endfor %}
+        </KeywordList>
+        <OnlineResource href="{{ request.build_absolute_uri }}" xlink:type="simple" xmlns:xlink="http://www.w3.org/1999/xlink" />
+        <ContactInformation>
+            <ContactPersonPrimary>
+                <ContactPerson>{{ server.contact_person }}</ContactPerson>
+                <ContactOrganization>{{ server.contact_organization}}</ContactOrganization>
+            </ContactPersonPrimary>
+            <ContactPosition>{{ server.contact_position }}</ContactPosition>
+            <ContactAddress>
+                <AddressType>postal</AddressType>
+                <Address>{{ server.contact_street_address }}</Address>
+                <City>{{ server.contact_city_address }}</City>
+                <StateOrProvince>{{ server.contact_state_address }}</StateOrProvince>
+                <PostCode>{{ server.contact_code_address }}</PostCode>
+                <Country>{{ server.contact_country_address }}</Country>
+            </ContactAddress>
+            <ContactVoiceTelephone>{{ server.contact_telephone }}</ContactVoiceTelephone>
+            <ContactElectronicMailAddress>{{ server.contact_email }}</ContactElectronicMailAddress>
+        </ContactInformation>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>application/vnd.ogc.wms_xml</Format>
+                <Format>text/xml</Format>
+                <DCPType>
+                    <HTTP>
+                        <Get>
+                            <OnlineResource xlink:href="{{ request.build_absolute_uri }}" xlink:type="simple" xmlns:xlink="http://www.w3.org/1999/xlink" />
+                        </Get>
+                    </HTTP>
+                </DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <DCPType>
+                    <HTTP>
+                        <Get>
+                            <OnlineResource xlink:href="{{ request.build_absolute_uri }}" xlink:type="simple" xmlns:xlink="http://www.w3.org/1999/xlink" />
+                        </Get>
+                    </HTTP>
+                </DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/csv</Format>
+                <Format>text/javascript</Format>
+                <DCPType>
+                    <HTTP>
+                        <Get>
+                            <OnlineResource xlink:href="{{ request.build_absolute_uri }}" xlink:type="simple" xmlns:xlink="http://www.w3.org/1999/xlink" />
+                        </Get>
+                    </HTTP>
+                </DCPType>
+            </GetFeatureInfo>
+            <GetLegendGraphic>
+                <Format>image/png</Format>
+                <DCPType>
+                    <HTTP>
+                        <Get>
+                            <OnlineResource xlink:href="{{ request.build_absolute_uri }}" xlink:type="simple" xmlns:xlink="http://www.w3.org/1999/xlink" />
+                        </Get>
+                    </HTTP>
+                </DCPType>
+            </GetLegendGraphic>
+        </Request>
+        <Exception>
+            <Format>text/html</Format>
+        </Exception>
+        <Layer>
+            <Title>{{ dataset.title }}</Title>
+            <Abstract>{{ dataset.abstract }}</Abstract>
+            <SRS>EPSG:3857</SRS>
+            <SRS>MERCATOR</SRS>
+            {% load date_formats %}
+            {% for layer in dataset.active_layers %}
+            <Layer opaque="0" queryable="1">
+                <Name>{{ layer.var_name }}</Name>
+                <Title>{{ layer.std_name }}</Title>
+                <Abstract>{{ layer.abstract }}</Abstract>
+                <SRS>EPSG:3857</SRS>
+                <LatLonBoundingBox maxx="{{ layer.wgs84_bounds.maxx }}" maxy="{{ layer.wgs84_bounds.maxy }}" minx="{{ layer.wgs84_bounds.minx }}" miny="{{ layer.wgs84_bounds.miny }}" />
+                <BoundingBox SRS="EPSG:4326" maxx="{{ layer.wgs84_bounds.maxx }}" maxy="{{ layer.wgs84_bounds.maxy }}" minx="{{ layer.wgs84_bounds.minx }}" miny="{{ layer.wgs84_bounds.miny }}" />
+                <Dimension name="time" units="ISO8601" />
+                {% if dataset.display_all_timesteps %}
+                    <Extent name="time">{{ layer.times | date_format_z }}</Extent>
+                {% else %}
+                    <Extent name="time">{{ layer.time_bounds.min | date_format_z }}/{{ layer.time_bounds.max | date_format_z }}</Extent>
+                {% endif %}
+                {% if layer.depths %}
+                    <Dimension name="elevation" units="EPSG:5030" postive="{{ layer.depth_direction }}"/>
+                    <Extent default="{{ layer.depths | first }}" name="elevation">{{ layer.depths | join:','}}</Extent>
+                {% endif %}
+                {% for style in layer.styles.all %}
+                <Style>
+                    <Name>{{ style.code }}</Name>
+                    <Title>{{ style.code }}</Title>
+                    <Abstract>{{ style.description }}</Abstract>
+                    <LegendURL height="80" width="50">
+                        <Format>image/png</Format>
+                    </LegendURL>
+                </Style>
+                {% endfor %}
+            </Layer>
+            {% endfor %}
+        </Layer>
+    </Capability>
+</WMT_MS_Capabilities>

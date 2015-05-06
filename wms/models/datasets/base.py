@@ -13,6 +13,8 @@ from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
 
+from wms.utils import DotDict
+
 
 class Dataset(TypedModel):
     uri = models.CharField(max_length=1000)
@@ -55,8 +57,43 @@ class Dataset(TypedModel):
             except:
                 return None
 
+    def topology_dataset(self):
+        try:
+            return EnhancedDataset(self.topology_file)
+        except RuntimeError:
+            return None
+
+    def getmap(self, layer, request):
+        raise NotImplementedError
+
+    def getlegendgraphic(self, layer, request):
+        raise NotImplementedError
+
+    def getfeatureinfo(self, layer, request):
+        raise NotImplementedError
+
+    def wgs84_bounds(self, layer):
+        raise NotImplementedError
+
+    def time_bounds(self, layer):
+        times = self.times(layer)
+        try:
+            return DotDict(min=times[0], max=times[-1])
+        except IndexError:
+            return DotDict(min=None, max=None)
+
+    def depth_bounds(self, layer):
+        depths = self.depths(layer)
+        try:
+            return DotDict(min=depths[0], max=depths[-1])
+        except IndexError:
+            return DotDict(min=None, max=None)
+
+    def depths(self, layer):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
-        raise NotImplementedError("Implement in subclasses")
+        raise NotImplementedError
 
     def clear_cache(self):
         cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.safe_filename + '*'))
@@ -132,6 +169,11 @@ class Dataset(TypedModel):
                 l.save()
 
             nc.close()
+
+    def active_layers(self):
+        layers = self.layer_set.prefetch_related('styles').filter(active=True)
+        vlayers = self.virtuallayer_set.prefetch_related('styles').filter(active=True)
+        return list(layers) + list(vlayers)
 
     @property
     def safe_filename(self):

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import re
+
 from django.db import models
 
 from wms.models import Style
+
+from wms import logger
 
 
 class LayerBase(models.Model):
@@ -26,7 +30,23 @@ class LayerBase(models.Model):
 
 
 class Layer(LayerBase):
-    pass
+    def wgs84_bounds(self):
+        return self.dataset.wgs84_bounds(self)
+
+    def time_bounds(self):
+        return self.dataset.time_bounds(self)
+
+    def times(self):
+        return self.dataset.times(self)
+
+    def depth_bounds(self):
+        return self.dataset.depth_bounds(self)
+
+    def depth_direction(self):
+        return self.dataset.depth_direction(self)
+
+    def depths(self):
+        return self.dataset.depths(self)
 
 
 class VirtualLayer(LayerBase):
@@ -50,3 +70,26 @@ class VirtualLayer(LayerBase):
                         break
                     except:
                         raise
+
+    @property
+    def single_layer(self):
+        single_var = re.findall(r"[^*,]+", self.var_name)[0]
+        return self.dataset.layer_set.filter(var_name=single_var).first()
+
+    def wgs84_bounds(self):
+        return self.dataset.wgs84_bounds(self.single_layer)
+
+    def time_bounds(self):
+        return self.dataset.time_bounds(self.single_layer)
+
+    def times(self):
+        return self.dataset.times(self.single_layer)
+
+    def depth_bounds(self):
+        return self.dataset.depth_bounds(self.single_layer)
+
+    def depth_direction(self):
+        return self.dataset.depth_direction(self.single_layer)
+
+    def depths(self):
+        return self.dataset.depths(self.single_layer)

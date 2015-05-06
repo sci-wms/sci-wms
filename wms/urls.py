@@ -18,13 +18,13 @@ This file is part of SCI-WMS.
 '''
 
 from django.conf.urls import patterns, url
-from wms.views import DatasetListView
+from wms.views import DatasetListView, WmsView
 
 urlpatterns = patterns('',
                        url(r'^$', 'wms.views.index', name='wms-index'),
                        # Datasets
                        url(r'^datasets$', DatasetListView.as_view(), name='add_dataset'),
-                       url(r'^datasets/(?P<dataset>.*)', 'wms.views.wms', name="dataset"),
+                       url(r'^datasets/(?P<dataset>.*)', WmsView.as_view(), name="dataset"),
                        url(r'^datasets/(?P<dataset>.*)/update', 'wms.views.update_dataset', name="update_dataset"),
                        # Clients
                        url(r'^demo', 'wms.views.demo', name='demo'),

@@ -6,9 +6,15 @@ import pytz
 
 from pyugrid import UGrid
 from pyaxiom.netcdf import EnhancedDataset
+import numpy as np
+import netCDF4
 
 from wms.models import Dataset
-from sciwms import logger
+from wms.utils import DotDict
+
+from wms import views
+
+from wms import logger
 
 
 class UGridDataset(Dataset):
@@ -59,6 +65,88 @@ class UGridDataset(Dataset):
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
+
+    def getmap(self, layer, request):
+        return views.getMap(request, self)
+
+    def getlegendgraphic(self, layer, request):
+        return views.getLegendGraphic(request, self)
+
+    def getfeatureinfo(self, layer, request):
+        return views.getFeatureInfo(request, self)
+
+    def wgs84_bounds(self, layer):
+        try:
+            nc = self.netcdf4_dataset()
+            data_location = nc.variables[layer.var_name].location
+            mesh_name = nc.variables[layer.var_name].mesh
+            # Use local topology for pulling bounds data
+            ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+            coords = np.empty(0)
+            if data_location == 'node':
+                coords = ug.nodes
+            elif data_location == 'face':
+                coords = ug.face_coordinates
+            elif data_location == 'edge':
+                coords = ug.edge_coordinates
+
+            minx = np.nanmin(coords[:, 1])
+            miny = np.nanmin(coords[:, 0])
+            maxx = np.nanmax(coords[:, 1])
+            maxy = np.nanmax(coords[:, 0])
+
+            return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
+        except AttributeError:
+            pass
+        finally:
+            nc.close()
+
+    def times(self, layer):
+        try:
+            nc = self.topology_dataset()
+            return netCDF4.num2date(nc.variables['time'][:], units=nc.variables['time'].units)
+        finally:
+            nc.close()
+
+    def depth_variable(self, layer):
+        try:
+            nc = self.netcdf4_dataset()
+            layer_var = nc.variables[layer.var_name]
+            for cv in layer_var.coordinates.split():
+                try:
+                    coord_var = nc.variables[cv]
+                    if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
+                        return cv
+                    elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
+                        return cv
+                except BaseException:
+                    pass
+        except AttributeError:
+            pass
+        finally:
+            nc.close()
+
+    def depth_direction(self, layer):
+        d = self.depth_variable(layer)
+        if d is not None:
+            try:
+                nc = self.netcdf4_dataset()
+                dvar = nc.variables[d]
+                if hasattr(dvar, 'positive'):
+                    return dvar.positive
+            finally:
+                nc.close()
+        return 'unknown'
+
+    def depths(self, layer):
+        d = self.depth_variable(layer)
+        if d is not None:
+            try:
+                nc = self.netcdf4_dataset()
+                return range(0, nc.variables[d].shape[0])
+            finally:
+                nc.close()
+        return []
 
     def humanize(self):
         return "UGRID"

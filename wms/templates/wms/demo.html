@@ -29,7 +29,7 @@
               <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
                 <div class="panel-body">
                   <div class="list-group">
-                    {% for vl in dataset.layer_set.all %}
+                    {% for vl in dataset.active_layers %}
                     {% if vl.styles %}
                         <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-style="{{ vl.styles.first }}" data-dataset="{{dataset.name}}">{{vl.var_name}} ({{vl.std_name}})</a>
                     {% else %}

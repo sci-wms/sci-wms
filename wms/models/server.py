@@ -19,3 +19,6 @@ class Server(models.Model):
     contact_country_address = models.CharField(max_length=1000, help_text="Address: Country (Optional)", blank=True)
     contact_telephone = models.CharField(max_length=1000, help_text="Contact Telephone Number (Optional)", blank=True)
     contact_email = models.CharField(max_length=1000, help_text="Contact Email Address (Optional)", blank=True)
+
+    def keyword_list(self):
+        return [ k for k in self.keywords.split(',') ]
