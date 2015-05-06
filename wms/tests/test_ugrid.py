@@ -47,5 +47,4 @@ class TestUgrid(TestCase):
 
     def test_create_layers(self):
         d = Dataset.objects.get(name='ugrid_testing')
-        d.process_layers()
         assert d.layer_set.count() == 30

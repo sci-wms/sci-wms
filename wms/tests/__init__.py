@@ -40,6 +40,7 @@ def add_dataset(name, klass, filename):
                                              display_all_timesteps = False,
                                              keep_up_to_date       = False)
     d.update_cache(force=True)
+    d.process_layers()
     d.save()
     return d
 
