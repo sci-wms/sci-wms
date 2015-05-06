@@ -3,6 +3,7 @@ from django.http import HttpResponse
 
 import pyproj
 import numpy as np
+import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
@@ -91,16 +92,16 @@ def quiver_response(lon,
     ax.set_axis_off()
     mags = np.sqrt(dx**2 + dy**2)
 
+    cmap = mpl.cm.get_cmap(colormap)
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
-    mags[mags > cmax] = cmax
-    mags[mags < cmin] = cmin
-
-    import matplotlib as mpl
-    cmap = mpl.cm.get_cmap(colormap)
-    bounds = np.linspace(cmin, cmax, 15)
-    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    norm = None
+    if cmin and cmax:
+        mags[mags > cmax] = cmax
+        mags[mags < cmin] = cmin
+        bounds = np.linspace(cmin, cmax, 15)
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
     # plot unit vectors
     if unit_vectors:
