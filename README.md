@@ -1,4 +1,4 @@
-#sci-wms
+#sci-wms  [![Build Status](https://travis-ci.org/sci-wms/sci-wms.svg)](https://travis-ci.org/sci-wms/sci-wms)
 ####A Python WMS service for geospatial gridded data
 
 COPYRIGHT 2010 RPS ASA
