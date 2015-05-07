@@ -65,8 +65,8 @@ class UGridDataset(Dataset):
                     cached_time_var[:] = time_vals[:]
                     cached_time_var.units = time_var.units
             cached_nc.close()
-        except:
-            raise
+        except RuntimeError:
+            pass  # We could still be updating the cache file
         finally:
             if nc is not None:
                 nc.close()
