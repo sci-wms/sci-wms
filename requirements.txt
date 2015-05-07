@@ -1,11 +1,9 @@
 numpy
 Django>=1.7,<1.8
-Shapely
 python-dateutil
 matplotlib>=1.2.0
 netCDF4>=1.0.2
 rtree==0.7.0
-south
 jsonfield
 pytz
 djangorestframework
