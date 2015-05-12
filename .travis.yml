@@ -1,0 +1,38 @@
+language: python
+python:
+  - "2.7"
+before_install:
+  # System packages
+  - sudo apt-get update -qq
+
+  # Install miniconda
+  # -----------------
+  - export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda
+  - if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then
+      wget ${CONDA_BASE}-3.7.0-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget ${CONDA_BASE}3-3.7.0-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+
+  # Create the basic testing environment
+  # ------------------------------------
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --set show_channel_urls True
+  - conda config --add create_default_packages pip
+  - conda update --quiet conda
+  - ENV_NAME='test-environment'
+  - conda create --quiet -n $ENV_NAME python=$TRAVIS_PYTHON_VERSION
+  - source activate $ENV_NAME
+
+install:
+  # Customise the testing environment
+  # ---------------------------------
+  - pip install django-grappelli django-typed-models django-extensions django-debug-toolbar
+  - pip install git+https://github.com/axiom-data-science/pyaxiom.git
+  - conda install --channel https://conda.binstar.org/rsignell "Django>=1.7,<1.8" python-dateutil "matplotlib>=1.2.0" "netCDF4>=1.0.2" "rtree==0.7.0" jsonfield pytz djangorestframework pyugrid pyproj
+  - conda list --export
+  - pip freeze
+
+script: python manage.py test

@@ -19,37 +19,21 @@ This file is part of SCI-WMS.
 
 # Django settings for fvcom_compute project.
 import os
+import sys
 
 WSGI_APPLICATION = "sciwms.wsgi.application"
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# LOCALDATASET is for testing purposes
-# If LOCALDATASET is populated, the service will use the cached
-# TOPOLOGY for schema/grid information and LOCALDATASETPATH for actual data extraction
-LOCALDATASET     = False
-#LOCALDATASETPATH = {
-#    '30yr_gom3' : "/home/user/Data/FVCOM/gom3_197802.nc",
-#}
-
-
 # Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "apps", "wms", "topology"))
+TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
 DEBUG = False
 TEMPLATE_DEBUG = False
 
-ADMINS = (
-    #('Your Name', 'youremail@domain.com'),
-)
-
-#EMAIL_HOST = ''
-#EMAIL_HOST_USER = ''
-#EMAIL_PORT = ''
-#EMAIL_HOST_PASSWORD = ''
-#EMAIL_SUBJECT_PREFIX = '[SCIWMS MESSAGE]'
+ADMINS = ()
 
 MANAGERS = ADMINS
 
@@ -134,7 +118,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 )
@@ -145,7 +129,19 @@ TEMPLATE_DIRS = (
     os.path.abspath(os.path.join(os.path.dirname(__file__), "templates")),
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+    "django.core.context_processors.request",
+)
+
 INSTALLED_APPS = [
+    'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -154,9 +150,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'nested_inline',
-    'sciwms.apps.wms',
-    'sciwms.apps.wmsrest',
+    'wms',
+    'wmsrest',
     'rest_framework'
 ]
 
@@ -164,3 +159,8 @@ REST_FRAMEWORK = {
                   'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
                   'PAGINATE_BY': 10
                   }
+
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+
+import matplotlib
+matplotlib.use("Agg")

@@ -1,0 +1,182 @@
+{% extends "wms/base.html" %}
+{% load static from staticfiles %}
+
+{% block header %}
+<style>
+    table { table-layout: fixed; }
+    table th, table td { overflow: hidden; }
+    hr { margin-top: 10px; margin-bottom: 10px; }
+</style>
+<script src="{% static 'wms/cookie.js' %}"></script>
+{% endblock %}
+
+
+{% block menu_items %}
+    {% if user.is_authenticated %}
+    <li><a data-toggle="collapse" href="#addDataset" aria-expanded="false" aria-controls="addDataset"><span style="color: green" class="glyphicon glyphicon-plus"></span> add dataset</a></li>
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+    <div id="dataset-messages">
+    </div>
+
+    {% if user.is_authenticated %}
+      <div class="collapse" id="addDataset">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form id="datasetForm" class="form-inline" action="{% url 'add_dataset' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="Name">
+              </div>
+              <div class="form-group">
+                <label for="uri">Dataset URI (file glob or DAP)</label>
+                <input type="text" class="form-control" name="uri" id="uri" placeholder="URI">
+              </div>
+              <label for="datasetSubmit">&nbsp;</label>
+              <button type="button" name="datasetSubmit" id="datasetSubmit" class="btn btn-default">add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if datasets %}
+
+        <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
+            <thead>
+                <tr>
+                    <th style="width: 300px">Description</th>
+                    <th style="width: 125px">Preview</th>
+                    <th style="width: 225px">Info</th>
+                    <th style="width: 100px">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in datasets %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>{{ dataset.name | truncatechars:28 }}</strong>
+                            <span class="label label-default">{{ dataset.humanize }}</span>
+                        </div>
+                        <span>{{ dataset.title }}</span>
+                        <hr />
+                        <span>{{ dataset.abstract }}</span>
+                    </td>
+
+                    <td>
+                        <a href="#" class="thumbnail" alt="{{ dataset.name }} thumbnail">n/a</a>
+                    </td>
+
+                    <td>
+                        <a class="row" href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">
+                            <span class="glyphicon glyphicon-new-window"></span> GetCaps
+                        </a>
+                        {% if dataset.online %}
+                            <a class="row" href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
+                        {% else %}
+                            <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
+                        {% endif %}
+
+                        <hr />
+                        {% if dataset.cache_last_updated %}
+                            <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
+                        {% else %}
+                            <span class="row">Updated: never</span>
+                        {% endif %}
+                        <span class="row">
+                            <span>Keep up to date:</span>
+                            {% if dataset.keep_up_to_date %}
+                                <span style="color: green" class="glyphicon glyphicon-ok"></span>
+                            {% else %}
+                                <span style="color: red" class="glyphicon glyphicon-remove"></span>
+                            {% endif %}
+                        </span>
+                    </td>
+
+                    <td>
+                        <!-- Update -->
+                        <a href="{% url 'update_dataset' dataset.name %}">
+                            <button type="button" class="btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh"></span> Update
+                            </button>
+                        </a>
+                        {% if user.is_authenticated %}
+                        <!-- Delete -->
+                        <a href="{% url 'dataset-detail' dataset.pk %}">
+                            <button type="button" class="deleteButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-trash"></span> Delete
+                            </button>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">No datasets found.  Add datasets using the Admin link above.</a></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+    <script>
+    {% if user.is_authenticated %}
+    $("#datasetSubmit").click(function() {
+
+        but = $(this)
+        but.attr("disabled", "disabled");
+
+        var posting = $.ajax({
+                                type: "POST",
+                                url: $("#datasetForm").attr("action"),
+                                data: $("#datasetForm").serialize(),
+                                success: function(data) {
+                                    // We get the Dataset back... we could prepend to the table?
+                                    but.attr("disabled", false);
+                                    location.reload();
+                                },
+                                dataType: "text"
+                            }).fail(function(data) {
+                                $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                                but.attr("disabled", false);
+                            });
+    });
+
+    $(".deleteButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        var posting = $.ajax({
+                                type: "DELETE",
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+                                },
+                                url: a_tag.attr("href"),
+                                success: function(data) {
+                                    a_tag.parent().parent().remove();
+                                    $("#dataset-messages").hide().html('<div class="alert alert-success">Dataset deleted</div>').fadeIn();
+                                }
+                            }).fail(function(data) {
+                                $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                            });
+    });
+    {% endif %}
+    </script>
+
+{% endblock %}

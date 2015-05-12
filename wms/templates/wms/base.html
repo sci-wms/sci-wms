@@ -1,0 +1,64 @@
+{% load static from staticfiles %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>sci-wms</title>
+    <link rel="shortcut icon" href="{% static 'common/favicon.ico' %}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    {% block header %}
+    {% endblock %}
+    <style>
+    body, html {
+        min-height: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    html {
+        height: 100%;
+    }
+    #menu {
+        height: 500px;
+        width: 100%;
+        overflow-y: auto;
+    }
+    </style>
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="page-header">
+              <h1>sci-wms <small>a Python WMS service for geospatial gridded data</small></h1>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-10">
+            <ul class="nav nav-pills">
+              <li><a href="{% url 'index' %}"><span class="glyphicon glyphicon-align-justify"></span> datasets</a></li>
+              <li><a href="http://sci-wms.github.io/sci-wms/docs/" target="_blank"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
+              <li><a href="{% url 'demo' %}"><span style="color: green" class="glyphicon glyphicon-leaf"></span> demo (Leaflet WMS client)</a></li>
+              {% if user.is_authenticated %}
+              <li><a href="{% url 'logout' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
+              {% else %}
+              <li><a href="{% url 'admin' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> admin</a></li>
+              {% endif %}
+              {% block menu_items %}
+              {% endblock %}
+            </ul>
+          </div>
+        </div>
+
+        <hr />
+      </div>
+    </header>
+  </head>
+  <body>
+    <div class="container">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </body>
+</html>

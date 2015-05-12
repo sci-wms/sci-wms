@@ -1,0 +1,100 @@
+{% extends "wms/base.html" %}
+
+{% block header %}
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.css" />
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+</style>
+
+<script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.ie.css" />
+<![endif]-->
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-4">
+          <div class="panel-group" id="menu">
+            {% for dataset in datasets %}
+            <div class="panel panel-default">
+              <div class="panel-heading" role="tab" id="heading-{{dataset.name}}">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{dataset.name}}" aria-expanded="false" aria-controls="collapse-{{dataset.name}}">{{dataset.name}}</a> <span class="label label-default">{{ dataset.humanize }}</span>
+                </h4>
+              </div>
+              <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
+                <div class="panel-body">
+                  <div class="list-group">
+                    {% for vl in dataset.active_layers %}
+                    {% if vl.styles %}
+                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-style="{{ vl.styles.first }}" data-dataset="{{dataset.name}}">{{vl.var_name}} ({{vl.std_name}})</a>
+                    {% else %}
+                        {{vl.layer}} (no styles)
+                    {% endif %}
+                    {% endfor %}
+                    {% if value.standard_name and value.style %}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-md-8">
+            <div id="map"></div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var map = new L.map('map');
+    openStreetMap = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: 'Map data &copy; OpenStreetMap contributors'});
+
+    var displayed_layers = L.layerGroup();
+    displayed_layers.addTo(map);
+
+    // one layer per dataset, we'll modify the layer and style with the click
+    {% for dataset in datasets %}
+    var {{dataset.name}} = L.tileLayer.wms("{% url 'dataset' dataset=dataset.name %}", {
+        //layers: '{{dataset.test_layer}}',
+        format: 'image/png',
+        transparent: 'true',
+        attribution: "Sci-wms - Python WMS service",
+        opacity: 0.7,
+    });
+    //{{dataset.name}}.setParams({
+    //    TIME: '{{dataset.test_date}}',
+    //    ELEVATION: '0'
+    //});
+    {% endfor %}
+
+    var bounds = new L.LatLngBounds(new L.LatLng(32, -126), new L.LatLng(50, -64));
+    map.addLayer(openStreetMap).fitBounds(bounds);
+
+    $(".layers").click(function(e) {
+        e.preventDefault();
+        $(".layers").removeClass("active");
+        $(e.target).addClass("active");
+        // -- get {{dataset.name}} from panel-title
+        dataset_name = $(this).data('dataset');
+        layer = $(this).data('layer');
+        style = $(this).data('style');
+
+        l = eval(dataset_name);
+        l.setParams({
+            layers: layer,
+            styles: style
+        });
+
+        // -- clear existing layers
+        displayed_layers.clearLayers();
+        // -- add this layer
+        displayed_layers.addLayer(l);
+
+    });
+
+    </script>
+{% endblock %}

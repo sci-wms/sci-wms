@@ -6,7 +6,7 @@
 *.log
 
 # Default Topology location
-sciwms/apps/wms/topology/
+wms/topology/
 sciwms/*.db
 !.gitkeep
 
