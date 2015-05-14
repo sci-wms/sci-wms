@@ -1,3 +1,4 @@
+import unittest
 from copy import copy
 
 from django.test import TestCase
@@ -7,6 +8,7 @@ from wms.models import Dataset
 from sciwms import logger
 
 
+@unittest.skip("GetLegendGraphic on UGRID Datasets is not implemented yet")
 class TestUgridLegendGraphic(TestCase):
 
     @classmethod
