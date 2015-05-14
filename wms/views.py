@@ -51,8 +51,7 @@ from django.db.utils import IntegrityError
 
 from pyugrid import UGrid
 
-import wms.wms_requests as wms_reqs
-from wms.models import Dataset, Server, Group
+from wms.models import Dataset, Server
 from wms.utils import get_layer_from_request
 from wms import wms_handler
 from wms import logger
@@ -72,40 +71,6 @@ def datasets(request):
     return HttpResponse(data, content_type='application/json')
 
 
-def groups(request, group):
-    import django.shortcuts as dshorts
-    reqtype = None
-    try:
-        reqtype = request.GET['REQUEST']
-    except:
-        try:
-            reqtype = request.GET['request']
-        except:
-            group = Group.objects.get(name=group)
-            datasets = Dataset.objects.filter(group=group)
-            for dataset in datasets:
-                dataset.uri = dataset.path()
-                if urlparse(dataset.uri).scheme != "":
-                    # Used in template to linkify to URI
-                    dataset.online = True
-            context = { "datasets" : datasets }
-            return dshorts.render_to_response('wms/index.html', context)
-    if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
-        group = Group.objects.get(name=group)
-        caps = wms_reqs.groupGetCapabilities(request, group, logger)
-        return caps
-    elif reqtype is not None:
-        try:
-            layers = request.GET["LAYERS"]
-        except:
-            layers = request.GET["layers"]
-        dataset = layers.split("/")[0]
-        request.GET = request.GET.copy()
-        request.GET["LAYERS"] = layers.replace(dataset+"/", "")
-        request.GET["layers"] = layers.replace(dataset+"/", "")
-        return wms(request, dataset)
-
-
 def index(request):
     datasets = Dataset.objects.all()
     for dataset in datasets:
@@ -115,6 +80,10 @@ def index(request):
             dataset.online = True
     context = { "datasets" : datasets }
     return TemplateResponse(request, 'wms/index.html', context)
+
+
+def groups(request):
+    return HttpResponse('ok')
 
 
 def authenticate_view(request):
