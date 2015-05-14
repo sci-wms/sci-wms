@@ -30,8 +30,7 @@ install:
   # Customise the testing environment
   # ---------------------------------
   - pip install django-grappelli django-typed-models django-extensions django-debug-toolbar
-  - pip install git+https://github.com/axiom-data-science/pyaxiom.git
-  - conda install --channel https://conda.binstar.org/rsignell "Django>=1.7,<1.8" python-dateutil "matplotlib>=1.2.0" "netCDF4>=1.0.2" "rtree==0.7.0" jsonfield pytz djangorestframework pyugrid pyproj
+  - conda install --channel ioos "Django>=1.7,<1.8" python-dateutil "matplotlib>=1.2.0" "netCDF4>=1.0.2" "rtree==0.7.0" jsonfield pytz djangorestframework pyugrid pyproj pyaxiom
   - conda list --export
   - pip freeze
 
