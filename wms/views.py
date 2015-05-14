@@ -51,8 +51,6 @@ from django.db.utils import IntegrityError
 
 from pyugrid import UGrid
 
-from sciwms.libs.data import cgrid
-
 import wms.wms_requests as wms_reqs
 from wms.models import Dataset, Server, Group
 from wms.utils import get_layer_from_request
