@@ -45,55 +45,46 @@ class TestSgrid(TestCase):
         klass = Dataset.identify(d.uri)
         assert klass == SGridDataset
 
+    def do_test(self, params, write=True):
+        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
+        self.assertEqual(response.status_code, 200)
+        if write is True:
+            with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
+                f.write(response.content)
+
     @unittest.skip("filledcontours is not yet implemeted for SGRID datasets")
     def test_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_jet')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
-        with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
-            f.write(response.content)
+        self.do_test(params)
 
     @unittest.skip("facets is not yet implemeted for SGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
-        with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
-            f.write(response.content)
+        self.do_test(params)
 
     @unittest.skip("pcolor is not yet implemeted for SGRID datasets")
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_jet')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
-        with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
-            f.write(response.content)
+        self.do_test(params)
 
     @unittest.skip("contours is not yet implemeted for SGRID datasets")
     def test_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
-        with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
-            f.write(response.content)
+        self.do_test(params)
 
     @unittest.skip("vectors is not yet implemeted for SGRID datasets")
     def test_vectors(self):
         params = copy(self.url_params)
         params.update(styles='vectors_jet', layers='u,v')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
-        with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
-            f.write(response.content)
+        self.do_test(params)
 
     def test_getCaps(self):
         params = dict(request='GetCapabilities')
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
-        self.assertEqual(response.status_code, 200)
+        self.do_test(params, write=False)
 
     def test_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_name)
