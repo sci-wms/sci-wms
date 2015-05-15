@@ -1,3 +1,6 @@
+import unittest
+from copy import copy
+
 from django.test import TestCase
 from wms.tests import *
 from wms.models import Dataset
@@ -5,7 +8,8 @@ from wms.models import Dataset
 from sciwms import logger
 
 
-class TestGetLegendGraphic(TestCase):
+@unittest.skip("GetLegendGraphic on UGRID Datasets is not implemented yet")
+class TestUgridLegendGraphic(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -20,54 +24,39 @@ class TestGetLegendGraphic(TestCase):
         d.clear_cache()
         d.delete()
 
+    def setUp(self):
+        self.dataset_name = 'legend_testing'
+        self.url_params = dict(
+            request = 'GetLegendGraphic',
+            layer   = 'surface_salt',
+        )
+
+    def image_name(self):
+        return '{}.png'.format(self.id().split('.')[-1])
+
+    def do_test(self, params, write=True):
+        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
+        self.assertEqual(response.status_code, 200)
+        if write is True:
+            with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
+                f.write(response.content)
+
     def test_pcolor(self):
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=facets_average_jet_-1_1_cell_False&layer=surface_temp')
-        self.assertEqual(response.status_code, 200)
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet')
+        self.do_test(params)
 
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=facets_average_jet_-1_1_cell_False&layer=surface_temp&showlabel=false')
-        self.assertEqual(response.status_code, 200)
+    def test_pcolor_no_label(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet', showlabel='false')
+        self.do_test(params)
 
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=facets_average_jet_-1_1_cell_False&layer=surface_temp&units=somethingelse')
-        self.assertEqual(response.status_code, 200)
+    def test_pcolor_custom_units(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet', unitlabel='somethingelse')
+        self.do_test(params)
 
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=facets_average_jet_None_None_cell_False&layer=surface_temp&colorscalerange=-1,1')
-        self.assertEqual(response.status_code, 200)
-
-    def test_contours(self):
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=contours_average_jet_-1_1_cell_False&layer=surface_temp')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=contours_average_jet_-1_1_cell_False&layer=surface_temp&showlabel=false')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=contours_average_jet_-1_1_cell_False&layer=surface_temp&units=somethingelse')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=contours_average_jet_None_None_cell_False&layer=surface_temp&colorscalerange=-1,1')
-        self.assertEqual(response.status_code, 200)
-
-    def test_filledcontours(self):
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=filledcontours_average_jet_-1_1_cell_False&layer=surface_temp')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=filledcontours_average_jet_-1_1_cell_False&layer=surface_temp&showlabel=false')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=filledcontours_average_jet_-1_1_cell_False&layer=surface_temp&units=somethingelse')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=filledcontours_average_jet_None_None_cell_False&layer=surface_temp&colorscalerange=-1,1')
-        self.assertEqual(response.status_code, 200)
-
-    def test_vectors(self):
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=vectors_average_jet_-1_1_cell_False&layer=surface_temp')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=vectors_average_jet_-1_1_cell_False&layer=surface_temp&showlabel=false')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=vectors_average_jet_-1_1_cell_False&layer=surface_temp&units=somethingelse')
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.get('/wms/datasets/legend_testing?request=GetLegendGraphic&styles=vectors_average_jet_None_None_cell_False&layer=surface_temp&colorscalerange=-1,1')
-        self.assertEqual(response.status_code, 200)
+    def test_pcolor_colorscalerange(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet', colorscalerange='-1,1')
+        self.do_test(params)

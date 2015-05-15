@@ -8,7 +8,7 @@ jsonfield
 pytz
 djangorestframework
 pyugrid
-pyaxiom
+pyaxiom>=0.0.9
 django-grappelli
 django-typed-models
 pyproj

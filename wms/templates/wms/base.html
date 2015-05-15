@@ -41,9 +41,10 @@
               <li><a href="http://sci-wms.github.io/sci-wms/docs/" target="_blank"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
               <li><a href="{% url 'demo' %}"><span style="color: green" class="glyphicon glyphicon-leaf"></span> demo (Leaflet WMS client)</a></li>
               {% if user.is_authenticated %}
-              <li><a href="{% url 'logout' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
+              <li><a href="{% url 'logout' %}?next={{request.path}}" data-toggle="modal"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
+              <li><a href="{% url 'admin:index' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> admin</a></li>
               {% else %}
-              <li><a href="{% url 'admin' %}" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> admin</a></li>
+              <li><a href="{% url 'admin:login' %}?next={{request.path}}" data-toggle="modal"><span class="glyphicon glyphicon-log-in"></span> login</a></li>
               {% endif %}
               {% block menu_items %}
               {% endblock %}

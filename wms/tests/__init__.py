@@ -56,3 +56,10 @@ def add_user():
                                    is_superuser=True)
     except IntegrityError:
         return User.objects.filter(username='testuser').first()
+
+
+def image_path(*args):
+    path = os.path.join(os.path.dirname(__file__), 'images', *args)
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    return path
