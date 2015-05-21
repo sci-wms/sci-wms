@@ -39,6 +39,9 @@ class UGridDataset(Dataset):
             if ds is not None:
                 ds.close()
 
+    def has_cache(self):
+        return os.path.exists(self.topology_file)
+
     def update_cache(self, force=False):
         try:
             nc = self.netcdf4_dataset()

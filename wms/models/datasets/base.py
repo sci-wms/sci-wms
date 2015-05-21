@@ -92,6 +92,9 @@ class Dataset(TypedModel):
     def depths(self, layer):
         raise NotImplementedError
 
+    def has_cache(self):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
         raise NotImplementedError
 

@@ -19,7 +19,6 @@ class TestRgrid(TestCase):
     @classmethod
     def tearDownClass(cls):
         d = Dataset.objects.get(name="rgrid_testing")
-        d.clear_cache()
         d.delete()
 
     def setUp(self):
@@ -83,3 +82,9 @@ class TestRgrid(TestCase):
     def test_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_name)
         assert d.layer_set.count() == 1
+
+    def test_delete_cache_signal(self):
+        d = add_dataset("rgrid_deleting", "rgrid", "satellite_rgrid.nc")
+        self.assertTrue(d.has_cache())
+        d.clear_cache()
+        self.assertFalse(d.has_cache())

@@ -19,7 +19,6 @@ class TestSgrid(TestCase):
     @classmethod
     def tearDownClass(cls):
         d = Dataset.objects.get(name="sgrid_testing")
-        d.clear_cache()
         d.delete()
 
     def setUp(self):
@@ -89,3 +88,9 @@ class TestSgrid(TestCase):
     def test_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_name)
         assert d.layer_set.count() == 12
+
+    def test_delete_cache_signal(self):
+        d = add_dataset("sgrid_deleting", "ugrid", "coawst_sgrid.nc")
+        self.assertTrue(d.has_cache())
+        d.clear_cache()
+        self.assertFalse(d.has_cache())

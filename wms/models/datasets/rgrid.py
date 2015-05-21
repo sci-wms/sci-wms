@@ -3,6 +3,10 @@ from wms.models import Dataset
 
 
 class RGridDataset(Dataset):
+
+    def has_cache(self):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
         raise NotImplementedError("The RGRID Dataset type is not implemented yet")
 
