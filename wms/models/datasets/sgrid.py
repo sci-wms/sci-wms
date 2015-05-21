@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import bisect
 import itertools
 
+import netCDF4 as nc4
+import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset
@@ -72,8 +75,23 @@ class SGridDataset(Dataset):
         raise NotImplementedError
     
     def nearest_time(self, layer, time):
-        raise NotImplementedError
-
+        nc = self.topology_dataset()
+        time_var = nc.variables['time']
+        units = time_var.units
+        try:
+            calendar = time_var.calendar
+        except AttributeError:
+            calendar = 'gregorian'
+        num_date = round(nc4.date2num(time, units=units, calendar=calendar))
+        times = time_var[:]
+        time_index = bisect.bisect_right(times, num_date)
+        try:
+            time_val = times[time_index]
+        except IndexError:
+            time_index -= 1
+            time_val = times[time_index]
+        return time_index, time_val
+        
     def times(self, layer):
         raise NotImplementedError
 
