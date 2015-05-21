@@ -63,7 +63,13 @@ class SGridDataset(Dataset):
         self.save()
 
     def getmap(self, layer, request):
-        raise NotImplementedError
+        time_index, time_value = self.nearest_time(layer, request.GET['time'])
+        epsg_4326 = pyproj.Proj(init='EPSG:4326')
+        bbox = request.GET['bbox']
+        requested_crs = request.GET['crs']
+        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
+        wsg84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxx)
+        nc  = self.netcdf4_dataset()
 
     def getlegendgraphic(self, layer, request):
         raise NotImplementedError
