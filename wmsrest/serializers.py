@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset
+from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset
 
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -59,6 +59,23 @@ class SGridDatasetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SGridDataset
+        fields = ('uri',
+                  'type',
+                  'name',
+                  'title',
+                  'abstract',
+                  'keep_up_to_date',
+                  'display_all_timesteps',
+                  'layer_set',
+                  'virtuallayer_set')
+
+
+class RGridDatasetSerializer(serializers.ModelSerializer):
+    layer_set = LayerSerializer(many=True, read_only=True)
+    virtuallayer_set = VirtualLayerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RGridDataset
         fields = ('uri',
                   'type',
                   'name',

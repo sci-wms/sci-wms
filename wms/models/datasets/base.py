@@ -178,6 +178,11 @@ class Dataset(TypedModel):
         vlayers = self.virtuallayer_set.prefetch_related('styles').filter(active=True)
         return list(layers) + list(vlayers)
 
+    def all_layers(self):
+        layers = self.layer_set.prefetch_related('styles').all()
+        vlayers = self.virtuallayer_set.prefetch_related('styles').all()
+        return sorted(list(layers) + list(vlayers), key=lambda x: x.active, reverse=True)
+
     @property
     def safe_filename(self):
         return "".join(c for c in self.name if c.isalnum()).rstrip()
@@ -213,6 +218,10 @@ class Dataset(TypedModel):
     @property
     def cell_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
+
+    @property
+    def online(self):
+        return urlparse(self.uri).scheme != ""
 
     def humanize(self):
         return "Generic Dataset"

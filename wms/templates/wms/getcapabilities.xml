@@ -81,7 +81,7 @@
             <Abstract>{{ dataset.abstract }}</Abstract>
             <SRS>EPSG:3857</SRS>
             <SRS>MERCATOR</SRS>
-            {% load date_formats %}
+            {% load wms %}
             {% for layer in dataset.active_layers %}
             <Layer opaque="0" queryable="1">
                 <Name>{{ layer.var_name }}</Name>

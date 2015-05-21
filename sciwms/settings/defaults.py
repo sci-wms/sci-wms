@@ -133,9 +133,9 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-                  'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
-                  'PAGINATE_BY': 10
-                  }
+    'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
+    'PAGINATE_BY': 10
+}
 
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
