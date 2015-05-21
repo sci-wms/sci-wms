@@ -48,6 +48,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
 from django.core import serializers
 from django.db.utils import IntegrityError
+from django.shortcuts import get_object_or_404, render_to_response
 from django.views.decorators.cache import cache_page
 
 from pyugrid import UGrid
@@ -83,11 +84,6 @@ def datasets(request):
 
 def index(request):
     datasets = Dataset.objects.all()
-    for dataset in datasets:
-        dataset.uri = dataset.path()
-        if urlparse(dataset.uri).scheme != "":
-            # Used in template to linkify to URI
-            dataset.online = True
     context = { "datasets" : datasets }
     return TemplateResponse(request, 'wms/index.html', context)
 
@@ -596,9 +592,8 @@ def getFeatureInfo(request, dataset):
 
 
 def demo(request):
-    import django.shortcuts as dshorts
     context = { 'datasets'  : Dataset.objects.all()}
-    return dshorts.render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
+    return render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
 
 
 from django.http import HttpResponse
@@ -653,6 +648,13 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     gettemp.update(newgets)
     request.GET = gettemp
     return request
+
+
+class DatasetShowView(View):
+
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, name=dataset)
+        return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset))
 
 
 class DatasetListView(View):
