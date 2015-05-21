@@ -12,3 +12,4 @@ pyaxiom>=0.0.9
 django-grappelli
 django-typed-models
 pyproj
+dj-static
