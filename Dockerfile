@@ -39,7 +39,7 @@ WORKDIR /apps/sci-wms
 
 ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
 
-RUN python manage.py migrate
+RUN python manage.py migrate --noinput
 RUN python manage.py collectstatic --noinput
 
 # handle admin user
