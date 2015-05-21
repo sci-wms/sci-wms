@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
-from wms.models import Dataset
+from datetime import datetime
+import itertools
 
+import pytz
 from pyaxiom.netcdf import EnhancedDataset
+from pysgrid import from_nc_dataset
+from pysgrid.custom_exceptions import SGridNonCompliantError
+from pysgrid.read_netcdf import NetCDFDataset
+
+from wms.models import Dataset
 
 
 class SGridDataset(Dataset):
@@ -11,15 +18,46 @@ class SGridDataset(Dataset):
         ds = None
         try:
             ds = EnhancedDataset(uri)
-            return 'sgrid' in ds.Conventions.lower()
-        except (AttributeError, RuntimeError):
+            nc_ds = NetCDFDataset(ds)
+            return nc_ds.sgrid_compliant_file()
+        except (AttributeError, RuntimeError, SGridNonCompliantError):
             return False
         finally:
             if ds is not None:
                 ds.close()
 
     def update_cache(self, force=False):
-        raise NotImplementedError("The SGRID Dataset type is not implemented yet")
+        nc = self.netcdf4_dataset()
+        sg = from_nc_dataset(nc)
+        sg.save_as_netcdf(self.topology_file)
+        # add time to the cached topology
+        time_vars = nc.get_variables_by_attributes(standard_name='time')
+        time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
+        unique_time_dims = list(set(time_dims))
+        with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
+            # create pertinent time dimensions if they aren't already present
+            for unique_time_dim in unique_time_dims:
+                dim_size = len(cached_nc.dimensions[unique_time_dim])
+                try:
+                    cached_nc.createDimension(unique_time_dim, size=dim_size)
+                except RuntimeError:
+                    continue
+            # support cases where there may be more than one variable with standard_name='time' in a dataset
+            for time_var in time_vars:
+                try:
+                    time_var_obj = cached_nc.createVariable(time_var.name, 
+                                                            time_var.dtype, 
+                                                            time_var.dimensions
+                                                            )
+                except RuntimeError:
+                    time_var_obj = cached_nc.variables[time_var.name]
+                finally:
+                    time_vals = time_var[:]
+                    time_var_obj[:] = time_vals
+                    time_var_obj.units = time_var.units
+        nc.close()
+        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
+        self.save()
 
     def getmap(self, layer, request):
         raise NotImplementedError
@@ -31,6 +69,9 @@ class SGridDataset(Dataset):
         raise NotImplementedError
 
     def wgs84_bounds(self, layer):
+        raise NotImplementedError
+    
+    def nearest_time(self, layer, time):
         raise NotImplementedError
 
     def times(self, layer):
