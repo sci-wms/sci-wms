@@ -32,6 +32,7 @@ urlpatterns = patterns( '',
                         url(r'^$', 'wms.views.index', name='index'),
 
                         url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
+                        url(r'^favicon.ico$', 'wms.views.favicon'),
 
                         url(r'^wms/', include('wms.urls')),
                         url(r'^rest/', include('wmsrest.urls')),

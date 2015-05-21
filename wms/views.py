@@ -48,6 +48,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
 from django.core import serializers
 from django.db.utils import IntegrityError
+from django.views.decorators.cache import cache_page
 
 from pyugrid import UGrid
 
@@ -57,9 +58,18 @@ from wms import wms_handler
 from wms import logger
 
 
+@cache_page(604800)
 def crossdomain(request):
-    with open(os.path.join(settings.COMMON_STATIC_FILES, "common", "crossdomain.xml")) as f:
+    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "crossdomain.xml")) as f:
         response = HttpResponse(content_type="text/xml")
+        response.write(f.read())
+    return response
+
+
+@cache_page(604800)
+def favicon(request):
+    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "favicon.ico")) as f:
+        response = HttpResponse(content_type="image/x-icon")
         response.write(f.read())
     return response
 

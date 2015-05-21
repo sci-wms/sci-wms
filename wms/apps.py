@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.utils import OperationalError
 
 from wms import logger
 
@@ -17,11 +18,14 @@ class WmsConfig(AppConfig):
         if settings.TESTING or settings.DEBUG:
             logger.info("Not updating datasets due to TESTING or DEBUG setting being True")
         else:
-            for d in Dataset.objects.all():
-                try:
-                    d.update_cache()
-                    logger.info('Updating {} successful'.format(d.name))
-                except NotImplementedError:
-                    logger.info('Updating {} failed.  Dataset type not implemented.'.format(d.name))
-                except BaseException as e:
-                    logger.info('Updating {} failed. {}.'.format(d.name, str(e)))
+            try:
+                for d in Dataset.objects.all():
+                    try:
+                        d.update_cache()
+                        logger.info('Updating {} successful'.format(d.name))
+                    except NotImplementedError:
+                        logger.info('Updating {} failed.  Dataset type not implemented.'.format(d.name))
+                    except BaseException as e:
+                        logger.info('Updating {} failed. {}.'.format(d.name, str(e)))
+            except OperationalError:
+                pass
