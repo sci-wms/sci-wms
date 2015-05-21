@@ -167,6 +167,9 @@ class Dataset(TypedModel):
                     if len(nc_var.dimensions) > 1:
                         l.active = True
 
+                if hasattr(nc_var, 'long_name'):
+                    l.description = nc_var.long_name
+
                 # Set some standard styles
                 l.styles = Style.defaults()
                 l.save()
