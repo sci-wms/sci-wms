@@ -131,19 +131,25 @@ class SGridDataset(Dataset):
             time_val = times[time_index]
         return time_index, time_val
     
-    def nearest_z(self, layer, z):
+    def nearest_z(self, layer_access_name, z):
         """
         Return the z index and z value that is closest
         
         """
-        raise NotImplementedError
-        
+        depths = self.depths(layer_access_name)
+        depth_idx = bisect.bisect_right(depths, z)
+        try:
+            depth = depths[depth_idx]
+        except IndexError:
+            depth_idx -= 1
+            depth = depth[depth_idx]
+        return depth_idx, depth
         
     def times(self, layer):
         raise NotImplementedError
 
-    def depth_variable(self, variable_obj):
-        var_coordinates = self._parse_data_coordinates(variable_obj)
+    def depth_variable(self, layer_access_name):
+        var_coordinates = self._parse_data_coordinates(layer_access_name)
         nc = self.netcdf4_dataset()
         for var_coordinate in var_coordinates:
             var_obj = nc.variables[var_coordinate]
@@ -156,7 +162,8 @@ class SGridDataset(Dataset):
                 depth_variable = None
         return depth_variable
     
-    def _parse_data_coordinates(self, variable_obj):
+    def _parse_data_coordinates(self, layer_access_name):
+        variable_obj = self.netcdf4_dataset().variables[layer_access_name]
         var_dims = variable_obj.dimensions
         var_coordinates = variable_obj.coordinates.strip().split()
         if len(var_dims) < len(var_coordinates):
@@ -175,8 +182,10 @@ class SGridDataset(Dataset):
     def depth_direction(self, layer):
         raise NotImplementedError
 
-    def depths(self, layer):
-        raise NotImplementedError
+    def depths(self, layer_access_name):
+        depth_variable = self.depth_variable(layer_access_name)
+        depth_data = self.netcdf4_dataset().variables[depth_variable][:]
+        return depth_data
 
     def humanize(self):
         return "SGRID"
