@@ -34,7 +34,7 @@ RUN pip install -r /tmp/requirements-prod.txt
 
 RUN mkdir -p /apps/sci-wms
 COPY . /apps/sci-wms
-RUN rm /apps/sci-wms/sciwms/sci-wms.db
+RUN rm -f /apps/sci-wms/sciwms/sci-wms.db
 WORKDIR /apps/sci-wms
 
 ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod

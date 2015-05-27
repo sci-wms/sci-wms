@@ -7,7 +7,6 @@
     table th, table td { overflow: hidden; }
     hr { margin-top: 10px; margin-bottom: 10px; }
 </style>
-<script src="{% static 'wms/cookie.js' %}"></script>
 {% endblock %}
 
 
@@ -61,7 +60,7 @@
                 <tr>
                     <td>
                         <div>
-                            <strong>{{ dataset.name | truncatechars:28 }}</strong>
+                            <strong><a href="{% url 'show_dataset' dataset.name %}">{{ dataset.name | truncatechars:28 }}</a></strong>
                             <span class="label label-default">{{ dataset.humanize }}</span>
                         </div>
                         <span>{{ dataset.title }}</span>

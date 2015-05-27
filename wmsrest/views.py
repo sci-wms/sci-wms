@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from wms.models import Dataset
-from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer
+from wms.models import Dataset, Layer, VirtualLayer
+from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import mixins
+from rest_framework import generics
 from django.http import Http404
 
 
 class DatasetList(APIView):
     """
-    List all snippets, or create a new snippet.
+    List all datasets, or create a new dataset.
     """
     def get(self, request, format=None):
         snippets = Dataset.objects.select_related('layer_set__styles').all()
@@ -24,6 +26,9 @@ class DatasetList(APIView):
         elif 'sgrid' in request.data['type']:
             request.data['type'] = 'wms.sgriddataset'
             serializer = SGridDatasetSerializer(data=request.data)
+        elif 'rgrid' in request.data['type']:
+            request.data['type'] = 'wms.rgriddataset'
+            serializer = RGridDatasetSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
@@ -66,6 +71,9 @@ class DatasetDetail(APIView):
         elif 'sgrid' in request.data['type']:
             request.data['type'] = 'wms.sgriddataset'
             serializer = SGridDatasetSerializer(dataset, data=request.data)
+        elif 'rgrid' in request.data['type']:
+            request.data['type'] = 'wms.rgriddataset'
+            serializer = RGridDatasetSerializer(dataset, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
@@ -76,3 +84,15 @@ class DatasetDetail(APIView):
         dataset = self.get_object(pk)
         dataset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LayerDetail(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = LayerSerializer
+    queryset = Layer.objects.all()
+
+
+class VirtuallLayerDetail(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = VirtualLayerSerializer
+    queryset = VirtualLayer.objects.all()

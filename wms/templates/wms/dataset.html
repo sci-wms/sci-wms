@@ -1,0 +1,137 @@
+{% extends "wms/base.html" %}
+{% load wms %}
+
+{% block content %}
+
+<div class="row">
+  <h2>{{dataset.name}} <span class="label label-default">{{ dataset.humanize }}</span></h2>
+  <form>
+    <table class="table table-bordered" style="margin-top: 10px;">
+      <tr>
+        <td width="75%"><b>description</b>: {{dataset.description}}</td>
+        {% if dataset.online %}
+            <td><b>data</b>: <a class="row" href="{{ dataset.uri }}.html" target="_blank"><span class="glyphicon glyphicon-new-window"></span> OPeNDAP</a></td>
+        {% else %}
+            <td><b>data</b>: <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Local file</abbr></td>
+        {% endif %}
+      </tr>
+      <tr>
+        <td colspan="2"><b>additional dataset attributes</b>: <pre>{% autoescape off %}{{ dataset.json }}{% endautoescape %}</pre></td>
+    </table>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover table-condensed">
+      <thead>
+        <tr>
+          <th class='col-md-1'>active</th>
+          <th class='col-md-2'>NetCDF Variable</th>
+          <th class='col-md-5'>CF standard_name</th>
+          <th class='col-md-2'>min</th>
+          <th class='col-md-2'>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for layer in dataset.all_layers %}
+        <tr class="{{ layer.active | yesno:'success,warning' }}">
+          <td>
+            <div class="check">
+              <label>
+                <input type="checkbox" class="active_check" name="active" {{ layer.active | yesno:'checked,' }} aria-label="Available?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></label>
+            </div>
+          </td>
+          <td>{{ layer.var_name }} {% if layer|class_name == 'VirtualLayer' %}<span class="label label-info">Virtual</span>{% endif %}</td>
+
+          {% if layer.std_name|length > 60 %}
+            <td><abbr title="{{ layer.std_name }}"><span>{{ layer.std_name | truncatechars:60}}</span></abbr></td>
+          {% else %}
+            <td>{{ layer.std_name }}</td>
+          {% endif %}
+          <td>
+            <input type="text" class="form-control default_value_edits" name="default_min" value="{{ layer.default_min | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">
+          </td>
+          <td>
+            <input type="text" class="form-control default_value_edits" name="default_max" value="{{ layer.default_max | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+  <script>
+  $(document).ready(function() {
+    $(".active_check").click(function() {
+        chx = $(this)
+        chx.attr("disabled", "disabled");
+
+        var zbool = chx.is(':checked') ? "true" : "false";
+        console.log(chx.attr("name") + "=" + zbool);
+
+        $.ajax({
+            type: "PATCH",
+            url: chx.attr('data-edit-url'),
+            data: chx.attr('name') + "=" + zbool,
+            dataType: "text",
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+            },
+            success: function(data) {
+                chx.attr("disabled", false);
+                chx.closest("tr").animate({
+                  color: "green",
+                });
+                chx.closest("tr").animate({
+                  color: "#333",
+                });
+            }
+        }).fail(function(data) {
+            chx.attr("disabled", false);
+            chx.closest("tr").animate({
+              color: "red",
+            });
+            chx.closest("tr").animate({
+              color: "#333",
+            });
+        });
+    });
+
+    $(".default_value_edits").on("blur", function() {
+      but = $(this)
+      but.attr("disabled", "disabled");
+
+      $.ajax({
+            type: "PATCH",
+            url: but.attr('data-edit-url'),
+            data: but.attr('name') + "=" + but.val(),
+            dataType: "text",
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+            },
+            success: function(data) {
+                but.attr("disabled", false);
+                but.closest("tr").animate({
+                  color: "green",
+                });
+                but.closest("tr").animate({
+                  color: "#333",
+                });
+            }
+        }).fail(function(data) {
+            console.log(data)
+            but.attr("disabled", false);
+            but.closest("tr").animate({
+              color: "red",
+            });
+            but.closest("tr").animate({
+              color: "#333",
+            });
+        });
+      });
+    });
+    </script>
+{% endif %}
+
+{% endblock %}

@@ -32,6 +32,9 @@ class SGridDataset(Dataset):
             if ds is not None:
                 ds.close()
 
+    def has_cache(self):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
         nc = self.netcdf4_dataset()
         sg = from_nc_dataset(nc)

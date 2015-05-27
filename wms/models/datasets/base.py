@@ -92,6 +92,9 @@ class Dataset(TypedModel):
     def depths(self, layer):
         raise NotImplementedError
 
+    def has_cache(self):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
         raise NotImplementedError
 
@@ -164,6 +167,9 @@ class Dataset(TypedModel):
                     if len(nc_var.dimensions) > 1:
                         l.active = True
 
+                if hasattr(nc_var, 'long_name'):
+                    l.description = nc_var.long_name
+
                 # Set some standard styles
                 l.styles = Style.defaults()
                 l.save()
@@ -174,6 +180,11 @@ class Dataset(TypedModel):
         layers = self.layer_set.prefetch_related('styles').filter(active=True)
         vlayers = self.virtuallayer_set.prefetch_related('styles').filter(active=True)
         return list(layers) + list(vlayers)
+
+    def all_layers(self):
+        layers = self.layer_set.prefetch_related('styles').all()
+        vlayers = self.virtuallayer_set.prefetch_related('styles').all()
+        return sorted(list(layers) + list(vlayers), key=lambda x: x.active, reverse=True)
 
     @property
     def safe_filename(self):
@@ -210,6 +221,10 @@ class Dataset(TypedModel):
     @property
     def cell_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
+
+    @property
+    def online(self):
+        return urlparse(self.uri).scheme != ""
 
     def humanize(self):
         return "Generic Dataset"
