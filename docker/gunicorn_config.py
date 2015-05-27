@@ -39,7 +39,7 @@ except:
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.prod")
 
-bind              = "127.0.0.1:7002"
+bind              = "0.0.0.0:7002"
 workers           = multiprocessing.cpu_count() + 1
 worker_class      = worker
 debug             = False
@@ -48,8 +48,8 @@ timeout           = 300
 max_requests      = 20
 keepalive         = 5
 backlog           = 20
-accesslog         = os.path.abspath(os.path.join(os.path.dirname(__file__), "logs", "gunicorn_access.log"))
-errorlog          = os.path.abspath(os.path.join(os.path.dirname(__file__), "logs", "gunicorn_error.log"))
+accesslog         = "-"
+errorlog          = "-"
 loglevel          = "warning"
 preload_app       = False
 proc_name         = "sciwms"
