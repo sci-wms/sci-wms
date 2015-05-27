@@ -21,8 +21,11 @@ class WmsConfig(AppConfig):
             try:
                 for d in Dataset.objects.all():
                     try:
+                        if not d.has_cache():
+                            logger.info('Creating {} successful'.format(d.name))
+                        else:
+                            logger.info('Updating {} successful'.format(d.name))
                         d.update_cache()
-                        logger.info('Updating {} successful'.format(d.name))
                     except NotImplementedError:
                         logger.info('Updating {} failed.  Dataset type not implemented.'.format(d.name))
                     except BaseException as e:

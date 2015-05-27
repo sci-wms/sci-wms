@@ -18,6 +18,9 @@ class SGridDataset(Dataset):
             if ds is not None:
                 ds.close()
 
+    def has_cache(self):
+        raise NotImplementedError
+
     def update_cache(self, force=False):
         raise NotImplementedError("The SGRID Dataset type is not implemented yet")
 
