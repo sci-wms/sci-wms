@@ -10,6 +10,7 @@ from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset
 from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset
+from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors, vector_sum
 
 from wms.data_handler import lat_lon_subset_idx
 from wms.models import Dataset
@@ -65,6 +66,7 @@ class SGridDataset(Dataset):
 
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
+        requested_elevation = request.GET['elevation']
         epsg_4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
@@ -92,14 +94,65 @@ class SGridDataset(Dataset):
         for var_idx, var_name in enumerate(split_lyr_vars):
             lv_key = 'var{0}'.format(var_idx)
             lyr_vars[lv_key] = var_name
-        if len(lyr_vars) == 2:
+        # let's just handle instances of 1 or 2 variables for now
+        # a request of 2 variables will be a request for a virtual layer
+        # i think if 2 variables are requested, they would probably be defined on the grid
+        grid_variables = cached_sg.grid_variables
+        if len(lyr_vars) == 2 and set(split_lyr_vars).issubset(grid_variables):
             var0_name = lyr_vars['var0']
             var1_name = lyr_vars['var1']
             var0_obj = getattr(cached_sg, var0_name)
             var1_obj = getattr(cached_sg, var1_name)
             raw_var0 = nc.variables[var0_name]
             raw_var1 = nc.variables[var1_name]
-            
+            if len(var0_obj.dimensions) == 3 and len(var1_obj.dimensions) == 3:
+                if self.depth_variable(var0_name) == self.depth_variable(var1_name):
+                    vertical_idx, vertical_val = self.nearest_z(var0_name, requested_elevation)
+                    var0_data_trimmed = raw_var0[time_index, vertical_idx, var0_obj.center_axis[-2], var0_obj.center_axis[-1]]
+                    var1_data_trimmed = raw_var1[time_index, vertical_idx, var1_obj.center_axis[-2]. var1_obj.center_axis[-1]]
+                else:
+                    raise AttributeError('The variables of this layer do not appear to have the same vertical coordinates.')
+            elif len(var0_obj.dimensions) == 2 and len(var1_obj.dimensions) == 2:
+                var0_data_trimmed = raw_var0[time_index, var0_obj.center_axis[-2], var0_obj.center_axis[-1]]
+                var1_data_trimmed = raw_var1[time_index, var1_obj.center_axis[-2], var1_obj.center_axis[-1]]
+            elif len(var0_obj.dimensions) == 1 and len(var1_obj.dimensions) == 1:
+                var0_data_trimmed = raw_var0[var0_obj.center_axis]
+                var1_data_trimmed = raw_var1[var1_obj.center_axis]
+            else:
+                raise AttributeError('One or both of the specified variables has screwed up dimensions.')
+            var0_avg = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
+            var1_avg = avg_to_cell_center(var1_data_trimmed, var1_obj.center_axis)
+            if var0_obj.vector_axis.lower() == 'x' and var1_obj.vector_axis.lower() == 'y':
+                x_var = var0_avg
+                y_var = var1_avg
+            elif var0_obj.vector_axis.lower() == 'y' and var1_obj.vector_axis.lower() == 'x':
+                x_var = var1_avg
+                y_var = var0_avg
+            # if unable to determine from vector_axis attribute, try center_axis
+            # this is less reliable....
+            elif var0_obj.center_axis == 1 and var1_obj.center_axis == 0:
+                x_var = var0_avg
+                y_var = var1_avg
+            elif var0_obj.center_axis == 0 and var1_obj.center_axis == 1:
+                x_var = var1_avg
+                y_var = var0_avg
+            else:
+                raise Exception('Unable to determine x and y variables.')
+            # rotate vectors
+            angles = cached_sg.angles[lon_obj.center_slicing]
+            x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
+            spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
+            spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
+            plot_data = vector_sum(spatial_subset_x_rot, spatial_subset_y_rot)
+        # deal with requests for a single variable
+        elif len(lyr_vars) == 1:
+            # handle grid variables
+            if set(lyr_vars).issubset(grid_variables):
+                pass
+            # handle non-grid variables
+            else:
+                pass
+    
     def getlegendgraphic(self, layer, request):
         raise NotImplementedError
 
