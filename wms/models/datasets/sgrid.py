@@ -84,7 +84,6 @@ class SGridDataset(Dataset):
         
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
-        requested_elevation = request.GET['elevation']
         epsg_4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
