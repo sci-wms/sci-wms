@@ -12,8 +12,9 @@ from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors, vector_sum
 
+from wms import mpl_handler
 from wms.data_handler import lat_lon_subset_idx
-from wms.models import Dataset
+from wms.models import Dataset, Layer, VirtualLayer
 
 
 class SGridDataset(Dataset):
@@ -63,7 +64,21 @@ class SGridDataset(Dataset):
         nc.close()
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
-
+        
+    def _variable_data_trimming(self, variable, cached_variable, time_index, request):
+        variable_dim_length = len(cached_variable.dimensions)
+        if variable_dim_length == 3:
+            z = request.GET['elevation']
+            vertical_idx = self.nearest_z(cached_variable.name, z)[0]
+            trimmed_variable = variable[time_index, vertical_idx, cached_variable.center_slicing[-2], cached_variable.center_slicing[-1]]
+        elif variable_dim_length == 2:
+            trimmed_variable = variable[time_index, cached_variable.center_slicing[-2], cached_variable.center_slicing[-3]]
+        elif variable_dim_length == 1:
+            trimmed_variable = variable[cached_variable.center_slicing]
+        else:
+            raise Exception('Unable to trim variable {0} data.'.format(cached_variable.name))
+        return trimmed_variable
+        
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
         requested_elevation = request.GET['elevation']
@@ -72,7 +87,7 @@ class SGridDataset(Dataset):
         requested_crs = request.GET['crs']
         wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
         wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxx)
-        nc  = self.netcdf4_dataset()
+        nc = self.netcdf4_dataset()
         cached_sg = from_nc_dataset(self.topology_file)
         lon_name, lat_name = cached_sg.face_coordiates
         lon_obj = getattr(cached_sg, lon_name)
@@ -105,19 +120,9 @@ class SGridDataset(Dataset):
             var1_obj = getattr(cached_sg, var1_name)
             raw_var0 = nc.variables[var0_name]
             raw_var1 = nc.variables[var1_name]
-            if len(var0_obj.dimensions) == 3 and len(var1_obj.dimensions) == 3:
-                if self.depth_variable(var0_name) == self.depth_variable(var1_name):
-                    vertical_idx, vertical_val = self.nearest_z(var0_name, requested_elevation)
-                    var0_data_trimmed = raw_var0[time_index, vertical_idx, var0_obj.center_axis[-2], var0_obj.center_axis[-1]]
-                    var1_data_trimmed = raw_var1[time_index, vertical_idx, var1_obj.center_axis[-2]. var1_obj.center_axis[-1]]
-                else:
-                    raise AttributeError('The variables of this layer do not appear to have the same vertical coordinates.')
-            elif len(var0_obj.dimensions) == 2 and len(var1_obj.dimensions) == 2:
-                var0_data_trimmed = raw_var0[time_index, var0_obj.center_axis[-2], var0_obj.center_axis[-1]]
-                var1_data_trimmed = raw_var1[time_index, var1_obj.center_axis[-2], var1_obj.center_axis[-1]]
-            elif len(var0_obj.dimensions) == 1 and len(var1_obj.dimensions) == 1:
-                var0_data_trimmed = raw_var0[var0_obj.center_axis]
-                var1_data_trimmed = raw_var1[var1_obj.center_axis]
+            if len(var0_obj.dimensions) == len(var1_obj.dimensions):
+                var0_data_trimmed = self._variable_data_trimming(raw_var0, var0_obj, time_index, request)
+                var1_data_trimmed = self._variable_data_trimming(raw_var1, var1_obj, time_index, request)
             else:
                 raise AttributeError('One or both of the specified variables has screwed up dimensions.')
             var0_avg = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
@@ -146,12 +151,27 @@ class SGridDataset(Dataset):
             plot_data = vector_sum(spatial_subset_x_rot, spatial_subset_y_rot)
         # deal with requests for a single variable
         elif len(lyr_vars) == 1:
+            var0_name = lyr_vars['var0']
+            var0_obj = getattr(cached_sg, var0_name)
+            raw_var0 = nc.variables[var0_name]
+            var0_data_trimmed = self._variable_data_trimming(raw_var0, var0_obj, time_index, request)
             # handle grid variables
             if set(lyr_vars).issubset(grid_variables):
-                pass
+                var0_cell_center_data = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
             # handle non-grid variables
             else:
-                pass
+                var0_cell_center_data = var0_data_trimmed
+            plot_data = self._spatial_data_subset(var0_cell_center_data, spatial_idx)
+        else:
+            msg = ('Only layers with 1 or 2 variables are currently supported. ' 
+                   'The request layer contains {0} layers.').format(len(lyr_vars))
+            raise ValueError(msg)
+        # deal with rendering a map image
+        if isinstance(layer, Layer):
+            pass
+        elif isinstance(layer, VirtualLayer):
+            pass
+        
     
     def getlegendgraphic(self, layer, request):
         raise NotImplementedError
