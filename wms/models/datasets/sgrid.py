@@ -11,7 +11,7 @@ from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset
-from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors, vector_sum
+from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
 
 from wms import mpl_handler
 from wms.data_handler import lat_lon_subset_idx
