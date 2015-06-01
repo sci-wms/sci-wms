@@ -89,7 +89,7 @@ class SGridDataset(Dataset):
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
         wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
-        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxx)
+        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxy)
         nc = self.netcdf4_dataset()
         cached_sg = from_ncfile(self.topology_file)
         lon_name, lat_name = cached_sg.face_coordinates
@@ -149,11 +149,11 @@ class SGridDataset(Dataset):
                 else:
                     raise Exception('Unable to determine x and y variables.')
             # rotate vectors
+            # print(x_var)
             angles = cached_sg.angles[lon_obj.center_slicing]
             x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
             spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
             spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
-            plot_data = vector_sum(spatial_subset_x_rot, spatial_subset_y_rot)
         # deal with requests for a single variable
         elif len(lyr_vars) == 1:
             var0_name = lyr_vars['var0']
@@ -185,7 +185,7 @@ class SGridDataset(Dataset):
                                                               )
                     return quiver_resp
                 if len(lyr_vars) == 1:
-                    pass
+                    raise NotImplementedError
         
     
     def getlegendgraphic(self, layer, request):
