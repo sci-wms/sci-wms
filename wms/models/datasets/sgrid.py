@@ -71,16 +71,16 @@ class SGridDataset(Dataset):
         
     def _variable_data_trimming(self, variable, cached_variable, time_index, request):
         variable_dim_length = len(cached_variable.dimensions)
-        if variable_dim_length == 3:
+        if variable_dim_length >= 3:
             z = request.GET['elevation']
-            vertical_idx = self.nearest_z(cached_variable.name, z)[0]
+            vertical_idx = self.nearest_z(cached_variable.variable, z)[0]
             trimmed_variable = variable[time_index, vertical_idx, cached_variable.center_slicing[-2], cached_variable.center_slicing[-1]]
         elif variable_dim_length == 2:
             trimmed_variable = variable[time_index, cached_variable.center_slicing[-2], cached_variable.center_slicing[-3]]
         elif variable_dim_length == 1:
             trimmed_variable = variable[cached_variable.center_slicing]
         else:
-            raise Exception('Unable to trim variable {0} data.'.format(cached_variable.name))
+            raise Exception('Unable to trim variable {0} data.'.format(cached_variable.variable))
         return trimmed_variable
         
     def getmap(self, layer, request):
