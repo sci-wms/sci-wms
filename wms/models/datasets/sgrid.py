@@ -106,7 +106,7 @@ class SGridDataset(Dataset):
                                          )
         subset_lon = self._spatial_data_subset(lon, spatial_idx)
         subset_lat = self._spatial_data_subset(lat, spatial_idx)
-        lyr_access_name = layer.access_name
+        lyr_access_name = layer.var_name
         split_lyr_vars = lyr_access_name.split(',')
         lyr_vars = {}
         for var_idx, var_name in enumerate(split_lyr_vars):
