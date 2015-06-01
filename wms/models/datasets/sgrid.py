@@ -2,12 +2,13 @@
 from datetime import datetime
 import bisect
 import itertools
+import os
 
 import netCDF4 as nc4
 import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
-from pysgrid import from_nc_dataset
+from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors, vector_sum
@@ -33,7 +34,7 @@ class SGridDataset(Dataset):
                 ds.close()
 
     def has_cache(self):
-        raise NotImplementedError
+        return os.path.exists(self.topology_file)
 
     def update_cache(self, force=False):
         nc = self.netcdf4_dataset()
@@ -90,8 +91,8 @@ class SGridDataset(Dataset):
         wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
         wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxx)
         nc = self.netcdf4_dataset()
-        cached_sg = from_nc_dataset(self.topology_file)
-        lon_name, lat_name = cached_sg.face_coordiates
+        cached_sg = from_ncfile(self.topology_file)
+        lon_name, lat_name = cached_sg.face_coordinates
         lon_obj = getattr(cached_sg, lon_name)
         lat_obj = getattr(cached_sg, lat_name)
         centers = cached_sg.centers
@@ -172,7 +173,16 @@ class SGridDataset(Dataset):
         if isinstance(layer, Layer):
             pass
         elif isinstance(layer, VirtualLayer):
-            pass
+            if request.GET['image_type'] == 'vectors':
+                if len(lyr_vars) == 2:
+                    quiver_resp = mpl_handler.quiver_response(subset_lon,
+                                                              subset_lat,
+                                                              spatial_subset_x_rot,
+                                                              spatial_subset_y_rot
+                                                              )
+                    return quiver_resp
+                if len(lyr_vars) == 1:
+                    pass
         
     
     def getlegendgraphic(self, layer, request):
