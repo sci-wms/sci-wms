@@ -130,22 +130,24 @@ class SGridDataset(Dataset):
                 raise AttributeError('One or both of the specified variables has screwed up dimensions.')
             var0_avg = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
             var1_avg = avg_to_cell_center(var1_data_trimmed, var1_obj.center_axis)
-            if var0_obj.vector_axis.lower() == 'x' and var1_obj.vector_axis.lower() == 'y':
-                x_var = var0_avg
-                y_var = var1_avg
-            elif var0_obj.vector_axis.lower() == 'y' and var1_obj.vector_axis.lower() == 'x':
-                x_var = var1_avg
-                y_var = var0_avg
+            if var0_obj.vector_axis is not None and var1_obj is not None:
+                if var0_obj.vector_axis.lower() == 'x' and var1_obj.vector_axis.lower() == 'y':
+                    x_var = var0_avg
+                    y_var = var1_avg
+                elif var0_obj.vector_axis.lower() == 'y' and var1_obj.vector_axis.lower() == 'x':
+                    x_var = var1_avg
+                    y_var = var0_avg
             # if unable to determine from vector_axis attribute, try center_axis
             # this is less reliable....
-            elif var0_obj.center_axis == 1 and var1_obj.center_axis == 0:
-                x_var = var0_avg
-                y_var = var1_avg
-            elif var0_obj.center_axis == 0 and var1_obj.center_axis == 1:
-                x_var = var1_avg
-                y_var = var0_avg
             else:
-                raise Exception('Unable to determine x and y variables.')
+                if var0_obj.center_axis == 1 and var1_obj.center_axis == 0:
+                    x_var = var0_avg
+                    y_var = var1_avg
+                elif var0_obj.center_axis == 0 and var1_obj.center_axis == 1:
+                    x_var = var1_avg
+                    y_var = var0_avg
+                else:
+                    raise Exception('Unable to determine x and y variables.')
             # rotate vectors
             angles = cached_sg.angles[lon_obj.center_slicing]
             x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
@@ -178,7 +180,8 @@ class SGridDataset(Dataset):
                     quiver_resp = mpl_handler.quiver_response(subset_lon,
                                                               subset_lat,
                                                               spatial_subset_x_rot,
-                                                              spatial_subset_y_rot
+                                                              spatial_subset_y_rot,
+                                                              request
                                                               )
                     return quiver_resp
                 if len(lyr_vars) == 1:
