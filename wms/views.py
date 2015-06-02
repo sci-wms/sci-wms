@@ -603,7 +603,7 @@ def getFeatureInfo(request, dataset):
 
 
 def demo(request):
-    context = { 'datasets'  : Dataset.objects.all()}
+    context = { 'datasets'  : Dataset.objects.select_related('layers__styles').all()}
     return render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
 
 
