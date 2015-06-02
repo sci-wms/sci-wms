@@ -120,7 +120,7 @@ def update_dataset(request, dataset):
         if dataset is None:
             return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
         else:
-            d = Dataset.objects.get(name=dataset)
+            d = Dataset.objects.get(slug=dataset)
             d.update_cache(force=True)
             return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
     else:
@@ -186,7 +186,7 @@ def getLegendGraphic(request, dataset):
     except IndexError:
         colormap = None
 
-    dataset = Dataset.objects.get(name=dataset)
+    dataset = Dataset.objects.get(slug=dataset)
     nc = dataset.netcdf4_dataset()
 
     """
@@ -303,7 +303,7 @@ def getFeatureInfo(request, dataset):
     from datetime import date
     from mpl_toolkits.basemap import pyproj
 
-    dataset = Dataset.objects.get(name=dataset)
+    dataset = Dataset.objects.get(slug=dataset)
 
     X = float(request.GET['x'])
     Y = float(request.GET['y'])
@@ -676,7 +676,7 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
 class DatasetShowView(View):
 
     def get(self, request, dataset):
-        dataset = get_object_or_404(Dataset, name=dataset)
+        dataset = get_object_or_404(Dataset, slug=dataset)
         return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset))
 
 
@@ -706,7 +706,7 @@ class DatasetListView(View):
 class WmsView(View):
 
     def get(self, request, dataset):
-        dataset = Dataset.objects.filter(name=dataset).first()
+        dataset = Dataset.objects.filter(slug=dataset).first()
         request = normalize_get_params(request)
         reqtype = request.GET['request']
 

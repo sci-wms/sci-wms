@@ -60,7 +60,7 @@
                 <tr>
                     <td>
                         <div>
-                            <strong><a href="{% url 'show_dataset' dataset.name %}">{{ dataset.name | truncatechars:28 }}</a></strong>
+                            <strong><a href="{% url 'show_dataset' dataset.slug %}">{{ dataset.name | truncatechars:28 }}</a></strong>
                             <span class="label label-default">{{ dataset.humanize }}</span>
                         </div>
                         <span>{{ dataset.title }}</span>
@@ -73,7 +73,7 @@
                     </td>
 
                     <td>
-                        <a class="row" href="{% url 'dataset' dataset.name %}?REQUEST=GetCapabilities">
+                        <a class="row" href="{% url 'dataset' dataset.slug %}?REQUEST=GetCapabilities">
                             <span class="glyphicon glyphicon-new-window"></span> GetCaps
                         </a>
                         {% if dataset.online %}
@@ -100,7 +100,7 @@
 
                     <td>
                         <!-- Update -->
-                        <a href="{% url 'update_dataset' dataset.name %}">
+                        <a href="{% url 'update_dataset' dataset.slug %}">
                             <button type="button" class="btn btn-default btn-xs">
                                 <span class="glyphicon glyphicon-refresh"></span> Update
                             </button>

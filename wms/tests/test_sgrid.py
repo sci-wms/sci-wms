@@ -21,11 +21,11 @@ class TestSgrid(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        d = Dataset.objects.get(name="sgrid_testing")
+        d = Dataset.objects.get(slug="sgrid_testing")
         d.delete()
 
     def setUp(self):
-        self.dataset_name = 'sgrid_testing'
+        self.dataset_slug = 'sgrid_testing'
         self.url_params = dict(
             service     = 'WMS',
             request     = 'GetMap',
@@ -43,12 +43,12 @@ class TestSgrid(TestCase):
         return '{}.png'.format(self.id().split('.')[-1])
 
     def test_identify(self):
-        d = Dataset.objects.get(name=self.dataset_name)
+        d = Dataset.objects.get(name=self.dataset_slug)
         klass = Dataset.identify(d.uri)
         assert klass == SGridDataset
 
     def do_test(self, params, write=True):
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
+        response = self.client.get('/wms/datasets/{}'.format(self.dataset_slug), params)
         self.assertEqual(response.status_code, 200)
         if write is True:
             with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
@@ -65,7 +65,7 @@ class TestSgrid(TestCase):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
         self.do_test(params)
-    
+
     @unittest.skip('temporary skip')
     def test_pcolor(self):
         params = copy(self.url_params)
@@ -88,8 +88,8 @@ class TestSgrid(TestCase):
         self.do_test(params, write=False)
 
     def test_create_layers(self):
-        d = Dataset.objects.get(name=self.dataset_name)
-        assert d.layer_set.count() == 15
+        d = Dataset.objects.get(name=self.dataset_slug)
+        assert d.layer_set.count() == 12
 
     def test_delete_cache_signal(self):
         d = add_dataset("sgrid_deleting", "sgrid", "coawst_sgrid.nc")

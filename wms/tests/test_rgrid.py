@@ -18,11 +18,11 @@ class TestRgrid(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        d = Dataset.objects.get(name="rgrid_testing")
+        d = Dataset.objects.get(slug="rgrid_testing")
         d.delete()
 
     def setUp(self):
-        self.dataset_name = 'rgrid_testing'
+        self.dataset_slug = 'rgrid_testing'
         self.url_params = dict(
             service     = 'WMS',
             request     = 'GetMap',
@@ -40,12 +40,12 @@ class TestRgrid(TestCase):
         return '{}.png'.format(self.id().split('.')[-1])
 
     def test_identify(self):
-        d = Dataset.objects.get(name=self.dataset_name)
+        d = Dataset.objects.get(name=self.dataset_slug)
         klass = Dataset.identify(d.uri)
         assert klass == RGridDataset
 
     def do_test(self, params, write=True):
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
+        response = self.client.get('/wms/datasets/{}'.format(self.dataset_slug), params)
         self.assertEqual(response.status_code, 200)
         if write is True:
             with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
@@ -80,7 +80,7 @@ class TestRgrid(TestCase):
         self.do_test(params, write=False)
 
     def test_create_layers(self):
-        d = Dataset.objects.get(name=self.dataset_name)
+        d = Dataset.objects.get(slug=self.dataset_slug)
         assert d.layer_set.count() == 1
 
     def test_delete_cache_signal(self):
