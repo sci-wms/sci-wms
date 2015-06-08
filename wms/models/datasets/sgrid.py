@@ -5,6 +5,7 @@ import itertools
 import os
 
 import netCDF4 as nc4
+import numpy as np
 import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
@@ -114,7 +115,7 @@ class SGridDataset(Dataset):
             lyr_vars[lv_key] = var_name
         # let's just handle instances of 1 or 2 variables for now
         # a request of 2 variables will be a request for a virtual layer
-        # i think if 2 variables are requested, they would probably be defined on the grid
+        # i think if 2 variables are requested, they would probably be defined on a grid
         grid_variables = cached_sg.grid_variables
         if len(lyr_vars) == 2 and set(split_lyr_vars).issubset(grid_variables):
             var0_name = lyr_vars['var0']
@@ -171,15 +172,43 @@ class SGridDataset(Dataset):
             raise ValueError(msg)
         # deal with rendering a map image
         if isinstance(layer, Layer):
-            if var0_obj.center_axis is None:
+            # deal with variables that are scalar quantities
+            if (var0_obj.x_axis is None and
+                var0_obj.y_axis is None and
+                var0_obj.z_axis is None and
+                var0_obj.center_axis is None
+                ):
                 colormesh_resp = mpl_handler.pcolormesh_response(lon,
                                                                  lat,
                                                                  data=var0_cell_center_data, 
                                                                  request=request
                                                                  )
                 return colormesh_resp
+            # deal with vectors
             else:
-                pass
+                if var0_obj.vector_axis is not None:
+                    if var0_obj.vector_axis.lower() == 'x':
+                        x = var0_cell_center_data
+                        y = np.zeros(var0_cell_center_data.shape)
+                    else:
+                        x = np.zeros(var0_cell_center_data.shape)
+                        y = var0_cell_center_data
+                else:
+                    if var0_obj.center_axis == 1:
+                        x = var0_cell_center_data
+                        y = np.zeros(var0_cell_center_data.shape)
+                    else:
+                        x = np.zeros(var0_cell_center_data.shape)
+                        y = var0_cell_center_data
+                x = self._spatial_data_subset(x, spatial_idx)
+                y = self._spatial_data_subset(y, spatial_idx)
+                query_resp = mpl_handler.quiver_response(subset_lon,
+                                                         subset_lat,
+                                                         x,
+                                                         y,
+                                                         request,
+                                                         )
+                return query_resp
         elif isinstance(layer, VirtualLayer):
             if request.GET['image_type'] == 'vectors':
                 if len(lyr_vars) == 2:
