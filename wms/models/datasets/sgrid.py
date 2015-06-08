@@ -84,7 +84,7 @@ class SGridDataset(Dataset):
         return trimmed_variable
         
     def getmap(self, layer, request):
-        time_index, time_value = self.nearest_time(layer, request.GET['time'])
+        time_index = self.nearest_time(layer, request.GET['time'])[0]
         epsg_4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
@@ -149,7 +149,6 @@ class SGridDataset(Dataset):
                 else:
                     raise Exception('Unable to determine x and y variables.')
             # rotate vectors
-            # print(x_var)
             angles = cached_sg.angles[lon_obj.center_slicing]
             x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
             spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
@@ -166,14 +165,21 @@ class SGridDataset(Dataset):
             # handle non-grid variables
             else:
                 var0_cell_center_data = var0_data_trimmed
-            plot_data = self._spatial_data_subset(var0_cell_center_data, spatial_idx)
         else:
             msg = ('Only layers with 1 or 2 variables are currently supported. ' 
                    'The request layer contains {0} layers.').format(len(lyr_vars))
             raise ValueError(msg)
         # deal with rendering a map image
         if isinstance(layer, Layer):
-            pass
+            if var0_obj.center_axis is None:
+                colormesh_resp = mpl_handler.pcolormesh_response(lon,
+                                                                 lat,
+                                                                 data=var0_cell_center_data, 
+                                                                 request=request
+                                                                 )
+                return colormesh_resp
+            else:
+                pass
         elif isinstance(layer, VirtualLayer):
             if request.GET['image_type'] == 'vectors':
                 if len(lyr_vars) == 2:
@@ -184,8 +190,6 @@ class SGridDataset(Dataset):
                                                               request
                                                               )
                     return quiver_resp
-                if len(lyr_vars) == 1:
-                    raise NotImplementedError
         
     
     def getlegendgraphic(self, layer, request):
