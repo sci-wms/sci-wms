@@ -8,6 +8,7 @@ import netCDF4 as nc4
 import numpy as np
 import pyproj
 import pytz
+from django.http.response import HttpResponse
 from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
@@ -15,8 +16,9 @@ from pysgrid.read_netcdf import NetCDFDataset
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
 
 from wms import mpl_handler
-from wms.data_handler import lat_lon_subset_idx
+from wms.data_handler import lat_lon_subset_idx, blank_canvas
 from wms.models import Dataset, Layer, VirtualLayer
+from wms.utils import DotDict
 
 
 class SGridDataset(Dataset):
@@ -186,29 +188,32 @@ class SGridDataset(Dataset):
                 return colormesh_resp
             # deal with vectors
             else:
-                if var0_obj.vector_axis is not None:
-                    if var0_obj.vector_axis.lower() == 'x':
-                        x = var0_cell_center_data
-                        y = np.zeros(var0_cell_center_data.shape)
+                if request.GET['image_type'] == 'vectors':
+                    if var0_obj.vector_axis is not None:
+                        if var0_obj.vector_axis.lower() == 'x':
+                            x = var0_cell_center_data
+                            y = np.zeros(var0_cell_center_data.shape)
+                        else:
+                            x = np.zeros(var0_cell_center_data.shape)
+                            y = var0_cell_center_data
                     else:
-                        x = np.zeros(var0_cell_center_data.shape)
-                        y = var0_cell_center_data
+                        if var0_obj.center_axis == 1:
+                            x = var0_cell_center_data
+                            y = np.zeros(var0_cell_center_data.shape)
+                        else:
+                            x = np.zeros(var0_cell_center_data.shape)
+                            y = var0_cell_center_data
+                    x = self._spatial_data_subset(x, spatial_idx)
+                    y = self._spatial_data_subset(y, spatial_idx)
+                    query_resp = mpl_handler.quiver_response(subset_lon,
+                                                             subset_lat,
+                                                             x,
+                                                             y,
+                                                             request,
+                                                             )
+                    return query_resp
                 else:
-                    if var0_obj.center_axis == 1:
-                        x = var0_cell_center_data
-                        y = np.zeros(var0_cell_center_data.shape)
-                    else:
-                        x = np.zeros(var0_cell_center_data.shape)
-                        y = var0_cell_center_data
-                x = self._spatial_data_subset(x, spatial_idx)
-                y = self._spatial_data_subset(y, spatial_idx)
-                query_resp = mpl_handler.quiver_response(subset_lon,
-                                                         subset_lat,
-                                                         x,
-                                                         y,
-                                                         request,
-                                                         )
-                return query_resp
+                    return self._generate_blank_response(request)
         elif isinstance(layer, VirtualLayer):
             if request.GET['image_type'] == 'vectors':
                 if len(lyr_vars) == 2:
@@ -219,7 +224,17 @@ class SGridDataset(Dataset):
                                                               request
                                                               )
                     return quiver_resp
-        
+            else:
+                print('Generating blank response.')
+                return self._generate_blank_response(request)
+    
+    def _generate_blank_response(self, request, content_type='image/png'):
+        width = request.GET['width']
+        height = request.GET['height']
+        canvas = blank_canvas(width, height)
+        response = HttpResponse(content_type=content_type)
+        canvas.print_png(response)
+        return response
     
     def getlegendgraphic(self, layer, request):
         raise NotImplementedError
@@ -228,8 +243,29 @@ class SGridDataset(Dataset):
         raise NotImplementedError
 
     def wgs84_bounds(self, layer):
-        raise NotImplementedError
-    
+        try:
+            cached_sg = from_ncfile(self.topology_file)
+        except:
+            pass
+        else:
+            centers = cached_sg.centers
+            longitudes = centers[..., 0]
+            latitudes = centers[..., 1]
+            lon_name, lat_name = cached_sg.face_coordinates
+            lon_var_obj = getattr(cached_sg, lon_name)
+            lat_var_obj = getattr(cached_sg, lat_name)
+            lon_trimmed = longitudes[lon_var_obj.center_slicing]
+            lat_trimmed = latitudes[lat_var_obj.center_slicing]
+            lon_max = lon_trimmed.max()
+            lon_min = lon_trimmed.min()
+            lat_max = lat_trimmed.max()
+            lat_min = lat_trimmed.min()
+            return DotDict(minx=lon_min,
+                           miny=lat_min,
+                           maxx=lon_max,
+                           maxy=lat_max
+                           )
+        
     def nearest_time(self, layer, time):
         """
         Very similar to ugrid
@@ -257,6 +293,7 @@ class SGridDataset(Dataset):
         Return the z index and z value that is closest
         
         """
+        print(layer_access_name)
         depths = self.depths(layer_access_name)
         depth_idx = bisect.bisect_right(depths, z)
         try:
@@ -267,31 +304,46 @@ class SGridDataset(Dataset):
         return depth_idx, depth
         
     def times(self, layer):
-        raise NotImplementedError
+        try:
+            nc = self.topology_dataset()
+            return nc4.num2date(nc.variables['time'][:], units=nc.variables['time'].units)
+        finally:
+            nc.close()
 
-    def depth_variable(self, layer_access_name):
-        var_coordinates = self._parse_data_coordinates(layer_access_name)
+    def depth_variable(self, layer):
+        var_coordinates = self._parse_data_coordinates(layer)
         nc = self.netcdf4_dataset()
+        print(var_coordinates)
+        depth_variable = None
         for var_coordinate in var_coordinates:
             var_obj = nc.variables[var_coordinate]
             if ((hasattr(var_obj, 'axis') and var_obj.axis.lower().strip() == 'z') or
                 (hasattr(var_obj, 'positive') and var_obj.positive.lower().strip() in ['up', 'down'])
                 ):
+                print('Found!')
                 depth_variable = var_coordinate
+                print(depth_variable)
                 break
-            else:
-                depth_variable = None
         return depth_variable
     
-    def _parse_data_coordinates(self, layer_access_name):
-        variable_obj = self.netcdf4_dataset().variables[layer_access_name]
-        var_dims = variable_obj.dimensions
-        var_coordinates = variable_obj.coordinates.strip().split()
-        if len(var_dims) < len(var_coordinates):
-            c_idx = len(var_coordinates) - len(var_dims)
-            filtered_var_coord = var_coordinates[c_idx:]
+    def _parse_data_coordinates(self, layer):
+        if isinstance(layer, Layer):
+            access_name = layer.access_name
         else:
-            filtered_var_coord = var_coordinates
+            access_name = layer
+        print(access_name)
+        variable_obj = self.netcdf4_dataset().variables[access_name]
+        var_dims = variable_obj.dimensions
+        try:
+            var_coordinates = variable_obj.coordinates.strip().split()
+        except AttributeError:
+            filtered_var_coord = []
+        else:
+            if len(var_dims) < len(var_coordinates):
+                c_idx = len(var_coordinates) - len(var_dims)
+                filtered_var_coord = var_coordinates[c_idx:]
+            else:
+                filtered_var_coord = var_coordinates
         return filtered_var_coord
         
     def _spatial_data_subset(self, data, spatial_index):
@@ -301,12 +353,25 @@ class SGridDataset(Dataset):
         return data_subset
     
     def depth_direction(self, layer):
-        raise NotImplementedError
+        d = self.depth_variable(layer)
+        if d is not None:
+            try:
+                nc = self.netcdf4_dataset()
+                dvar = nc.variables[d]
+                if hasattr(dvar, 'positive'):
+                    return dvar.positive
+            finally:
+                nc.close()
+        return 'unknown'
 
-    def depths(self, layer_access_name):
-        depth_variable = self.depth_variable(layer_access_name)
-        depth_data = self.netcdf4_dataset().variables[depth_variable][:]
-        return depth_data
+    def depths(self, layer):
+        depth_variable = self.depth_variable(layer)
+        print('DV: {0}'.format(depth_variable))
+        try:
+            depth_data = self.netcdf4_dataset().variables[depth_variable][:]
+        except KeyError:
+            depth_data = []
+        return list(depth_data)
 
     def humanize(self):
         return "SGRID"
