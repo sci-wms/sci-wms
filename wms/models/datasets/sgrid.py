@@ -14,8 +14,9 @@ from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
-
+ 
 from wms import mpl_handler
+from wms import views
 from wms.data_handler import lat_lon_subset_idx, blank_canvas
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict
@@ -29,13 +30,18 @@ class SGridDataset(Dataset):
         try:
             ds = EnhancedDataset(uri)
             nc_ds = NetCDFDataset(ds)
-            return nc_ds.sgrid_compliant_file()
         except (AttributeError, RuntimeError, SGridNonCompliantError):
             return False
+        else:
+            if nc_ds.sgrid_compliant_file() or 'SGRID' in ds.conventions:
+                return True
+            else:
+                return False
         finally:
             if ds is not None:
                 ds.close()
-
+    
+    # same as ugrid
     def has_cache(self):
         return os.path.exists(self.topology_file)
 
@@ -180,12 +186,15 @@ class SGridDataset(Dataset):
                 var0_obj.z_axis is None and
                 var0_obj.center_axis is None
                 ):
-                colormesh_resp = mpl_handler.pcolormesh_response(lon,
-                                                                 lat,
-                                                                 data=var0_cell_center_data, 
-                                                                 request=request
-                                                                 )
-                return colormesh_resp
+                if request.GET['image_type'] == 'pcolor':
+                    colormesh_resp = mpl_handler.pcolormesh_response(lon,
+                                                                     lat,
+                                                                     data=var0_cell_center_data, 
+                                                                     request=request
+                                                                     )
+                    return colormesh_resp
+                else:
+                    return self._generate_blank_response(request)
             # deal with vectors
             else:
                 if request.GET['image_type'] == 'vectors':
@@ -225,7 +234,6 @@ class SGridDataset(Dataset):
                                                               )
                     return quiver_resp
             else:
-                print('Generating blank response.')
                 return self._generate_blank_response(request)
     
     def _generate_blank_response(self, request, content_type='image/png'):
@@ -236,11 +244,13 @@ class SGridDataset(Dataset):
         canvas.print_png(response)
         return response
     
+    # same as ugrid
     def getlegendgraphic(self, layer, request):
-        raise NotImplementedError
-
+        return views.getLegendGraphic(request, self)
+    
+    # same as ugrid
     def getfeatureinfo(self, layer, request):
-        raise NotImplementedError
+        return views.getFeatureInfo(request, self)
 
     def wgs84_bounds(self, layer):
         try:
@@ -286,6 +296,7 @@ class SGridDataset(Dataset):
         except IndexError:
             time_index -= 1
             time_val = times[time_index]
+        nc.close()
         return time_index, time_val
     
     def nearest_z(self, layer_access_name, z):
@@ -293,16 +304,16 @@ class SGridDataset(Dataset):
         Return the z index and z value that is closest
         
         """
-        print(layer_access_name)
         depths = self.depths(layer_access_name)
         depth_idx = bisect.bisect_right(depths, z)
         try:
             depth = depths[depth_idx]
         except IndexError:
             depth_idx -= 1
-            depth = depth[depth_idx]
+            depth = depths[depth_idx]
         return depth_idx, depth
-        
+    
+    # same as ugrid 
     def times(self, layer):
         try:
             nc = self.topology_dataset()
@@ -313,17 +324,15 @@ class SGridDataset(Dataset):
     def depth_variable(self, layer):
         var_coordinates = self._parse_data_coordinates(layer)
         nc = self.netcdf4_dataset()
-        print(var_coordinates)
         depth_variable = None
         for var_coordinate in var_coordinates:
             var_obj = nc.variables[var_coordinate]
             if ((hasattr(var_obj, 'axis') and var_obj.axis.lower().strip() == 'z') or
                 (hasattr(var_obj, 'positive') and var_obj.positive.lower().strip() in ['up', 'down'])
                 ):
-                print('Found!')
                 depth_variable = var_coordinate
-                print(depth_variable)
                 break
+        nc.close()
         return depth_variable
     
     def _parse_data_coordinates(self, layer):
@@ -331,7 +340,6 @@ class SGridDataset(Dataset):
             access_name = layer.access_name
         else:
             access_name = layer
-        print(access_name)
         variable_obj = self.netcdf4_dataset().variables[access_name]
         var_dims = variable_obj.dimensions
         try:
@@ -352,6 +360,7 @@ class SGridDataset(Dataset):
         data_subset = data[rows, columns]
         return data_subset
     
+    # same as ugrid
     def depth_direction(self, layer):
         d = self.depth_variable(layer)
         if d is not None:
@@ -366,7 +375,6 @@ class SGridDataset(Dataset):
 
     def depths(self, layer):
         depth_variable = self.depth_variable(layer)
-        print('DV: {0}'.format(depth_variable))
         try:
             depth_data = self.netcdf4_dataset().variables[depth_variable][:]
         except KeyError:
