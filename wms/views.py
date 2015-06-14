@@ -626,6 +626,7 @@ def enhance_getmap_request(dataset, layer, request):
         time=wms_handler.get_time(request),
         crs=wms_handler.get_projection(request),
         bbox=wms_handler.get_bbox(request),
+        wgs84_bbox=wms_handler.get_wgs84_bbox(request),
         colormap=wms_handler.get_colormap(request),
         colorscalerange=wms_handler.get_colorscalerange(request, layer.default_min, layer.default_max),
         elevation=wms_handler.get_elevation(request),
@@ -651,10 +652,21 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     gettemp = request.GET.copy()
     # 'time' parameter
     times = wms_handler.get_times(request)
+    xy = wms_handler.get_xy(request)
+    dimensions = wms_handler.get_dimensions(request)
 
     newgets = dict(
         starting=times.min,
-        ending=times.max
+        ending=times.max,
+        x=xy.x,
+        y=xy.y,
+        bbox=wms_handler.get_bbox(request),
+        wgs84_bbox=wms_handler.get_wgs84_bbox(request),
+        width=dimensions.width,
+        height=dimensions.height,
+        elevation=wms_handler.get_elevation(request),
+        crs=wms_handler.get_projection(request),
+        info_format=wms_handler.get_info_format(request)
     )
     gettemp.update(newgets)
     request.GET = gettemp

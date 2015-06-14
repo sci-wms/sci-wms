@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import time
 import bisect
+import shutil
+import tempfile
 from datetime import datetime
 
 import pytz
@@ -11,7 +14,13 @@ from pyaxiom.netcdf import EnhancedDataset
 import numpy as np
 import netCDF4
 
+import pandas as pd
+
 import matplotlib.tri as Tri
+
+from django.http import HttpResponse
+
+import rtree
 
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict
@@ -36,6 +45,49 @@ class UGridDataset(Dataset):
         finally:
             if ds is not None:
                 ds.close()
+
+    def has_cache(self):
+        return os.path.exists(self.topology_file)
+
+    def make_rtree(self):
+        p = rtree.index.Property()
+        p.overwrite = True
+        p.storage   = rtree.index.RT_Disk
+        p.Dimension = 2
+
+        _, temp_file = tempfile.mkstemp(suffix='.tree')
+
+        nc = self.netcdf4_dataset()
+        ug = UGrid.from_nc_dataset(nc=nc)
+
+        class FastRtree(rtree.Rtree):
+            def dumps(self, obj):
+                try:
+                    import cPickle
+                    return cPickle.dumps(obj, -1)
+                except ImportError:
+                    super(FastRtree, self).dumps(obj)
+
+        def rtree_generator_function():
+            for face_idx, node_list in enumerate(ug.faces):
+                nodes = ug.nodes[node_list]
+                xmin, ymin = np.min(nodes, 0)
+                xmax, ymax = np.max(nodes, 0)
+                yield (face_idx, (xmin, ymin, xmax, ymax), node_list)
+
+        logger.info("Building Rtree Topology Cache for {0}".format(self.name))
+        start = time.time()
+        FastRtree(temp_file,
+                  rtree_generator_function(),
+                  properties=p,
+                  overwrite=True,
+                  interleaved=True)
+        logger.info("Built Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+
+        shutil.move(temp_file, self.node_tree_data_file)
+        shutil.move(temp_file, self.node_file_index_file)
+
+        nc.close()
 
     def update_cache(self, force=False):
         try:
@@ -64,6 +116,10 @@ class UGridDataset(Dataset):
                     cached_time_var.units = time_var.units
                     cached_time_var.standard_name = 'time'
             cached_nc.close()
+
+            # Now do the RTree index
+            self.make_rtree()
+
         except RuntimeError:
             pass  # We could still be updating the cache file
         finally:
@@ -75,13 +131,7 @@ class UGridDataset(Dataset):
 
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
-
-        # Transform bbox to WGS84
-        EPSG4326 = pyproj.Proj(init='EPSG:4326')
-        bbox = request.GET['bbox']
-        requested_crs = request.GET['crs']
-        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, EPSG4326, bbox.minx, bbox.miny)
-        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
+        wgs84_bbox = request.GET['wgs84_bbox']
 
         try:
             nc = self.netcdf4_dataset()
@@ -101,7 +151,7 @@ class UGridDataset(Dataset):
             lon = coords[:, 0]
             lat = coords[:, 1]
 
-            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat, wgs84_minx, wgs84_miny, wgs84_maxx, wgs84_maxy)
+            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat, wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy)
 
             face_indicies = ug.faces[:]
             face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
@@ -162,7 +212,97 @@ class UGridDataset(Dataset):
         return views.getLegendGraphic(request, self)
 
     def getfeatureinfo(self, layer, request):
-        return views.getFeatureInfo(request, self)
+        try:
+            nc = self.netcdf4_dataset()
+            data_obj = nc.variables[layer.access_name]
+            data_location = data_obj.location
+            mesh_name = data_obj.mesh
+            # Use local topology for pulling bounds data
+            ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+
+            try:
+                # Find closest cell or node (only node for now)
+                tree = rtree.index.Index(self.node_tree_root)
+                nindex = list(tree.nearest((tlon, tlat, tlon, tlat), 1, objects=True))[0]
+                tree.close()
+                closest_lon, clostest_lat = tuple(nindex.bbox[2:])
+                closest_index = nindex.id
+            except BaseException:
+                logger.exception("Could not query Tree for nearest point")
+            finally:
+                tree.close()
+
+            timevar = nc.get_variables_by_attributes(standard_name='time')[0]
+            start_nc_num = round(netCDF4.date2num(request.GET['starting'], units=timevar.units))
+            end_nc_num = round(netCDF4.date2num(request.GET['ending'], units=timevar.units))
+
+            all_times = timevar[:]
+            start_nc_index = bisect.bisect_right(all_times, start_nc_num) - 1
+            end_nc_index = bisect.bisect_right(all_times, end_nc_num) - 1
+            if start_nc_index == end_nc_index:
+                end_nc_index += 1
+
+            # Get the actual time values (for return)
+            return_dates = netCDF4.num2daate(all_times[start_nc_index:end_nc_index], units=timevar.units)
+
+            return_arrays = []
+            z_value = None
+            if isinstance(layer, Layer):
+                if (len(data_obj.shape) == 3):
+                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                    data = data_obj[start_nc_index:end_nc_index, z_index, :]
+                elif (len(data_obj.shape) == 2):
+                    data = data_obj[start_nc_index:end_nc_index, :]
+                elif len(data_obj.shape) == 1:
+                    data = data_obj[:]
+                else:
+                    raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
+
+                return_arrays.append(data)
+
+            elif isinstance(layer, VirtualLayer):
+
+                # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
+                for l in layer.layers:
+                    data_obj = nc.variables[l.var_name]
+                    if (len(data_obj.shape) == 3):
+                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                        data.append(data_obj[start_nc_index:end_nc_index, z_index, :])
+                    elif (len(data_obj.shape) == 2):
+                        data.append(data_obj[start_nc_index:end_nc_index, :])
+                    elif len(data_obj.shape) == 1:
+                        data.append(data_obj[:])
+                    else:
+                        raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
+
+                    return_arrays.append(data)
+
+            # Data is now in the return_arrays list, as a list of numpy arrays.  We need
+            # to add time and depth to them to create a single Pandas DataFrame
+            if (len(data_obj.shape) == 3):
+                df = pd.DataFrame({'time': return_dates,
+                                   'z': z_value})
+            elif (len(data_obj.shape) == 2):
+                df = pd.DataFrame({'time': return_dates})
+            else:
+                df = pd.DataFrame()
+            # Now add a column for each member of the return_arrays list
+            # ggsdgsdfsdfs
+
+            if request.GET['info_format'] == 'text/csv':
+                response = HttpResponse(content_type='text/csv')
+                response.write(df.something)
+            elif request.GET['info_format'] == 'text/tsv':
+                response = HttpResponse(content_type='text/csv')
+                response.write(df.something)
+            elif request.GET['info_format'] == 'application/x-hdf5':
+                response = HttpResponse(content_type='text/csv')
+                response.write(df.something)
+
+        except BaseException:
+            logger.exception("Could not process GetFeatureInfo request")
+        finally:
+            nc.close()
 
     def wgs84_bounds(self, layer):
         try:

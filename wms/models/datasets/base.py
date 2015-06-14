@@ -256,26 +256,26 @@ class Dataset(TypedModel):
 
     @property
     def node_tree_root(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.nodes').format(self.safe_filename)
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.tree').format(self.safe_filename)
 
     @property
-    def cell_tree_root(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
-
-    @property
-    def node_index_file(self):
-        return '{}.idx'.format(self.node_tree_root)
-
-    @property
-    def node_data_file(self):
+    def node_tree_data_file(self):
         return '{}.dat'.format(self.node_tree_root)
 
     @property
-    def cell_index_file(self):
+    def node_tree_index_file(self):
+        return '{}.idx'.format(self.node_tree_root)
+
+    @property
+    def cell_tree_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
+
+    @property
+    def cell_tree_index_file(self):
         return '{}.idx'.format(self.cell_tree_root)
 
     @property
-    def cell_data_file(self):
+    def cell_tree_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
 
     @property
