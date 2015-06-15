@@ -6,7 +6,6 @@ from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, SGridDataset
 
 
-# @unittest.skip("SGRID Datasets are not implemented yet")
 class TestSgrid(TestCase):
 
     @classmethod
@@ -63,7 +62,6 @@ class TestSgrid(TestCase):
         params.update(styles='facets_jet')
         self.do_test(params)
 
-    # @unittest.skip("pcolor is not yet implemeted for SGRID datasets")
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_jet')
@@ -75,7 +73,6 @@ class TestSgrid(TestCase):
         params.update(styles='contours_jet')
         self.do_test(params)
 
-    @unittest.skip("vectors is not yet implemeted for SGRID datasets")
     def test_vectors(self):
         params = copy(self.url_params)
         params.update(styles='vectors_jet', layers='u,v')
