@@ -2,7 +2,6 @@
 from datetime import datetime
 import bisect
 import itertools
-import os
 
 import netCDF4 as nc4
 import numpy as np
@@ -40,10 +39,6 @@ class SGridDataset(Dataset):
         finally:
             if ds is not None:
                 ds.close()
-    
-    # same as ugrid
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
 
     def update_cache(self, force=False):
         nc = self.netcdf4_dataset()
@@ -244,13 +239,8 @@ class SGridDataset(Dataset):
         canvas.print_png(response)
         return response
     
-    # same as ugrid
     def getlegendgraphic(self, layer, request):
         return views.getLegendGraphic(request, self)
-    
-    # same as ugrid
-    def getfeatureinfo(self, layer, request):
-        return views.getFeatureInfo(request, self)
 
     def wgs84_bounds(self, layer):
         try:
@@ -313,7 +303,6 @@ class SGridDataset(Dataset):
             depth = depths[depth_idx]
         return depth_idx, depth
     
-    # same as ugrid 
     def times(self, layer):
         try:
             nc = self.topology_dataset()

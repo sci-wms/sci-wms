@@ -93,7 +93,7 @@ class Dataset(TypedModel):
         raise NotImplementedError
 
     def has_cache(self):
-        raise NotImplementedError
+        return os.path.exists(self.topology_file)
 
     def update_cache(self, force=False):
         raise NotImplementedError
