@@ -66,8 +66,7 @@ class SGridDataset(Dataset):
                 except RuntimeError:
                     time_var_obj = cached_nc.variables[time_var.name]
                 finally:
-                    time_vals = time_var[:]
-                    time_var_obj[:] = time_vals
+                    time_var_obj[:] = time_var[:]
                     time_var_obj.units = time_var.units
         nc.close()
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
