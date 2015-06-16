@@ -86,8 +86,10 @@ class SGridDataset(Dataset):
         return trimmed_variable
         
     def getmap(self, layer, request):
-        time_index = self.nearest_time(layer, request.GET['time'])[0]
-        epsg_4326 = pyproj.Proj(init='EPSG:4326')
+        time_index, time_value = self.nearest_time(layer, request.GET['time'])
+
+        # Transform bbox to WGS84
+        EPSG4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
         wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
@@ -263,44 +265,43 @@ class SGridDataset(Dataset):
                            maxx=lon_max,
                            maxy=lat_max
                            )
-        
+
     def nearest_time(self, layer, time):
         """
-        Very similar to ugrid
-        
+        Return the time index and time value that is closest
         """
-        nc = self.topology_dataset()
-        units = time_var.units
         try:
-            calendar = time_var.calendar
-        except AttributeError:
-            calendar = 'gregorian'
-        num_date = round(nc4.date2num(time, units=units, calendar=calendar))
-        times = time_var[:]
-        time_index = bisect.bisect_right(times, num_date)
-        try:
-            time_val = times[time_index]
-        except IndexError:
-            time_index -= 1
-            time_val = times[time_index]
-        nc.close()
-        return time_index, time_val
-    
-    def nearest_z(self, layer_access_name, z):
+            nc = self.topology_dataset()
             time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            units = time_var.units
+            if hasattr(time_var, 'calendar'):
+                calendar = time_var.calendar
+            else:
+                calendar = 'gregorian'
+            num_date = round(nc4.date2num(time, units=units, calendar=calendar))
+
+            times = time_var[:]
+            time_index = bisect.bisect_right(times, num_date)
+            try:
+                times[time_index]
+            except IndexError:
+                time_index -= 1
+            return time_index, times[time_index]
+        finally:
+            nc.close()
+
+    def nearest_z(self, layer, z):
         """
         Return the z index and z value that is closest
-        
         """
-        depths = self.depths(layer_access_name)
+        depths = self.depths(layer)
         depth_idx = bisect.bisect_right(depths, z)
         try:
-            depth = depths[depth_idx]
+            depths[depth_idx]
         except IndexError:
             depth_idx -= 1
-            depth = depths[depth_idx]
-        return depth_idx, depth
-    
+        return depth_idx, depths[depth_idx]
+
     def times(self, layer):
         try:
             nc = self.topology_dataset()
