@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from datetime import datetime
 import bisect
 import itertools
@@ -40,37 +41,49 @@ class SGridDataset(Dataset):
                 ds.close()
 
     def update_cache(self, force=False):
-        nc = self.netcdf4_dataset()
-        sg = from_nc_dataset(nc)
-        sg.save_as_netcdf(self.topology_file)
-        # add time to the cached topology
-        time_vars = nc.get_variables_by_attributes(standard_name='time')
-        time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
-        unique_time_dims = list(set(time_dims))
-        with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
-            # create pertinent time dimensions if they aren't already present
-            for unique_time_dim in unique_time_dims:
-                dim_size = len(cached_nc.dimensions[unique_time_dim])
-                try:
-                    cached_nc.createDimension(unique_time_dim, size=dim_size)
-                except RuntimeError:
-                    continue
-            # support cases where there may be more than one variable with standard_name='time' in a dataset
-            for time_var in time_vars:
-                try:
-                    time_var_obj = cached_nc.createVariable(time_var.name, 
-                                                            time_var.dtype, 
-                                                            time_var.dimensions
-                                                            )
-                except RuntimeError:
-                    time_var_obj = cached_nc.variables[time_var.name]
-                finally:
-                    time_var_obj[:] = time_var[:]
-                    time_var_obj.units = time_var.units
-        nc.close()
+        try:
+            nc = self.netcdf4_dataset()
+            sg = from_nc_dataset(nc)
+            sg.save_as_netcdf(self.topology_file)
+
+            if not os.path.exists(self.topology_file):
+                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+                return
+
+            # add time to the cached topology
+            time_vars = nc.get_variables_by_attributes(standard_name='time')
+            time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
+            unique_time_dims = list(set(time_dims))
+            with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
+                # create pertinent time dimensions if they aren't already present
+                for unique_time_dim in unique_time_dims:
+                    dim_size = len(cached_nc.dimensions[unique_time_dim])
+                    try:
+                        cached_nc.createDimension(unique_time_dim, size=dim_size)
+                    except RuntimeError:
+                        continue
+                # support cases where there may be more than one variable with standard_name='time' in a dataset
+                for time_var in time_vars:
+                    try:
+                        time_var_obj = cached_nc.createVariable(time_var.name, 
+                                                                time_var.dtype, 
+                                                                time_var.dimensions
+                                                                )
+                    except RuntimeError:
+                        time_var_obj = cached_nc.variables[time_var.name]
+                    finally:
+                        time_var_obj[:] = time_var[:]
+                        time_var_obj.units = time_var.units
+                        time_var_obj.standard_name = 'time'
+        except RuntimeError:
+            pass  # Could still be updating (write-lock)
+        finally:
+            if nc is not None:
+                nc.close()
+
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
-        
+
     def _variable_data_trimming(self, variable, cached_variable, time_index, request):
         variable_dim_length = len(cached_variable.dimensions)
         if variable_dim_length >= 3:
