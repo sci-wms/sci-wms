@@ -79,8 +79,9 @@ class UGridDataset(Dataset):
         # Transform bbox to WGS84
         EPSG4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
-        wgs84_minx, wgs84_miny = pyproj.transform(request.GET['crs'], EPSG4326, bbox.minx, bbox.miny)
-        wgs84_maxx, wgs84_maxy = pyproj.transform(request.GET['crs'], EPSG4326, bbox.maxx, bbox.maxy)
+        requested_crs = request.GET['crs']
+        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, EPSG4326, bbox.minx, bbox.miny)
+        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
 
         try:
             nc = self.netcdf4_dataset()
@@ -194,11 +195,12 @@ class UGridDataset(Dataset):
         Return the z index and z value that is closest
         """
         depths = self.depths(layer)
-        depth_index = bisect.bisect_right(depths, z)
+        depth_idx = bisect.bisect_right(depths, z)
         try:
-            return depth_index, depths[depth_index]
+            depths[depth_idx]
         except IndexError:
-            return depth_index - 1, depths[depth_index - 1]  # Would have added to the end
+            depth_idx -= 1
+        return depth_idx, depths[depth_idx]
 
     def nearest_time(self, layer, time):
         """
@@ -217,9 +219,10 @@ class UGridDataset(Dataset):
             times = time_var[:]
             time_index = bisect.bisect_right(times, num_date)
             try:
-                return time_index, times[time_index]
+                times[time_index]
             except IndexError:
-                return time_index - 1, times[time_index - 1]  # Would have added to the end
+                time_index -= 1
+            return time_index, times[time_index]
         finally:
             nc.close()
 
@@ -235,7 +238,7 @@ class UGridDataset(Dataset):
         try:
             nc = self.netcdf4_dataset()
             layer_var = nc.variables[layer.access_name]
-            for cv in layer_var.coordinates.split():
+            for cv in layer_var.coordinates.strip().split():
                 try:
                     coord_var = nc.variables[cv]
                     if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
@@ -254,9 +257,8 @@ class UGridDataset(Dataset):
         if d is not None:
             try:
                 nc = self.netcdf4_dataset()
-                dvar = nc.variables[d]
-                if hasattr(dvar, 'positive'):
-                    return dvar.positive
+                if hasattr(d, 'positive'):
+                    return d.positive
             finally:
                 nc.close()
         return 'unknown'
@@ -266,7 +268,7 @@ class UGridDataset(Dataset):
         if d is not None:
             try:
                 nc = self.netcdf4_dataset()
-                return range(0, nc.variables[d].shape[0])
+                return range(0, d.shape[0])
             finally:
                 nc.close()
         return []
