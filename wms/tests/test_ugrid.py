@@ -5,7 +5,9 @@ from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, UGridDataset
 
-from sciwms import logger
+import logging
+from wms import logger
+logger.addHandler(logging.StreamHandler())
 
 
 class TestUgrid(TestCase):
