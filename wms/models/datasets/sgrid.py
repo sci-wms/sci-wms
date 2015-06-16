@@ -75,7 +75,7 @@ class SGridDataset(Dataset):
         variable_dim_length = len(cached_variable.dimensions)
         if variable_dim_length >= 3:
             z = request.GET['elevation']
-            vertical_idx = self.nearest_z(cached_variable.variable, z)[0]
+            vertical_idx, _ = self.nearest_z(cached_variable.variable, z)
             trimmed_variable = variable[time_index, vertical_idx, cached_variable.center_slicing[-2], cached_variable.center_slicing[-1]]
         elif variable_dim_length == 2:
             trimmed_variable = variable[time_index, cached_variable.center_slicing[-2], cached_variable.center_slicing[-3]]
@@ -84,7 +84,7 @@ class SGridDataset(Dataset):
         else:
             raise Exception('Unable to trim variable {0} data.'.format(cached_variable.variable))
         return trimmed_variable
-        
+
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
 
@@ -92,153 +92,96 @@ class SGridDataset(Dataset):
         EPSG4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
         requested_crs = request.GET['crs']
-        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, epsg_4326, bbox.minx, bbox.miny)
-        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, epsg_4326, bbox.maxx, bbox.maxy)
-        nc = self.netcdf4_dataset()
-        cached_sg = from_ncfile(self.topology_file)
-        lon_name, lat_name = cached_sg.face_coordinates
-        lon_obj = getattr(cached_sg, lon_name)
-        lat_obj = getattr(cached_sg, lat_name)
-        centers = cached_sg.centers
-        lon = centers[..., 0][lon_obj.center_slicing]
-        lat = centers[..., 1][lat_obj.center_slicing]
-        spatial_idx = lat_lon_subset_idx(lon, lat, 
-                                         lonmin=wgs84_minx, 
-                                         latmin=wgs84_miny, 
-                                         lonmax=wgs84_maxx, 
-                                         latmax=wgs84_maxy
-                                         )
-        subset_lon = self._spatial_data_subset(lon, spatial_idx)
-        subset_lat = self._spatial_data_subset(lat, spatial_idx)
-        lyr_access_name = layer.var_name
-        split_lyr_vars = lyr_access_name.split(',')
-        lyr_vars = {}
-        for var_idx, var_name in enumerate(split_lyr_vars):
-            lv_key = 'var{0}'.format(var_idx)
-            lyr_vars[lv_key] = var_name
-        # let's just handle instances of 1 or 2 variables for now
-        # a request of 2 variables will be a request for a virtual layer
-        # i think if 2 variables are requested, they would probably be defined on a grid
-        grid_variables = cached_sg.grid_variables
-        if len(lyr_vars) == 2 and set(split_lyr_vars).issubset(grid_variables):
-            var0_name = lyr_vars['var0']
-            var1_name = lyr_vars['var1']
-            var0_obj = getattr(cached_sg, var0_name)
-            var1_obj = getattr(cached_sg, var1_name)
-            raw_var0 = nc.variables[var0_name]
-            raw_var1 = nc.variables[var1_name]
-            if len(var0_obj.dimensions) == len(var1_obj.dimensions):
-                var0_data_trimmed = self._variable_data_trimming(raw_var0, var0_obj, time_index, request)
-                var1_data_trimmed = self._variable_data_trimming(raw_var1, var1_obj, time_index, request)
-            else:
-                raise AttributeError('One or both of the specified variables has screwed up dimensions.')
-            var0_avg = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
-            var1_avg = avg_to_cell_center(var1_data_trimmed, var1_obj.center_axis)
-            if var0_obj.vector_axis is not None and var1_obj is not None:
-                if var0_obj.vector_axis.lower() == 'x' and var1_obj.vector_axis.lower() == 'y':
-                    x_var = var0_avg
-                    y_var = var1_avg
-                elif var0_obj.vector_axis.lower() == 'y' and var1_obj.vector_axis.lower() == 'x':
-                    x_var = var1_avg
-                    y_var = var0_avg
-            # if unable to determine from vector_axis attribute, try center_axis
-            # this is less reliable....
-            else:
-                if var0_obj.center_axis == 1 and var1_obj.center_axis == 0:
-                    x_var = var0_avg
-                    y_var = var1_avg
-                elif var0_obj.center_axis == 0 and var1_obj.center_axis == 1:
-                    x_var = var1_avg
-                    y_var = var0_avg
-                else:
-                    raise Exception('Unable to determine x and y variables.')
-            # rotate vectors
-            angles = cached_sg.angles[lon_obj.center_slicing]
-            x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
-            spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
-            spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
-        # deal with requests for a single variable
-        elif len(lyr_vars) == 1:
-            var0_name = lyr_vars['var0']
-            var0_obj = getattr(cached_sg, var0_name)
-            raw_var0 = nc.variables[var0_name]
-            var0_data_trimmed = self._variable_data_trimming(raw_var0, var0_obj, time_index, request)
-            # handle grid variables
-            if set(lyr_vars).issubset(grid_variables):
-                var0_cell_center_data = avg_to_cell_center(var0_data_trimmed, var0_obj.center_axis)
-            # handle non-grid variables
-            else:
-                var0_cell_center_data = var0_data_trimmed
-        else:
-            msg = ('Only layers with 1 or 2 variables are currently supported. ' 
-                   'The request layer contains {0} layers.').format(len(lyr_vars))
-            raise ValueError(msg)
-        # deal with rendering a map image
-        if isinstance(layer, Layer):
-            # deal with variables that are scalar quantities
-            if (var0_obj.x_axis is None and
-                var0_obj.y_axis is None and
-                var0_obj.z_axis is None and
-                var0_obj.center_axis is None
-                ):
+        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, EPSG4326, bbox.minx, bbox.miny)
+        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
+
+        try:
+            nc = self.netcdf4_dataset()
+            cached_sg = from_ncfile(self.topology_file)
+            lon_name, lat_name = cached_sg.face_coordinates
+            lon_obj = getattr(cached_sg, lon_name)
+            lat_obj = getattr(cached_sg, lat_name)
+            centers = cached_sg.centers
+            lon = centers[..., 0][lon_obj.center_slicing]
+            lat = centers[..., 1][lat_obj.center_slicing]
+            spatial_idx = lat_lon_subset_idx(lon, lat,
+                                             lonmin=wgs84_minx,
+                                             latmin=wgs84_miny,
+                                             lonmax=wgs84_maxx,
+                                             latmax=wgs84_maxy
+                                             )
+            subset_lon = self._spatial_data_subset(lon, spatial_idx)
+            subset_lat = self._spatial_data_subset(lat, spatial_idx)
+            grid_variables = cached_sg.grid_variables
+
+            if isinstance(layer, Layer):
+                data_obj = getattr(cached_sg, layer.access_name)
+                raw_var = nc.variables[layer.access_name]
+                var0_data = self._variable_data_trimming(raw_var, data_obj, time_index, request)
+                # handle grid variables
+                if set([layer.access_name]).issubset(grid_variables):
+                    var0_data = avg_to_cell_center(var0_data, data_obj.center_axis)
+
                 if request.GET['image_type'] == 'pcolor':
-                    colormesh_resp = mpl_handler.pcolormesh_response(lon,
-                                                                     lat,
-                                                                     data=var0_cell_center_data, 
-                                                                     request=request
-                                                                     )
-                    return colormesh_resp
+                    return mpl_handler.pcolormesh_response(lon, lat, data=var0_data, request=request)
                 else:
-                    return self._generate_blank_response(request)
-            # deal with vectors
-            else:
-                if request.GET['image_type'] == 'vectors':
-                    if var0_obj.vector_axis is not None:
-                        if var0_obj.vector_axis.lower() == 'x':
-                            x = var0_cell_center_data
-                            y = np.zeros(var0_cell_center_data.shape)
-                        else:
-                            x = np.zeros(var0_cell_center_data.shape)
-                            y = var0_cell_center_data
+                    return self.empty_response(layer, request)
+
+            elif isinstance(layer, VirtualLayer):
+                x_var = None
+                y_var = None
+                raw_vars = []
+                for l in layer.layers:
+                    data_obj = getattr(cached_sg, l.access_name)
+                    raw_var = nc.variables[l.access_name]
+                    raw_vars.append(raw_var)
+                    if (len(raw_var.shape) >= 3):
+                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                        raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
+                    elif (len(raw_var.shape) == 2):
+                        raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-3]]
+                    elif len(raw_var.shape) == 1:
+                        raw_data = raw_var[data_obj.center_slicing]
                     else:
-                        if var0_obj.center_axis == 1:
-                            x = var0_cell_center_data
-                            y = np.zeros(var0_cell_center_data.shape)
-                        else:
-                            x = np.zeros(var0_cell_center_data.shape)
-                            y = var0_cell_center_data
-                    x = self._spatial_data_subset(x, spatial_idx)
-                    y = self._spatial_data_subset(y, spatial_idx)
-                    query_resp = mpl_handler.quiver_response(subset_lon,
-                                                             subset_lat,
-                                                             x,
-                                                             y,
-                                                             request,
-                                                             )
-                    return query_resp
+                        raise BaseException('Unable to trim variable {0} data.'.format(l.access_name))
+
+                    raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
+                    if x_var is None:
+                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'x':
+                            x_var = raw_data
+                        elif data_obj.center_axis == 1:
+                            x_var = raw_data
+
+                    if y_var is None:
+                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'y':
+                            y_var = raw_data
+                        elif data_obj.center_axis == 0:
+                            y_var = raw_data
+
+                if x_var is None or y_var is None:
+                    raise BaseException('Unable to determine x and y variables.')
+
+                dim_lengths = [ len(v.dimensions) for v in raw_vars ]
+                if len(list(set(dim_lengths))) != 1:
+                    raise AttributeError('One or both of the specified variables has screwed up dimensions.')
+
+                if request.GET['image_type'] == 'vectors':
+                    # rotate vectors
+                    angles = cached_sg.angles[lon_obj.center_slicing]
+                    x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
+                    spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
+                    spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
+                    return mpl_handler.quiver_response(subset_lon,
+                                                       subset_lat,
+                                                       spatial_subset_x_rot,
+                                                       spatial_subset_y_rot,
+                                                       request)
                 else:
-                    return self._generate_blank_response(request)
-        elif isinstance(layer, VirtualLayer):
-            if request.GET['image_type'] == 'vectors':
-                if len(lyr_vars) == 2:
-                    quiver_resp = mpl_handler.quiver_response(subset_lon,
-                                                              subset_lat,
-                                                              spatial_subset_x_rot,
-                                                              spatial_subset_y_rot,
-                                                              request
-                                                              )
-                    return quiver_resp
-            else:
-                return self._generate_blank_response(request)
-    
-    def _generate_blank_response(self, request, content_type='image/png'):
-        width = request.GET['width']
-        height = request.GET['height']
-        canvas = blank_canvas(width, height)
-        response = HttpResponse(content_type=content_type)
-        canvas.print_png(response)
-        return response
-    
+                    return self.empty_response(layer, request)
+
+        finally:
+            nc.close()
+
     def getlegendgraphic(self, layer, request):
         return views.getLegendGraphic(request, self)
 
