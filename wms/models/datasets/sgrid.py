@@ -363,12 +363,11 @@ class SGridDataset(Dataset):
         return 'unknown'
 
     def depths(self, layer):
-        depth_variable = self.depth_variable(layer)
-        try:
-            depth_data = self.netcdf4_dataset().variables[depth_variable][:]
-        except KeyError:
-            depth_data = []
-        return list(depth_data)
+        """ sci-wms only deals in depth indexes at this time (no sigma) """
+        d = self.depth_variable(layer)
+        if d is not None:
+            return range(0, d.shape[0])
+        return []
 
     def humanize(self):
         return "SGRID"
