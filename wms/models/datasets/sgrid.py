@@ -270,7 +270,6 @@ class SGridDataset(Dataset):
         
         """
         nc = self.topology_dataset()
-        time_var = nc.variables['time']
         units = time_var.units
         try:
             calendar = time_var.calendar
@@ -288,6 +287,7 @@ class SGridDataset(Dataset):
         return time_index, time_val
     
     def nearest_z(self, layer_access_name, z):
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
         """
         Return the z index and z value that is closest
         
@@ -304,7 +304,8 @@ class SGridDataset(Dataset):
     def times(self, layer):
         try:
             nc = self.topology_dataset()
-            return nc4.num2date(nc.variables['time'][:], units=nc.variables['time'].units)
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            return nc4.num2date(time_var[:], units=time_var.units)
         finally:
             nc.close()
 
