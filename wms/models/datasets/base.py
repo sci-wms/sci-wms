@@ -189,6 +189,8 @@ class Dataset(TypedModel):
 
             nc.close()
 
+        self.analyze_virtual_layers()
+
     def active_layers(self):
         layers = self.layer_set.prefetch_related('styles').filter(active=True)
         vlayers = self.virtuallayer_set.prefetch_related('styles').filter(active=True)
