@@ -80,7 +80,7 @@ class TestSgrid(TestCase):
 
     def test_vectors(self):
         params = copy(self.url_params)
-        params.update(styles='vectors_jet', layers='u')
+        params.update(styles='vectors_jet', layers='u,v')
         self.do_test(params)
 
     def test_getCaps(self):
