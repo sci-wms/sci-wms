@@ -13,8 +13,6 @@ import netCDF4
 
 import matplotlib.tri as Tri
 
-from django.http import HttpResponse
-
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict
 
@@ -109,10 +107,7 @@ class UGridDataset(Dataset):
             # If no traingles insersect the field of view, return a transparent tile
             if (len(spatial_idx) == 0) or (len(face_indicies_spatial_idx) == 0):
                 logger.debug("No triangles in field of view, returning empty tile.")
-                canvas = data_handler.blank_canvas(request.GET['width'], request.GET['height'])
-                response = HttpResponse(content_type='image/png')
-                canvas.print_png(response)
-                return response
+                return self.empty_response(layer, request)
 
             tri_subset = Tri.Triangulation(lon, lat, triangles=face_indicies[face_indicies_spatial_idx])
 
@@ -126,13 +121,12 @@ class UGridDataset(Dataset):
                     data = data_obj[:]
                 else:
                     logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
-                    canvas = data_handler.blank_canvas(request.GET.get['width'], request.GET['height'])
-                    HttpResponse(content_type='image/png')
-                    canvas.print_png(response)
-                    return response
+                    return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'filledcontours':
                     return mpl_handler.tricontourf_response(tri_subset, data, request)
+                else:
+                    return self.empty_response(layer, request)
 
             elif isinstance(layer, VirtualLayer):
 
@@ -149,10 +143,7 @@ class UGridDataset(Dataset):
                         data.append(data_obj[:])
                     else:
                         logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
-                        canvas = data_handler.blank_canvas(request.GET.get['width'], request.GET['height'])
-                        HttpResponse(content_type='image/png')
-                        canvas.print_png(response)
-                        return response
+                        return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'vectors':
                     return mpl_handler.quiver_response(lon[spatial_idx],
@@ -160,6 +151,8 @@ class UGridDataset(Dataset):
                                                        data[0][spatial_idx],
                                                        data[1][spatial_idx],
                                                        request)
+                else:
+                    return self.empty_response(layer, request)
         finally:
             nc.close()
 
