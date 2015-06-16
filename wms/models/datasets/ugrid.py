@@ -62,6 +62,7 @@ class UGridDataset(Dataset):
                                                                dimensions=('time',))
                     cached_time_var[:] = time_vals[:]
                     cached_time_var.units = time_var.units
+                    cached_time_var.standard_name = 'time'
             cached_nc.close()
         except RuntimeError:
             pass  # We could still be updating the cache file
@@ -205,7 +206,7 @@ class UGridDataset(Dataset):
         """
         try:
             nc = self.topology_dataset()
-            time_var = nc.variables['time']
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
             units = time_var.units
             if hasattr(time_var, 'calendar'):
                 calendar = time_var.calendar
@@ -225,7 +226,8 @@ class UGridDataset(Dataset):
     def times(self, layer):
         try:
             nc = self.topology_dataset()
-            return netCDF4.num2date(nc.variables['time'][:], units=nc.variables['time'].units)
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            return netCDF4.num2date(time_var[:], units=time_var.units)
         finally:
             nc.close()
 
