@@ -311,53 +311,37 @@ class SGridDataset(Dataset):
             nc.close()
 
     def depth_variable(self, layer):
-        var_coordinates = self._parse_data_coordinates(layer)
-        nc = self.netcdf4_dataset()
-        depth_variable = None
-        for var_coordinate in var_coordinates:
-            var_obj = nc.variables[var_coordinate]
-            if ((hasattr(var_obj, 'axis') and var_obj.axis.lower().strip() == 'z') or
-                (hasattr(var_obj, 'positive') and var_obj.positive.lower().strip() in ['up', 'down'])
-                ):
-                depth_variable = var_coordinate
-                break
-        nc.close()
-        return depth_variable
-    
-    def _parse_data_coordinates(self, layer):
-        if isinstance(layer, Layer):
-            access_name = layer.access_name
-        else:
-            access_name = layer
-        variable_obj = self.netcdf4_dataset().variables[access_name]
-        var_dims = variable_obj.dimensions
         try:
-            var_coordinates = variable_obj.coordinates.strip().split()
+            nc = self.netcdf4_dataset()
+            layer_var = nc.variables[layer.access_name]
+            for cv in layer_var.coordinates.strip().split():
+                try:
+                    coord_var = nc.variables[cv]
+                    if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
+                        return coord_var
+                    elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
+                        return coord_var
+                except BaseException:
+                    pass
         except AttributeError:
-            filtered_var_coord = []
-        else:
-            if len(var_dims) < len(var_coordinates):
-                c_idx = len(var_coordinates) - len(var_dims)
-                filtered_var_coord = var_coordinates[c_idx:]
-            else:
-                filtered_var_coord = var_coordinates
-        return filtered_var_coord
-        
+            pass
+        finally:
+            nc.close()
+
     def _spatial_data_subset(self, data, spatial_index):
         rows = spatial_index[0, :]
         columns = spatial_index[1, :]
         data_subset = data[rows, columns]
         return data_subset
-    
+
     # same as ugrid
     def depth_direction(self, layer):
         d = self.depth_variable(layer)
         if d is not None:
             try:
                 nc = self.netcdf4_dataset()
-                dvar = nc.variables[d]
-                if hasattr(dvar, 'positive'):
-                    return dvar.positive
+                if hasattr(d, 'positive'):
+                    return d.positive
             finally:
                 nc.close()
         return 'unknown'
