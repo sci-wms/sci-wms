@@ -20,6 +20,8 @@ from wms.data_handler import lat_lon_subset_idx
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict
 
+from wms import logger
+
 
 class SGridDataset(Dataset):
 
