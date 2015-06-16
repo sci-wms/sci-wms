@@ -709,9 +709,11 @@ class WmsView(View):
                 # Test formats, etc. before returning?
                 return response
         except ValueError as e:
+            logger.exception(str(e))
             return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
         except AttributeError as e:
             logger.exception(str(e))
             return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
-        except NotImplementedError:
+        except NotImplementedError as e:
+            logger.exception(str(e))
             return HttpResponse('"{}" is not implemented for a {}'.format(reqtype, dataset.__class__.__name__), status=500, reason="Could not process inputs", content_type="application/json")
