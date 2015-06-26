@@ -8,6 +8,7 @@ jsonfield
 pytz
 djangorestframework
 pyugrid
+-e git+https://github.com/sgrid/pysgrid.git@0.0.3.1-beta#egg=pysgrid
 pyaxiom>=0.0.9
 django-grappelli
 django-typed-models

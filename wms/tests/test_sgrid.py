@@ -5,8 +5,11 @@ from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, SGridDataset
 
+import logging
+from wms import logger
+logger.addHandler(logging.StreamHandler())
 
-@unittest.skip("SGRID Datasets are not implemented yet")
+
 class TestSgrid(TestCase):
 
     @classmethod
@@ -62,8 +65,8 @@ class TestSgrid(TestCase):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
         self.do_test(params)
-
-    @unittest.skip("pcolor is not yet implemeted for SGRID datasets")
+    
+    @unittest.skip('temporary skip')
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_jet')
@@ -75,7 +78,6 @@ class TestSgrid(TestCase):
         params.update(styles='contours_jet')
         self.do_test(params)
 
-    @unittest.skip("vectors is not yet implemeted for SGRID datasets")
     def test_vectors(self):
         params = copy(self.url_params)
         params.update(styles='vectors_jet', layers='u,v')
@@ -87,10 +89,10 @@ class TestSgrid(TestCase):
 
     def test_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_name)
-        assert d.layer_set.count() == 12
+        assert d.layer_set.count() == 15
 
     def test_delete_cache_signal(self):
-        d = add_dataset("sgrid_deleting", "ugrid", "coawst_sgrid.nc")
+        d = add_dataset("sgrid_deleting", "sgrid", "coawst_sgrid.nc")
         self.assertTrue(d.has_cache())
         d.clear_cache()
         self.assertFalse(d.has_cache())

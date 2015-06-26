@@ -12,8 +12,10 @@ from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
+from django.http.response import HttpResponse
 
 from wms.utils import DotDict
+from wms.data_handler import blank_canvas
 
 
 class Dataset(TypedModel):
@@ -72,6 +74,17 @@ class Dataset(TypedModel):
     def getfeatureinfo(self, layer, request):
         raise NotImplementedError
 
+    def empty_response(self, layer, request, content_type=None):
+        """ Abstracted here to support many different empty response types"""
+        content_type = content_type or 'image/png'
+        if content_type == 'image/png':
+            width = request.GET['width']
+            height = request.GET['height']
+            canvas = blank_canvas(width, height)
+            response = HttpResponse(content_type=content_type)
+            canvas.print_png(response)
+        return response
+
     def wgs84_bounds(self, layer):
         raise NotImplementedError
 
@@ -93,7 +106,7 @@ class Dataset(TypedModel):
         raise NotImplementedError
 
     def has_cache(self):
-        raise NotImplementedError
+        return os.path.exists(self.topology_file)
 
     def update_cache(self, force=False):
         raise NotImplementedError
@@ -175,6 +188,8 @@ class Dataset(TypedModel):
                 l.save()
 
             nc.close()
+
+        self.analyze_virtual_layers()
 
     def active_layers(self):
         layers = self.layer_set.prefetch_related('styles').filter(active=True)

@@ -13,8 +13,6 @@ import netCDF4
 
 import matplotlib.tri as Tri
 
-from django.http import HttpResponse
-
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict
 
@@ -38,9 +36,6 @@ class UGridDataset(Dataset):
         finally:
             if ds is not None:
                 ds.close()
-
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
 
     def update_cache(self, force=False):
         try:
@@ -67,6 +62,7 @@ class UGridDataset(Dataset):
                                                                dimensions=('time',))
                     cached_time_var[:] = time_vals[:]
                     cached_time_var.units = time_var.units
+                    cached_time_var.standard_name = 'time'
             cached_nc.close()
         except RuntimeError:
             pass  # We could still be updating the cache file
@@ -83,8 +79,9 @@ class UGridDataset(Dataset):
         # Transform bbox to WGS84
         EPSG4326 = pyproj.Proj(init='EPSG:4326')
         bbox = request.GET['bbox']
-        wgs84_minx, wgs84_miny = pyproj.transform(request.GET['crs'], EPSG4326, bbox.minx, bbox.miny)
-        wgs84_maxx, wgs84_maxy = pyproj.transform(request.GET['crs'], EPSG4326, bbox.maxx, bbox.maxy)
+        requested_crs = request.GET['crs']
+        wgs84_minx, wgs84_miny = pyproj.transform(requested_crs, EPSG4326, bbox.minx, bbox.miny)
+        wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
 
         try:
             nc = self.netcdf4_dataset()
@@ -112,10 +109,7 @@ class UGridDataset(Dataset):
             # If no traingles insersect the field of view, return a transparent tile
             if (len(spatial_idx) == 0) or (len(face_indicies_spatial_idx) == 0):
                 logger.debug("No triangles in field of view, returning empty tile.")
-                canvas = data_handler.blank_canvas(request.GET['width'], request.GET['height'])
-                response = HttpResponse(content_type='image/png')
-                canvas.print_png(response)
-                return response
+                return self.empty_response(layer, request)
 
             tri_subset = Tri.Triangulation(lon, lat, triangles=face_indicies[face_indicies_spatial_idx])
 
@@ -129,13 +123,12 @@ class UGridDataset(Dataset):
                     data = data_obj[:]
                 else:
                     logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
-                    canvas = data_handler.blank_canvas(request.GET.get['width'], request.GET['height'])
-                    HttpResponse(content_type='image/png')
-                    canvas.print_png(response)
-                    return response
+                    return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'filledcontours':
                     return mpl_handler.tricontourf_response(tri_subset, data, request)
+                else:
+                    return self.empty_response(layer, request)
 
             elif isinstance(layer, VirtualLayer):
 
@@ -152,10 +145,7 @@ class UGridDataset(Dataset):
                         data.append(data_obj[:])
                     else:
                         logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
-                        canvas = data_handler.blank_canvas(request.GET.get['width'], request.GET['height'])
-                        HttpResponse(content_type='image/png')
-                        canvas.print_png(response)
-                        return response
+                        return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'vectors':
                     return mpl_handler.quiver_response(lon[spatial_idx],
@@ -163,6 +153,8 @@ class UGridDataset(Dataset):
                                                        data[0][spatial_idx],
                                                        data[1][spatial_idx],
                                                        request)
+                else:
+                    return self.empty_response(layer, request)
         finally:
             nc.close()
 
@@ -203,11 +195,12 @@ class UGridDataset(Dataset):
         Return the z index and z value that is closest
         """
         depths = self.depths(layer)
-        depth_index = bisect.bisect_right(depths, z)
+        depth_idx = bisect.bisect_right(depths, z)
         try:
-            return depth_index, depths[depth_index]
+            depths[depth_idx]
         except IndexError:
-            return depth_index - 1, depths[depth_index - 1]  # Would have added to the end
+            depth_idx -= 1
+        return depth_idx, depths[depth_idx]
 
     def nearest_time(self, layer, time):
         """
@@ -215,7 +208,7 @@ class UGridDataset(Dataset):
         """
         try:
             nc = self.topology_dataset()
-            time_var = nc.variables['time']
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
             units = time_var.units
             if hasattr(time_var, 'calendar'):
                 calendar = time_var.calendar
@@ -226,16 +219,18 @@ class UGridDataset(Dataset):
             times = time_var[:]
             time_index = bisect.bisect_right(times, num_date)
             try:
-                return time_index, times[time_index]
+                times[time_index]
             except IndexError:
-                return time_index - 1, times[time_index - 1]  # Would have added to the end
+                time_index -= 1
+            return time_index, times[time_index]
         finally:
             nc.close()
 
     def times(self, layer):
         try:
             nc = self.topology_dataset()
-            return netCDF4.num2date(nc.variables['time'][:], units=nc.variables['time'].units)
+            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            return netCDF4.num2date(time_var[:], units=time_var.units)
         finally:
             nc.close()
 
@@ -243,7 +238,7 @@ class UGridDataset(Dataset):
         try:
             nc = self.netcdf4_dataset()
             layer_var = nc.variables[layer.access_name]
-            for cv in layer_var.coordinates.split():
+            for cv in layer_var.coordinates.strip().split():
                 try:
                     coord_var = nc.variables[cv]
                     if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
@@ -262,9 +257,8 @@ class UGridDataset(Dataset):
         if d is not None:
             try:
                 nc = self.netcdf4_dataset()
-                dvar = nc.variables[d]
-                if hasattr(dvar, 'positive'):
-                    return dvar.positive
+                if hasattr(d, 'positive'):
+                    return d.positive
             finally:
                 nc.close()
         return 'unknown'
@@ -274,7 +268,7 @@ class UGridDataset(Dataset):
         if d is not None:
             try:
                 nc = self.netcdf4_dataset()
-                return range(0, nc.variables[d].shape[0])
+                return range(0, d.shape[0])
             finally:
                 nc.close()
         return []
