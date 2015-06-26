@@ -52,6 +52,10 @@ class Layer(LayerBase):
     def depths(self):
         return self.dataset.depths(self)
 
+    @property
+    def layers(self):
+        return self.dataset.layer_set.filter(var_name=self.var_name)
+
 
 class VirtualLayer(LayerBase):
 

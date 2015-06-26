@@ -5,6 +5,10 @@ from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, SGridDataset
 
+import logging
+from wms import logger
+logger.addHandler(logging.StreamHandler())
+
 
 class TestSgrid(TestCase):
 
@@ -76,7 +80,7 @@ class TestSgrid(TestCase):
 
     def test_vectors(self):
         params = copy(self.url_params)
-        params.update(styles='vectors_jet', layers='u')
+        params.update(styles='vectors_jet', layers='u,v')
         self.do_test(params)
 
     def test_getCaps(self):
