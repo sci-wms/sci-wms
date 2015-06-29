@@ -89,4 +89,5 @@ try:
     from local_settings import *
 except ImportError:
     pass
+
 INSTALLED_APPS += LOCAL_APPS

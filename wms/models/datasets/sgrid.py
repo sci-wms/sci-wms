@@ -99,7 +99,7 @@ class SGridDataset(Dataset):
         else:
             raise Exception('Unable to trim variable {0} data.'.format(cached_variable.variable))
         return trimmed_variable
-
+    
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
 
@@ -186,6 +186,7 @@ class SGridDataset(Dataset):
                     x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
                     spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
                     spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
+                    print(spatial_subset_x_rot)
                     return mpl_handler.quiver_response(subset_lon,
                                                        subset_lat,
                                                        spatial_subset_x_rot,
@@ -258,6 +259,7 @@ class SGridDataset(Dataset):
             depths[depth_idx]
         except IndexError:
             depth_idx -= 1
+        print('Depth Idx: {0}'.format(depth_idx))
         return depth_idx, depths[depth_idx]
 
     def times(self, layer):
@@ -270,8 +272,12 @@ class SGridDataset(Dataset):
 
     def depth_variable(self, layer):
         try:
+            lyr_access_name = layer.access_name
+        except AttributeError:
+            lyr_access_name = layer
+        try:
             nc = self.netcdf4_dataset()
-            layer_var = nc.variables[layer.access_name]
+            layer_var = nc.variables[lyr_access_name]
             for cv in layer_var.coordinates.strip().split():
                 try:
                     coord_var = nc.variables[cv]
