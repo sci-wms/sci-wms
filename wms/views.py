@@ -176,11 +176,15 @@ def getLegendGraphic(request, dataset):
     show_label = True
     if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
         show_label = False
-
-    variables = request.GET["layer"].split(",")
+    lyr = request.GET['layers']
+    variables = request.GET["layers"].split(",")
     plot_type = styles[0]
-    colormap = styles[2].replace('-', '_')
-
+    # handle cases where the user does not specify a color map
+    try:
+        colormap = styles[2].replace('-', '_')
+    except IndexError:
+        # not sure if this is the best thing to do...
+        colormap = None
     dataset = Dataset.objects.get(name=dataset)
     nc = dataset.netcdf4_dataset()
 
