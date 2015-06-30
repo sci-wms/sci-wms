@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import time
 from datetime import datetime
 import bisect
 import itertools
@@ -85,7 +86,7 @@ class SGridDataset(Dataset):
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
-
+    
     def _variable_data_trimming(self, variable, cached_variable, time_index, request):
         variable_dim_length = len(cached_variable.dimensions)
         if variable_dim_length >= 3:
@@ -111,7 +112,7 @@ class SGridDataset(Dataset):
         wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
 
         try:
-            nc = self.netcdf4_dataset()
+            nc = self.canon_dataset
             cached_sg = from_ncfile(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
@@ -186,7 +187,6 @@ class SGridDataset(Dataset):
                     x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
                     spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
                     spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
-                    print(spatial_subset_x_rot)
                     return mpl_handler.quiver_response(subset_lon,
                                                        subset_lat,
                                                        spatial_subset_x_rot,
@@ -194,7 +194,6 @@ class SGridDataset(Dataset):
                                                        request)
                 else:
                     return self.empty_response(layer, request)
-
         finally:
             nc.close()
 
@@ -259,7 +258,6 @@ class SGridDataset(Dataset):
             depths[depth_idx]
         except IndexError:
             depth_idx -= 1
-        print('Depth Idx: {0}'.format(depth_idx))
         return depth_idx, depths[depth_idx]
 
     def times(self, layer):
@@ -276,7 +274,7 @@ class SGridDataset(Dataset):
         except AttributeError:
             lyr_access_name = layer
         try:
-            nc = self.netcdf4_dataset()
+            nc = self.canon_dataset
             layer_var = nc.variables[lyr_access_name]
             for cv in layer_var.coordinates.strip().split():
                 try:
@@ -309,7 +307,7 @@ class SGridDataset(Dataset):
             finally:
                 nc.close()
         return 'unknown'
-
+    
     def depths(self, layer):
         """ sci-wms only deals in depth indexes at this time (no sigma) """
         d = self.depth_variable(layer)
