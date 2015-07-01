@@ -654,18 +654,23 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     times = wms_handler.get_times(request)
     xy = wms_handler.get_xy(request)
     dimensions = wms_handler.get_dimensions(request)
+    bbox = wms_handler.get_bbox(request)
+    crs = wms_handler.get_projection(request)
+    targets = wms_handler.get_gfi_positions(xy, bbox, crs, dimensions)
 
     newgets = dict(
         starting=times.min,
         ending=times.max,
-        x=xy.x,
-        y=xy.y,
-        bbox=wms_handler.get_bbox(request),
-        wgs84_bbox=wms_handler.get_wgs84_bbox(request),
-        width=dimensions.width,
-        height=dimensions.height,
+        #x=xy.x,
+        #y=xy.y,
+        #bbox=bbox,
+        latitude=targets.latitude,
+        longitude=targets.longitude,
+        #wgs84_bbox=wms_handler.get_wgs84_bbox(request),
+        #width=dimensions.width,
+        #height=dimensions.height,
         elevation=wms_handler.get_elevation(request),
-        crs=wms_handler.get_projection(request),
+        crs=crs,
         info_format=wms_handler.get_info_format(request)
     )
     gettemp.update(newgets)

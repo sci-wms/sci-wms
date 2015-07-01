@@ -39,19 +39,34 @@ class TestUgrid(TestCase):
             bbox        = '-13756219.106426599,5811660.1345785195,-13736651.227185594,5831228.013819524'
         )
 
-    def image_name(self):
-        return '{}.png'.format(self.id().split('.')[-1])
+        self.gfi_params = dict(
+            service      = 'WMS',
+            request      = 'GetFeatureInfo',
+            version      = '1.1.1',
+            query_layers = 'surface_salt',
+            info_format  = 'text/csv',
+            srs          = 'EPSG:3857',
+            bbox         = '-13756219.106426599,5811660.1345785195,-13736651.227185594,5831228.013819524',
+            height       = 256,
+            width        = 256,
+            x            = 0,
+            y            = 0
+        )
+
+    def image_name(self, fmt):
+        return '{}.{}'.format(self.id().split('.')[-1], fmt)
 
     def test_identify(self):
         d = Dataset.objects.get(name=self.dataset_slug)
         klass = Dataset.identify(d.uri)
         assert klass == UGridDataset
 
-    def do_test(self, params, write=True):
+    def do_test(self, params, fmt=None, write=True):
+        fmt = fmt or 'png'
         response = self.client.get('/wms/datasets/{}'.format(self.dataset_slug), params)
         self.assertEqual(response.status_code, 200)
         if write is True:
-            with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
+            with open(image_path(self.__class__.__name__, self.image_name(fmt)), "wb") as f:
                 f.write(response.content)
 
     def test_filledcontours(self):
@@ -76,6 +91,21 @@ class TestUgrid(TestCase):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
         self.do_test(params)
+
+    def test_gfi_single_variable_csv(self):
+        params = copy(self.gfi_params)
+        self.do_test(params, fmt='csv')
+
+    def test_gfi_single_variable_tsv(self):
+        params = copy(self.gfi_params)
+        params['info_format']  = 'text/tsv'
+        params['query_layers'] = 'surface_temp'
+        self.do_test(params, fmt='tsv')
+
+    def test_gfi_single_variable_json(self):
+        params = copy(self.gfi_params)
+        params['info_format']  = 'application/json'
+        self.do_test(params, fmt='json')
 
     def test_getCaps(self):
         params = dict(request='GetCapabilities')

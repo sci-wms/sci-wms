@@ -9,7 +9,6 @@ from datetime import datetime
 import pytz
 
 from pyugrid import UGrid
-import pyproj
 from pyaxiom.netcdf import EnhancedDataset
 import numpy as np
 import netCDF4
@@ -27,6 +26,7 @@ from wms.utils import DotDict
 
 from wms import data_handler
 from wms import mpl_handler
+from wms import gfi_handler
 from wms import views
 
 from wms import logger
@@ -84,8 +84,8 @@ class UGridDataset(Dataset):
                   interleaved=True)
         logger.info("Built Rtree Topology Cache in {0} seconds.".format(time.time() - start))
 
-        shutil.move(temp_file, self.node_tree_data_file)
-        shutil.move(temp_file, self.node_file_index_file)
+        shutil.move('{}.dat'.format(temp_file), self.node_tree_data_file)
+        shutil.move('{}.idx'.format(temp_file), self.node_tree_index_file)
 
         nc.close()
 
@@ -214,68 +214,84 @@ class UGridDataset(Dataset):
     def getfeatureinfo(self, layer, request):
         try:
             nc = self.netcdf4_dataset()
+            topo = self.topology_dataset()
             data_obj = nc.variables[layer.access_name]
-            data_location = data_obj.location
-            mesh_name = data_obj.mesh
+            #data_location = data_obj.location
+            #mesh_name = data_obj.mesh
             # Use local topology for pulling bounds data
-            ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+            #ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
 
             try:
+                latitude = request.GET['latitude']
+                longitude = request.GET['longitude']
                 # Find closest cell or node (only node for now)
                 tree = rtree.index.Index(self.node_tree_root)
-                nindex = list(tree.nearest((tlon, tlat, tlon, tlat), 1, objects=True))[0]
-                tree.close()
+                nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
                 closest_lon, clostest_lat = tuple(nindex.bbox[2:])
-                closest_index = nindex.id
+                i_index = nindex.id
             except BaseException:
                 logger.exception("Could not query Tree for nearest point")
             finally:
                 tree.close()
 
-            timevar = nc.get_variables_by_attributes(standard_name='time')[0]
-            start_nc_num = round(netCDF4.date2num(request.GET['starting'], units=timevar.units))
-            end_nc_num = round(netCDF4.date2num(request.GET['ending'], units=timevar.units))
+            # Get time indexes
+            time_var = topo.get_variables_by_attributes(standard_name='time')[0]
+            if hasattr(time_var, 'calendar'):
+                calendar = time_var.calendar
+            else:
+                calendar = 'gregorian'
+            start_nc_num = round(netCDF4.date2num(request.GET['starting'], units=time_var.units, calendar=calendar))
+            end_nc_num = round(netCDF4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
 
-            all_times = timevar[:]
-            start_nc_index = bisect.bisect_right(all_times, start_nc_num) - 1
-            end_nc_index = bisect.bisect_right(all_times, end_nc_num) - 1
+            all_times = time_var[:]
+            start_nc_index = bisect.bisect_right(all_times, start_nc_num)
+            end_nc_index = bisect.bisect_right(all_times, end_nc_num)
+
+            try:
+                all_times[start_nc_index]
+            except IndexError:
+                start_nc_index = all_times.size - 1
+            try:
+                all_times[end_nc_index]
+            except IndexError:
+                end_nc_index = all_times.size - 1
+
             if start_nc_index == end_nc_index:
-                end_nc_index += 1
+                start_nc_index -= 1
 
-            # Get the actual time values (for return)
-            return_dates = netCDF4.num2daate(all_times[start_nc_index:end_nc_index], units=timevar.units)
+            return_dates = netCDF4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
 
             return_arrays = []
             z_value = None
             if isinstance(layer, Layer):
-                if (len(data_obj.shape) == 3):
+                if len(data_obj.shape) == 3:
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                    data = data_obj[start_nc_index:end_nc_index, z_index, :]
-                elif (len(data_obj.shape) == 2):
-                    data = data_obj[start_nc_index:end_nc_index, :]
+                    data = data_obj[start_nc_index:end_nc_index, z_index, i_index]
+                elif len(data_obj.shape) == 2:
+                    data = data_obj[start_nc_index:end_nc_index, i_index]
                 elif len(data_obj.shape) == 1:
-                    data = data_obj[:]
+                    data = data_obj[i_index]
                 else:
                     raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
 
-                return_arrays.append(data)
+                return_arrays.append((layer.var_name, data))
 
             elif isinstance(layer, VirtualLayer):
 
                 # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
                 for l in layer.layers:
                     data_obj = nc.variables[l.var_name]
-                    if (len(data_obj.shape) == 3):
+                    if len(data_obj.shape) == 3:
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        data.append(data_obj[start_nc_index:end_nc_index, z_index, :])
-                    elif (len(data_obj.shape) == 2):
-                        data.append(data_obj[start_nc_index:end_nc_index, :])
+                        data.append(data_obj[start_nc_index:end_nc_index, z_index, i_index])
+                    elif len(data_obj.shape) == 2:
+                        data.append(data_obj[start_nc_index:end_nc_index, i_index])
                     elif len(data_obj.shape) == 1:
-                        data.append(data_obj[:])
+                        data.append(data_obj[i_index])
                     else:
                         raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
 
-                    return_arrays.append(data)
+                    return_arrays.append((l.var_name, data))
 
             # Data is now in the return_arrays list, as a list of numpy arrays.  We need
             # to add time and depth to them to create a single Pandas DataFrame
@@ -286,23 +302,18 @@ class UGridDataset(Dataset):
                 df = pd.DataFrame({'time': return_dates})
             else:
                 df = pd.DataFrame()
-            # Now add a column for each member of the return_arrays list
-            # ggsdgsdfsdfs
 
-            if request.GET['info_format'] == 'text/csv':
-                response = HttpResponse(content_type='text/csv')
-                response.write(df.something)
-            elif request.GET['info_format'] == 'text/tsv':
-                response = HttpResponse(content_type='text/csv')
-                response.write(df.something)
-            elif request.GET['info_format'] == 'application/x-hdf5':
-                response = HttpResponse(content_type='text/csv')
-                response.write(df.something)
+            # Now add a column for each member of the return_arrays list
+            for (var_name, np_array) in return_arrays:
+                df.loc[:, var_name] = pd.Series(np_array, index=df.index)
+
+            return gfi_handler.from_dataframe(request, df)
 
         except BaseException:
             logger.exception("Could not process GetFeatureInfo request")
         finally:
             nc.close()
+            topo.close()
 
     def wgs84_bounds(self, layer):
         try:

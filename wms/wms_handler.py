@@ -142,4 +142,11 @@ def get_dimensions(request):
         height = float(request.GET.get("height"))
         return DotDict(width=width, height=height)
     except:
-        return DotDict(min=None, max=None)
+        return DotDict(width=None, height=None)
+
+
+def get_gfi_positions(xy, bbox, crs, dims):
+    """ Returns the latitude and longitude the GFI should be performed at"""
+    EPSG4326 = pyproj.Proj(init='EPSG:4326')
+    lon, lat = pyproj.transform(crs, EPSG4326, bbox.minx+((bbox.maxx-bbox.minx)*(xy.x/dims.width)), bbox.maxy-((bbox.maxy-bbox.miny)*(xy.y/dims.height)))
+    return DotDict(latitude=lat, longitude=lon)
