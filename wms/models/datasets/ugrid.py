@@ -202,30 +202,6 @@ class UGridDataset(Dataset):
             depth_idx -= 1
         return depth_idx, depths[depth_idx]
 
-    def nearest_time(self, layer, time):
-        """
-        Return the time index and time value that is closest
-        """
-        try:
-            nc = self.topology_dataset()
-            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
-            units = time_var.units
-            if hasattr(time_var, 'calendar'):
-                calendar = time_var.calendar
-            else:
-                calendar = 'gregorian'
-            num_date = round(netCDF4.date2num(time, units=units, calendar=calendar))
-
-            times = time_var[:]
-            time_index = bisect.bisect_right(times, num_date)
-            try:
-                times[time_index]
-            except IndexError:
-                time_index -= 1
-            return time_index, times[time_index]
-        finally:
-            nc.close()
-
     def times(self, layer):
         try:
             nc = self.topology_dataset()
