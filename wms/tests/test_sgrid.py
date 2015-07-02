@@ -89,7 +89,7 @@ class TestSgrid(TestCase):
 
     def test_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_slug)
-        assert d.layer_set.count() == 12
+        assert d.layer_set.count() == 15
 
     def test_delete_cache_signal(self):
         d = add_dataset("sgrid_deleting", "sgrid", "coawst_sgrid.nc")
