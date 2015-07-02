@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import bisect
 import os
 import glob
 from urlparse import urlparse
@@ -8,13 +9,14 @@ from django.db import models
 from typedmodels import TypedModel
 from jsonfield import JSONField
 
+import netCDF4 as nc4
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
 from django.http.response import HttpResponse
 
-from wms.utils import DotDict
+from wms.utils import DotDict, find_appropriate_time
 from wms.data_handler import blank_canvas
 
 
@@ -27,6 +29,16 @@ class Dataset(TypedModel):
     display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
     cache_last_updated = models.DateTimeField(null=True, editable=False)
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
+    
+    def __init__(self, *args, **kwargs):
+        super(Dataset, self).__init__(*args, **kwargs)
+        self.canon_dataset = self.netcdf4_dataset()
+        
+    def __del__(self):
+        try:
+            self.canon_dataset.close()
+        except AttributeError:
+            pass
 
     def __unicode__(self):
         return self.name
@@ -190,6 +202,35 @@ class Dataset(TypedModel):
             nc.close()
 
         self.analyze_virtual_layers()
+        
+    def nearest_time(self, layer, time):
+        """
+        Return the time index and time value that is closest
+        """
+        nc = self.canon_dataset
+        time_vars = nc.get_variables_by_attributes(standard_name='time')
+        if len(time_vars) == 1:
+            time_var = time_vars[0]
+        else:
+            # if there is more than variable with standard_name = time
+            # fine the appropriate one to use with the layer
+            var_obj = nc.variables[layer.access_name]
+            time_var_name = find_appropriate_time(var_obj, time_vars)
+            time_var = nc.variables[time_var_name]
+        units = time_var.units
+        if hasattr(time_var, 'calendar'):
+            calendar = time_var.calendar
+        else:
+            calendar = 'gregorian'
+        num_date = round(nc4.date2num(time, units=units, calendar=calendar))
+
+        times = time_var[:]
+        time_index = bisect.bisect_right(times, num_date)
+        try:
+            times[time_index]
+        except IndexError:
+            time_index -= 1
+        return time_index, times[time_index]
 
     def active_layers(self):
         layers = self.layer_set.prefetch_related('styles').filter(active=True)
