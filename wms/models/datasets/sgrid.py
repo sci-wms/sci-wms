@@ -138,6 +138,8 @@ class SGridDataset(Dataset):
 
                 if request.GET['image_type'] == 'pcolor':
                     return mpl_handler.pcolormesh_response(lon, lat, data=var0_data, request=request)
+                elif request.GET['image_type'] == 'filledcontours':
+                    return mpl_handler.contourf_response(lon, lat, data=var0_data, request=request)
                 else:
                     return self.empty_response(layer, request)
 
