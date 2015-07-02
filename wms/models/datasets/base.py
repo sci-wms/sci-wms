@@ -39,7 +39,7 @@ class Dataset(TypedModel):
     def __del__(self):
         try:
             self.canon_dataset.close()
-        except AttributeError:
+        except (RuntimeError, AttributeError):
             pass
 
     def __unicode__(self):
