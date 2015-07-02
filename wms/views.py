@@ -180,7 +180,11 @@ def getLegendGraphic(request, dataset):
 
     variables = request.GET["layer"].split(",")
     plot_type = styles[0]
-    colormap = styles[2].replace('-', '_')
+    # handle cases where the user does not specify a color map
+    try:
+        colormap = styles[2].replace('-', '_')
+    except IndexError:
+        colormap = None
 
     dataset = Dataset.objects.get(name=dataset)
     nc = dataset.netcdf4_dataset()
