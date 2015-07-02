@@ -5,7 +5,6 @@ import bisect
 import itertools
 
 import netCDF4 as nc4
-import numpy as np
 import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
@@ -85,7 +84,7 @@ class SGridDataset(Dataset):
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
-
+    
     def _variable_data_trimming(self, variable, cached_variable, time_index, request):
         variable_dim_length = len(cached_variable.dimensions)
         if variable_dim_length >= 3:
@@ -99,7 +98,7 @@ class SGridDataset(Dataset):
         else:
             raise Exception('Unable to trim variable {0} data.'.format(cached_variable.variable))
         return trimmed_variable
-
+    
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
 
@@ -111,7 +110,7 @@ class SGridDataset(Dataset):
         wgs84_maxx, wgs84_maxy = pyproj.transform(requested_crs, EPSG4326, bbox.maxx, bbox.maxy)
 
         try:
-            nc = self.netcdf4_dataset()
+            nc = self.canon_dataset
             cached_sg = from_ncfile(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
@@ -139,9 +138,10 @@ class SGridDataset(Dataset):
 
                 if request.GET['image_type'] == 'pcolor':
                     return mpl_handler.pcolormesh_response(lon, lat, data=var0_data, request=request)
+                elif request.GET['image_type'] == 'filledcontours':
+                    return mpl_handler.contourf_response(lon, lat, data=var0_data, request=request)
                 else:
                     return self.empty_response(layer, request)
-
             elif isinstance(layer, VirtualLayer):
                 x_var = None
                 y_var = None
@@ -193,12 +193,14 @@ class SGridDataset(Dataset):
                                                        request)
                 else:
                     return self.empty_response(layer, request)
-
         finally:
             nc.close()
 
     def getlegendgraphic(self, layer, request):
         return views.getLegendGraphic(request, self)
+    
+    def getfeatureinfo(self, layer, request):
+        return views.getFeatureInfo(request, self)
 
     def wgs84_bounds(self, layer):
         try:
@@ -224,30 +226,6 @@ class SGridDataset(Dataset):
                            maxy=lat_max
                            )
 
-    def nearest_time(self, layer, time):
-        """
-        Return the time index and time value that is closest
-        """
-        try:
-            nc = self.topology_dataset()
-            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
-            units = time_var.units
-            if hasattr(time_var, 'calendar'):
-                calendar = time_var.calendar
-            else:
-                calendar = 'gregorian'
-            num_date = round(nc4.date2num(time, units=units, calendar=calendar))
-
-            times = time_var[:]
-            time_index = bisect.bisect_right(times, num_date)
-            try:
-                times[time_index]
-            except IndexError:
-                time_index -= 1
-            return time_index, times[time_index]
-        finally:
-            nc.close()
-
     def nearest_z(self, layer, z):
         """
         Return the z index and z value that is closest
@@ -270,8 +248,12 @@ class SGridDataset(Dataset):
 
     def depth_variable(self, layer):
         try:
-            nc = self.netcdf4_dataset()
-            layer_var = nc.variables[layer.access_name]
+            lyr_access_name = layer.access_name
+        except AttributeError:
+            lyr_access_name = layer
+        try:
+            nc = self.canon_dataset
+            layer_var = nc.variables[lyr_access_name]
             for cv in layer_var.coordinates.strip().split():
                 try:
                     coord_var = nc.variables[cv]
@@ -303,7 +285,7 @@ class SGridDataset(Dataset):
             finally:
                 nc.close()
         return 'unknown'
-
+    
     def depths(self, layer):
         """ sci-wms only deals in depth indexes at this time (no sigma) """
         d = self.depth_variable(layer)

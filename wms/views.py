@@ -52,6 +52,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.views.decorators.cache import cache_page
 
 from pyugrid import UGrid
+from pysgrid import from_nc_dataset
 
 from wms.models import Dataset, Server
 from wms.utils import get_layer_from_request
@@ -176,11 +177,15 @@ def getLegendGraphic(request, dataset):
     show_label = True
     if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
         show_label = False
-
-    variables = request.GET["layer"].split(",")
+    lyr = request.GET['layers']
+    variables = request.GET["layers"].split(",")
     plot_type = styles[0]
-    colormap = styles[2].replace('-', '_')
-
+    # handle cases where the user does not specify a color map
+    try:
+        colormap = styles[2].replace('-', '_')
+    except IndexError:
+        # not sure if this is the best thing to do...
+        colormap = None
     dataset = Dataset.objects.get(name=dataset)
     nc = dataset.netcdf4_dataset()
 
@@ -373,13 +378,21 @@ def getFeatureInfo(request, dataset):
                     test = i.id
             if test == -1:
                 nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
+        print(nindex)
         selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
         index = nindex[test_index].id
         tree.close()
     else:
+        print('Node tree root: {}'.format(dataset.node_tree_root))
         tree = rindex.Index(dataset.node_tree_root)
-        lats = topology.variables['lat'][:]
-        lons = topology.variables['lon'][:]
+        if grid_type == 'sgrid':
+            sg = from_nc_dataset(topology)
+            sg_centers = sg.centers
+            lats = sg_centers[..., 1]
+            lons = sg_centers[..., 0]
+        else:
+            lats = topology.variables['lat'][:]
+            lons = topology.variables['lon'][:]
         nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
         selected_longitude, selected_latitude = lons[nindex[0].object[0], nindex[0].object[1]][0], lats[nindex[0].object[0], nindex[0].object[1]][0]
         index = nindex[0].object
