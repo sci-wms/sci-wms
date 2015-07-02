@@ -15,6 +15,7 @@ from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
 from django.http.response import HttpResponse
+from autoslug import AutoSlugField
 
 from wms.utils import DotDict, find_appropriate_time
 from wms.data_handler import blank_canvas
@@ -29,15 +30,16 @@ class Dataset(TypedModel):
     display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
     cache_last_updated = models.DateTimeField(null=True, editable=False)
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
-    
+    slug = AutoSlugField(populate_from='name')
+
     def __init__(self, *args, **kwargs):
         super(Dataset, self).__init__(*args, **kwargs)
         self.canon_dataset = self.netcdf4_dataset()
-        
+
     def __del__(self):
         try:
             self.canon_dataset.close()
-        except AttributeError:
+        except (RuntimeError, AttributeError):
             pass
 
     def __unicode__(self):
@@ -202,7 +204,7 @@ class Dataset(TypedModel):
             nc.close()
 
         self.analyze_virtual_layers()
-        
+
     def nearest_time(self, layer, time):
         """
         Return the time index and time value that is closest
@@ -256,26 +258,26 @@ class Dataset(TypedModel):
 
     @property
     def node_tree_root(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.nodes').format(self.safe_filename)
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.tree').format(self.safe_filename)
 
     @property
-    def cell_tree_root(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
-
-    @property
-    def node_index_file(self):
-        return '{}.idx'.format(self.node_tree_root)
-
-    @property
-    def node_data_file(self):
+    def node_tree_data_file(self):
         return '{}.dat'.format(self.node_tree_root)
 
     @property
-    def cell_index_file(self):
+    def node_tree_index_file(self):
+        return '{}.idx'.format(self.node_tree_root)
+
+    @property
+    def cell_tree_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
+
+    @property
+    def cell_tree_index_file(self):
         return '{}.idx'.format(self.cell_tree_root)
 
     @property
-    def cell_data_file(self):
+    def cell_tree_data_file(self):
         return '{}.dat'.format(self.cell_tree_root)
 
     @property

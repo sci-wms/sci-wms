@@ -18,6 +18,31 @@ def get_bbox(request):
     return DotDict(minx=elements[0], miny=elements[1], maxx=elements[2], maxy=elements[3])
 
 
+def get_wgs84_bbox(request):
+    """
+    Return the [lonmin, latmin, lonmax, lonmax] - [lower (x,y), upper(x,y)]
+    in WGS84
+    """
+    EPSG4326 = pyproj.Proj(init='EPSG:4326')
+    crs = get_projection(request)
+    bbox = get_bbox(request)
+
+    wgs84_minx, wgs84_miny = pyproj.transform(crs, EPSG4326, bbox.minx, bbox.miny)
+    wgs84_maxx, wgs84_maxy = pyproj.transform(crs, EPSG4326, bbox.maxx, bbox.maxy)
+
+    return DotDict(minx=wgs84_minx, miny=wgs84_miny, maxx=wgs84_maxx, maxy=wgs84_maxy)
+
+
+def get_info_format(request):
+    """
+    Return the INFO_FORMAT for GetFeatureInfo requests
+    """
+    try:
+        return request.GET['info_format'].lower()
+    except KeyError:
+        return None
+
+
 def get_projection(request):
     """
     Return the projection string passed into the request.
@@ -39,15 +64,17 @@ def get_xy(request):
     """
     Returns list of floats
     """
-    xy = [None, None]
-    x = request.GET.get('x')
-    if x:
-        xy[0] = float(x)
-    y = request.GET.get('y')
-    if y:
-        xy[1] = float(y)
+    try:
+        x = float(request.GET.get('x'))
+    except ValueError:
+        x = None
 
-    return xy
+    try:
+        y = float(request.GET.get('y'))
+    except ValueError:
+        y = None
+
+    return DotDict(x=x, y=y)
 
 
 def get_elevation(request):
@@ -115,4 +142,11 @@ def get_dimensions(request):
         height = float(request.GET.get("height"))
         return DotDict(width=width, height=height)
     except:
-        return DotDict(min=None, max=None)
+        return DotDict(width=None, height=None)
+
+
+def get_gfi_positions(xy, bbox, crs, dims):
+    """ Returns the latitude and longitude the GFI should be performed at"""
+    EPSG4326 = pyproj.Proj(init='EPSG:4326')
+    lon, lat = pyproj.transform(crs, EPSG4326, bbox.minx+((bbox.maxx-bbox.minx)*(xy.x/dims.width)), bbox.maxy-((bbox.maxy-bbox.miny)*(xy.y/dims.height)))
+    return DotDict(latitude=lat, longitude=lon)

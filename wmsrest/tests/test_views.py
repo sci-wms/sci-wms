@@ -50,7 +50,6 @@ class TestDatasetList(APITestCase):
         self.assertEqual(status_code, status.HTTP_201_CREATED)
 
     def test_view_post_response_with_layers(self):
-        url = reverse('dataset-list')
         test_data = {'uri': u'fake_file_4.nc',
                      'name': u'a fourth fake file',
                      'title': u'some title',
@@ -59,7 +58,7 @@ class TestDatasetList(APITestCase):
                      'display_all_timesteps': False,
                      'type': 'sgrid'
                      }
-        response = self.ac.post(url, test_data, format='json')
+        response = self.ac.post(self.url, test_data, format='json')
         status_code = response.status_code
         self.assertEqual(status_code, status.HTTP_201_CREATED)
 

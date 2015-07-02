@@ -21,17 +21,17 @@
           <div class="panel-group" id="menu">
             {% for dataset in datasets %}
             <div class="panel panel-default">
-              <div class="panel-heading" role="tab" id="heading-{{dataset.name}}">
+              <div class="panel-heading" role="tab" id="heading-{{ dataset.slug }}">
                 <h4 class="panel-title">
-                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{dataset.name}}" aria-expanded="false" aria-controls="collapse-{{dataset.name}}">{{dataset.name}}</a> <span class="label label-default">{{ dataset.humanize }}</span>
+                  <a data-toggle="collapse" data-parent="#menu" href="#collapse-{{ dataset.slug }}" aria-expanded="false" aria-controls="collapse-{{ dataset.slug }}">{{dataset.name}}</a> <span class="label label-default">{{ dataset.humanize }}</span>
                 </h4>
               </div>
-              <div id="collapse-{{dataset.name}}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.name}}">
+              <div id="collapse-{{ dataset.slug }}" class="panel-collapse collapse" aria-labelledby="heading-{{dataset.slug}}">
                 <div class="panel-body">
                   <div class="list-group">
                     {% for vl in dataset.active_layers %}
                     {% if vl.styles %}
-                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-style="{{ vl.styles.first }}" data-dataset="{{dataset.name}}">{{vl.var_name}} ({{vl.std_name}})</a>
+                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-style="{{ vl.styles.first }}" data-dataset="{{ dataset.slug }}">{{vl.var_name}} ({{vl.std_name}})</a>
                     {% else %}
                         {{vl.layer}} (no styles)
                     {% endif %}
@@ -58,17 +58,12 @@
 
     // one layer per dataset, we'll modify the layer and style with the click
     {% for dataset in datasets %}
-    var {{dataset.name}} = L.tileLayer.wms("{% url 'dataset' dataset=dataset.name %}", {
-        //layers: '{{dataset.test_layer}}',
+    var {{dataset.slug}} = L.tileLayer.wms("{% url 'dataset' dataset.slug %}", {
         format: 'image/png',
         transparent: 'true',
         attribution: "Sci-wms - Python WMS service",
         opacity: 0.7,
     });
-    //{{dataset.name}}.setParams({
-    //    TIME: '{{dataset.test_date}}',
-    //    ELEVATION: '0'
-    //});
     {% endfor %}
 
     var bounds = new L.LatLngBounds(new L.LatLng(32, -126), new L.LatLng(50, -64));
@@ -78,12 +73,11 @@
         e.preventDefault();
         $(".layers").removeClass("active");
         $(e.target).addClass("active");
-        // -- get {{dataset.name}} from panel-title
-        dataset_name = $(this).data('dataset');
+        dataset_slug = $(this).data('dataset');
         layer = $(this).data('layer');
         style = $(this).data('style');
 
-        l = eval(dataset_name);
+        l = eval(dataset_slug);
         l.setParams({
             layers: layer,
             styles: style

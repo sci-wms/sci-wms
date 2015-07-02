@@ -25,7 +25,7 @@ class TestUgridLegendGraphic(TestCase):
         d.delete()
 
     def setUp(self):
-        self.dataset_name = 'legend_testing'
+        self.dataset_slug = 'legend_testing'
         self.url_params = dict(
             request = 'GetLegendGraphic',
             layer   = 'surface_salt',
@@ -35,7 +35,7 @@ class TestUgridLegendGraphic(TestCase):
         return '{}.png'.format(self.id().split('.')[-1])
 
     def do_test(self, params, write=True):
-        response = self.client.get('/wms/datasets/{}'.format(self.dataset_name), params)
+        response = self.client.get('/wms/datasets/{}'.format(self.dataset_slug), params)
         self.assertEqual(response.status_code, 200)
         if write is True:
             with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:

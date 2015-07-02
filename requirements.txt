@@ -14,3 +14,5 @@ django-grappelli
 django-typed-models
 pyproj
 dj-static
+pandas
+django-autoslug

@@ -38,7 +38,7 @@ class LayerInline(admin.StackedInline):
 
 @admin.register(Dataset)
 class DatasetAdmin(admin.ModelAdmin):
-    list_display = ('name', 'title', 'keep_up_to_date')
+    list_display = ('name', 'slug', 'title', 'keep_up_to_date')
     list_filter = ('keep_up_to_date',)
     inlines = [
         LayerInline,

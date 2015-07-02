@@ -120,7 +120,7 @@ def update_dataset(request, dataset):
         if dataset is None:
             return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
         else:
-            d = Dataset.objects.get(name=dataset)
+            d = Dataset.objects.get(slug=dataset)
             d.update_cache(force=True)
             return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
     else:
@@ -186,7 +186,7 @@ def getLegendGraphic(request, dataset):
     except IndexError:
         colormap = None
 
-    dataset = Dataset.objects.get(name=dataset)
+    dataset = Dataset.objects.get(slug=dataset)
     nc = dataset.netcdf4_dataset()
 
     """
@@ -303,7 +303,7 @@ def getFeatureInfo(request, dataset):
     from datetime import date
     from mpl_toolkits.basemap import pyproj
 
-    dataset = Dataset.objects.get(name=dataset)
+    dataset = Dataset.objects.get(slug=dataset)
 
     X = float(request.GET['x'])
     Y = float(request.GET['y'])
@@ -626,6 +626,7 @@ def enhance_getmap_request(dataset, layer, request):
         time=wms_handler.get_time(request),
         crs=wms_handler.get_projection(request),
         bbox=wms_handler.get_bbox(request),
+        wgs84_bbox=wms_handler.get_wgs84_bbox(request),
         colormap=wms_handler.get_colormap(request),
         colorscalerange=wms_handler.get_colorscalerange(request, layer.default_min, layer.default_max),
         elevation=wms_handler.get_elevation(request),
@@ -651,10 +652,26 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     gettemp = request.GET.copy()
     # 'time' parameter
     times = wms_handler.get_times(request)
+    xy = wms_handler.get_xy(request)
+    dimensions = wms_handler.get_dimensions(request)
+    bbox = wms_handler.get_bbox(request)
+    crs = wms_handler.get_projection(request)
+    targets = wms_handler.get_gfi_positions(xy, bbox, crs, dimensions)
 
     newgets = dict(
         starting=times.min,
-        ending=times.max
+        ending=times.max,
+        #x=xy.x,
+        #y=xy.y,
+        #bbox=bbox,
+        latitude=targets.latitude,
+        longitude=targets.longitude,
+        #wgs84_bbox=wms_handler.get_wgs84_bbox(request),
+        #width=dimensions.width,
+        #height=dimensions.height,
+        elevation=wms_handler.get_elevation(request),
+        crs=crs,
+        info_format=wms_handler.get_info_format(request)
     )
     gettemp.update(newgets)
     request.GET = gettemp
@@ -664,7 +681,7 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
 class DatasetShowView(View):
 
     def get(self, request, dataset):
-        dataset = get_object_or_404(Dataset, name=dataset)
+        dataset = get_object_or_404(Dataset, slug=dataset)
         return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset))
 
 
@@ -694,7 +711,7 @@ class DatasetListView(View):
 class WmsView(View):
 
     def get(self, request, dataset):
-        dataset = Dataset.objects.filter(name=dataset).first()
+        dataset = Dataset.objects.filter(slug=dataset).first()
         request = normalize_get_params(request)
         reqtype = request.GET['request']
 
