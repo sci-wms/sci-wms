@@ -4,6 +4,7 @@ import time
 import bisect
 import shutil
 import tempfile
+import itertools
 from datetime import datetime
 
 import pytz
@@ -17,12 +18,10 @@ import pandas as pd
 
 import matplotlib.tri as Tri
 
-from django.http import HttpResponse
-
 import rtree
 
 from wms.models import Dataset, Layer, VirtualLayer
-from wms.utils import DotDict
+from wms.utils import DotDict, find_appropriate_time
 
 from wms import data_handler
 from wms import mpl_handler
@@ -55,8 +54,6 @@ class UGridDataset(Dataset):
         p.storage   = rtree.index.RT_Disk
         p.Dimension = 2
 
-        _, temp_file = tempfile.mkstemp(suffix='.tree')
-
         nc = self.netcdf4_dataset()
         ug = UGrid.from_nc_dataset(nc=nc)
 
@@ -68,24 +65,38 @@ class UGridDataset(Dataset):
                 except ImportError:
                     super(FastRtree, self).dumps(obj)
 
-        def rtree_generator_function():
+        def rtree_faces_generator_function():
             for face_idx, node_list in enumerate(ug.faces):
                 nodes = ug.nodes[node_list]
                 xmin, ymin = np.min(nodes, 0)
                 xmax, ymax = np.max(nodes, 0)
-                yield (face_idx, (xmin, ymin, xmax, ymax), node_list)
-
-        logger.info("Building Rtree Topology Cache for {0}".format(self.name))
+                yield (face_idx, (xmin, ymin, xmax, ymax), face_idx)
+        logger.info("Building Faces Rtree Topology Cache for {0}".format(self.name))
+        _, face_temp_file = tempfile.mkstemp(suffix='.face')
         start = time.time()
-        FastRtree(temp_file,
-                  rtree_generator_function(),
+        FastRtree(face_temp_file,
+                  rtree_faces_generator_function(),
                   properties=p,
                   overwrite=True,
                   interleaved=True)
-        logger.info("Built Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+        logger.info("Built Faces Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+        shutil.move('{}.dat'.format(face_temp_file), self.face_tree_data_file)
+        shutil.move('{}.idx'.format(face_temp_file), self.face_tree_index_file)
 
-        shutil.move('{}.dat'.format(temp_file), self.node_tree_data_file)
-        shutil.move('{}.idx'.format(temp_file), self.node_tree_index_file)
+        def rtree_nodes_generator_function():
+            for node_index, (x, y) in enumerate(ug.nodes):
+                yield (node_index, (x, y, x, y), node_index)
+        logger.info("Building Nodes Rtree Topology Cache for {0}".format(self.name))
+        _, node_temp_file = tempfile.mkstemp(suffix='.node')
+        start = time.time()
+        FastRtree(node_temp_file,
+                  rtree_nodes_generator_function(),
+                  properties=p,
+                  overwrite=True,
+                  interleaved=True)
+        logger.info("Built Nodes Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+        shutil.move('{}.dat'.format(node_temp_file), self.node_tree_data_file)
+        shutil.move('{}.idx'.format(node_temp_file), self.node_tree_index_file)
 
         nc.close()
 
@@ -99,23 +110,30 @@ class UGridDataset(Dataset):
                 logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
                 return
 
-            cached_nc = EnhancedDataset(self.topology_file, mode='a')
+            time_vars = nc.get_variables_by_attributes(standard_name='time')
+            time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
+            unique_time_dims = list(set(time_dims))
+            with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
+                # create pertinent time dimensions if they aren't already present
+                for unique_time_dim in unique_time_dims:
+                    dim_size = len(nc.dimensions[unique_time_dim])
+                    try:
+                        cached_nc.createDimension(unique_time_dim, size=dim_size)
+                    except RuntimeError:
+                        continue
 
-            # add time to the cached topology
-            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
-            time_vals = time_var[:]
-            if time_vals is not None:
-                cached_nc.createDimension('time', size=time_vals.size)
-                if time_vals.ndim > 1:  # deal with one dimensional time for now
-                    pass
-                else:
-                    cached_time_var = cached_nc.createVariable(varname='time',
-                                                               datatype='f8',
-                                                               dimensions=('time',))
-                    cached_time_var[:] = time_vals[:]
-                    cached_time_var.units = time_var.units
-                    cached_time_var.standard_name = 'time'
-            cached_nc.close()
+                # support cases where there may be more than one variable with standard_name='time' in a dataset
+                for time_var in time_vars:
+                    try:
+                        time_var_obj = cached_nc.createVariable(time_var.name,
+                                                                time_var.dtype,
+                                                                time_var.dimensions)
+                    except RuntimeError:
+                        time_var_obj = cached_nc.variables[time_var.name]
+                    finally:
+                        time_var_obj[:] = time_var[:]
+                        time_var_obj.units = time_var.units
+                        time_var_obj.standard_name = 'time'
 
             # Now do the RTree index
             self.make_rtree()
@@ -178,7 +196,7 @@ class UGridDataset(Dataset):
                 if request.GET['image_type'] == 'filledcontours':
                     return mpl_handler.tricontourf_response(tri_subset, data, request)
                 else:
-                    return self.empty_response(layer, request)
+                    raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
             elif isinstance(layer, VirtualLayer):
 
@@ -204,75 +222,41 @@ class UGridDataset(Dataset):
                                                        data[1][spatial_idx],
                                                        request)
                 else:
-                    return self.empty_response(layer, request)
+                    raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
         finally:
             nc.close()
 
     def getlegendgraphic(self, layer, request):
-        return views.getLegendGraphic(request, self)
+        raise NotImplementedError("GetLegendGraphic is not implemented for UGRID datasets")
 
     def getfeatureinfo(self, layer, request):
         try:
             nc = self.netcdf4_dataset()
             topo = self.topology_dataset()
             data_obj = nc.variables[layer.access_name]
-            #data_location = data_obj.location
-            #mesh_name = data_obj.mesh
+            data_location = data_obj.location
+            # mesh_name = data_obj.mesh
             # Use local topology for pulling bounds data
-            #ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+            # ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
 
-            try:
-                latitude = request.GET['latitude']
-                longitude = request.GET['longitude']
-                # Find closest cell or node (only node for now)
-                tree = rtree.index.Index(self.node_tree_root)
-                nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
-                closest_lon, clostest_lat = tuple(nindex.bbox[2:])
-                i_index = nindex.id
-            except BaseException:
-                logger.exception("Could not query Tree for nearest point")
-            finally:
-                tree.close()
+            geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(topo, data_obj, request, location=data_location)
 
-            # Get time indexes
-            time_var = topo.get_variables_by_attributes(standard_name='time')[0]
-            if hasattr(time_var, 'calendar'):
-                calendar = time_var.calendar
-            else:
-                calendar = 'gregorian'
-            start_nc_num = round(netCDF4.date2num(request.GET['starting'], units=time_var.units, calendar=calendar))
-            end_nc_num = round(netCDF4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
-
-            all_times = time_var[:]
-            start_nc_index = bisect.bisect_right(all_times, start_nc_num)
-            end_nc_index = bisect.bisect_right(all_times, end_nc_num)
-
-            try:
-                all_times[start_nc_index]
-            except IndexError:
-                start_nc_index = all_times.size - 1
-            try:
-                all_times[end_nc_index]
-            except IndexError:
-                end_nc_index = all_times.size - 1
-
-            if start_nc_index == end_nc_index:
-                start_nc_index -= 1
-
-            return_dates = netCDF4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
+            logger.info("Start index: {}".format(start_time_index))
+            logger.info("End index: {}".format(end_time_index))
+            logger.info("Geo index: {}".format(geo_index))
 
             return_arrays = []
             z_value = None
             if isinstance(layer, Layer):
                 if len(data_obj.shape) == 3:
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                    data = data_obj[start_nc_index:end_nc_index, z_index, i_index]
+                    data = data_obj[start_time_index:end_time_index, z_index, geo_index]
                 elif len(data_obj.shape) == 2:
-                    data = data_obj[start_nc_index:end_nc_index, i_index]
+                    data = data_obj[start_time_index:end_time_index, geo_index]
                 elif len(data_obj.shape) == 1:
-                    data = data_obj[i_index]
+                    data = data_obj[geo_index]
                 else:
-                    raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
+                    raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
 
                 return_arrays.append((layer.var_name, data))
 
@@ -283,13 +267,13 @@ class UGridDataset(Dataset):
                     data_obj = nc.variables[l.var_name]
                     if len(data_obj.shape) == 3:
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        data.append(data_obj[start_nc_index:end_nc_index, z_index, i_index])
+                        data.append(data_obj[start_time_index:end_time_index, z_index, geo_index])
                     elif len(data_obj.shape) == 2:
-                        data.append(data_obj[start_nc_index:end_nc_index, i_index])
+                        data.append(data_obj[start_time_index:end_time_index, geo_index])
                     elif len(data_obj.shape) == 1:
-                        data.append(data_obj[i_index])
+                        data.append(data_obj[geo_index])
                     else:
-                        raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_nc_index, end_nc_index))
+                        raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
 
                     return_arrays.append((l.var_name, data))
 
@@ -297,9 +281,16 @@ class UGridDataset(Dataset):
             # to add time and depth to them to create a single Pandas DataFrame
             if (len(data_obj.shape) == 3):
                 df = pd.DataFrame({'time': return_dates,
+                                   'x': closest_x,
+                                   'y': closest_y,
                                    'z': z_value})
             elif (len(data_obj.shape) == 2):
-                df = pd.DataFrame({'time': return_dates})
+                df = pd.DataFrame({'time': return_dates,
+                                   'x': closest_x,
+                                   'y': closest_y})
+            elif (len(data_obj.shape) == 1):
+                df = pd.DataFrame({'x': closest_x,
+                                   'y': closest_y})
             else:
                 df = pd.DataFrame()
 
@@ -311,6 +302,7 @@ class UGridDataset(Dataset):
 
         except BaseException:
             logger.exception("Could not process GetFeatureInfo request")
+            raise
         finally:
             nc.close()
             topo.close()

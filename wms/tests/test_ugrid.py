@@ -1,13 +1,14 @@
-import unittest
+# -*- coding: utf-8 -*-
 from copy import copy
 
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, UGridDataset
 
-import logging
 from wms import logger
-logger.addHandler(logging.StreamHandler())
+
+import pytest
+xfail = pytest.mark.xfail
 
 
 class TestUgrid(TestCase):
@@ -49,8 +50,8 @@ class TestUgrid(TestCase):
             bbox         = '-13756219.106426599,5811660.1345785195,-13736651.227185594,5831228.013819524',
             height       = 256,
             width        = 256,
-            x            = 0,
-            y            = 0
+            x            = 256,  # Top right
+            y            = 0     # Top right
         )
 
     def image_name(self, fmt):
@@ -65,35 +66,43 @@ class TestUgrid(TestCase):
         fmt = fmt or 'png'
         response = self.client.get('/wms/datasets/{}'.format(self.dataset_slug), params)
         self.assertEqual(response.status_code, 200)
+        outfile = image_path(self.__class__.__name__, self.image_name(fmt))
         if write is True:
-            with open(image_path(self.__class__.__name__, self.image_name(fmt)), "wb") as f:
+            with open(outfile, "wb") as f:
                 f.write(response.content)
+        return outfile
 
     def test_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_jet')
         self.do_test(params)
 
-    @unittest.skip("facets is not yet implemeted for UGRID datasets")
+    @xfail(reason="facets is not yet implemeted for UGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
         self.do_test(params)
 
-    @unittest.skip("pcolor is not yet implemeted for UGRID datasets")
+    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_jet')
         self.do_test(params)
 
-    @unittest.skip("contours is not yet implemeted for UGRID datasets")
+    @xfail(reason="contours is not yet implemeted for UGRID datasets")
     def test_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
         self.do_test(params)
 
-    def test_gfi_single_variable_csv(self):
+    def test_ugrid_gfi_single_variable_csv(self):
         params = copy(self.gfi_params)
+        self.do_test(params, fmt='csv')
+
+    def test_gfi_single_variable_csv_4326(self):
+        params = copy(self.gfi_params)
+        params['srs']  = 'EPSG:4326'
+        params['bbox'] = '-123.57421875,46.19504211,-123.3984375,46.31658418'
         self.do_test(params, fmt='csv')
 
     def test_gfi_single_variable_tsv(self):

@@ -17,8 +17,12 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from autoslug import AutoSlugField
 
+import rtree
+
 from wms.utils import DotDict, find_appropriate_time
 from wms.data_handler import blank_canvas
+
+from wms import logger
 
 
 class Dataset(TypedModel):
@@ -85,6 +89,60 @@ class Dataset(TypedModel):
     def getlegendgraphic(self, layer, request):
         raise NotImplementedError
 
+    def setup_getfeatureinfo(self, ncd, variable_object, request, location=None):
+
+        location = location or 'face'
+
+        try:
+            latitude = request.GET['latitude']
+            longitude = request.GET['longitude']
+            # Find closest cell or node (only node for now)
+            if location == 'face':
+                tree = rtree.index.Index(self.face_tree_root)
+            elif location == 'node':
+                tree = rtree.index.Index(self.node_tree_root)
+            else:
+                raise NotImplementedError("No RTree for location '{}'".format(location))
+            nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+            closest_x, closest_y = tuple(nindex.bbox[2:])
+            geo_index = nindex.object
+        except BaseException:
+            raise
+        finally:
+            tree.close()
+
+        # Get time indexes
+        time_var_name = find_appropriate_time(variable_object, ncd.get_variables_by_attributes(standard_name='time'))
+        time_var = ncd.variables[time_var_name]
+        if hasattr(time_var, 'calendar'):
+            calendar = time_var.calendar
+        else:
+            calendar = 'gregorian'
+        start_nc_num = round(nc4.date2num(request.GET['starting'], units=time_var.units, calendar=calendar))
+        end_nc_num = round(nc4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
+
+        all_times = time_var[:]
+        start_nc_index = bisect.bisect_right(all_times, start_nc_num)
+        end_nc_index = bisect.bisect_right(all_times, end_nc_num)
+
+        try:
+            all_times[start_nc_index]
+        except IndexError:
+            start_nc_index = all_times.size - 1
+        try:
+            all_times[end_nc_index]
+        except IndexError:
+            end_nc_index = all_times.size - 1
+
+        if start_nc_index == end_nc_index:
+            if start_nc_index > 0:
+                start_nc_index -= 1
+            elif end_nc_index < all_times.size:
+                end_nc_index += 1
+        return_dates = nc4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
+
+        return geo_index, closest_x, closest_y, start_nc_index, end_nc_index, return_dates
+
     def getfeatureinfo(self, layer, request):
         raise NotImplementedError
 
@@ -131,7 +189,7 @@ class Dataset(TypedModel):
             os.remove(cache_file)
 
     def analyze_virtual_layers(self):
-        nc = self.netcdf4_dataset()
+        nc = self.canon_dataset
         if nc is not None:
             # Earth Projected Sea Water Velocity
             u_names = ['eastward_sea_water_velocity', 'eastward_sea_water_velocity_assuming_no_tide']
@@ -168,10 +226,8 @@ class Dataset(TypedModel):
             vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
             VirtualLayer.make_vector_layer(us, vs, 'sea_ice_velocity', 'vectors', self.id)
 
-            nc.close()
-
     def process_layers(self):
-        nc = self.netcdf4_dataset()
+        nc = self.canon_dataset
         if nc is not None:
 
             for v in nc.variables:
@@ -200,8 +256,6 @@ class Dataset(TypedModel):
                 # Set some standard styles
                 l.styles = Style.defaults()
                 l.save()
-
-            nc.close()
 
         self.analyze_virtual_layers()
 
@@ -258,7 +312,7 @@ class Dataset(TypedModel):
 
     @property
     def node_tree_root(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.tree').format(self.safe_filename)
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.nodes').format(self.safe_filename)
 
     @property
     def node_tree_data_file(self):
@@ -269,16 +323,16 @@ class Dataset(TypedModel):
         return '{}.idx'.format(self.node_tree_root)
 
     @property
-    def cell_tree_file(self):
-        return os.path.join(settings.TOPOLOGY_PATH, '{}.cells').format(self.safe_filename)
+    def face_tree_root(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.faces').format(self.safe_filename)
 
     @property
-    def cell_tree_index_file(self):
-        return '{}.idx'.format(self.cell_tree_root)
+    def face_tree_data_file(self):
+        return '{}.dat'.format(self.face_tree_root)
 
     @property
-    def cell_tree_data_file(self):
-        return '{}.dat'.format(self.cell_tree_root)
+    def face_tree_index_file(self):
+        return '{}.idx'.format(self.face_tree_root)
 
     @property
     def online(self):
