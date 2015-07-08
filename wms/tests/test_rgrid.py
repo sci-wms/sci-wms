@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 from copy import copy
 
@@ -5,8 +6,11 @@ from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, RGridDataset
 
+import pytest
+xfail = pytest.mark.xfail
 
-@unittest.skip("RGRID Datasets are not implemented yet")
+
+@xfail(reason="RGRID Datasets are not implemented yet")
 class TestRgrid(TestCase):
 
     @classmethod
@@ -51,25 +55,21 @@ class TestRgrid(TestCase):
             with open(image_path(self.__class__.__name__, self.image_name()), "wb") as f:
                 f.write(response.content)
 
-    @unittest.skip("filledcontours is not yet implemeted for RGRID datasets")
     def test_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_jet')
         self.do_test(params)
 
-    @unittest.skip("facets is not yet implemeted for RGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
         self.do_test(params)
 
-    @unittest.skip("pcolor is not yet implemeted for RGRID datasets")
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_jet')
         self.do_test(params)
 
-    @unittest.skip("contours is not yet implemeted for RGRID datasets")
     def test_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')

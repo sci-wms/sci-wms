@@ -21,6 +21,7 @@ from .defaults import *
 
 DEBUG          = False
 TEMPLATE_DEBUG = False
+TESTING        = False
 
 ALLOWED_HOSTS  = ["*"]
 

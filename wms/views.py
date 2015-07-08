@@ -734,6 +734,8 @@ class WmsView(View):
                 except AttributeError as e:
                     logger.exception(e)
                     return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
+                except NotImplementedError as e:
+                    return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
                 # Test formats, etc. before returning?
                 return response
         except ValueError as e:

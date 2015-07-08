@@ -29,10 +29,10 @@ before_install:
 install:
   # Customise the testing environment
   # ---------------------------------
-  - conda install --channel ioos "Django>=1.7,<1.8" python-dateutil "matplotlib>=1.2.0" "netCDF4>=1.0.2" "rtree==0.7.0" jsonfield pytz djangorestframework pyugrid pyproj "pyaxiom>=0.0.9" pandas
-  - pip install django-grappelli django-typed-models django-extensions django-debug-toolbar django-autoslug
-  - pip install -e git+https://github.com/sgrid/pysgrid.git@0.0.4-beta#egg=pysgrid
+  - conda install --channel ioos "Django>=1.7,<1.8" python-dateutil "matplotlib>=1.2.0" "netCDF4>=1.0.2" "rtree==0.7.0" jsonfield pytz djangorestframework pyugrid pyproj "pyaxiom>=0.0.9" pandas pytest
+  - pip install django-grappelli django-typed-models django-extensions django-debug-toolbar django-autoslug pytest-django
+  - pip install git+https://github.com/sgrid/pysgrid.git@0.0.4-beta#egg=pysgrid
   - conda list --export
   - pip freeze
 
-script: python manage.py test
+script: py.test -rxs --verbose
