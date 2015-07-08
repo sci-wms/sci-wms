@@ -1,4 +1,4 @@
 import logging
 logger = logging.getLogger('sci-wms')
 
-__version__ = '0.0.3-dev'
+__version__ = '1.0.0'
