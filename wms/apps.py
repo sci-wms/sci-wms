@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.apps import AppConfig
 from django.conf import settings
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError, ProgrammingError
 
 from wms import logger
 
@@ -30,5 +30,5 @@ class WmsConfig(AppConfig):
                         logger.info('Updating {} failed.  Dataset type not implemented.'.format(d.name))
                     except BaseException as e:
                         logger.info('Updating {} failed. {}.'.format(d.name, str(e)))
-            except OperationalError:
+            except (ProgrammingError, OperationalError):
                 pass
