@@ -113,7 +113,7 @@ def quiver_response(lon,
     # Set to black like ncWMS?
     # Configurable by user?
     norm = None
-    if cmin and cmax:
+    if cmin is not None and cmax is not None:
         mags[mags > cmax] = cmax
         mags[mags < cmin] = cmin
         bounds = np.linspace(cmin, cmax, 15)
