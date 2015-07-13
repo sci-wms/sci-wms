@@ -226,9 +226,6 @@ class UGridDataset(Dataset):
         finally:
             nc.close()
 
-    def getlegendgraphic(self, layer, request):
-        raise NotImplementedError("GetLegendGraphic is not implemented for UGRID datasets")
-
     def getfeatureinfo(self, layer, request):
         try:
             nc = self.netcdf4_dataset()

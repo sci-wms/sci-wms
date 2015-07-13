@@ -11,6 +11,7 @@ from wms import logger
 class LayerBase(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
     std_name    = models.CharField(max_length=200, blank=True, help_text="The 'standard_name' from the dataset variable")
+    units       = models.CharField(max_length=200, blank=True, help_text="The 'units' from the dataset variable")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
     dataset     = models.ForeignKey('Dataset')
     active      = models.BooleanField(default=False)

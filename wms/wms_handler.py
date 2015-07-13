@@ -33,6 +33,76 @@ def get_wgs84_bbox(request):
     return DotDict(minx=wgs84_minx, miny=wgs84_miny, maxx=wgs84_maxx, maxy=wgs84_maxy)
 
 
+def get_format(request):
+    """
+    Return the FORMAT for GetLegendGraphic requests
+    """
+    try:
+        return 'image/png'  # request.GET['format'].lower()
+    except KeyError:
+        return 'image/png'
+
+
+def get_show_label(request):
+    """
+    Return the SHOWLABEL for GetLegendGraphic requests
+    """
+    try:
+        return request.GET['showlabel'].lower() == 'true'
+    except KeyError:
+        return True
+
+
+def get_units(request, units):
+    """
+    Return the UNITS for GetLegendGraphic requests
+    """
+    try:
+        return request.GET['unitlabel'].lower()
+    except KeyError:
+        return units
+
+
+def get_logscale(request):
+    """
+    Return the LOGSCALE for GetLegendGraphic requests
+    """
+    try:
+        return request.GET['logscale'].lower() == 'true'
+    except KeyError:
+        return False
+
+
+def get_horizontal(request):
+    """
+    Return the horizontal for GetLegendGraphic requests
+    """
+    try:
+        return request.GET['horizontal'].lower() == 'true'
+    except KeyError:
+        return False
+
+
+def get_show_values(request):
+    """
+    Return the SHOWVALUES for GetLegendGraphic requests
+    """
+    try:
+        return request.GET['showvalues'].lower() == 'true'
+    except KeyError:
+        return True
+
+
+def get_num_contours(request):
+    """
+    Return the NUMCONTOURS for GetLegendGraphic requests
+    """
+    try:
+        return int(float(request.GET['numcontours'].lower()))
+    except (KeyError, ValueError):
+        return 8
+
+
 def get_info_format(request):
     """
     Return the INFO_FORMAT for GetFeatureInfo requests
@@ -110,16 +180,20 @@ def get_times(request):
     return DotDict(min=times[0], max=times[-1])
 
 
-def get_colormap(request):
+def get_colormap(request, parameter=None):
+    parameter = parameter or 'styles'
     try:
-        return request.GET.get('styles').split(',')[0].split('_')[1]
-    except (AttributeError, TypeError):
+        from matplotlib.pyplot import colormaps
+        requested_cm = request.GET.get(parameter).split(',')[0].split('_')[1]
+        return next(x for x in colormaps() if x.lower() == requested_cm)
+    except (AttributeError, TypeError, StopIteration):
         return 'jet'
 
 
-def get_imagetype(request):
+def get_imagetype(request, parameter=None):
+    parameter = parameter or 'styles'
     try:
-        return request.GET.get('styles').split(',')[0].split('_')[0].lower()
+        return request.GET.get(parameter).split(',')[0].split('_')[0].lower()
     except (AttributeError, TypeError):
         return 'filledcontours'
 

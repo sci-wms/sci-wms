@@ -137,165 +137,6 @@ def normalize_get_params(request):
     return request
 
 
-def getLegendGraphic(request, dataset):
-    """
-    Parse parameters from request that looks like this:
-
-    http://webserver.smast.umassd.edu:8000/wms/NecofsWave?
-    ELEVATION=1
-    &LAYERS=hs
-    &TRANSPARENT=TRUE
-    &STYLES=facets_average_jet_0_0.5_node_False
-    &SERVICE=WMS
-    &VERSION=1.1.1
-    &REQUEST=GetLegendGraphic
-    &FORMAT=image%2Fpng
-    &TIME=2012-06-20T18%3A00%3A00
-    &SRS=EPSG%3A3857
-    &LAYER=hs
-    &COLORSCALERANGE=min,max
-    &UNITS=text
-    &SHOWLABEL=true/false
-    """
-    if 'styles' in request.GET:
-        styles = request.GET["styles"].split("_")
-    elif 'style' in request.GET:
-        styles = request.GET["style"].split("_")
-
-    climits = (None, None)
-    if 'colorscalerange' in request.GET:
-        try:
-            climits = map(lambda x: float(x), request.GET["colorscalerange"].split(','))
-        except BaseException:
-            pass
-    else:
-        try:
-            climits = (float(styles[3]), float(styles[4]))
-        except BaseException:
-            pass
-
-    show_label = True
-    if 'showlabel' in request.GET and request.GET['showlabel'].lower() == 'false':
-        show_label = False
-
-    variables = request.GET["layer"].split(",")
-    plot_type = styles[0]
-    # handle cases where the user does not specify a color map
-    try:
-        colormap = styles[2].replace('-', '_')
-    except IndexError:
-        colormap = None
-
-    dataset = Dataset.objects.get(slug=dataset)
-    nc = dataset.netcdf4_dataset()
-
-    """
-    Create figure and axes for small legend image
-    """
-    #from matplotlib.figure import Figure
-    from matplotlib.pylab import get_cmap
-    dpi = 96.
-
-    width = 124
-    if 'width' in request.GET:
-        width = int(request.GET['width'])
-
-    height = 188
-    if 'height' in request.GET:
-        height = int(request.GET['height'])
-
-    fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
-    fig.set_alpha(0)
-    fig.set_figwidth(width/dpi)
-    fig.set_figheight(height/dpi)
-
-    """
-    Create the colorbar or legend and add to axis
-    """
-    units = ''
-    if 'units' in request.GET:
-        units = request.GET['units']
-    else:
-        try:
-            units = nc.variables[variables[0]].units
-        except BaseException:
-            pass
-
-    if climits[0] is None or climits[1] is None:  # TODO: NOT SUPPORTED RESPONSE
-            # going to have to get the data here to figure out bounds
-            # need elevation, bbox, time, magnitudebool
-            CNorm = None
-            ax = fig.add_axes([0, 0, 1, 1])
-            ax.grid(False)
-            ax.text(.5, .5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
-    elif plot_type not in ["contours", "filledcontours"]:
-        # use limits described by climits
-        ax = fig.add_axes([0.1, 0.08, 0.1, 0.8])  # xticks=[], yticks=[])
-        CNorm = matplotlib.colors.Normalize(vmin=climits[0],
-                                            vmax=climits[1],
-                                            clip=False,
-                                            )
-        cb = matplotlib.colorbar.ColorbarBase(ax,
-                                              cmap=get_cmap(colormap),
-                                              norm=CNorm,
-                                              orientation='vertical',
-                                              )
-        if show_label:
-            cb.set_label(units)
-    else:  # plot type somekind of contour
-        if plot_type == "contours":
-            fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
-            ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=True)
-            levs = numpy.linspace(climits[0], climits[1], 11)
-            x, y = numpy.meshgrid(numpy.arange(10), numpy.arange(10))
-            cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
-
-            proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
-
-            legend = fig.legend(proxy,
-                                levs,
-                                loc = 10,
-                                prop = { 'size' : 8 },
-                                frameon = False)
-            if show_label:
-                legend.set_title(units)
-        elif plot_type == "filledcontours":
-            fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
-            ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
-            CNorm = matplotlib.colors.Normalize(vmin=climits[0], vmax=climits[1], clip=False,)
-            levs = numpy.linspace(climits[0], climits[1], 10)
-            levs = numpy.hstack(([-99999], levs, [99999]))
-
-            x, y = numpy.meshgrid(numpy.arange(10), numpy.arange(10))
-            cs = ax_proxy.contourf(x, y, x, levels=levs, norm=CNorm, cmap=get_cmap(colormap))
-
-            proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
-
-            levels = []
-            for i, value in enumerate(levs):
-                if i == len(levs)-2 or i == len(levs)-1:
-                    levels.append("> " + str(value))
-                elif i == 0:
-                    levels.append("< " + str(levs[i+1]))
-                else:
-                    text = '%.2f-%.2f' % (value, levs[i+1])
-                    levels.append(text)
-            legend = fig.legend(proxy,
-                                levels,
-                                loc = 10,
-                                prop = { 'size' : 6 },
-                                frameon = False)
-            if show_label:
-                legend.set_title(units)
-
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response, dpi=dpi)
-    nc.close()
-    return response
-
-
 def getFeatureInfo(request, dataset):
     """
      /wms/GOM3/?ELEVATION=1&LAYERS=temp&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=facets_average_jet_0_32_node_False&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:3857&BBOX=-7949675.196111,5078194.822174,-7934884.63114,5088628.476533&X=387&Y=196&INFO_FORMAT=text/csv&WIDTH=774&HEIGHT=546&QUERY_LAYERS=salinity&TIME=2012-08-14T00:00:00/2012-08-16T00:00:00
@@ -644,6 +485,24 @@ def enhance_getmap_request(dataset, layer, request):
 
 def enhance_getlegendgraphic_request(dataset, layer, request):
     gettemp = request.GET.copy()
+
+    dimensions = wms_handler.get_dimensions(request)
+
+    newgets = dict(
+        colorscalerange=wms_handler.get_colorscalerange(request, layer.default_min, layer.default_max),
+        width=dimensions.width,
+        height=dimensions.height,
+        image_type=wms_handler.get_imagetype(request, parameter='style'),
+        colormap=wms_handler.get_colormap(request, parameter='style'),
+        format=wms_handler.get_format(request),
+        showlabel=wms_handler.get_show_label(request),
+        showvalues=wms_handler.get_show_values(request),
+        units=wms_handler.get_units(request, layer.units),
+        logscale=wms_handler.get_logscale(request),
+        horizontal=wms_handler.get_horizontal(request),
+        numcontours=wms_handler.get_num_contours(request)
+    )
+    gettemp.update(newgets)
     request.GET = gettemp
     return request
 

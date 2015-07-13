@@ -21,6 +21,7 @@ import rtree
 
 from wms.utils import DotDict, find_appropriate_time
 from wms.data_handler import blank_canvas
+from wms import glg_handler
 
 from wms import logger
 
@@ -87,7 +88,18 @@ class Dataset(TypedModel):
         raise NotImplementedError
 
     def getlegendgraphic(self, layer, request):
-        raise NotImplementedError
+        try:
+            if 'filledcontours' in request.GET['image_type']:
+                return glg_handler.filledcontour(request)
+            elif 'contours' in request.GET['image_type']:
+                return glg_handler.contour(request)
+            elif 'vector' in request.GET['image_type']:
+                return glg_handler.vector(request)
+            else:
+                return glg_handler.gradiant(request)
+        except BaseException:
+            logger.exception("Could not process GetLegendGraphic request")
+            raise
 
     def setup_getfeatureinfo(self, ncd, variable_object, request, location=None):
 
@@ -252,6 +264,9 @@ class Dataset(TypedModel):
 
                 if hasattr(nc_var, 'long_name'):
                     l.description = nc_var.long_name
+
+                if hasattr(nc_var, 'units'):
+                    l.units = nc_var.units
 
                 # Set some standard styles
                 l.styles = Style.defaults()
