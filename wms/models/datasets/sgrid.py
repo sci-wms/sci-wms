@@ -239,9 +239,6 @@ class SGridDataset(Dataset):
         finally:
             nc.close()
 
-    def getlegendgraphic(self, layer, request):
-        return views.getLegendGraphic(request, self)
-
     def getfeatureinfo(self, layer, request):
         try:
             nc = self.netcdf4_dataset()
