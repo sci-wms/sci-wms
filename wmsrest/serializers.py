@@ -15,7 +15,7 @@ class LayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Layer
-        fields = ('var_name', 'std_name', 'description', 'active', 'styles', 'default_min', 'default_max')
+        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale')
 
 
 class VirtualLayerSerializer(serializers.ModelSerializer):
@@ -23,7 +23,7 @@ class VirtualLayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = VirtualLayer
-        fields = ('var_name', 'std_name', 'description', 'active', 'styles', 'default_min', 'default_max')
+        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale')
 
 
 class DatasetSerializer(serializers.ModelSerializer):
@@ -32,7 +32,8 @@ class DatasetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Dataset
-        fields = ('uri',
+        fields = ('id',
+                  'uri',
                   'type',
                   'name',
                   'title',
@@ -49,7 +50,8 @@ class UGridDatasetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UGridDataset
-        fields = ('uri',
+        fields = ('id',
+                  'uri',
                   'type',
                   'name',
                   'title',
@@ -66,7 +68,8 @@ class SGridDatasetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SGridDataset
-        fields = ('uri',
+        fields = ('id',
+                  'uri',
                   'type',
                   'name',
                   'title',
@@ -83,7 +86,8 @@ class RGridDatasetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RGridDataset
-        fields = ('uri',
+        fields = ('id',
+                  'uri',
                   'type',
                   'name',
                   'title',
