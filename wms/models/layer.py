@@ -88,9 +88,16 @@ class VirtualLayer(LayerBase):
                 v_match = '_'.join([ x for x in v.standard_name.split('_') if x not in ['y', 'northward']])
 
                 if u_match == v_match:
+                    if hasattr(u, 'units'):
+                        units = u.units
+                    elif hasattr(v, 'units'):
+                        units = v.units
+                    else:
+                        units = None
                     try:
                         vl = VirtualLayer.objects.create(var_name='{},{}'.format(u._name, v._name),
                                                          std_name=std_name,
+                                                         units=units,
                                                          description="U ({}) and V ({}) vectors".format(u._name, v._name),
                                                          dataset_id=dataset_id,
                                                          active=True)
