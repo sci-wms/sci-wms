@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from wms.models import Dataset, Server, Group, VirtualLayer, Layer
+from wms.models import Dataset, Server, Group, VirtualLayer, Layer, Variable
 
 
 @admin.register(Server)
@@ -34,6 +34,11 @@ class LayerInline(admin.StackedInline):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Variable)
+class VariableAdmin(admin.ModelAdmin):
+    list_display = ('std_name', 'units', 'logscale', 'default_min', 'default_max')
 
 
 @admin.register(Dataset)

@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset
+from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, Variable
+
+
+class VariableSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Variable
+        fields = ('id', 'std_name', 'units', 'default_min', 'default_max', 'logscale')
 
 
 class LayerSerializer(serializers.ModelSerializer):

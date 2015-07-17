@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from wms.models import Dataset, Layer, VirtualLayer
-from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer
+from wms.models import Dataset, Layer, VirtualLayer, Variable
+from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer, VariableSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import mixins
@@ -96,3 +96,26 @@ class VirtuallLayerDetail(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = VirtualLayerSerializer
     queryset = VirtualLayer.objects.all()
+
+
+class DefaultDetail(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = VariableSerializer
+    queryset = Variable.objects.all()
+
+
+class DefaultList(APIView):
+    """
+    List all datasets, or create a new dataset.
+    """
+    def get(self, request, format=None):
+        snippets = Variable.objects.all()
+        serializer = VariableSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = VariableSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -54,7 +54,7 @@ from django.views.decorators.cache import cache_page
 from pyugrid import UGrid
 from pysgrid import from_nc_dataset
 
-from wms.models import Dataset, Server
+from wms.models import Dataset, Server, Variable
 from wms.utils import get_layer_from_request
 from wms import wms_handler
 from wms import logger
@@ -460,6 +460,7 @@ def enhance_getmap_request(dataset, layer, request):
     # 'time' parameter
     times = wms_handler.get_times(request)
     dimensions = wms_handler.get_dimensions(request)
+    defaults = layer.defaults
 
     newgets = dict(
         starting=times.min,
@@ -469,11 +470,12 @@ def enhance_getmap_request(dataset, layer, request):
         bbox=wms_handler.get_bbox(request),
         wgs84_bbox=wms_handler.get_wgs84_bbox(request),
         colormap=wms_handler.get_colormap(request),
-        colorscalerange=wms_handler.get_colorscalerange(request, layer.default_min, layer.default_max),
+        colorscalerange=wms_handler.get_colorscalerange(request, defaults.min, defaults.max),
         elevation=wms_handler.get_elevation(request),
         width=dimensions.width,
         height=dimensions.height,
-        image_type=wms_handler.get_imagetype(request)
+        image_type=wms_handler.get_imagetype(request),
+        logscale=wms_handler.get_logscale(request, defaults.logscale),
     )
     gettemp.update(newgets)
     request.GET = gettemp
@@ -487,9 +489,10 @@ def enhance_getlegendgraphic_request(dataset, layer, request):
     gettemp = request.GET.copy()
 
     dimensions = wms_handler.get_dimensions(request)
+    defaults = layer.defaults
 
     newgets = dict(
-        colorscalerange=wms_handler.get_colorscalerange(request, layer.default_min, layer.default_max),
+        colorscalerange=wms_handler.get_colorscalerange(request, defaults.min, defaults.max),
         width=dimensions.width,
         height=dimensions.height,
         image_type=wms_handler.get_imagetype(request, parameter='style'),
@@ -498,7 +501,7 @@ def enhance_getlegendgraphic_request(dataset, layer, request):
         showlabel=wms_handler.get_show_label(request),
         showvalues=wms_handler.get_show_values(request),
         units=wms_handler.get_units(request, layer.units),
-        logscale=wms_handler.get_logscale(request),
+        logscale=wms_handler.get_logscale(request, defaults.logscale),
         horizontal=wms_handler.get_horizontal(request),
         numcontours=wms_handler.get_num_contours(request)
     )
@@ -535,6 +538,13 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     gettemp.update(newgets)
     request.GET = gettemp
     return request
+
+
+class DefaultsView(View):
+
+    def get(self, request):
+        defaults = Variable.objects.all()
+        return TemplateResponse(request, 'wms/defaults.html', dict(defaults=defaults))
 
 
 class DatasetShowView(View):

@@ -1,5 +1,11 @@
 {% extends "wms/base.html" %}
+{% load static from staticfiles %}
 {% load wms %}
+
+{% block header %}
+<link href="{% static 'wms/bootstrap-editable.css' %}" rel="stylesheet"/>
+<script src="{% static 'wms/bootstrap-editable.min.js' %}"></script>
+{% endblock %}
 
 {% block content %}
 
@@ -26,33 +32,45 @@
         <tr>
           <th class='col-md-1'>active</th>
           <th class='col-md-2'>NetCDF Variable</th>
-          <th class='col-md-5'>CF standard_name</th>
-          <th class='col-md-2'>min</th>
-          <th class='col-md-2'>max</th>
+          <th class='col-md-4'>CF standard_name</th>
+          <th class='col-md-2'>units</th>
+          <th class='col-md-1'>logscale</th>
+          <th class='col-md-1'>min</th>
+          <th class='col-md-1'>max</th>
         </tr>
       </thead>
       <tbody>
         {% for layer in dataset.all_layers %}
         <tr class="{{ layer.active | yesno:'success,warning' }}">
+
           <td>
-            <div class="check">
-              <label>
-                <input type="checkbox" class="active_check" name="active" {{ layer.active | yesno:'checked,' }} aria-label="Available?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></label>
-            </div>
+            <a href="#" data-type="select" class="inline-edits" id="active" data-source="{'True': 'Active', 'False':'Disabled'}" data-value="{{ layer.active }}" aria-label="Active?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
           </td>
+
           <td>{{ layer.var_name }} {% if layer|class_name == 'VirtualLayer' %}<span class="label label-info">Virtual</span>{% endif %}</td>
 
+          <td>
           {% if layer.std_name|length > 60 %}
-            <td><abbr title="{{ layer.std_name }}"><span>{{ layer.std_name | truncatechars:60}}</span></abbr></td>
+            <abbr title="{{ layer.std_name }}"><span>{{ layer.std_name | truncatechars:60}}</span></abbr>
           {% else %}
-            <td>{{ layer.std_name }}</td>
+            {{ layer.std_name }}
           {% endif %}
-          <td>
-            <input type="text" class="form-control default_value_edits" name="default_min" value="{{ layer.default_min | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">
           </td>
+
+          <td>{{ layer.units }}</td>
+
           <td>
-            <input type="text" class="form-control default_value_edits" name="default_max" value="{{ layer.default_max | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">
+            <a href="#" data-type="select" class="inline-edits" id="logscale" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ layer.logscale }}" aria-label="Logscale?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
           </td>
+
+          <td>
+            <a href="#" data-type="text" class="inline-edits" id="default_min" data-value="{{ layer.default_min | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+          </td>
+
+          <td>
+            <a href="#" data-type="text" class="inline-edits" id="default_max" data-value="{{ layer.default_max | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+          </td>
+
         </tr>
         {% endfor %}
       </tbody>
@@ -63,75 +81,31 @@
 {% if user.is_authenticated %}
   <script>
   $(document).ready(function() {
-    $(".active_check").click(function() {
-        chx = $(this)
-        chx.attr("disabled", "disabled");
 
-        var zbool = chx.is(':checked') ? "true" : "false";
-        console.log(chx.attr("name") + "=" + zbool);
-
-        $.ajax({
-            type: "PATCH",
-            url: chx.attr('data-edit-url'),
-            data: chx.attr('name') + "=" + zbool,
-            dataType: "text",
-            beforeSend: function(xhr) {
-              xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
-            },
-            success: function(data) {
-                chx.attr("disabled", false);
-                chx.closest("tr").animate({
-                  color: "green",
-                });
-                chx.closest("tr").animate({
-                  color: "#333",
-                });
-            }
-        }).fail(function(data) {
-            chx.attr("disabled", false);
-            chx.closest("tr").animate({
-              color: "red",
-            });
-            chx.closest("tr").animate({
-              color: "#333",
-            });
-        });
+    $(".inline-edits").editable({
+      mode: 'inline',
+      send: 'always',
+      highlight: '#68ce00',
+      url: function(params) {
+          but = $(this)
+          return $.ajax({
+              type: "PATCH",
+              url: but.attr('data-edit-url'),
+              data: params['name'] + "=" + params['value'],
+              dataType: "json",
+              beforeSend: function(xhr) {
+                  xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+              },
+          });
+      },
+      error: function(response, newValue) {
+        js = response.responseJSON
+        return js[Object.keys(js)[0]]
+      }
     });
 
-    $(".default_value_edits").on("blur", function() {
-      but = $(this)
-      but.attr("disabled", "disabled");
-
-      $.ajax({
-            type: "PATCH",
-            url: but.attr('data-edit-url'),
-            data: but.attr('name') + "=" + but.val(),
-            dataType: "text",
-            beforeSend: function(xhr) {
-              xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
-            },
-            success: function(data) {
-                but.attr("disabled", false);
-                but.closest("tr").animate({
-                  color: "green",
-                });
-                but.closest("tr").animate({
-                  color: "#333",
-                });
-            }
-        }).fail(function(data) {
-            console.log(data)
-            but.attr("disabled", false);
-            but.closest("tr").animate({
-              color: "red",
-            });
-            but.closest("tr").animate({
-              color: "#333",
-            });
-        });
-      });
-    });
-    </script>
+  });
+  </script>
 {% endif %}
 
 {% endblock %}
