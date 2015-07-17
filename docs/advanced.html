@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Advanced Usage &mdash; SCI-WMS 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Roadmap" href="roadmap.html" />
+    <link rel="prev" title="Deployment" href="deployment.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="roadmap.html" title="Roadmap"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="advanced-usage">
+<h1>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="docker">
+<h2>Docker<a class="headerlink" href="#docker" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">sci-wms</span></tt> supports running inside of a Docker container</p>
+<p>Build</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker build -t sci-wms .
+</pre></div>
+</div>
+<p>Run, interactively</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run --rm -it -p 7002:7002 sci-wms
+</pre></div>
+</div>
+<p>Run, daemonized</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 sci-wms
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">sci-wms</span></tt> will be running on <a class="reference external" href="http://localhost:7002">http://localhost:7002</a>.  Adjust the <cite>-p</cite> value to your liking.</p>
+<div class="section" id="superuser">
+<h3>Superuser<a class="headerlink" href="#superuser" title="Permalink to this headline">¶</a></h3>
+<p>On first run, this image will create a superuser account that can be used to access the <tt class="docutils literal"><span class="pre">sci-wms</span></tt> admin area, and echo it to the screen, like so:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="o">========================================================================</span>
+sci-wms user:         <span class="s2">&quot;sciwmsuser&quot;</span>
+sci-wms user email:   <span class="s2">&quot;sciwmsuser@localhost&quot;</span>
+sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
+<span class="o">========================================================================</span>
+</pre></div>
+</div>
+<p>The default username and email are as shown, and the password is randomly set.  You can manually set all of these by with the environment variables <cite>SCIWMS_USERNAME</cite>, <cite>SCIWMS_EMAIL</cite>, and <cite>SCIWMS_PASSWORD</cite> via the <cite>docker -e</cite> parameter.</p>
+<p>For example</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -e <span class="nv">SCIWMS_USERNAME</span><span class="o">=</span>daf -e <span class="nv">SCIWMS_PASSWORD</span><span class="o">=</span>hunter2 sci-wms
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="virtual-layers">
+<h2>Virtual layers<a class="headerlink" href="#virtual-layers" title="Permalink to this headline">¶</a></h2>
+<p><strong>Virtual Layers</strong> allow you to use a parameter expression to access multiple variables from a dataset in a special way, while specifying a descriptive layer name that will also appear in the <em>GetCapabilities</em> documents. This is so that generic web clients don&#8217;t necessarility need to know the intracacies of assembling <tt class="docutils literal"><span class="pre">sci-wms</span></tt> parameter expressions in requests.</p>
+<p>Suported parameter expressions:</p>
+<p><tt class="docutils literal"><span class="pre">[layer_1],[layer_2]</span></tt> This will treat layer_1 as a U vector and layer_2 as a V vector and produce vector plots.</p>
+</div>
+<div class="section" id="custom-djago-settings">
+<h2>Custom Djago Settings<a class="headerlink" href="#custom-djago-settings" title="Permalink to this headline">¶</a></h2>
+<p>You may create a file at <strong>path/to/sci-wms/sci-wms/settings/local_settings.py</strong> and configure any Django settings you wish.</p>
+<p>The following settings are recommended:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Specific host(s) that that server should be accessible on</span>
+<span class="n">ALLOWED_HOSTS</span>  <span class="o">=</span> <span class="p">[</span><span class="s">&quot;sciwms.external-host.com&quot;</span><span class="p">,</span> <span class="s">&quot;YOUR_IP_ADDRESS&quot;</span><span class="p">,</span> <span class="s">&quot;sciwms.internal-host&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Sci-wms caches data on disk so it does not have to read static data from each dataset every request.</span>
+<span class="c"># By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.</span>
+<span class="n">TOPOLOGY_PATH</span> <span class="o">=</span> <span class="s">&quot;/data/sci-wms-topology&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">TOPOLOGY_PATH</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">TOPOLOGY_PATH</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="topology-cache">
+<h2>Topology Cache<a class="headerlink" href="#topology-cache" title="Permalink to this headline">¶</a></h2>
+<p>The topology cache is an important optimization that speeds up response times for datasets that are accessed over opendap. The cache is current located in the folder of the <tt class="docutils literal"><span class="pre">sci-wms</span></tt> instance at <tt class="docutils literal"><span class="pre">path/to/sci-wms/wms/topology</span></tt>. There are a number of files that make up the cache, and they vary by dataset type.</p>
+<p>Each file has a name that is taken directly from the <tt class="docutils literal"><span class="pre">sci-wms</span></tt> <strong>Dataset</strong>&#8216;s <strong>&#8216;Name&#8217;</strong>.</p>
+<div class="section" id="spatial-tree-idx-and-dat">
+<h3>Spatial Tree (.idx and .dat)<a class="headerlink" href="#spatial-tree-idx-and-dat" title="Permalink to this headline">¶</a></h3>
+<p>These files contain serialized <em>RTree</em> spatial objects that are used for quickly making nearest neighbor queries as part of GetFeatureInfo requests.</p>
+<p>These are necessary for large unstructured meshes, but are also used for the logically rectangular grids as well.  Ideally it would be nice to move away from <em>RTree</em> into a better KD-Tree implementation, like <em>sklearn</em>&#8216;s, that will have better on disk performance lookup performance, but will be slower to initially build.</p>
+<p>These files are constructed once when the dataset is added and never updated.  If the grid for you model changes you must delete and re-add the model to regenerate the topology cache.</p>
+<p>Adding a dataset via the website may timeout due to the topology cache taking along time to complete. If you run across this case, it is better to add the Dataset manually through the Django shell.</p>
+</div>
+<div class="section" id="netcdf-nc">
+<h3>NetCDF (.nc)<a class="headerlink" href="#netcdf-nc" title="Permalink to this headline">¶</a></h3>
+<p>This file contains the up-to-date coordinate variable data for the dataset. This is typically Latitude/Longitude, and Time. For forecasts that are routinely updates, the time variable typically is growing with each update.  This file is updated if the Dataset is set to &#8220;Keep up to date&#8221; and an update is requested.</p>
+</div>
+</div>
+<div class="section" id="default-layer-settings">
+<h2>Default Layer Settings<a class="headerlink" href="#default-layer-settings" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">sci-wms</span></tt> takes a three tier approach to figure out what the <tt class="docutils literal"><span class="pre">min</span></tt>, <tt class="docutils literal"><span class="pre">max</span></tt>, and <tt class="docutils literal"><span class="pre">logscale</span></tt> values should be for a request.</p>
+<p>In order of precedence:</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>URL request arguments</dt>
+<dd><p class="first last">Always prefered for maximum client control. Controlled with the <tt class="docutils literal"><span class="pre">LOGSCALE</span></tt> and <tt class="docutils literal"><span class="pre">COLORSCALERANGE</span></tt> URL parameters.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Layer defaults</dt>
+<dd><p class="first last">Used when populated on a <tt class="docutils literal"><span class="pre">Layer</span></tt> not specified in the URL request. Controlled on each dataset page on a per-variable basis.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Global defaults</dt>
+<dd><p class="first last">Used when the previous two are not populated. Controlled on the global defaults page on a <tt class="docutils literal"><span class="pre">standard_name</span></tt> and <tt class="docutils literal"><span class="pre">units</span></tt> basis.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="wms-extensions">
+<h2>WMS Extensions<a class="headerlink" href="#wms-extensions" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">sci-wms</span></tt> implements a number of additional WMS parameters that are not defined in the WMS specification while remaining completely backwards compatible.</p>
+<table border="1" class="docutils">
+<caption>WMS Extensions</caption>
+<colgroup>
+<col width="7%" />
+<col width="14%" />
+<col width="14%" />
+<col width="50%" />
+<col width="14%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Requests</th>
+<th class="head">Possible Values</th>
+<th class="head">Usage</th>
+<th class="head">Examples</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>LOGSCALE</td>
+<td>GetLegendGraphic GetMap</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt>, <tt class="docutils literal"><span class="pre">false</span></tt></td>
+<td>If the request should use logscaling</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt> <tt class="docutils literal"><span class="pre">false</span></tt></td>
+</tr>
+<tr class="row-odd"><td>COLORSCALERANGE</td>
+<td>GetLegendGraphic GetMap</td>
+<td><tt class="docutils literal"><span class="pre">[min],[max]</span></tt></td>
+<td>A tuple in the format [min],[max] that defines the scale range to visualize</td>
+<td><tt class="docutils literal"><span class="pre">1,100</span></tt>  <tt class="docutils literal"><span class="pre">4.5,30</span></tt></td>
+</tr>
+<tr class="row-even"><td>SHOWLABEL</td>
+<td>GetLegendGraphic</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt>, <tt class="docutils literal"><span class="pre">false</span></tt></td>
+<td>If the units label should be shows in the legend</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt> <tt class="docutils literal"><span class="pre">false</span></tt></td>
+</tr>
+<tr class="row-odd"><td>SHOWVALUES</td>
+<td>GetLegendGraphic</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt>, <tt class="docutils literal"><span class="pre">false</span></tt></td>
+<td>If the value ticks should be shows in the legend</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt> <tt class="docutils literal"><span class="pre">false</span></tt></td>
+</tr>
+<tr class="row-even"><td>UNITLABEL</td>
+<td>GetLegendGraphic</td>
+<td><tt class="docutils literal"><span class="pre">[text]</span></tt></td>
+<td>Set the unit label on a legend to a custom value</td>
+<td><tt class="docutils literal"><span class="pre">meters</span></tt> <tt class="docutils literal"><span class="pre">degC</span></tt></td>
+</tr>
+<tr class="row-odd"><td>HORIZONTAL</td>
+<td>GetLegendGraphic</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt>, <tt class="docutils literal"><span class="pre">false</span></tt></td>
+<td>Return a horizontal legend (vertical is the default)</td>
+<td><tt class="docutils literal"><span class="pre">true</span></tt> <tt class="docutils literal"><span class="pre">false</span></tt></td>
+</tr>
+<tr class="row-even"><td>NUMCONTOURS</td>
+<td>GetLegendGraphic</td>
+<td><tt class="docutils literal"><span class="pre">[int]</span></tt></td>
+<td>Return request with the specified number of contours. Only valid for the <tt class="docutils literal"><span class="pre">image_type</span></tt> of <tt class="docutils literal"><span class="pre">contours</span></tt> or <tt class="docutils literal"><span class="pre">filledcontours</span></tt>).  <strong>This is not supported in GetMap request yet.</strong></td>
+<td><tt class="docutils literal"><span class="pre">8</span></tt>  <tt class="docutils literal"><span class="pre">30</span></tt></td>
+</tr>
+<tr class="row-odd"><td>STYLE</td>
+<td>GetLegendGraphic GetMap</td>
+<td><tt class="docutils literal"><span class="pre">[image_type]</span></tt>/<tt class="docutils literal"><span class="pre">[colormap]</span></tt></td>
+<td>While some styles are defined in the GetCapabilities document, a use can specify any combination of an <tt class="docutils literal"><span class="pre">image_type</span></tt> (<tt class="docutils literal"><span class="pre">filledcontours</span></tt>, <tt class="docutils literal"><span class="pre">contours</span></tt>, <tt class="docutils literal"><span class="pre">pcolor</span></tt>, <tt class="docutils literal"><span class="pre">vectors</span></tt>) and a matplotlib <tt class="docutils literal"><span class="pre">colormap</span></tt> (<a class="reference external" href="http://matplotlib.org/examples/color/colormaps_reference.html">http://matplotlib.org/examples/color/colormaps_reference.html</a>)</td>
+<td><tt class="docutils literal"><span class="pre">contours_jet</span></tt>  <tt class="docutils literal"><span class="pre">vectors_blues</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Advanced Usage</a><ul>
+<li><a class="reference internal" href="#docker">Docker</a><ul>
+<li><a class="reference internal" href="#superuser">Superuser</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#virtual-layers">Virtual layers</a></li>
+<li><a class="reference internal" href="#custom-djago-settings">Custom Djago Settings</a></li>
+<li><a class="reference internal" href="#topology-cache">Topology Cache</a><ul>
+<li><a class="reference internal" href="#spatial-tree-idx-and-dat">Spatial Tree (.idx and .dat)</a></li>
+<li><a class="reference internal" href="#netcdf-nc">NetCDF (.nc)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#default-layer-settings">Default Layer Settings</a></li>
+<li><a class="reference internal" href="#wms-extensions">WMS Extensions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="deployment.html"
+                        title="previous chapter">Deployment</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="roadmap.html"
+                        title="next chapter">Roadmap</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="roadmap.html" title="Roadmap"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             >previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

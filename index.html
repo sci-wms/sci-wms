@@ -1,0 +1,24 @@
+---
+title: sci-wms
+published: true
+layout: page
+---
+
+<h3>Python Web Mapping Service (WMS) for visualizing geospatial data</h3>
+<p>
+    sci-wms is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data.  It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.
+</p>
+<br />
+<h4>Core features</h4>
+<ul>
+    <li>Visualize structured or unstructured grids adhering to <a href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</li>
+    <li>Abstracts each dataset into two objects: a topology and corresponding model data</li>
+    <li>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</li>
+    <li>External data (over DAP) is subset, downloaded, and rendered for each request</li>
+    <li>Supports arbitrary cartographic projections</li>
+    <li>Web-based management console for managing datasets and variables</li>
+    <li>Lightweight client for testing</li>
+</ul>
+<br />
+For complete information, please see the <a href="/sci-wms/docs/">Documentation</a>
+

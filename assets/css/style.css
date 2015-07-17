@@ -1,0 +1,40 @@
+html {
+    display: block;
+}
+
+.wrapper {
+    width: 860px;
+    margin: 0 auto;
+}
+
+body {
+    padding: 50px;
+}
+
+header {
+    width: 270px;
+    float: left;
+    position: fixed;
+}
+
+section {
+    width: 500px;
+    float: right;
+    padding-bottom: 50px;
+}
+
+footer {
+    width: 270px;
+    float: left;
+    position: fixed;
+    bottom: 50px;
+}
+
+header>.nav-pills>li>a {
+    color: #000;
+}
+
+header>.nav-pills>li.active>a, header>.nav-pills>li.active>a:hover, header>.nav-pills>li.active>a:focus {
+    background-color: #fdd017;
+    color: #000;
+}

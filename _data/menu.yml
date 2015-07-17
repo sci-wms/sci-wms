@@ -1,0 +1,9 @@
+---
+- label: Home
+  url: /
+
+- label: Documentation
+  url: /docs/
+
+- label: Acknowledgments and Support
+  url: /support/

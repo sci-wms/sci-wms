@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to sci-wms &mdash; SCI-WMS 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 1.0.0 documentation" href="#" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-sci-wms">
+<h1>Welcome to sci-wms<a class="headerlink" href="#welcome-to-sci-wms" title="Permalink to this headline">¶</a></h1>
+<p><tt class="docutils literal"><span class="pre">sci-wms</span></tt> is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data.  It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#download">Download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#create-database">Create Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#run-the-tests">Run the Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#updating">Updating</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#quick-start-development-only">Quick Start (DEVELOPMENT ONLY)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#using-the-gunicorn-server">Using the Gunicorn Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#management-with-supervisord">Management with Supervisord</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#docker">Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#virtual-layers">Virtual layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#custom-djago-settings">Custom Djago Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#topology-cache">Topology Cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#default-layer-settings">Default Layer Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#wms-extensions">WMS Extensions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>No tools for comparing multiple unstructured models out of the box</li>
+<li>Existing WMS technologies (ncWMS and GeoServer) don&#8217;t support unstructured meshes in a format the preserves topology</li>
+<li>Vast amount of large collections of met-ocean data available over OpenDAP</li>
+</ul>
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Visualize grids adhering to <a class="reference external" href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a class="reference external" href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</li>
+<li>Abstracts each dataset into two objects: a topology and corresponding model data</li>
+<li>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</li>
+<li>External data (over DAP) is subset, downloaded, and rendered for each request</li>
+<li>Supports arbitrary cartographic projections</li>
+<li>Web-based management console for managing datasets and variables</li>
+<li>Lightweight client for testing</li>
+</ul>
+</div>
+<div class="section" id="authors">
+<h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
+<p><em>Code author: Alex Crosby &lt;<a class="reference external" href="https://github.com/acrosby">https://github.com/acrosby</a>&gt;</em></p>
+<p><em>Code author: Brandon Mayer &lt;<a class="reference external" href="https://github.com/brandonmayer">https://github.com/brandonmayer</a>&gt;</em></p>
+<p><em>Code author: Brian McKenna &lt;<a class="reference external" href="https://github.com/brianmckenna">https://github.com/brianmckenna</a>&gt;</em></p>
+<p><em>Code author: Dave Foster &lt;<a class="reference external" href="https://github.com/daf">https://github.com/daf</a>&gt;</em></p>
+<p><em>Code author: Kyle Wilcox &lt;<a class="reference external" href="https://github.com/kwilcox">https://github.com/kwilcox</a>&gt;</em></p>
+<p><em>Code author: Andrew Yan &lt;<a class="reference external" href="https://github.com/ayan-usgs">https://github.com/ayan-usgs</a>&gt;</em></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to sci-wms</a><ul>
+<li><a class="reference internal" href="#background">Background</a></li>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#authors">Authors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="next chapter">Installation</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >next</a> |</li>
+        <li><a href="#">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

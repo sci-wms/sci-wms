@@ -1,0 +1,105 @@
+Using SCI-WMS
+=================
+
+
+=======
+OGC Web Mapping Service (WMS) API
+=======
+
+SCI-WMS attempts to follow the OGC Web Mapping Service (WMS) specification and API. It supports the following requests. In some cases parameters are ignored, which may or may not be noted. Projection is fixed to web mercator at the moment, and the only image response mime type is "image/png". Version and Service are ignored, where they appear in the requests below.
+
+SCI-WMS GetCapabilities
+-----------------------
+
+Here are the paramters relevant to request a sci-wms GetCapabilities document for a dataset::
+
+    http://server:port/wms/dataset_id?REQUEST=GetCapabilities
+
+SCI-WMS GetMap
+--------------
+
+Here are the parameters relevant to a sci-wms GetMap request::
+
+    http://server:port/wms/dataset_id?
+
+    ELEVATION=z_index&
+    LAYERS=netcdf_variable_of_interest&
+    FORMAT=getmap_image_format&
+    TRANSPARENT=unused_by_sciwms&
+    STYLES=style_of_getmap_request&
+    SERVICE=WMS&
+    VERSION=1.1.1&
+    REQUEST=GetMap&
+    TIME=nearest_time_isostr&
+    SRS=EPSG:3857&
+    BBOX=ll_x,ll_y,ur_x,ur_y&
+    WIDTH=getmap_width_in_px&
+    HEIGHT=getmap_height_in_px&
+
+Here is a working example:
+
+http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&LAYERS=temp&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_5_20_node_False&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&TIME=2013-11-04T22%3A00%3A00&SRS=EPSG%3A3857&BBOX=-9159139.9528234,3713489.6175589,-6256978.8632958,5547978.2961477&WIDTH=1186&HEIGHT=750
+
+SCI-WMS GetLegendGraphic
+------------------------
+
+Here are the parameters relevant to a GetLegendGraphic request::
+
+    http://server:port/wms/dataset_id?
+
+    REQUEST=GetLegendGraphic&
+    LAYER=netcdf_variable_of_interest&
+    STYLES=style_of_getmap_request&
+    ELEVATION=z_index&
+
+Here is a working example:
+
+http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&&REQUEST=GetLegendGraphic&LAYER=temp&STYLES=pcolor_average_jet_0_30_grid_False
+
+SCI-WMS GetFeatureInfo (GFI)
+----------------------------
+
+To support queries at specific points in order allow for timeseries extraction from datasets, SCI-WMS supports WMS GetFeatureInfo (GFI) requrests. A generic example, and real life request can be found below.
+
+The generic structure of a GetFeatureInfo request to SCI-WMS looks a lot like a GetMap request (in fact some of the parameters are even repeated as-is). The key change is ``REQUST=GetFeatureInfo`` and some other GFI specific parameters to locate the point of interest based on the current map extent. The general structure is as follows::
+
+    http://server:port/wms/dataset_id?
+
+    ELEVATION=z_index&
+    LAYERS=netcdf_variable_of_interest&
+    FORMAT=getmap_image_format&
+    TRANSPARENT=unused_by_sciwms&
+    STYLES=style_of_getmap_request&
+    SERVICE=WMS&
+    VERSION=1.1.1&
+    REQUEST=GetFeatureInfo&
+    SRS=EPSG:3857&
+    BBOX=ll_x,ll_y,ur_x,ur_y&
+    X=point_at_x_pixel_from_ul&
+    Y=point_at_y_pixel_from_ul&
+    INFO_FORMAT=getfeatureinfo_response_format&
+    WIDTH=getmap_width_in_px&
+    HEIGHT=getmap_height_in_px&
+    QUERY_LAYERS=commasep_variables_for_gfi&
+    TIME=starttime_isostr/stoptime_isostr
+
+The following is a real GFI request to a server that is (hopefully, please visit the google group and let us know if you are having problems) currently running and will return a jsonp formatted GeoJson response with the requests parameters (in this case variables, u and v for the nearest time since the TIME parameter is empty.
+
+http://wms.maracoos.org/wms/necofs_forecast/?ELEVATION=39&LAYERS=u,v&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=pcolor_average_jet_5_20_cell_False&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:3857&BBOX=-8465091.73609,4343330.730541,-7489143.759081,5446469.922599&X=237&Y=167&INFO_FORMAT=text/javascript&WIDTH=399&HEIGHT=451&QUERY_LAYERS=u,v&TIME=
+
+========
+SCI-WMS Styles
+========
+
+The basic form of the sci-wms styles parameter is as follows::
+
+    imagetype_unused_colormap_colormin_colormax_paramterlocation_wildcard
+
+
+ - Image Type:
+ - Unused:
+ - Colormap:
+ - Color Min:
+ - Color Max:
+ - Paramter Location:
+ - Wildcard:

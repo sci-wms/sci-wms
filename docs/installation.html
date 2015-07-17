@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &mdash; SCI-WMS 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Deployment" href="deployment.html" />
+    <link rel="prev" title="Welcome to sci-wms" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sci-wms"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>&gt;= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.</li>
+<li>&gt; 2 CPU (&gt; 4 CPU Better)</li>
+<li>Python 2.7.x with sqlite</li>
+<li>LibGeos (<a class="reference external" href="http://download.osgeo.org/geos/">http://download.osgeo.org/geos/</a>)</li>
+<li>LibSpatialIndex (<a class="reference external" href="http://libspatialindex.github.com">http://libspatialindex.github.com</a>)</li>
+<li>netCDF4 C library (with opendap enabled, if opendap/remote functionality is desired)</li>
+<li>libhdf5 C library (dependency of netCDF4)</li>
+<li>libcurl (required for opendap)</li>
+<li>libfreetype</li>
+<li>libpng</li>
+<li>libevent</li>
+<li>libjpeg</li>
+</ul>
+</div>
+<div class="section" id="download">
+<h2>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://github.com/sci-wms/sci-wms">Download the compressed project and unpack anywhere.</a> This is where the installation will live.</p>
+</div>
+<div class="section" id="install">
+<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
+<p>Install Python dependencies using pip</p>
+<div class="highlight-bash"><div class="highlight"><pre>pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -r requirements-prod.txt
+</pre></div>
+</div>
+<p><em>if NetCDF4 and HDF5 libraries are in non-typical locations, pass the locations to pip</em></p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">NETCDF4_DIR</span><span class="o">=</span>... <span class="nv">HDF5_DIR</span><span class="o">=</span>... pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -r requirements-prod.txt
+</pre></div>
+</div>
+<p>If you would like Gunicorn to use an alternative worker, the following are also supported:</p>
+<ul class="simple">
+<li>eventlet</li>
+<li>tornado</li>
+</ul>
+</div>
+<div class="section" id="create-database">
+<h2>Create Database<a class="headerlink" href="#create-database" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
+python manage.py migrate
+python manage.py createsuperuser  <span class="c"># prompts to create superuser account</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="run-the-tests">
+<h2>Run the Tests<a class="headerlink" href="#run-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>Install the testing dependencies</p>
+<div class="highlight-bash"><div class="highlight"><pre>pip install -r requirements-test.txt
+</pre></div>
+</div>
+<p>Test that <tt class="docutils literal"><span class="pre">sci-wms</span></tt> is fully functional by running the following command</p>
+<div class="highlight-bash"><div class="highlight"><pre>py.test -rxs --verbose
+</pre></div>
+</div>
+</div>
+<div class="section" id="updating">
+<h2>Updating<a class="headerlink" href="#updating" title="Permalink to this headline">¶</a></h2>
+<p>From version 1.0.0 <tt class="docutils literal"><span class="pre">sci-wms</span></tt> is easily upgraded to a newer version:</p>
+<ol class="arabic simple">
+<li>Stop any running instances of <tt class="docutils literal"><span class="pre">sci-wms</span></tt></li>
+<li>Replace your current <tt class="docutils literal"><span class="pre">sci-wms</span></tt> directory with the new version (using git pull)</li>
+<li>Migrate the database: <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;sciwms.settings.prod&quot;</span> <span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">migrate</span></tt></li>
+<li>Start <tt class="docutils literal"><span class="pre">sci-wms</span></tt> as you usually would</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li><a class="reference internal" href="#download">Download</a></li>
+<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#create-database">Create Database</a></li>
+<li><a class="reference internal" href="#run-the-tests">Run the Tests</a></li>
+<li><a class="reference internal" href="#updating">Updating</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to sci-wms</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="deployment.html"
+                        title="next chapter">Deployment</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sci-wms"
+             >previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

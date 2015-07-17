@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% include head.html %}
+  </head>
+  <body class="{{page.layout}}">
+    <div class='wrapper'>
+      <header>
+        <img src="{{site.baseurl}}/assets/images/logo-color.png" />
+        <h1>sci-wms</h1>
+        <p>A Python WMS service for geospatial gridded data</p>
+        <p>
+          {% include menu.html %}
+        </p>
+      </header>
+      <section>
+        {{ content }}
+      </section>
+      <footer>
+        {% include footer.html %}
+      </footer>
+    </div>
+  </body>
+</html>

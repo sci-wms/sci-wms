@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Deployment &mdash; SCI-WMS 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Advanced Usage" href="advanced.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="advanced.html" title="Advanced Usage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="deployment">
+<h1>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="quick-start-development-only">
+<h2>Quick Start (DEVELOPMENT ONLY)<a class="headerlink" href="#quick-start-development-only" title="Permalink to this headline">¶</a></h2>
+<p>To start <tt class="docutils literal"><span class="pre">sci-wms</span></tt> with the Django development server on port :7000, type the following commands</p>
+<div class="highlight-bash"><div class="highlight"><pre>python manage.py runserver 0.0.0.0:7002
+</pre></div>
+</div>
+<p>This server is not considered secure for production implementations,
+and it is recommended you use an alternative wsgi server like <em>Gunicorn</em>.</p>
+</div>
+<div class="section" id="using-the-gunicorn-server">
+<h2>Using the Gunicorn Server<a class="headerlink" href="#using-the-gunicorn-server" title="Permalink to this headline">¶</a></h2>
+<p>Gunicorn is recommended for production servers</p>
+<p>start services on port 7002 (port specified in <cite>gunicorn_config_prod.py</cite>)</p>
+<div class="highlight-bash"><div class="highlight"><pre>gunicorn -c gunicorn_config_prod.py sciwms.wsgi:application
+</pre></div>
+</div>
+<p><a class="reference external" href="http://gunicorn.org/">Gunicorn WSGI server configuration</a></p>
+</div>
+<div class="section" id="management-with-supervisord">
+<h2>Management with Supervisord<a class="headerlink" href="#management-with-supervisord" title="Permalink to this headline">¶</a></h2>
+<p>Sample supervisord configuration for <tt class="docutils literal"><span class="pre">sci-wms</span></tt> assuming installation at <tt class="docutils literal"><span class="pre">/srv/sci-wms</span></tt>
+and running as the <tt class="docutils literal"><span class="pre">sciwms</span></tt> user.  You should specify the full path to the <tt class="docutils literal"><span class="pre">gunicorn</span></tt> executable
+you want to use (the one installed inside of your virtualenv).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="o">[</span>program:sci-wms<span class="o">]</span>
+<span class="nb">command</span><span class="o">=</span>gunicorn -w <span class="m">8</span> -t <span class="m">300</span> -b 127.0.0.1:7002 -n sciwms --max-requests <span class="m">100</span> --access-logfile /srv/sci-wms/logs/gunicorn.access.log --error-logfile /srv/sci-wms/logs/gunicorn.error.log -k tornado sciwms.wsgi:application
+<span class="nv">directory</span><span class="o">=</span>/srv/sci-wms
+<span class="nv">user</span><span class="o">=</span>sciwms
+<span class="nv">autostart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">autorestart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">redirect_stderr</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">stopasgroup</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">numprocs</span><span class="o">=</span>1
+<span class="nv">environment</span><span class="o">=</span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Deployment</a><ul>
+<li><a class="reference internal" href="#quick-start-development-only">Quick Start (DEVELOPMENT ONLY)</a></li>
+<li><a class="reference internal" href="#using-the-gunicorn-server">Using the Gunicorn Server</a></li>
+<li><a class="reference internal" href="#management-with-supervisord">Management with Supervisord</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="advanced.html"
+                        title="next chapter">Advanced Usage</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="advanced.html" title="Advanced Usage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

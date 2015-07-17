@@ -1,0 +1,56 @@
+---
+- label: SURA
+  url: http://www.sura.org/
+  logo:
+
+- label: GLOS
+  url: http://glos.us/
+  logo:
+
+- label: MEDM
+  url: http://fvcom.smast.umassd.edu/
+  logo:
+
+- label: IOOS
+  url: http://www.ioos.noaa.gov/
+  logo:
+
+- label: matplotlib
+  url: http://matplotlib.org/
+  logo:
+
+- label: MARACOOS
+  url: http://maracoos.org/
+  logo:
+
+- label: AOOS
+  url: http://www.aoos.org
+  logo:
+
+- label: CeNCOOS
+  url: http://www.cencoos.org
+  logo:
+
+- label: USGS
+  url: http://usgs.gov
+  logo:
+
+- label: netCDF-c
+  url: https://github.com/Unidata/netcdf-c/
+  logo:
+
+- label: OPeNDAP
+  url: http://www.opendap.org/
+  logo:
+
+- label: OGC
+  url: http://www.opengeospatial.org/
+  logo:
+
+- label: Python
+  url: https://www.python.org/
+  logo:
+
+- label: Django
+  url: https://www.djangoproject.com/
+  logo:

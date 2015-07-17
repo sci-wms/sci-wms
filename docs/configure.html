@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configure &mdash; SCI-WMS 0.0.2-dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.2-dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 0.0.2-dev documentation" href="index.html" />
+    <link rel="next" title="Using SCI-WMS" href="using.html" />
+    <link rel="prev" title="Deployment" href="deployment.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="using.html" title="Using SCI-WMS"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 0.0.2-dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="configure">
+<h1>Configure<a class="headerlink" href="#configure" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Refer to this section if you are setting up SCI-WMS for the first time.</p>
+<div class="section" id="the-admin-site">
+<h3>The Admin Site<a class="headerlink" href="#the-admin-site" title="Permalink to this headline">¶</a></h3>
+<p>SCI-WMS comes with an administration site built into the server.
+This allows users to add and remove datasets, as well as setup
+and manage groups. (It is essentially the default Django admin
+interface, but it works well for our purposes.)</p>
+<p>The admin page can be found on a running instance at <strong>http://server:port/admin</strong> .</p>
+<p>The default username is <strong>sciwmsuser</strong>, and the default password is <strong>sciwmspassword</strong>.
+The first thing you should do after getting your server started is to login into the
+administration utility and change the password for this user, or remove the default user and add your
+own.</p>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p>Depending on the version of Django you have installed, you
+may have a problem logging into the admin site, even with
+the correct password and username. An easy way to solve this
+problem is to run the following command in a terminal to reset
+the <em>sciwmsuser</em> password using Django&#8217;s management functionality:</p>
+<div class="last highlight-python"><div class="highlight"><pre>cd sci-wms/src/pywms &amp;&amp; python manage.py changepassword sciwmsuser
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="the-openlayers-test-page">
+<h3>The Openlayers Test Page<a class="headerlink" href="#the-openlayers-test-page" title="Permalink to this headline">¶</a></h3>
+<p>The server also comes with a very simple client using <em>openlayers.js</em> that can be used for testing
+the GetMap capability of the layers that have been setup in the server. In order for this test page
+to work correctly a number of things must be done. The datasets must be added to the server, the
+dataset <em>cache</em> must be initialized (more on this later), and the domain or IP must be added to the
+Sites list in the Admin app.</p>
+<p>Add your IP, localhost, or the domain (including ports if applicable) to the Sites list by removing the
+default entry and adding your&#8217;s as a new entry. The &#8220;Domain Name&#8221; field should be in the following form,
+omitting &#8220;<a class="reference external" href="http://">http://</a>&#8221; and the trailing &#8220;/&#8221;:</p>
+<blockquote>
+<div>server:port</div></blockquote>
+<p>Choose an appropriate nickname for the &#8220;Display Name&#8221; field.</p>
+</div>
+</div>
+<div class="section" id="sci-wms-administration">
+<h2>SCI-WMS Administration<a class="headerlink" href="#sci-wms-administration" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="adding-datasets">
+<h3>Adding Datasets<a class="headerlink" href="#adding-datasets" title="Permalink to this headline">¶</a></h3>
+<p>Django was chosen for the Python web framework because of the out-of-the-box database abstraction API that it provides. There have been some growing pains as Django has matured, and evolved like the change in project/app file structure (we still use the old structure). SCI-WMS uses a sqlite portable file based database that already exists in the project Git repository.</p>
+<p>SCI-WMS relies on the database to store dataset metadata, server metadata, and to provide some persistent user-enhanced abstraction with groups and derived layers.</p>
+<div class="section" id="datasets-in-the-database">
+<h4>Datasets in the database<a class="headerlink" href="#datasets-in-the-database" title="Permalink to this headline">¶</a></h4>
+<p>The <strong>dataset</strong> metadata stored in the database is the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li><strong>Uri</strong>: the opendap endpoint or local file path</li>
+<li><strong>Name</strong>: this is really the dataset id, and must be a valid POSIX compliant file name, and lack spaces</li>
+<li><strong>Title</strong>:  This shows up in GetCapabilities documents and the like as the human readable Title</li>
+<li><strong>Abstract</strong>: This is a human readable abstract for the dataset</li>
+<li><strong>Test Layer</strong>: this is the netcdf variable to use as the demo variable in the embedded <em>/wmstest</em> client included in the app</li>
+<li><strong>Test Style</strong>: this is the SCI-WMS style to use on the demo variable in the embedded <em>/wmstest</em> client included in the app</li>
+<li><strong>Keep up to date</strong>: This is a boolean toggle to instruct the server the keep the dataset topology cache up-to-date during cache updates, or treat the file as static and not changeing. (For an operational forecast collection, you would toggle on., For the FVCOM NECOFS 33-yr Hindcast you could just leave it toggled off)</li>
+<li><strong>Display all timesteps</strong>: This is a boolean toggle to instruct the service to return the individual timesteps in an dataset for a GetCapabilities request, otherwise just include the range. Returning each timestep number in the GetCapabilities for large NCML OpenDAP aggregations is potentially problematic.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="groups-in-the-database">
+<h4>Groups in the database<a class="headerlink" href="#groups-in-the-database" title="Permalink to this headline">¶</a></h4>
+<p>The <strong>groups</strong> elements coordinate which datasets belong to which groups and allow you to provide <em>/wmstest</em> and <em>GetCapabilities</em> for all datasets in a group in single group-endpoints.</p>
+</div>
+<div class="section" id="server-metadata">
+<h4>Server metadata<a class="headerlink" href="#server-metadata" title="Permalink to this headline">¶</a></h4>
+<p>The <strong>server</strong> database element is similarly self explainatory. Edit with specfic metadata about the SCI-WMS instance you are setting up. This information appears in  <em>GetCapabilities</em> documents.</p>
+</div>
+<div class="section" id="virtual-layers">
+<h4>Virtual layers<a class="headerlink" href="#virtual-layers" title="Permalink to this headline">¶</a></h4>
+<p><strong>Virtual Layers</strong> allow you do take a SCI-WMS valid parameter expression using multiple variables from a dataset, and simplify it by using a descriptive layer name that will also appear in the <em>GetCapabilities</em> documents. (These will be explained later.) This is so that generic web clients don&#8217;t necessarility need to know the intracacies of assembling SCI-WMS parameter expressions in requests.</p>
+</div>
+<div class="section" id="wmstest-functionality">
+<h4><em>&#8216;/wmstest&#8217;</em> Functionality<a class="headerlink" href="#wmstest-functionality" title="Permalink to this headline">¶</a></h4>
+<p>In order for the <em>/wmstest</em> pages to work, there must be a <strong>site</strong> element in the database. One is included by default, but it must be adapted for your particular instance if you want to provide the embedded OpenLayers test client to users. Otherwise layers will appear to be broken in the client. Edit the <strong>Domain Name</strong> in the <strong>site</strong> element with your site and port in the form of <cite>domain_or_ip:port</cite>. Leave off the port if you intend to access the server over port 80. Also leave off the preceeding <em>http://</em> and any trailing slashes.</p>
+<p>The <em>/wmstest</em> site can be accessed at <cite>domain_or_ip:port/wmstest</cite> in order to quickly test datasets that have been added to the SCI-WMS instance.</p>
+</div>
+<div class="section" id="topology-cache">
+<h4>Topology Cache<a class="headerlink" href="#topology-cache" title="Permalink to this headline">¶</a></h4>
+<p>The topology cache is an important optimization that speeds up response times for datasets that are accessed over opendap. The cache is current located in the folder of the SCI-WMS instance at <cite>path/to/sci-wms/src/pywms</cite>. There are a number of files that make up the cache, and they vary by dataset type.</p>
+<p>Each file has a name that is taken directly from the SCI-WMS <strong>Dataset</strong>&#8216;s <strong>&#8216;Name&#8217;</strong>.</p>
+<div class="section" id="spatial-tree-idx-and-dat">
+<h5>Spatial Tree (.idx and .dat)<a class="headerlink" href="#spatial-tree-idx-and-dat" title="Permalink to this headline">¶</a></h5>
+<p>These files contain serialized <em>RTree</em> spatial kd-tree objects that are used for quickly making nearest neighbor queries as part of GetFeatureInfo requests.</p>
+<p>These are necessary for large unstructured meshes, but are also used for the logically rectangular grids as well. (Ideally it would be nice to move away from <em>RTree</em> into a better KD-Tree implementation, like <em>sklearn</em>&#8216;s, that will be have better on disk...will have to accept slower performance when initially buiding the indexes though.)</p>
+<p>These files are constructed once when the dataset is added, and then not updated subsequently even if <strong>Keep up to date</strong> is toggled for the dataset.</p>
+</div>
+<div class="section" id="netcdf-nc">
+<h5>NetCDF (.nc)<a class="headerlink" href="#netcdf-nc" title="Permalink to this headline">¶</a></h5>
+<p>This file contains the up-to-date coordinate variable data for the dataset. This is typically Latitude/Longitude, and Time. For forecasts that are routinely updates, the time variable typically is growing with each update.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For unstructured meshes the nodal vertex coordinates of the elements as well of the coodinates of the element centers are stored here.</p>
+</div>
+</div>
+<div class="section" id="bounding-polygon-domain">
+<h5>Bounding Polygon (.domain)<a class="headerlink" href="#bounding-polygon-domain" title="Permalink to this headline">¶</a></h5>
+<p>This file is a Python dump of a Shapely polygon object that represents the maximum-extent bounding polygon of an unstructured mesh dataset.</p>
+<p>This file is constructed once when the dataset is added, and then not updated subsequently even if <strong>Keep up to date</strong> is toggled for the dataset.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><em>This file will only exist for datasets with unstructured meshes</em></p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="dataset-cache-initialization-updating">
+<h3>Dataset Cache Initialization &amp; Updating<a class="headerlink" href="#dataset-cache-initialization-updating" title="Permalink to this headline">¶</a></h3>
+<p>Calls to <cite>server:port/update</cite> will start a process to initialize newly added datasets and update older datasets that have <strong>keep up to date</strong> enabled. The admin interface does not initialize new datasets, it only adds the corresponding metadata into the database.</p>
+<p>This initialization and update process can also be started from the command line using the command this command. This what the call to <cite>server:port/update</cite> does in the back end.:</p>
+<div class="highlight-python"><div class="highlight"><pre>cd path/to/sci-wms/src/pywms &amp;&amp; /path/to/your/python manage.py updatecache
+</pre></div>
+</div>
+<p>This process builds and updates the proper files outlined in this <strong>Topology Cache</strong> section. <strong>It is probably beneficial to set a cron job that does this routinely every *X* hours on the deployment server.</strong></p>
+<p>This <cite>manage.py updatecache</cite> call actually calls methods in  <cite>grid_init_script.py</cite> (<strong>which is not a script anymore</strong>). This file contains some hacky only vaugly CFish readers to interpret the source file or endpoint and generate the topology cache. Ultimately we should complement the <em>just sort of OK</em> readers with the appropriate <em>perfect CF-UGRID</em> and GRID readers. This will be more important as full support for ROMS grids is added.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Configure</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li><a class="reference internal" href="#the-admin-site">The Admin Site</a></li>
+<li><a class="reference internal" href="#the-openlayers-test-page">The Openlayers Test Page</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sci-wms-administration">SCI-WMS Administration</a><ul>
+<li><a class="reference internal" href="#adding-datasets">Adding Datasets</a><ul>
+<li><a class="reference internal" href="#datasets-in-the-database">Datasets in the database</a></li>
+<li><a class="reference internal" href="#groups-in-the-database">Groups in the database</a></li>
+<li><a class="reference internal" href="#server-metadata">Server metadata</a></li>
+<li><a class="reference internal" href="#virtual-layers">Virtual layers</a></li>
+<li><a class="reference internal" href="#wmstest-functionality"><em>&#8216;/wmstest&#8217;</em> Functionality</a></li>
+<li><a class="reference internal" href="#topology-cache">Topology Cache</a><ul>
+<li><a class="reference internal" href="#spatial-tree-idx-and-dat">Spatial Tree (.idx and .dat)</a></li>
+<li><a class="reference internal" href="#netcdf-nc">NetCDF (.nc)</a></li>
+<li><a class="reference internal" href="#bounding-polygon-domain">Bounding Polygon (.domain)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dataset-cache-initialization-updating">Dataset Cache Initialization &amp; Updating</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="deployment.html"
+                        title="previous chapter">Deployment</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="using.html"
+                        title="next chapter">Using SCI-WMS</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="using.html" title="Using SCI-WMS"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             >previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 0.0.2-dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+<ul class="nav nav-pills nav-stacked">
+  {% for item in site.data.menu %}
+    <li class="{% if page.url == item.url %}active {% endif %}{% if item.children %}dropdown{% endif %}">
+      <a href="{{ site.baseurl }}{{ item.url }}"{% if item.children %} data-toggle="dropdown" class="dropdown-toggle"{% endif %}>{{item.label}}</a>
+      {% if item.children %}
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+        {% for child in item.children %}
+          <li><a href="{{ site.baseurl }}{{ child.url }}">{{child.label}}</a></li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    </li>
+  {% endfor %}
+  {% for item in site.data.external %}
+    <li>
+      <a href="{{ item.url }}" target="_blank">{{item.label}}</a>
+    </li>
+  {% endfor %}
+</ul>

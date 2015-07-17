@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using SCI-WMS &mdash; SCI-WMS 0.0.2-dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.2-dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SCI-WMS 0.0.2-dev documentation" href="index.html" />
+    <link rel="next" title="Roadmap" href="roadmap.html" />
+    <link rel="prev" title="Configure" href="configure.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="roadmap.html" title="Roadmap"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="configure.html" title="Configure"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 0.0.2-dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-sci-wms">
+<h1>Using SCI-WMS<a class="headerlink" href="#using-sci-wms" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="ogc-web-mapping-service-wms-api">
+<h2>OGC Web Mapping Service (WMS) API<a class="headerlink" href="#ogc-web-mapping-service-wms-api" title="Permalink to this headline">¶</a></h2>
+<p>SCI-WMS attempts to follow the OGC Web Mapping Service (WMS) specification and API. It supports the following requests. In some cases parameters are ignored, which may or may not be noted. Projection is fixed to web mercator at the moment, and the only image response mime type is &#8220;image/png&#8221;. Version and Service are ignored, where they appear in the requests below.</p>
+<div class="section" id="sci-wms-getcapabilities">
+<h3>SCI-WMS GetCapabilities<a class="headerlink" href="#sci-wms-getcapabilities" title="Permalink to this headline">¶</a></h3>
+<p>Here are the paramters relevant to request a sci-wms GetCapabilities document for a dataset:</p>
+<div class="highlight-python"><div class="highlight"><pre>http://server:port/wms/dataset_id?REQUEST=GetCapabilities
+</pre></div>
+</div>
+</div>
+<div class="section" id="sci-wms-getmap">
+<h3>SCI-WMS GetMap<a class="headerlink" href="#sci-wms-getmap" title="Permalink to this headline">¶</a></h3>
+<p>Here are the parameters relevant to a sci-wms GetMap request:</p>
+<div class="highlight-python"><div class="highlight"><pre>http://server:port/wms/dataset_id?
+
+ELEVATION=z_index&amp;
+LAYERS=netcdf_variable_of_interest&amp;
+FORMAT=getmap_image_format&amp;
+TRANSPARENT=unused_by_sciwms&amp;
+STYLES=style_of_getmap_request&amp;
+SERVICE=WMS&amp;
+VERSION=1.1.1&amp;
+REQUEST=GetMap&amp;
+TIME=nearest_time_isostr&amp;
+SRS=EPSG:3857&amp;
+BBOX=ll_x,ll_y,ur_x,ur_y&amp;
+WIDTH=getmap_width_in_px&amp;
+HEIGHT=getmap_height_in_px&amp;
+</pre></div>
+</div>
+<p>Here is a working example:</p>
+<p><a class="reference external" href="http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&amp;LAYERS=temp&amp;TRANSPARENT=TRUE&amp;STYLES=pcolor_average_jet_5_20_node_False&amp;FORMAT=image%2Fpng&amp;SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;TIME=2013-11-04T22%3A00%3A00&amp;SRS=EPSG%3A3857&amp;BBOX=-9159139.9528234,3713489.6175589,-6256978.8632958,5547978.2961477&amp;WIDTH=1186&amp;HEIGHT=750">http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&amp;LAYERS=temp&amp;TRANSPARENT=TRUE&amp;STYLES=pcolor_average_jet_5_20_node_False&amp;FORMAT=image%2Fpng&amp;SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;TIME=2013-11-04T22%3A00%3A00&amp;SRS=EPSG%3A3857&amp;BBOX=-9159139.9528234,3713489.6175589,-6256978.8632958,5547978.2961477&amp;WIDTH=1186&amp;HEIGHT=750</a></p>
+</div>
+<div class="section" id="sci-wms-getlegendgraphic">
+<h3>SCI-WMS GetLegendGraphic<a class="headerlink" href="#sci-wms-getlegendgraphic" title="Permalink to this headline">¶</a></h3>
+<p>Here are the parameters relevant to a GetLegendGraphic request:</p>
+<div class="highlight-python"><div class="highlight"><pre>http://server:port/wms/dataset_id?
+
+REQUEST=GetLegendGraphic&amp;
+LAYER=netcdf_variable_of_interest&amp;
+STYLES=style_of_getmap_request&amp;
+ELEVATION=z_index&amp;
+</pre></div>
+</div>
+<p>Here is a working example:</p>
+<p><a class="reference external" href="http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&amp;&amp;REQUEST=GetLegendGraphic&amp;LAYER=temp&amp;STYLES=pcolor_average_jet_0_30_grid_False">http://wms.maracoos.org/wms/maracoos_espresso/?ELEVATION=0&amp;&amp;REQUEST=GetLegendGraphic&amp;LAYER=temp&amp;STYLES=pcolor_average_jet_0_30_grid_False</a></p>
+</div>
+<div class="section" id="sci-wms-getfeatureinfo-gfi">
+<h3>SCI-WMS GetFeatureInfo (GFI)<a class="headerlink" href="#sci-wms-getfeatureinfo-gfi" title="Permalink to this headline">¶</a></h3>
+<p>To support queries at specific points in order allow for timeseries extraction from datasets, SCI-WMS supports WMS GetFeatureInfo (GFI) requrests. A generic example, and real life request can be found below.</p>
+<p>The generic structure of a GetFeatureInfo request to SCI-WMS looks a lot like a GetMap request (in fact some of the parameters are even repeated as-is). The key change is <tt class="docutils literal"><span class="pre">REQUST=GetFeatureInfo</span></tt> and some other GFI specific parameters to locate the point of interest based on the current map extent. The general structure is as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>http://server:port/wms/dataset_id?
+
+ELEVATION=z_index&amp;
+LAYERS=netcdf_variable_of_interest&amp;
+FORMAT=getmap_image_format&amp;
+TRANSPARENT=unused_by_sciwms&amp;
+STYLES=style_of_getmap_request&amp;
+SERVICE=WMS&amp;
+VERSION=1.1.1&amp;
+REQUEST=GetFeatureInfo&amp;
+SRS=EPSG:3857&amp;
+BBOX=ll_x,ll_y,ur_x,ur_y&amp;
+X=point_at_x_pixel_from_ul&amp;
+Y=point_at_y_pixel_from_ul&amp;
+INFO_FORMAT=getfeatureinfo_response_format&amp;
+WIDTH=getmap_width_in_px&amp;
+HEIGHT=getmap_height_in_px&amp;
+QUERY_LAYERS=commasep_variables_for_gfi&amp;
+TIME=starttime_isostr/stoptime_isostr
+</pre></div>
+</div>
+<p>The following is a real GFI request to a server that is (hopefully, please visit the google group and let us know if you are having problems) currently running and will return a jsonp formatted GeoJson response with the requests parameters (in this case variables, u and v for the nearest time since the TIME parameter is empty.</p>
+<p><a class="reference external" href="http://wms.maracoos.org/wms/necofs_forecast/?ELEVATION=39&amp;LAYERS=u,v&amp;FORMAT=image/png&amp;TRANSPARENT=TRUE&amp;STYLES=pcolor_average_jet_5_20_cell_False&amp;SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetFeatureInfo&amp;SRS=EPSG:3857&amp;BBOX=-8465091.73609,4343330.730541,-7489143.759081,5446469.922599&amp;X=237&amp;Y=167&amp;INFO_FORMAT=text/javascript&amp;WIDTH=399&amp;HEIGHT=451&amp;QUERY_LAYERS=u,v&amp;TIME=">http://wms.maracoos.org/wms/necofs_forecast/?ELEVATION=39&amp;LAYERS=u,v&amp;FORMAT=image/png&amp;TRANSPARENT=TRUE&amp;STYLES=pcolor_average_jet_5_20_cell_False&amp;SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetFeatureInfo&amp;SRS=EPSG:3857&amp;BBOX=-8465091.73609,4343330.730541,-7489143.759081,5446469.922599&amp;X=237&amp;Y=167&amp;INFO_FORMAT=text/javascript&amp;WIDTH=399&amp;HEIGHT=451&amp;QUERY_LAYERS=u,v&amp;TIME=</a></p>
+</div>
+</div>
+<div class="section" id="sci-wms-styles">
+<h2>SCI-WMS Styles<a class="headerlink" href="#sci-wms-styles" title="Permalink to this headline">¶</a></h2>
+<p>The basic form of the sci-wms styles parameter is as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>   imagetype_unused_colormap_colormin_colormax_paramterlocation_wildcard
+
+
+- Image Type:
+- Unused:
+- Colormap:
+- Color Min:
+- Color Max:
+- Paramter Location:
+- Wildcard:
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using SCI-WMS</a><ul>
+<li><a class="reference internal" href="#ogc-web-mapping-service-wms-api">OGC Web Mapping Service (WMS) API</a><ul>
+<li><a class="reference internal" href="#sci-wms-getcapabilities">SCI-WMS GetCapabilities</a></li>
+<li><a class="reference internal" href="#sci-wms-getmap">SCI-WMS GetMap</a></li>
+<li><a class="reference internal" href="#sci-wms-getlegendgraphic">SCI-WMS GetLegendGraphic</a></li>
+<li><a class="reference internal" href="#sci-wms-getfeatureinfo-gfi">SCI-WMS GetFeatureInfo (GFI)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sci-wms-styles">SCI-WMS Styles</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="configure.html"
+                        title="previous chapter">Configure</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="roadmap.html"
+                        title="next chapter">Roadmap</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="roadmap.html" title="Roadmap"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="configure.html" title="Configure"
+             >previous</a> |</li>
+        <li><a href="index.html">SCI-WMS 0.0.2-dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

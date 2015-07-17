@@ -1,0 +1,16 @@
+---
+title: sci-wms - Support
+---
+
+<h3>Support</h3>
+<p>sci-wms would not be possible without the help and support from the following:</p>
+
+<div class="row">
+  <ul>
+  {% for item in site.data.support %}
+    <li>
+      <a href="{{item.url}}">{{item.label}}</a>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
