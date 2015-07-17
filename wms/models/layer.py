@@ -3,7 +3,8 @@ import re
 
 from django.db import models
 
-from wms.models import Style
+from wms.models import Style, Variable
+from wms.utils import DotDict
 
 from wms import logger
 
@@ -12,6 +13,7 @@ class LayerBase(models.Model):
     var_name    = models.CharField(max_length=200, help_text="Variable name from dataset")
     std_name    = models.CharField(max_length=200, blank=True, help_text="The 'standard_name' from the dataset variable")
     units       = models.CharField(max_length=200, blank=True, help_text="The 'units' from the dataset variable")
+    logscale    = models.NullBooleanField(default=None, null=True, help_text="If this dataset variable should default to a log scale")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
     dataset     = models.ForeignKey('Dataset')
     active      = models.BooleanField(default=False)
@@ -26,6 +28,24 @@ class LayerBase(models.Model):
     @property
     def access_name(self):
         return self.var_name
+
+    @property
+    def defaults(self):
+
+        lmin = self.default_min
+        lmax = self.default_max
+        llog = self.logscale
+
+        default = Variable.objects.filter(std_name=self.std_name, units=self.units).first()
+        if default:
+            if lmin is None and default.default_min:
+                lmin = default.default_min
+            if lmax is None and default.default_max:
+                lmax = default.default_max
+            if llog is None and default.logscale is not None:
+                llog = default.logscale
+
+        return DotDict(min=lmin, max=lmax, logscale=llog)
 
     def __unicode__(self):
         z = self.var_name
@@ -68,9 +88,16 @@ class VirtualLayer(LayerBase):
                 v_match = '_'.join([ x for x in v.standard_name.split('_') if x not in ['y', 'northward']])
 
                 if u_match == v_match:
+                    if hasattr(u, 'units'):
+                        units = u.units
+                    elif hasattr(v, 'units'):
+                        units = v.units
+                    else:
+                        units = None
                     try:
                         vl = VirtualLayer.objects.create(var_name='{},{}'.format(u._name, v._name),
                                                          std_name=std_name,
+                                                         units=units,
                                                          description="U ({}) and V ({}) vectors".format(u._name, v._name),
                                                          dataset_id=dataset_id,
                                                          active=True)

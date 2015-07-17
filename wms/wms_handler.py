@@ -63,14 +63,14 @@ def get_units(request, units):
         return units
 
 
-def get_logscale(request):
+def get_logscale(request, default_logscale):
     """
     Return the LOGSCALE for GetLegendGraphic requests
     """
     try:
         return request.GET['logscale'].lower() == 'true'
     except KeyError:
-        return False
+        return default_logscale
 
 
 def get_horizontal(request):

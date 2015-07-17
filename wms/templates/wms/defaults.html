@@ -1,0 +1,138 @@
+{% extends "wms/base.html" %}
+{% load static from staticfiles %}
+{% load wms %}
+
+{% block header %}
+<link href="{% static 'wms/bootstrap-editable.css' %}" rel="stylesheet"/>
+<script src="{% static 'wms/bootstrap-editable.min.js' %}"></script>
+{% endblock %}
+
+{% block menu_items %}
+    {% if user.is_authenticated %}
+    <li><a data-toggle="collapse" href="#addDefault" aria-expanded="false" aria-controls="addDefault"><span style="color: green" class="glyphicon glyphicon-plus"></span> add default</a></li>
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+<div id="default-messages">
+</div>
+
+  <h2>Defaults</h2>
+
+  {% if user.is_authenticated %}
+    <div class="collapse" id="addDefault">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <form id="defaultForm" class="form-inline" action="{% url 'default-list' %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="std_name">Standard Name</label>
+              <input type="text" class="form-control" name="std_name" id="std_name" placeholder="Name">
+            </div>
+            <div class="form-group">
+              <label for="units">Units</label>
+              <input type="text" class="form-control" name="units" id="units" placeholder="Units">
+            </div>
+            <label for="defaultSubmit">&nbsp;</label>
+            <button type="button" name="defaultSubmit" id="defaultSubmit" class="btn btn-default">add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover table-condensed">
+      <thead>
+        <tr>
+          <th class='col-md-4'>CF standard_name</th>
+          <th class='col-md-3'>units</th>
+          <th class='col-md-1'>logscale</th>
+          <th class='col-md-2'>min</th>
+          <th class='col-md-2'>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in defaults %}
+        <tr>
+          <td>
+            <a href="#" class="inline-edits" id="std_name" data-type="text" data-value="{{ d.std_name }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+          </td>
+
+          <td>
+            <a href="#" class="inline-edits" id="units" data-type="text" data-value="{{ d.units }}"  data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+          </td>
+
+          <td>
+            <a href="#" class="inline-edits" id="logscale" data-type="select" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ d.logscale }}" aria-label="Logscale?" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+          </td>
+
+          <td>
+            <a href="#" class="inline-edits" id="default_min" data-type="text" data-value="{{ d.default_min | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+          </td>
+
+          <td>
+            <a href="#" class="inline-edits" id="default_max" data-type="text" data-value="{{ d.default_max | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+  <script>
+  $(document).ready(function() {
+
+    $(".inline-edits").editable({
+      mode: 'inline',
+      send: 'always',
+      highlight: '#68ce00',
+      url: function(params) {
+          but = $(this)
+          return $.ajax({
+              type: "PATCH",
+              url: but.attr('data-edit-url'),
+              data: params['name'] + "=" + params['value'],
+              dataType: "json",
+              beforeSend: function(xhr) {
+                  xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+              },
+          });
+      },
+      error: function(response, newValue) {
+        js = response.responseJSON
+        return js[Object.keys(js)[0]]
+      }
+    });
+
+    $("#defaultSubmit").click(function() {
+
+        but = $(this)
+        but.attr("disabled", "disabled");
+
+        var posting = $.ajax({
+                                type: "POST",
+                                url: $("#defaultForm").attr("action"),
+                                data: $("#defaultForm").serialize(),
+                                success: function(data) {
+                                    // We get the Dataset back... we could prepend to the table?
+                                    but.attr("disabled", false);
+                                    location.reload();
+                                },
+                                dataType: "text"
+                            }).fail(function(data) {
+                                $("#default-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+                                but.attr("disabled", false);
+                            });
+      });
+  });
+
+    </script>
+{% endif %}
+
+{% endblock %}

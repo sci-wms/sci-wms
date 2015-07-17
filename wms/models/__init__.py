@@ -2,6 +2,7 @@
 from wms.models.style import Style
 from wms.models.group import Group
 from wms.models.server import Server
+from wms.models.variable import Variable
 from wms.models.layer import Layer, VirtualLayer
 
 from wms.models.datasets.base import Dataset
