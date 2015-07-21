@@ -235,3 +235,13 @@ def get_gfi_positions(xy, bbox, crs, dims):
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
     lon, lat = pyproj.transform(crs, EPSG4326, bbox.minx+((bbox.maxx-bbox.minx)*(xy.x/dims.width)), bbox.maxy-((bbox.maxy-bbox.miny)*(xy.y/dims.height)))
     return DotDict(latitude=lat, longitude=lon)
+
+
+def get_item(request):
+    """
+    Returns the GetMetadata 'item' function
+    """
+    try:
+        return request.GET["item"].lower()
+    except KeyError:
+        return None

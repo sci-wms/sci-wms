@@ -5,6 +5,7 @@ import bisect
 import shutil
 import tempfile
 import itertools
+from math import sqrt
 from datetime import datetime
 
 import pytz
@@ -26,7 +27,7 @@ from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor
 from wms import data_handler
 from wms import mpl_handler
 from wms import gfi_handler
-from wms import views
+from wms import gmd_handler
 
 from wms import logger
 
@@ -146,6 +147,73 @@ class UGridDataset(Dataset):
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
+
+    def minmax(self, layer, request):
+        time_index, time_value = self.nearest_time(layer, request.GET['time'])
+        wgs84_bbox = request.GET['wgs84_bbox']
+
+        try:
+            nc = self.netcdf4_dataset()
+            data_obj = nc.variables[layer.access_name]
+            data_location = data_obj.location
+            mesh_name = data_obj.mesh
+
+            ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+            coords = np.empty(0)
+            if data_location == 'node':
+                coords = ug.nodes
+            elif data_location == 'face':
+                coords = ug.face_coordinates
+            elif data_location == 'edge':
+                coords = ug.edge_coordinates
+
+            lon = coords[:, 0]
+            lat = coords[:, 1]
+            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat, wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy)
+
+            vmin = None
+            vmax = None
+            data = None
+            if isinstance(layer, Layer):
+                if (len(data_obj.shape) == 3):
+                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                    data = data_obj[time_index, z_index, spatial_idx]
+                elif (len(data_obj.shape) == 2):
+                    data = data_obj[time_index, spatial_idx]
+                elif len(data_obj.shape) == 1:
+                    data = data_obj[spatial_idx]
+                else:
+                    logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
+
+                if data is not None:
+                    vmin = np.nanmin(data).item()
+                    vmax = np.nanmax(data).item()
+            elif isinstance(layer, VirtualLayer):
+
+                # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
+                data = []
+                for l in layer.layers:
+                    data_obj = nc.variables[l.var_name]
+                    if (len(data_obj.shape) == 3):
+                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                        data.append(data_obj[time_index, z_index, spatial_idx])
+                    elif (len(data_obj.shape) == 2):
+                        data.append(data_obj[time_index, spatial_idx])
+                    elif len(data_obj.shape) == 1:
+                        data.append(data_obj[spatial_idx])
+                    else:
+                        logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
+
+                if ',' in layer.var_name and data:
+                    # Vectors, so return magnitude
+                    data = [ sqrt((u*u) + (v*v)) for (u, v,) in data.T if u != np.nan and v != np.nan]
+                    vmin = min(data)
+                    vmax = max(data)
+
+            return gmd_handler.from_dict(dict(min=vmin, max=vmax))
+
+        finally:
+            nc.close()
 
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])

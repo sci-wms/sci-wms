@@ -6,10 +6,10 @@ from datetime import datetime
 import bisect
 import tempfile
 import itertools
+from math import sqrt
 
 import numpy as np
 import netCDF4 as nc4
-import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset, from_ncfile
@@ -24,7 +24,8 @@ import rtree
 from wms import mpl_handler
 from wms import gfi_handler
 from wms import data_handler
-from wms import views
+from wms import gmd_handler
+
 from wms.models import Dataset, Layer, VirtualLayer
 from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor
 
@@ -137,6 +138,95 @@ class SGridDataset(Dataset):
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
 
+    def minmax(self, layer, request):
+        time_index, time_value = self.nearest_time(layer, request.GET['time'])
+        wgs84_bbox = request.GET['wgs84_bbox']
+
+        try:
+            nc = self.canon_dataset
+            cached_sg = from_ncfile(self.topology_file)
+            lon_name, lat_name = cached_sg.face_coordinates
+            lon_obj = getattr(cached_sg, lon_name)
+            lat_obj = getattr(cached_sg, lat_name)
+            centers = cached_sg.centers
+            lon = centers[..., 0][lon_obj.center_slicing]
+            lat = centers[..., 1][lat_obj.center_slicing]
+            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
+                                                          lonmin=wgs84_bbox.minx,
+                                                          latmin=wgs84_bbox.miny,
+                                                          lonmax=wgs84_bbox.maxx,
+                                                          latmax=wgs84_bbox.maxy)
+            subset_lon = np.unique(spatial_idx[0])
+            subset_lat = np.unique(spatial_idx[1])
+            grid_variables = cached_sg.grid_variables
+
+            vmin = None
+            vmax = None
+            raw_data = None
+            if isinstance(layer, Layer):
+                data_obj = getattr(cached_sg, layer.access_name)
+                raw_var = nc.variables[layer.access_name]
+                if len(raw_var.shape) == 4:
+                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                    raw_data = raw_var[time_index, z_index, subset_lon, subset_lat]
+                elif len(raw_var.shape) == 3:
+                    raw_data = raw_var[time_index, subset_lon, subset_lat]
+                elif len(raw_var.shape) == 2:
+                    raw_data = raw_var[subset_lon, subset_lat]
+                else:
+                    raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))
+
+                # handle grid variables
+                if set([layer.access_name]).issubset(grid_variables):
+                    raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
+
+                vmin = np.nanmin(raw_data).item()
+                vmax = np.nanmax(raw_data).item()
+
+            elif isinstance(layer, VirtualLayer):
+                x_var = None
+                y_var = None
+                raw_vars = []
+                for l in layer.layers:
+                    data_obj = getattr(cached_sg, l.access_name)
+                    raw_var = nc.variables[l.access_name]
+                    raw_vars.append(raw_var)
+                    if len(raw_var.shape) == 4:
+                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                        raw_data = raw_var[time_index, z_index, subset_lon, subset_lat]
+                    elif len(raw_var.shape) == 3:
+                        raw_data = raw_var[time_index, subset_lon, subset_lat]
+                    elif len(raw_var.shape) == 2:
+                        raw_data = raw_var[subset_lon, subset_lat]
+                    else:
+                        raise BaseException('Unable to trim variable {0} data.'.format(l.access_name))
+
+                    if x_var is None:
+                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'x':
+                            x_var = raw_data
+                        elif data_obj.center_axis == 1:
+                            x_var = raw_data
+
+                    if y_var is None:
+                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'y':
+                            y_var = raw_data
+                        elif data_obj.center_axis == 0:
+                            y_var = raw_data
+
+                if ',' in layer.var_name and raw_data is not None:
+                    # Vectors, so return magnitude
+                    data = [ sqrt((u*u) + (v*v)) for (u, v,) in zip(x_var.flatten(), y_var.flatten()) if u != np.nan and v != np.nan]
+                    vmin = min(data)
+                    vmax = max(data)
+
+            return gmd_handler.from_dict(dict(min=vmin, max=vmax))
+
+        except BaseException:
+            logger.exception("Could not process GetFeatureInfo request")
+            raise
+        finally:
+            nc.close()
+
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
@@ -155,12 +245,12 @@ class SGridDataset(Dataset):
             if isinstance(layer, Layer):
                 data_obj = getattr(cached_sg, layer.access_name)
                 raw_var = nc.variables[layer.access_name]
-                if len(raw_var.shape) >= 3:
+                if len(raw_var.shape) == 4:
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                     raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                elif len(raw_var.shape) == 2:
+                elif len(raw_var.shape) == 3:
                     raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-3]]
-                elif len(raw_var.shape) == 1:
+                elif len(raw_var.shape) == 2:
                     raw_data = raw_var[data_obj.center_slicing]
                 else:
                     raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))

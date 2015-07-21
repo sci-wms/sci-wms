@@ -12,6 +12,8 @@ def get_layer_from_request(dataset, request):
         requested_layers = request.GET.get('layer')
         if not requested_layers:
             requested_layers = request.GET.get("query_layers")
+            if not requested_layers:
+                requested_layers = request.GET.get("layerName")
     layer_objects = dataset.layer_set.filter(var_name=requested_layers)
     virtuallayer_objects = dataset.virtuallayer_set.filter(var_name=requested_layers)
     try:
