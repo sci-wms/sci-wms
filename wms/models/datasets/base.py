@@ -162,7 +162,7 @@ class Dataset(TypedModel):
         if request.GET['item'] == 'minmax':
             return self.minmax(layer, request)
         else:
-            raise NotImplementedError("GetMetadata '{}' is not yet implemented".format(request['item']))
+            raise NotImplementedError("GetMetadata '{}' is not yet implemented".format(request.GET['item']))
 
     def empty_response(self, layer, request, content_type=None):
         """ Abstracted here to support many different empty response types"""
