@@ -10,7 +10,6 @@ from math import sqrt
 
 import numpy as np
 import netCDF4 as nc4
-import pyproj
 import pytz
 from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset, from_ncfile
