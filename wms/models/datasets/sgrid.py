@@ -245,12 +245,12 @@ class SGridDataset(Dataset):
             if isinstance(layer, Layer):
                 data_obj = getattr(cached_sg, layer.access_name)
                 raw_var = nc.variables[layer.access_name]
-                if len(raw_var.shape) >= 3:
+                if len(raw_var.shape) == 4:
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                     raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                elif len(raw_var.shape) == 2:
+                elif len(raw_var.shape) == 3:
                     raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-3]]
-                elif len(raw_var.shape) == 1:
+                elif len(raw_var.shape) == 2:
                     raw_data = raw_var[data_obj.center_slicing]
                 else:
                     raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))
