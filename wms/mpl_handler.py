@@ -84,6 +84,7 @@ def quiver_response(lon,
                     dx,
                     dy,
                     request,
+                    vectorscale,
                     unit_vectors=False,
                     dpi=80):
 
@@ -121,9 +122,9 @@ def quiver_response(lon,
 
     # plot unit vectors
     if unit_vectors:
-        ax.quiver(x, y, dx/mags, dy/mags, mags, cmap=cmap)
+        ax.quiver(x, y, dx/mags, dy/mags, mags, cmap=cmap, scale=vectorscale)
     else:
-        ax.quiver(x, y, dx, dy, mags, cmap=cmap, norm=norm)
+        ax.quiver(x, y, dx, dy, mags, cmap=cmap, norm=norm, scale=vectorscale)
 
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)

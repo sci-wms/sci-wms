@@ -21,7 +21,7 @@ import matplotlib.tri as Tri
 import rtree
 
 from wms.models import Dataset, Layer, VirtualLayer
-from wms.utils import DotDict, find_appropriate_time
+from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor
 
 from wms import data_handler
 from wms import mpl_handler
@@ -168,13 +168,30 @@ class UGridDataset(Dataset):
 
             lon = coords[:, 0]
             lat = coords[:, 1]
-
-            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat, wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy)
+            
+            if request.GET['vectorscale']:  # is not None if vectors are being plotted
+                vectorscale = request.GET['vectorscale']
+                padding_factor = calc_safety_factor(vectorscale)
+                spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
+                spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
+                                                              wgs84_bbox.minx,
+                                                              wgs84_bbox.miny,
+                                                              wgs84_bbox.maxx,
+                                                              wgs84_bbox.maxy,
+                                                              padding=spatial_idx_padding
+                                                              )
+            else:
+                spatial_idx = data_handler.lat_lon_subset_idx(lon,lat,
+                                                              wgs84_bbox.minx,
+                                                              wgs84_bbox.miny,
+                                                              wgs84_bbox.maxx,
+                                                              wgs84_bbox.maxy
+                                                              )
 
             face_indicies = ug.faces[:]
             face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
 
-            # If no traingles insersect the field of view, return a transparent tile
+            # If no triangles intersect the field of view, return a transparent tile
             if (len(spatial_idx) == 0) or (len(face_indicies_spatial_idx) == 0):
                 logger.debug("No triangles in field of view, returning empty tile.")
                 return self.empty_response(layer, request)
@@ -220,7 +237,9 @@ class UGridDataset(Dataset):
                                                        lat[spatial_idx],
                                                        data[0][spatial_idx],
                                                        data[1][spatial_idx],
-                                                       request)
+                                                       request,
+                                                       vectorscale
+                                                       )
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
         finally:

@@ -196,6 +196,17 @@ def get_imagetype(request, parameter=None):
         return request.GET.get(parameter).split(',')[0].split('_')[0].lower()
     except (AttributeError, TypeError):
         return 'filledcontours'
+    
+    
+def get_vectorscale(request):
+    try:
+        vectorscale = float(request.GET.get('vectorscale'))
+    except (AttributeError, TypeError):
+        if get_imagetype(request) == 'vectors':
+            vectorscale = 20  # this seems a reasonable number
+        else:
+            vectorscale = None  # don't bother with a default if vectors aren't being plotted
+    return vectorscale
 
 
 def get_colorscalerange(request, default_min, default_max):

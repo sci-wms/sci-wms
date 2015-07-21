@@ -26,7 +26,7 @@ from wms import gfi_handler
 from wms import data_handler
 from wms import views
 from wms.models import Dataset, Layer, VirtualLayer
-from wms.utils import DotDict
+from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor
 
 from wms import logger
 
@@ -150,13 +150,6 @@ class SGridDataset(Dataset):
             centers = cached_sg.centers
             lon = centers[..., 0][lon_obj.center_slicing]
             lat = centers[..., 1][lat_obj.center_slicing]
-            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
-                                                          lonmin=wgs84_bbox.minx,
-                                                          latmin=wgs84_bbox.miny,
-                                                          lonmax=wgs84_bbox.maxx,
-                                                          latmax=wgs84_bbox.maxy)
-            subset_lon = self._spatial_data_subset(lon, spatial_idx)
-            subset_lat = self._spatial_data_subset(lat, spatial_idx)
             grid_variables = cached_sg.grid_variables
 
             if isinstance(layer, Layer):
@@ -221,6 +214,18 @@ class SGridDataset(Dataset):
                     raise AttributeError('One or both of the specified variables has screwed up dimensions.')
 
                 if request.GET['image_type'] == 'vectors':
+                    vectorscale = request.GET['vectorscale']
+                    padding_factor = calc_safety_factor(vectorscale)
+                    spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
+                    spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
+                                                                  lonmin=wgs84_bbox.minx,
+                                                                  latmin=wgs84_bbox.miny,
+                                                                  lonmax=wgs84_bbox.maxx,
+                                                                  latmax=wgs84_bbox.maxy,
+                                                                  padding=spatial_idx_padding
+                                                                  )
+                    subset_lon = self._spatial_data_subset(lon, spatial_idx)
+                    subset_lat = self._spatial_data_subset(lat, spatial_idx)
                     # rotate vectors
                     angles = cached_sg.angles[lon_obj.center_slicing]
                     x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
@@ -230,7 +235,9 @@ class SGridDataset(Dataset):
                                                        subset_lat,
                                                        spatial_subset_x_rot,
                                                        spatial_subset_y_rot,
-                                                       request)
+                                                       request,
+                                                       vectorscale
+                                                       )
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
         except BaseException:
