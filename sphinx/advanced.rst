@@ -116,7 +116,7 @@ Default Layer Settings
 In order of precedence:
 
 1. URL request arguments
-    Always prefered for maximum client control. Controlled with the ``LOGSCALE`` and ``COLORSCALERANGE`` URL parameters.
+    Always preferred for maximum client control. Controlled with the ``LOGSCALE`` and ``COLORSCALERANGE`` URL parameters.
 
 2. Layer defaults
     Used when populated on a ``Layer`` not specified in the URL request. Controlled on each dataset page on a per-variable basis.
@@ -143,3 +143,4 @@ WMS Extensions
    "HORIZONTAL", "GetLegendGraphic", "``true``, ``false``", "Return a horizontal legend (vertical is the default)", "``true`` ``false``"
    "NUMCONTOURS", "GetLegendGraphic", "``[int]``", "Return request with the specified number of contours. Only valid for the ``image_type`` of ``contours`` or ``filledcontours``).  **This is not supported in GetMap request yet.**", "``8``  ``30``"
    "STYLE", "GetLegendGraphic GetMap", "``[image_type]``/``[colormap]``", "While some styles are defined in the GetCapabilities document, a use can specify any combination of an ``image_type`` (``filledcontours``, ``contours``, ``pcolor``, ``vectors``) and a matplotlib ``colormap`` (http://matplotlib.org/examples/color/colormaps_reference.html)", "``contours_jet``  ``vectors_blues``"
+   "VECTORSCALE", "GetMap", "``[float]``", "Controls the scale of vector arrows when plotting a ``vectors`` style. The ``vectorscale`` value represents the number of data units per arrow length unit. Smaller numbers lead to longer arrows, while larger numbers represent shorter arrows. This is consistent with the use of the ``scale`` keyword used by matplotlib (http://matplotlib.org/api/pyplot_api.html).", "``10.5`` ``30``"
