@@ -58,12 +58,13 @@
 
     // one layer per dataset, we'll modify the layer and style with the click
     {% for dataset in datasets %}
+    var wmsURL = "{% url 'dataset' dataset.slug %}";
     var {{dataset.slug}} = L.tileLayer.wms("{% url 'dataset' dataset.slug %}", {
         format: 'image/png',
         transparent: 'true',
         attribution: "Sci-wms - Python WMS service",
         opacity: 0.7,
-    });
+    })
     {% endfor %}
 
     var bounds = new L.LatLngBounds(new L.LatLng(32, -126), new L.LatLng(50, -64));
@@ -76,13 +77,24 @@
         dataset_slug = $(this).data('dataset');
         layer = $(this).data('layer');
         style = $(this).data('style');
-
-        l = eval(dataset_slug);
-        l.setParams({
-            layers: layer,
-            styles: style
-        });
-
+		vectors = style.indexOf('vectors');
+		l = eval(dataset_slug);
+		var colorscale = '0,1';
+		if (vectors >= 0) {
+	        l.setParams({
+	            layers: layer,
+	            styles: style,
+	            colorscalerange: colorscale,
+	            vectorscale: 20
+	        });			
+		}
+		else {
+	        l.setParams({
+	            layers: layer,
+	            styles: style,
+	            colorscalerange: colorscale
+	        });				
+		}
         // -- clear existing layers
         displayed_layers.clearLayers();
         // -- add this layer
