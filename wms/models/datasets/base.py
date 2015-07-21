@@ -158,6 +158,12 @@ class Dataset(TypedModel):
     def getfeatureinfo(self, layer, request):
         raise NotImplementedError
 
+    def getmetadata(self, layer, request):
+        if request.GET['item'] == 'minmax':
+            return self.minmax(layer, request)
+        else:
+            raise NotImplementedError("GetMetadata '{}' is not yet implemented".format(request['item']))
+
     def empty_response(self, layer, request, content_type=None):
         """ Abstracted here to support many different empty response types"""
         content_type = content_type or 'image/png'

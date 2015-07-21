@@ -54,6 +54,17 @@ class TestUgrid(TestCase):
             y            = 0     # Top right
         )
 
+        self.gmd_params = dict(
+            service      = 'WMS',
+            request      = 'GetMetadata',
+            version      = '1.1.1',
+            query_layers = 'surface_salt',
+            srs          = 'EPSG:3857',
+            bbox         = '-13756219.106426599,5811660.1345785195,-13736651.227185594,5831228.013819524',
+            height       = 256,
+            width        = 256
+        )
+
     def image_name(self, fmt):
         return '{}.{}'.format(self.id().split('.')[-1], fmt)
 
@@ -114,6 +125,11 @@ class TestUgrid(TestCase):
     def test_gfi_single_variable_json(self):
         params = copy(self.gfi_params)
         params['info_format']  = 'application/json'
+        self.do_test(params, fmt='json')
+
+    def test_ugrid_getmetadata_minmax(self):
+        params = copy(self.gmd_params)
+        params['item']  = 'minmax'
         self.do_test(params, fmt='json')
 
     def test_getCaps(self):

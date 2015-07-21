@@ -185,6 +185,27 @@ def enhance_getfeatureinfo_request(dataset, layer, request):
     return request
 
 
+def enhance_getmetadata_request(dataset, layer, request):
+    gettemp = request.GET.copy()
+
+    # 'time' parameter
+    dimensions = wms_handler.get_dimensions(request)
+
+    newgets = dict(
+        time=wms_handler.get_time(request),
+        crs=wms_handler.get_projection(request),
+        bbox=wms_handler.get_bbox(request),
+        wgs84_bbox=wms_handler.get_wgs84_bbox(request),
+        elevation=wms_handler.get_elevation(request),
+        width=dimensions.width,
+        height=dimensions.height,
+        item=wms_handler.get_item(request)
+    )
+    gettemp.update(newgets)
+    request.GET = gettemp
+    return request
+
+
 class DefaultsView(View):
 
     def get(self, request):
@@ -243,6 +264,8 @@ class WmsView(View):
                     request = enhance_getlegendgraphic_request(dataset, layer, request)
                 elif reqtype.lower() == 'getfeatureinfo':
                     request = enhance_getfeatureinfo_request(dataset, layer, request)
+                elif reqtype.lower() == 'getmetadata':
+                    request = enhance_getmetadata_request(dataset, layer, request)
                 try:
                     response = getattr(dataset, reqtype.lower())(layer, request)
                 except AttributeError as e:
@@ -252,10 +275,7 @@ class WmsView(View):
                     return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
                 # Test formats, etc. before returning?
                 return response
-        except ValueError as e:
-            logger.exception(str(e))
-            return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
-        except AttributeError as e:
+        except (AttributeError, ValueError) as e:
             logger.exception(str(e))
             return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
         except NotImplementedError as e:
