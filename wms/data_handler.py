@@ -21,7 +21,7 @@ def lat_lon_subset_idx(lon, lat, lonmin, latmin, lonmax, latmax, padding=0.18):
 def faces_subset_idx(face_indicies, spatial_idx):
     """
     Return row indicies into the nv data structure which have indicies
-    inside the bounding box defined by get_lat_lon_subset_idx
+    inside the bounding box defined by lat_lon_subset_idx
     """
     return np.asarray(np.where(np.all(np.in1d(face_indicies, spatial_idx).reshape(face_indicies.shape), 1))).squeeze()
 
