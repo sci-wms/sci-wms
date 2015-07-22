@@ -9,7 +9,9 @@ from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 def forward(apps, schema_editor):
     Layer = apps.get_model('wms', 'Layer')
     Dataset = apps.get_model('wms', 'Dataset')
+
     for d in Dataset.objects.all():
+        nc = None
         try:
             nc = EnhancedDataset(d.uri)
         except:
@@ -18,12 +20,13 @@ def forward(apps, schema_editor):
             except:
                 pass
 
-        for v in nc.variables:
-            nc_var = nc.variables[v]
-            l, _ = Layer.objects.get_or_create(dataset_id=d.id, var_name=v)
-            if hasattr(nc_var, 'units'):
-                l.units = nc_var.units
-                l.save()
+        if nc is not None:
+            for v in nc.variables:
+                nc_var = nc.variables[v]
+                l, _ = Layer.objects.get_or_create(dataset_id=d.id, var_name=v)
+                if hasattr(nc_var, 'units'):
+                    l.units = nc_var.units
+                    l.save()
 
 
 def reverse(apps, schema_editor):
