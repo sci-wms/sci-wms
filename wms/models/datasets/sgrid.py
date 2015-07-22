@@ -304,8 +304,22 @@ class SGridDataset(Dataset):
                     raise AttributeError('One or both of the specified variables has screwed up dimensions.')
 
                 if request.GET['image_type'] == 'vectors':
+                    angles = cached_sg.angles[lon_obj.center_slicing]
+                    vectorstep = request.GET['vectorstep']
+                    # don't do this if the vectorstep is 1; let's save a microsecond or two
+                    # it's identical to getting all the data
+                    if vectorstep > 1:
+                        data_dim = len(lon.shape)
+                        step_slice = (np.s_[::vectorstep],) * data_dim  # make sure the vector step is used for all applicable dimensions
+                        lon = lon[step_slice]
+                        lat = lat[step_slice]
+                        x_var = x_var[step_slice]
+                        y_var = y_var[step_slice]
+                        angles = angles[step_slice]
                     vectorscale = request.GET['vectorscale']
                     padding_factor = calc_safety_factor(vectorscale)
+                    # figure out the average distance between lat/lon points
+                    # do the math after taking into the vectorstep if specified
                     spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
                     spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
                                                                   lonmin=wgs84_bbox.minx,
@@ -317,7 +331,6 @@ class SGridDataset(Dataset):
                     subset_lon = self._spatial_data_subset(lon, spatial_idx)
                     subset_lat = self._spatial_data_subset(lat, spatial_idx)
                     # rotate vectors
-                    angles = cached_sg.angles[lon_obj.center_slicing]
                     x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
                     spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
                     spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)

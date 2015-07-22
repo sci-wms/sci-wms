@@ -92,7 +92,7 @@ class TestSgrid(TestCase):
         params.update(styles='filledcontours_jet')
         self.do_test(params)
 
-    @xfail(reason="facets is not yet implemeted for SGRID datasets")
+    @xfail(reason="facets is not yet implemented for SGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_jet')
@@ -103,7 +103,7 @@ class TestSgrid(TestCase):
         params.update(styles='pcolor_jet')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemeted for SGRID datasets")
+    @xfail(reason="contours is not yet implemented for SGRID datasets")
     def test_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
@@ -112,6 +112,16 @@ class TestSgrid(TestCase):
     def test_vectors(self):
         params = copy(self.url_params)
         params.update(styles='vectors_jet', layers='u,v')
+        self.do_test(params)
+        
+    def test_sgrid_vectorscale(self):
+        params = copy(self.url_params)
+        params.update(vectorscale=25, styles='vectors_jet', layers='u,v')
+        self.do_test(params)
+        
+    def test_sgrid_vectorstep(self):
+        params = copy(self.url_params)
+        params.update(vectorstep=5, styles='vectors_jet', layers='u,v')
         self.do_test(params)
 
     def test_sgrid_gfi_single_variable_csv(self):
