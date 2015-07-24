@@ -209,6 +209,17 @@ def get_vectorscale(request):
     return vectorscale
 
 
+def get_vectorstep(request):
+    try:
+        vectorstep = int(request.GET.get('vectorstep'))
+    except TypeError:
+        if get_imagetype(request) == 'vectors':
+            vectorstep = 1  # equivalent to getting all the data
+        else:
+            vectorstep = None
+    return vectorstep
+
+
 def get_colorscalerange(request, default_min, default_max):
     try:
         climits = sorted([ float(x) for x in request.GET.get('colorscalerange').split(',') ])

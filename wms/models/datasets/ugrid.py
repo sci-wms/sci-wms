@@ -237,10 +237,11 @@ class UGridDataset(Dataset):
             lon = coords[:, 0]
             lat = coords[:, 1]
             
-            if request.GET['vectorscale']:  # is not None if vectors are being plotted
+            if request.GET['vectorscale'] is not None:  # is not None if vectors are being plotted
                 vectorscale = request.GET['vectorscale']
                 padding_factor = calc_safety_factor(vectorscale)
-                spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
+                vectorstep = request.GET['vectorstep']  # returns 1 by default if vectors are being plotted
+                spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor) * vectorstep
                 spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
                                                               wgs84_bbox.minx,
                                                               wgs84_bbox.miny,
@@ -248,6 +249,11 @@ class UGridDataset(Dataset):
                                                               wgs84_bbox.maxy,
                                                               padding=spatial_idx_padding
                                                               )
+                if vectorstep > 1:
+                    np.random.shuffle(spatial_idx)
+                    nvec = int(len(spatial_idx) / vectorstep)
+                    spatial_idx = spatial_idx[:nvec]
+
             else:
                 spatial_idx = data_handler.lat_lon_subset_idx(lon,lat,
                                                               wgs84_bbox.minx,
@@ -255,7 +261,6 @@ class UGridDataset(Dataset):
                                                               wgs84_bbox.maxx,
                                                               wgs84_bbox.maxy
                                                               )
-
             face_indicies = ug.faces[:]
             face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
 
@@ -445,9 +450,9 @@ class UGridDataset(Dataset):
                 try:
                     coord_var = nc.variables[cv]
                     if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
-                        return cv
+                        return coord_var
                     elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
-                        return cv
+                        return coord_var
                 except BaseException:
                     pass
         except AttributeError:
