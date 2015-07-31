@@ -254,8 +254,8 @@ class SGridDataset(Dataset):
                     raw_data = raw_var[data_obj.center_slicing]
                 else:
                     raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))
-                # handle grid variables
-                if set([layer.access_name]).issubset(grid_variables):
+                # handle edge variables
+                if data_obj.location is not None and 'edge' in data_obj.location:
                     raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
 
                 if request.GET['image_type'] == 'pcolor':
