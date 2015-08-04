@@ -16,6 +16,9 @@ RUN apt-get -y update && apt-get install -y \
     libnetcdf-dev \
     libpng-dev \
     libspatialindex-dev \
+    libblas-dev \
+    liblapack-dev \
+    gfortran \
     pwgen \
     python2.7 \
     python2.7-dev \
