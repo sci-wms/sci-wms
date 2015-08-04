@@ -22,7 +22,7 @@ import matplotlib.tri as Tri
 import rtree
 
 from wms.models import Dataset, Layer, VirtualLayer
-from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor
+from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor, find_appropriate_time
 
 from wms import data_handler
 from wms import mpl_handler
@@ -457,7 +457,15 @@ class UGridDataset(Dataset):
     def times(self, layer):
         try:
             nc = self.topology_dataset()
-            time_var = nc.get_variables_by_attributes(standard_name='time')[0]
+            time_vars = nc.get_variables_by_attributes(standard_name='time')
+            if len(time_vars) == 1:
+                time_var = time_vars[0]
+            else:
+                # if there is more than variable with standard_name = time
+                # fine the appropriate one to use with the layer
+                var_obj = nc.variables[layer.access_name]
+                time_var_name = find_appropriate_time(var_obj, time_vars)
+                time_var = nc.variables[time_var_name]
             return netCDF4.num2date(time_var[:], units=time_var.units)
         finally:
             nc.close()
