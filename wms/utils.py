@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
 import numpy as np
 
 from wms import logger
@@ -107,3 +108,25 @@ class DotDict(object):
     def __repr__(self):
         import pprint
         return pprint.pformat(vars(self), indent=2)
+
+
+def calculate_time_windows(times):
+
+    if times.size == 1:
+        yield [times[0], times[0], timedelta(days=0)]
+        return
+
+    starting = 0
+    ending = 0
+    d = np.diff(times)
+    for x in range(0, d.size):
+        if d[starting] == d[ending]:
+            ending += 1
+        else:
+            yield [times[starting], times[ending], (times[ending] - times[starting]) / (ending - starting)]
+            ending += 1
+            starting = ending
+    try:
+        yield [times[starting], times[ending], (times[ending] - times[starting]) / (ending - starting)]
+    except ZeroDivisionError:
+        yield [times[starting], times[ending], times[ending] - times[starting]]
