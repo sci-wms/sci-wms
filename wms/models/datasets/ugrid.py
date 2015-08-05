@@ -281,8 +281,9 @@ class UGridDataset(Dataset):
                     return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'filledcontours':
-                    if np.isnan(np.sum(data)):
-                        data_mask = np.logical_not(np.isnan(data))  # mask for non-NaN data elements
+                    mask = np.isnan(data)  # array with NaNs appearing as True
+                    if mask.any():
+                        data_mask = ~mask  # negate the NaN boolean array; mask for non-NaN data elements
                         # slice the data, lon, and lat to get elements that correspond to non-NaN values
                         data = data_mask[data_mask]
                         lon = lon[data_mask]
