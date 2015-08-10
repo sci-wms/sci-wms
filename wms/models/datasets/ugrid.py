@@ -253,7 +253,6 @@ class UGridDataset(Dataset):
                     np.random.shuffle(spatial_idx)
                     nvec = int(len(spatial_idx) / vectorstep)
                     spatial_idx = spatial_idx[:nvec]
-
             else:
                 spatial_idx = data_handler.lat_lon_subset_idx(lon,lat,
                                                               wgs84_bbox.minx,
@@ -268,9 +267,7 @@ class UGridDataset(Dataset):
             if (len(spatial_idx) == 0) or (len(face_indicies_spatial_idx) == 0):
                 logger.debug("No triangles in field of view, returning empty tile.")
                 return self.empty_response(layer, request)
-
-            tri_subset = Tri.Triangulation(lon, lat, triangles=face_indicies[face_indicies_spatial_idx])
-
+            
             if isinstance(layer, Layer):
                 if (len(data_obj.shape) == 3):
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
@@ -284,7 +281,30 @@ class UGridDataset(Dataset):
                     return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'filledcontours':
-                    return mpl_handler.tricontourf_response(tri_subset, data, request)
+                    mask = np.isnan(data)  # array with NaNs appearing as True
+                    if mask.any():
+                        data_mask = ~mask  # negate the NaN boolean array; mask for non-NaN data elements
+                        # slice the data, lon, and lat to get elements that correspond to non-NaN values
+                        data = data_mask[data_mask]
+                        lon = lon[data_mask]
+                        lat = lat[data_mask]
+                        # recalculate the spatial index using the subsetted lat/lon
+                        spatial_idx = data_handler.lat_lon_subset_idx(lon,
+                                                                      lat,
+                                                                      wgs84_bbox.minx,
+                                                                      wgs84_bbox.miny,
+                                                                      wgs84_bbox.maxx,
+                                                                      wgs84_bbox.maxy
+                                                                      )
+                    face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
+                    tri_subset = Tri.Triangulation(lon,
+                                                   lat, 
+                                                   triangles=face_indicies[face_indicies_spatial_idx]
+                                                   )
+                    return mpl_handler.tricontourf_response(tri_subset,
+                                                            data,
+                                                            request
+                                                            )
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
