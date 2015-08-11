@@ -16,7 +16,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install requirements
 COPY requirements*.txt /tmp/
-RUN pip install django-extensions
 RUN conda install --channel ioos --file /tmp/requirements.txt
 RUN conda install --channel ioos --file /tmp/requirements-prod.txt
 

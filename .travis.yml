@@ -31,7 +31,7 @@ install:
   # ---------------------------------
   - pip install django-extensions
   - conda install --channel ioos --file requirements.txt
-  - conda install --channel ioos --file requirements-dev.txt
+  - conda install --channel ioos django-debug-toolbar
   - conda install --channel ioos --file requirements-test.txt
   - conda list --export
 
