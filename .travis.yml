@@ -29,9 +29,9 @@ before_install:
 install:
   # Customise the testing environment
   # ---------------------------------
-  - pip install django-extensions django-debug-toolbar
   - conda install --channel ioos --file requirements.txt
   - conda install --channel ioos --file requirements-test.txt
-  - conda list --export
+  - pip install django-extensions django-debug-toolbar
+  - conda list
 
 script: py.test -rxs --verbose
