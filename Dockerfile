@@ -1,44 +1,28 @@
-FROM debian:wheezy
+FROM debian:jessie
+
 MAINTAINER Dave Foster <dave@axiomdatascience.com>
 
+# Setup CONDA (https://hub.docker.com/r/continuumio/miniconda3/~/dockerfile/)
+RUN apt-get update && apt-get install -y wget bzip2 ca-certificates pwgen \
+    libglib2.0-0 libxext6 libsm6 libxrender1
+RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet https://repo.continuum.io/miniconda/Miniconda-3.10.1-Linux-x86_64.sh && \
+    /bin/bash /Miniconda-3.10.1-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniconda-3.10.1-Linux-x86_64.sh && \
+    /opt/conda/bin/conda install --yes conda==3.14.1
+
+ENV PATH /opt/conda/bin:$PATH
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get -y update && apt-get install -y \
-    bash \
-    bzip2 \
-    git \
-    libcurl4-openssl-dev \
-    libevent-dev \
-    libfreetype6-dev \
-    libgeos-dev \
-    libhdf5-dev \
-    libjpeg-dev \
-    libnetcdf-dev \
-    libpng-dev \
-    libspatialindex-dev \
-    libblas-dev \
-    liblapack-dev \
-    gfortran \
-    pwgen \
-    python2.7 \
-    python2.7-dev \
-    python-mpltoolkits.basemap \
-    python-pip \
-    python-sqlite \
-    sqlite \
-    wget
-
+# Install requirements
 COPY requirements*.txt /tmp/
+RUN conda install --channel ioos --file /tmp/requirements.txt
+RUN conda install --channel ioos --file /tmp/requirements-prod.txt
 
-RUN pip install --upgrade distribute
-RUN pip install git+git://github.com/pyugrid/pyugrid
-RUN pip install -r /tmp/requirements.txt
-RUN pip install -r /tmp/requirements-prod.txt
-
-RUN mkdir -p /apps/sci-wms
-COPY . /apps/sci-wms
-RUN rm -f /apps/sci-wms/sciwms/sci-wms.db
-WORKDIR /apps/sci-wms
+RUN mkdir -p /srv/sci-wms
+COPY . /srv/sci-wms
+RUN rm -f /srv/sci-wms/sciwms/sci-wms.db
+WORKDIR /srv/sci-wms
 
 ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
 
