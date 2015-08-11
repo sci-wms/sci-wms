@@ -29,8 +29,8 @@ before_install:
 install:
   # Customise the testing environment
   # ---------------------------------
-  - conda install --channel ioos "Django>=1.7,<1.8"
   - conda install --channel ioos --file requirements.txt
+  - conda install --channel ioos "Django>=1.7,<1.8"
   - conda install --channel ioos --file requirements-dev.txt
   - conda install --channel ioos --file requirements-test.txt
   - conda install --channel ioos django-debug-toolbar
