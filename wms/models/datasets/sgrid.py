@@ -14,7 +14,7 @@ import pytz
 from pyaxiom.netcdf import EnhancedDataset
 from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
-from pysgrid.read_netcdf import NetCDFDataset
+from pysgrid.read_netcdf import NetCDFDataset as SGrid
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
 
 import pandas as pd
@@ -26,13 +26,15 @@ from wms import gfi_handler
 from wms import data_handler
 from wms import gmd_handler
 
-from wms.models import Dataset, Layer, VirtualLayer
+
+from wms.models import Dataset, Layer, VirtualLayer, NetCDFDataset
 from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor, find_appropriate_time
+
 
 from wms import logger
 
 
-class SGridDataset(Dataset):
+class SGridDataset(Dataset, NetCDFDataset):
 
     @staticmethod
     def is_valid(uri):
@@ -60,40 +62,37 @@ class SGridDataset(Dataset):
         p.storage   = rtree.index.RT_Disk
         p.Dimension = 2
 
-        nc = self.netcdf4_dataset()
-        sg = from_nc_dataset(nc)
+        with self.dataset() as nc:
+            sg = from_nc_dataset(nc)
 
-        class FastRtree(rtree.Rtree):
-            def dumps(self, obj):
-                try:
-                    import cPickle
-                    return cPickle.dumps(obj, -1)
-                except ImportError:
-                    super(FastRtree, self).dumps(obj)
+            class FastRtree(rtree.Rtree):
+                def dumps(self, obj):
+                    try:
+                        import cPickle
+                        return cPickle.dumps(obj, -1)
+                    except ImportError:
+                        super(FastRtree, self).dumps(obj)
 
-        def rtree_generator_function():
-            for i, axis in enumerate(sg.centers):
-                for j, (x, y) in enumerate(axis):
-                    yield (i+j, (x, y, x, y), (i, j))
+            def rtree_generator_function():
+                for i, axis in enumerate(sg.centers):
+                    for j, (x, y) in enumerate(axis):
+                        yield (i+j, (x, y, x, y), (i, j))
 
-        logger.info("Building Faces (centers) Rtree Topology Cache for {0}".format(self.name))
-        _, temp_file = tempfile.mkstemp(suffix='.face')
-        start = time.time()
-        FastRtree(temp_file,
-                  rtree_generator_function(),
-                  properties=p,
-                  overwrite=True,
-                  interleaved=True)
-        logger.info("Built Faces (centers) Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+            logger.info("Building Faces (centers) Rtree Topology Cache for {0}".format(self.name))
+            _, temp_file = tempfile.mkstemp(suffix='.face')
+            start = time.time()
+            FastRtree(temp_file,
+                      rtree_generator_function(),
+                      properties=p,
+                      overwrite=True,
+                      interleaved=True)
+            logger.info("Built Faces (centers) Rtree Topology Cache in {0} seconds.".format(time.time() - start))
 
-        shutil.move('{}.dat'.format(temp_file), self.face_tree_data_file)
-        shutil.move('{}.idx'.format(temp_file), self.face_tree_index_file)
-
-        nc.close()
+            shutil.move('{}.dat'.format(temp_file), self.face_tree_data_file)
+            shutil.move('{}.idx'.format(temp_file), self.face_tree_index_file)
 
     def update_cache(self, force=False):
-        try:
-            nc = self.netcdf4_dataset()
+        with self.dataset() as nc:
             sg = from_nc_dataset(nc)
             sg.save_as_netcdf(self.topology_file)
 
@@ -129,12 +128,6 @@ class SGridDataset(Dataset):
             # Now do the RTree index
             self.make_rtree()
 
-        except RuntimeError:
-            pass  # Could still be updating (write-lock)
-        finally:
-            if nc is not None:
-                nc.close()
-
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
 
@@ -142,8 +135,7 @@ class SGridDataset(Dataset):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
 
-        try:
-            nc = self.canon_dataset
+        with self.dataset() as nc:
             cached_sg = from_ncfile(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
@@ -221,18 +213,11 @@ class SGridDataset(Dataset):
 
             return gmd_handler.from_dict(dict(min=vmin, max=vmax))
 
-        except BaseException:
-            logger.exception("Could not process GetFeatureInfo request")
-            raise
-        finally:
-            nc.close()
-
     def getmap(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
 
-        try:
-            nc = self.canon_dataset
+        with self.dataset() as nc:
             cached_sg = from_ncfile(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
@@ -343,39 +328,17 @@ class SGridDataset(Dataset):
                                                        )
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
-        except BaseException:
-            logger.exception("Could not process GetFeatureInfo request")
-            raise
-        finally:
-            nc.close()
 
     def getfeatureinfo(self, layer, request):
-        try:
-            nc = self.netcdf4_dataset()
-            topo = self.topology_dataset()
-            data_obj = nc.variables[layer.access_name]
+        with self.dataset() as nc:
+            with self.topology() as topo:
+                data_obj = nc.variables[layer.access_name]
 
-            geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(topo, data_obj, request)
+                geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(topo, data_obj, request)
 
-            return_arrays = []
-            z_value = None
-            if isinstance(layer, Layer):
-                if len(data_obj.shape) == 4:
-                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                    data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
-                elif len(data_obj.shape) == 3:
-                    data = data_obj[start_time_index:end_time_index, geo_index[0], geo_index[1]]
-                elif len(data_obj.shape) == 2:
-                    data = data_obj[geo_index[0], geo_index[1]]
-                else:
-                    raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
-
-                return_arrays.append((layer.var_name, data))
-
-            elif isinstance(layer, VirtualLayer):
-
-                # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
-                for l in layer.layers:
+                return_arrays = []
+                z_value = None
+                if isinstance(layer, Layer):
                     if len(data_obj.shape) == 4:
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                         data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
@@ -385,36 +348,46 @@ class SGridDataset(Dataset):
                         data = data_obj[geo_index[0], geo_index[1]]
                     else:
                         raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
-                    return_arrays.append((l.var_name, data))
 
-            # Data is now in the return_arrays list, as a list of numpy arrays.  We need
-            # to add time and depth to them to create a single Pandas DataFrame
-            if len(data_obj.shape) == 4:
-                df = pd.DataFrame({'time': return_dates,
-                                   'x': closest_x,
-                                   'y': closest_y,
-                                   'z': z_value})
-            elif len(data_obj.shape) == 3:
-                df = pd.DataFrame({'time': return_dates,
-                                   'x': closest_x,
-                                   'y': closest_y})
-            elif len(data_obj.shape) == 2:
-                df = pd.DataFrame({'x': closest_x,
-                                   'y': closest_y})
-            else:
-                df = pd.DataFrame()
+                    return_arrays.append((layer.var_name, data))
 
-            # Now add a column for each member of the return_arrays list
-            for (var_name, np_array) in return_arrays:
-                df.loc[:, var_name] = pd.Series(np_array, index=df.index)
+                elif isinstance(layer, VirtualLayer):
 
-            return gfi_handler.from_dataframe(request, df)
+                    # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
+                    for l in layer.layers:
+                        if len(data_obj.shape) == 4:
+                            z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                            data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
+                        elif len(data_obj.shape) == 3:
+                            data = data_obj[start_time_index:end_time_index, geo_index[0], geo_index[1]]
+                        elif len(data_obj.shape) == 2:
+                            data = data_obj[geo_index[0], geo_index[1]]
+                        else:
+                            raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
+                        return_arrays.append((l.var_name, data))
 
-        except BaseException:
-            logger.exception("Could not process GetFeatureInfo request")
-        finally:
-            nc.close()
-            topo.close()
+                # Data is now in the return_arrays list, as a list of numpy arrays.  We need
+                # to add time and depth to them to create a single Pandas DataFrame
+                if len(data_obj.shape) == 4:
+                    df = pd.DataFrame({'time': return_dates,
+                                       'x': closest_x,
+                                       'y': closest_y,
+                                       'z': z_value})
+                elif len(data_obj.shape) == 3:
+                    df = pd.DataFrame({'time': return_dates,
+                                       'x': closest_x,
+                                       'y': closest_y})
+                elif len(data_obj.shape) == 2:
+                    df = pd.DataFrame({'x': closest_x,
+                                       'y': closest_y})
+                else:
+                    df = pd.DataFrame()
+
+                # Now add a column for each member of the return_arrays list
+                for (var_name, np_array) in return_arrays:
+                    df.loc[:, var_name] = pd.Series(np_array, index=df.index)
+
+                return gfi_handler.from_dataframe(request, df)
 
     def wgs84_bounds(self, layer):
         try:
@@ -453,8 +426,7 @@ class SGridDataset(Dataset):
         return depth_idx, depths[depth_idx]
 
     def times(self, layer):
-        try:
-            nc = self.topology_dataset()
+        with self.topology() as nc:
             time_vars = nc.get_variables_by_attributes(standard_name='time')
             if len(time_vars) == 1:
                 time_var = time_vars[0]
@@ -465,26 +437,22 @@ class SGridDataset(Dataset):
                 time_var_name = find_appropriate_time(var_obj, time_vars)
                 time_var = nc.variables[time_var_name]
             return nc4.num2date(time_var[:], units=time_var.units)
-        finally:
-            nc.close()
 
     def depth_variable(self, layer):
-        try:
-            nc = self.canon_dataset
-            layer_var = nc.variables[layer.access_name]
-            for cv in layer_var.coordinates.strip().split():
-                try:
-                    coord_var = nc.variables[cv]
-                    if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
-                        return coord_var
-                    elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
-                        return coord_var
-                except BaseException:
-                    pass
-        except AttributeError:
-            pass
-        finally:
-            nc.close()
+        with self.dataset() as nc:
+            try:
+                layer_var = nc.variables[layer.access_name]
+                for cv in layer_var.coordinates.strip().split():
+                    try:
+                        coord_var = nc.variables[cv]
+                        if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
+                            return coord_var
+                        elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
+                            return coord_var
+                    except BaseException:
+                        pass
+            except AttributeError:
+                pass
 
     def _spatial_data_subset(self, data, spatial_index):
         rows = spatial_index[0, :]
@@ -496,12 +464,8 @@ class SGridDataset(Dataset):
     def depth_direction(self, layer):
         d = self.depth_variable(layer)
         if d is not None:
-            try:
-                nc = self.netcdf4_dataset()
-                if hasattr(d, 'positive'):
-                    return d.positive
-            finally:
-                nc.close()
+            if hasattr(d, 'positive'):
+                return d.positive
         return 'unknown'
 
     def depths(self, layer):

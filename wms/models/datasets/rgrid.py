@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 
-from wms.models import Dataset
+from wms.models import Dataset, NetCDFDataset
 
 
-class RGridDataset(Dataset):
+class RGridDataset(Dataset, NetCDFDataset):
 
     def has_cache(self):
         return os.path.exists(self.topology_file)
