@@ -58,6 +58,9 @@ class Layer(LayerBase):
     def wgs84_bounds(self):
         return self.dataset.wgs84_bounds(self)
 
+    def time_windows(self):
+        return self.dataset.time_windows(self)
+
     def time_bounds(self):
         return self.dataset.time_bounds(self)
 
@@ -123,6 +126,9 @@ class VirtualLayer(LayerBase):
 
     def wgs84_bounds(self):
         return self.dataset.wgs84_bounds(self.single_layer)
+
+    def time_windows(self):
+        return self.dataset.time_windows(self.single_layer)
 
     def time_bounds(self):
         return self.dataset.time_bounds(self.single_layer)

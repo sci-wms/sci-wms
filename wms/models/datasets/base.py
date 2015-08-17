@@ -18,8 +18,9 @@ from django.http.response import HttpResponse
 from autoslug import AutoSlugField
 
 import rtree
+import numpy as np
 
-from wms.utils import DotDict, find_appropriate_time
+from wms.utils import DotDict, find_appropriate_time, calculate_time_windows
 from wms.data_handler import blank_canvas
 from wms import glg_handler
 
@@ -177,6 +178,10 @@ class Dataset(TypedModel):
 
     def wgs84_bounds(self, layer):
         raise NotImplementedError
+
+    def time_windows(self, layer):
+        times = np.unique(self.times(layer))
+        return calculate_time_windows(times)
 
     def time_bounds(self, layer):
         times = self.times(layer)

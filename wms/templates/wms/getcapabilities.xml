@@ -94,7 +94,7 @@
                 {% if dataset.display_all_timesteps %}
                     <Extent name="time">{{ layer.times | date_format_z }}</Extent>
                 {% else %}
-                    <Extent name="time">{{ layer.time_bounds.min | date_format_z }}/{{ layer.time_bounds.max | date_format_z }}</Extent>
+                    <Extent name="time">{{ layer.time_windows | triple_period_format_z }}</Extent>
                 {% endif %}
                 {% if layer.depths %}
                     <Dimension name="elevation" units="EPSG:5030" postive="{{ layer.depth_direction }}"/>

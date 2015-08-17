@@ -16,3 +16,4 @@ pyproj
 dj-static
 pandas
 django-autoslug
+isodate
