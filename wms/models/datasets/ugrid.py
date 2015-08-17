@@ -11,7 +11,7 @@ from datetime import datetime
 import pytz
 
 from pyugrid import UGrid
-from pyaxiom.netcdf import EnhancedDataset
+from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 import numpy as np
 import netCDF4
 
@@ -34,17 +34,19 @@ from wms import logger
 
 class UGridDataset(Dataset, NetCDFDataset):
 
-    @staticmethod
-    def is_valid(uri):
-        ds = None
+    @classmethod
+    def is_valid(cls, uri):
         try:
-            ds = EnhancedDataset(uri)
-            return 'ugrid' in ds.Conventions.lower()
-        except (AttributeError, RuntimeError):
+            with EnhancedDataset(uri) as ds:
+                return 'ugrid' in ds.Conventions.lower()
+        except RuntimeError:
+            try:
+                with EnhancedMFDataset(uri, aggdim='time') as ds:
+                    return 'ugrid' in ds.Conventions.lower()
+            except (AttributeError, RuntimeError):
+                return False
+        except AttributeError:
             return False
-        finally:
-            if ds is not None:
-                ds.close()
 
     def has_cache(self):
         return os.path.exists(self.topology_file)

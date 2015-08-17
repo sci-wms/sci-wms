@@ -11,7 +11,7 @@ from math import sqrt
 import numpy as np
 import netCDF4 as nc4
 import pytz
-from pyaxiom.netcdf import EnhancedDataset
+from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 from pysgrid import from_nc_dataset, from_ncfile
 from pysgrid.custom_exceptions import SGridNonCompliantError
 from pysgrid.read_netcdf import NetCDFDataset as SGrid
@@ -38,20 +38,19 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     @staticmethod
     def is_valid(uri):
-        ds = None
         try:
-            ds = EnhancedDataset(uri)
-            nc_ds = NetCDFDataset(ds)
-        except (AttributeError, RuntimeError, SGridNonCompliantError):
-            return False
-        else:
-            if nc_ds.sgrid_compliant_file() or 'SGRID' in ds.conventions:
-                return True
-            else:
+            with EnhancedDataset(uri) as ds:
+                nc_ds = SGrid(ds)
+                return nc_ds.sgrid_compliant_file() or 'sgrid' in ds.Conventions.lower()
+        except RuntimeError:
+            try:
+                with EnhancedMFDataset(uri, aggdim='time') as ds:
+                    nc_ds = SGrid(ds)
+                    return nc_ds.sgrid_compliant_file() or 'sgrid' in ds.Conventions.lower()
+            except (AttributeError, RuntimeError, SGridNonCompliantError):
                 return False
-        finally:
-            if ds is not None:
-                ds.close()
+        except (AttributeError, SGridNonCompliantError):
+            return False
 
     def has_cache(self):
         return os.path.exists(self.topology_file)
