@@ -376,11 +376,11 @@ class UGridDataset(Dataset):
                     data_obj = nc.variables[l.var_name]
                     if len(data_obj.shape) == 3:
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        data.append(data_obj[start_time_index:end_time_index, z_index, geo_index])
+                        data = data_obj[start_time_index:end_time_index, z_index, geo_index]
                     elif len(data_obj.shape) == 2:
-                        data.append(data_obj[start_time_index:end_time_index, geo_index])
+                        data = data_obj[start_time_index:end_time_index, geo_index]
                     elif len(data_obj.shape) == 1:
-                        data.append(data_obj[geo_index])
+                        data = data_obj[geo_index]
                     else:
                         raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
 
