@@ -491,22 +491,14 @@ class UGridDataset(Dataset):
     def depth_direction(self, layer):
         d = self.depth_variable(layer)
         if d is not None:
-            try:
-                nc = self.netcdf4_dataset()
-                if hasattr(d, 'positive'):
-                    return d.positive
-            finally:
-                nc.close()
+            if hasattr(d, 'positive'):
+                return d.positive
         return 'unknown'
 
     def depths(self, layer):
         d = self.depth_variable(layer)
         if d is not None:
-            try:
-                nc = self.netcdf4_dataset()
-                return range(0, d.shape[0])
-            finally:
-                nc.close()
+            return range(0, d.shape[0])
         return []
 
     def humanize(self):
