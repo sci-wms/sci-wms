@@ -16,6 +16,7 @@ from wms.models import VirtualLayer, Layer, Style
 from django.conf import settings
 from django.http.response import HttpResponse
 from autoslug import AutoSlugField
+from autoslug.settings import slugify as default_slugify
 
 import rtree
 import numpy as np
@@ -27,6 +28,10 @@ from wms import glg_handler
 from wms import logger
 
 
+def only_underscores(value):
+    return default_slugify(value).replace('-', '_')
+
+
 class Dataset(TypedModel):
     uri = models.CharField(max_length=1000)
     name = models.CharField(max_length=200, unique=True, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
@@ -36,7 +41,7 @@ class Dataset(TypedModel):
     display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
     cache_last_updated = models.DateTimeField(null=True, editable=False)
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
-    slug = AutoSlugField(populate_from='name')
+    slug = AutoSlugField(populate_from='name', slugify=only_underscores)
 
     def __init__(self, *args, **kwargs):
         super(Dataset, self).__init__(*args, **kwargs)
