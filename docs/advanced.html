@@ -129,7 +129,7 @@ sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
 <ol class="arabic">
 <li><dl class="first docutils">
 <dt>URL request arguments</dt>
-<dd><p class="first last">Always prefered for maximum client control. Controlled with the <tt class="docutils literal"><span class="pre">LOGSCALE</span></tt> and <tt class="docutils literal"><span class="pre">COLORSCALERANGE</span></tt> URL parameters.</p>
+<dd><p class="first last">Always preferred for maximum client control. Controlled with the <tt class="docutils literal"><span class="pre">LOGSCALE</span></tt> and <tt class="docutils literal"><span class="pre">COLORSCALERANGE</span></tt> URL parameters.</p>
 </dd>
 </dl>
 </li>
@@ -215,6 +215,18 @@ sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
 <td><tt class="docutils literal"><span class="pre">[image_type]</span></tt>/<tt class="docutils literal"><span class="pre">[colormap]</span></tt></td>
 <td>While some styles are defined in the GetCapabilities document, a use can specify any combination of an <tt class="docutils literal"><span class="pre">image_type</span></tt> (<tt class="docutils literal"><span class="pre">filledcontours</span></tt>, <tt class="docutils literal"><span class="pre">contours</span></tt>, <tt class="docutils literal"><span class="pre">pcolor</span></tt>, <tt class="docutils literal"><span class="pre">vectors</span></tt>) and a matplotlib <tt class="docutils literal"><span class="pre">colormap</span></tt> (<a class="reference external" href="http://matplotlib.org/examples/color/colormaps_reference.html">http://matplotlib.org/examples/color/colormaps_reference.html</a>)</td>
 <td><tt class="docutils literal"><span class="pre">contours_jet</span></tt>  <tt class="docutils literal"><span class="pre">vectors_blues</span></tt></td>
+</tr>
+<tr class="row-even"><td>VECTORSCALE</td>
+<td>GetMap</td>
+<td><tt class="docutils literal"><span class="pre">[float]</span></tt></td>
+<td>Controls the scale of vector arrows when plotting a <tt class="docutils literal"><span class="pre">vectors</span></tt> style. The <tt class="docutils literal"><span class="pre">vectorscale</span></tt> value represents the number of data units per arrow length unit. Smaller numbers lead to longer arrows, while larger numbers represent shorter arrows. This is consistent with the use of the <tt class="docutils literal"><span class="pre">scale</span></tt> keyword used by matplotlib (<a class="reference external" href="http://matplotlib.org/api/pyplot_api.html">http://matplotlib.org/api/pyplot_api.html</a>).</td>
+<td><tt class="docutils literal"><span class="pre">10.5</span></tt> <tt class="docutils literal"><span class="pre">30</span></tt></td>
+</tr>
+<tr class="row-odd"><td>VECTORSTEP</td>
+<td>GetMap</td>
+<td><tt class="docutils literal"><span class="pre">[int]</span></tt></td>
+<td>Set the number of vector steps to be used when rendering a GetMap request using a <tt class="docutils literal"><span class="pre">vectors</span></tt> style. A value of <tt class="docutils literal"><span class="pre">1</span></tt> will render with all vectors and is the default behavior.</td>
+<td><tt class="docutils literal"><span class="pre">2</span></tt> <tt class="docutils literal"><span class="pre">10</span></tt></td>
 </tr>
 </tbody>
 </table>
