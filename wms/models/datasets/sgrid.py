@@ -224,7 +224,6 @@ class SGridDataset(Dataset, NetCDFDataset):
             centers = cached_sg.centers
             lon = centers[..., 0][lon_obj.center_slicing]
             lat = centers[..., 1][lat_obj.center_slicing]
-            grid_variables = cached_sg.grid_variables
 
             if isinstance(layer, Layer):
                 data_obj = getattr(cached_sg, layer.access_name)
@@ -233,7 +232,7 @@ class SGridDataset(Dataset, NetCDFDataset):
                     z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                     raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
                 elif len(raw_var.shape) == 3:
-                    raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-3]]
+                    raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
                 elif len(raw_var.shape) == 2:
                     raw_data = raw_var[data_obj.center_slicing]
                 else:
@@ -261,7 +260,7 @@ class SGridDataset(Dataset, NetCDFDataset):
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                         raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
                     elif len(raw_var.shape) == 3:
-                        raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-3]]
+                        raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
                     elif len(raw_var.shape) == 2:
                         raw_data = raw_var[data_obj.center_slicing]
                     else:
