@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, date
 
-import pyproj
 from dateutil.parser import parse
+import pyproj
 
 from wms.utils import DotDict
 
@@ -162,11 +162,24 @@ def get_time(request):
     """
     Return the min and max times
     """
-    time = request.GET.get('time')
+    time = request.GET.get('time')  # must be in UTC
+    try:
+        suffix = time[-1]
+    except TypeError:
+        pass
+    else:
+        if suffix != 'Z':
+            tz_error_message = ('Timezone is not explicitly specified as UTC; '
+                                'datetimes are required to be in UTC.\n'
+                                'Please use a "Z" suffix on your TIME parameter value to denote it as UTC.'
+                                )
+            raise ValueError(tz_error_message)
     if time is None:
         return datetime.utcnow()
     else:
-        return parse(time)
+        dt = parse(time)
+        dt_sans_tz = dt.replace(tzinfo=None)  # make sure datetime is timezone naive
+        return dt_sans_tz
 
 
 def get_times(request):
