@@ -4,7 +4,7 @@ MAINTAINER Dave Foster <dave@axiomdatascience.com>
 
 # Setup CONDA (https://hub.docker.com/r/continuumio/miniconda3/~/dockerfile/)
 RUN apt-get update && apt-get install -y wget bzip2 ca-certificates pwgen \
-    libglib2.0-0 libxext6 libsm6 libxrender1
+    libglib2.0-0 libxext6 libsm6 libxrender1 libkeyutils1
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda-3.10.1-Linux-x86_64.sh && \
     /bin/bash /Miniconda-3.10.1-Linux-x86_64.sh -b -p /opt/conda && \
