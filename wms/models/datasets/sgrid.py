@@ -7,8 +7,10 @@ import bisect
 import tempfile
 import itertools
 from math import sqrt
+import warnings
 
 import numpy as np
+import numpy.ma as ma
 import netCDF4 as nc4
 import pytz
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
@@ -146,7 +148,8 @@ class SGridDataset(Dataset, NetCDFDataset):
                                                           lonmin=wgs84_bbox.minx,
                                                           latmin=wgs84_bbox.miny,
                                                           lonmax=wgs84_bbox.maxx,
-                                                          latmax=wgs84_bbox.maxy)
+                                                          latmax=wgs84_bbox.maxy
+                                                          )
             subset_lon = np.unique(spatial_idx[0])
             subset_lat = np.unique(spatial_idx[1])
             grid_variables = cached_sg.grid_variables
@@ -224,108 +227,106 @@ class SGridDataset(Dataset, NetCDFDataset):
             centers = cached_sg.centers
             lon = centers[..., 0][lon_obj.center_slicing]
             lat = centers[..., 1][lat_obj.center_slicing]
-
-            if isinstance(layer, Layer):
-                data_obj = getattr(cached_sg, layer.access_name)
-                raw_var = nc.variables[layer.access_name]
-                if len(raw_var.shape) == 4:
-                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                    raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                elif len(raw_var.shape) == 3:
-                    raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                elif len(raw_var.shape) == 2:
-                    raw_data = raw_var[data_obj.center_slicing]
-                else:
-                    raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))
-                # handle edge variables
-                if data_obj.location is not None and 'edge' in data_obj.location:
-                    raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
-
-                if request.GET['image_type'] == 'pcolor':
-                    return mpl_handler.pcolormesh_response(lon, lat, data=raw_data, request=request)
-                elif request.GET['image_type'] == 'filledcontours':
-                    return mpl_handler.contourf_response(lon, lat, data=raw_data, request=request)
-                else:
-                    raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
-
-            elif isinstance(layer, VirtualLayer):
-                x_var = None
-                y_var = None
-                raw_vars = []
-                for l in layer.layers:
-                    data_obj = getattr(cached_sg, l.access_name)
-                    raw_var = nc.variables[l.access_name]
-                    raw_vars.append(raw_var)
-                    if len(raw_var.shape) == 4:
-                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        raw_data = raw_var[time_index, z_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                    elif len(raw_var.shape) == 3:
-                        raw_data = raw_var[time_index, data_obj.center_slicing[-2], data_obj.center_slicing[-1]]
-                    elif len(raw_var.shape) == 2:
-                        raw_data = raw_var[data_obj.center_slicing]
+            if request.GET['image_type'] == 'vectors':
+                vectorstep = request.GET['vectorstep']
+                vectorscale = request.GET['vectorscale']
+                padding_factor = calc_safety_factor(vectorscale)
+                spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
+            else:
+                spatial_idx_padding = 0.18
+                vectorstep = None
+            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
+                                                          lonmin=wgs84_bbox.minx,
+                                                          latmin=wgs84_bbox.miny,
+                                                          lonmax=wgs84_bbox.maxx,
+                                                          latmax=wgs84_bbox.maxy,
+                                                          padding=spatial_idx_padding
+                                                         )
+            subset_x = np.unique(spatial_idx[0])
+            subset_y = np.unique(spatial_idx[1])
+            if subset_x.shape == (0, ) and subset_y.shape == (0, ):
+                return mpl_handler.empty_response()  # return an empty tile if subset contains no data
+            else:
+                x_min_idx = subset_x.min()
+                x_max_idx = subset_x.max() + 1
+                y_min_idx = subset_y.min()
+                y_max_idx = subset_y.max() + 1
+                lonlat_mask = np.ones(lon.shape)
+                lonlat_mask[spatial_idx[0], spatial_idx[1]] = 0
+                trimmed_lon = ma.masked_array(lon, mask=lonlat_mask).data[x_min_idx:x_max_idx:vectorstep, y_min_idx:y_max_idx:vectorstep]
+                trimmed_lat = ma.masked_array(lat, mask=lonlat_mask).data[x_min_idx:x_max_idx:vectorstep, y_min_idx:y_max_idx:vectorstep]
+                if isinstance(layer, Layer):
+                    data_obj = getattr(cached_sg, layer.access_name)
+                    raw_var = nc.variables[layer.access_name]
+                    raw_data = self._retrieve_data(request=request,
+                                                   nc_variable=raw_var,
+                                                   sg_variable=data_obj,
+                                                   layer=layer,
+                                                   subset_x=subset_x,
+                                                   subset_y=subset_y,
+                                                   time_index=time_index,
+                                                   vectorstep=1
+                                                   )
+                    # handle edge variables
+                    if data_obj.location is not None and 'edge' in data_obj.location:
+                        raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
+                    if request.GET['image_type'] == 'pcolor':
+                        return mpl_handler.pcolormesh_response(trimmed_lon, trimmed_lat, data=raw_data, request=request)
+                    elif request.GET['image_type'] == 'filledcontours':
+                        return mpl_handler.contourf_response(trimmed_lon, trimmed_lat, data=raw_data, request=request)
                     else:
-                        raise BaseException('Unable to trim variable {0} data.'.format(l.access_name))
-
-                    raw_data = avg_to_cell_center(raw_data, data_obj.center_axis)
-                    if x_var is None:
-                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'x':
-                            x_var = raw_data
-                        elif data_obj.center_axis == 1:
-                            x_var = raw_data
-
-                    if y_var is None:
-                        if data_obj.vector_axis and data_obj.vector_axis.lower() == 'y':
-                            y_var = raw_data
-                        elif data_obj.center_axis == 0:
-                            y_var = raw_data
-
-                if x_var is None or y_var is None:
-                    raise BaseException('Unable to determine x and y variables.')
-
-                dim_lengths = [ len(v.dimensions) for v in raw_vars ]
-                if len(list(set(dim_lengths))) != 1:
-                    raise AttributeError('One or both of the specified variables has screwed up dimensions.')
-
-                if request.GET['image_type'] == 'vectors':
-                    angles = cached_sg.angles[lon_obj.center_slicing]
-                    vectorstep = request.GET['vectorstep']
-                    # don't do this if the vectorstep is 1; let's save a microsecond or two
-                    # it's identical to getting all the data
-                    if vectorstep > 1:
-                        data_dim = len(lon.shape)
-                        step_slice = (np.s_[::vectorstep],) * data_dim  # make sure the vector step is used for all applicable dimensions
-                        lon = lon[step_slice]
-                        lat = lat[step_slice]
-                        x_var = x_var[step_slice]
-                        y_var = y_var[step_slice]
-                        angles = angles[step_slice]
-                    vectorscale = request.GET['vectorscale']
-                    padding_factor = calc_safety_factor(vectorscale)
-                    # figure out the average distance between lat/lon points
-                    # do the math after taking into the vectorstep if specified
-                    spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor)
-                    spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
-                                                                  lonmin=wgs84_bbox.minx,
-                                                                  latmin=wgs84_bbox.miny,
-                                                                  lonmax=wgs84_bbox.maxx,
-                                                                  latmax=wgs84_bbox.maxy,
-                                                                  padding=spatial_idx_padding
-                                                                  )
-                    subset_lon = self._spatial_data_subset(lon, spatial_idx)
-                    subset_lat = self._spatial_data_subset(lat, spatial_idx)
-                    # rotate vectors
-                    x_rot, y_rot = rotate_vectors(x_var, y_var, angles)
-                    spatial_subset_x_rot = self._spatial_data_subset(x_rot, spatial_idx)
-                    spatial_subset_y_rot = self._spatial_data_subset(y_rot, spatial_idx)
-                    return mpl_handler.quiver_response(subset_lon,
-                                                       subset_lat,
-                                                       spatial_subset_x_rot,
-                                                       spatial_subset_y_rot,
-                                                       request,
-                                                       vectorscale
+                        raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
+                elif isinstance(layer, VirtualLayer):
+                    x_var = None
+                    y_var = None
+                    raw_vars = []
+                    for l in layer.layers:
+                        data_obj = getattr(cached_sg, l.access_name)
+                        raw_var = nc.variables[l.access_name]
+                        raw_vars.append(raw_var)
+                        raw_data = self._retrieve_data(request=request,
+                                                       nc_variable=raw_var,
+                                                       sg_variable=data_obj,
+                                                       layer=layer,
+                                                       subset_x=subset_x,
+                                                       subset_y=subset_y,
+                                                       time_index=time_index,
+                                                       vectorstep=vectorstep
                                                        )
-                else:
-                    raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
+                        raw_data = self._avg_to_cell_center(raw_data, data_obj.center_axis, vectorstep)
+                        if x_var is None:
+                            if data_obj.vector_axis and data_obj.vector_axis.lower() == 'x':
+                                x_var = raw_data
+                            elif data_obj.center_axis == 1:
+                                x_var = raw_data
+    
+                        if y_var is None:
+                            if data_obj.vector_axis and data_obj.vector_axis.lower() == 'y':
+                                y_var = raw_data
+                            elif data_obj.center_axis == 0:
+                                y_var = raw_data
+    
+                    if x_var is None or y_var is None:
+                        raise BaseException('Unable to determine x and y variables.')
+    
+                    dim_lengths = [ len(v.dimensions) for v in raw_vars ]
+                    if len(list(set(dim_lengths))) != 1:
+                        raise AttributeError('One or both of the specified variables has screwed up dimensions.')
+    
+                    if request.GET['image_type'] == 'vectors':
+                        angles = cached_sg.angles[lon_obj.center_slicing]
+                        trimmed_angles = ma.masked_array(angles, mask=lonlat_mask).data[x_min_idx:x_max_idx:vectorstep, y_min_idx:y_max_idx:vectorstep]
+                        # rotate vectors
+                        x_rot, y_rot = rotate_vectors(x_var, y_var, trimmed_angles)
+                        return mpl_handler.quiver_response(trimmed_lon,
+                                                           trimmed_lat,
+                                                           x_rot,
+                                                           y_rot,
+                                                           request,
+                                                           vectorscale
+                                                           )
+                    else:
+                        raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
     def getfeatureinfo(self, layer, request):
         with self.dataset() as nc:
@@ -457,7 +458,141 @@ class SGridDataset(Dataset, NetCDFDataset):
         columns = spatial_index[1, :]
         data_subset = data[rows, columns]
         return data_subset
-
+    
+    def _avg_to_cell_center(self, data_array, avg_dim, vectorstep):
+        """
+        Given a two-dimensional numpy.array, average
+        adjacent row values (avg_dim=1) or adjacent
+        column values (avg_dim=0) to the grid cell
+        center.
+        
+        :param data_array: 2-dimensional data
+        :type data_array: numpy.array
+        :param int avg_dim: integer specify array axis to be averaged
+        :return: averages
+        :rtype: numpy.array
+        
+        """
+        if avg_dim == 0:
+            da = np.transpose(data_array)
+        else:
+            da = data_array
+        da_trim_low = da[:, 1:][::vectorstep, ::vectorstep]
+        da_trim_high = da[:, :-1][::vectorstep, ::vectorstep]
+        da_avg_raw = 0.5 * (da_trim_low + da_trim_high)
+        if avg_dim == 0:
+            da_avg = np.transpose(da_avg_raw)
+        else:
+            da_avg = da_avg_raw
+        return da_avg
+    
+    def _vector_spatial_subset_adjustment(self, subset_x, subset_y, sg_variable, vectorstep=1):
+        """
+        Vectors are on the edges rather then face centers.
+        Hence, using indices derived from face centered variables
+        causes offset problems. This function adapts face centered
+        indices to work with variables defined on an edge.
+        
+        Does not currently deal with indices on nodes.
+        
+        """
+        # adjust for slicing and the index offset changes it causes
+        subset_x, subset_y = self._adjust_subsets_for_slicing(subset_x, subset_y, sg_variable)
+        # make sure there are enough values to do vector averaging correctly
+        # expand the indices to cover large vector step
+        # handle variables defined on the "x-axis"
+        x_axis_def = ('x', 1)  # how "x" directed vectors can be identified
+        y_axis_def = ('y', 0)  # how "y" directed vectors can be identified
+        # handle variables defined on the "x-axis"
+        new_subset_y = self._expand_vector_indices(subset_y, sg_variable, vectorstep, x_axis_def)
+        # handle variables defined on the "y-axis"
+        new_subset_x = self._expand_vector_indices(subset_x, sg_variable, vectorstep, y_axis_def)
+        return new_subset_x, new_subset_y
+    
+    def _adjust_subsets_for_slicing(self, subset_x, subset_y, sg_variable):
+        np_no_slice = np.s_[:]
+        sliced_index = next((i for i, v in enumerate(sg_variable.center_slicing) if v != np_no_slice), None)
+        if sliced_index is not None:
+            x_axis = sg_variable.x_axis
+            y_axis = sg_variable.y_axis
+            try:
+                x_dim_index = sg_variable.dimensions.index(x_axis)
+            except ValueError:
+                x_dim_index = None
+            try:
+                y_dim_index = sg_variable.dimensions.index(y_axis)
+            except ValueError:
+                y_dim_index = None
+            slice_start = sg_variable.center_slicing[sliced_index].start
+            if sliced_index == x_dim_index:  # slicing on x, adjust x
+                subset_x = subset_x + slice_start
+            if sliced_index == y_dim_index:  # slicing on y, adjust y:
+                subset_y = subset_y + slice_start
+            if x_dim_index is None and y_dim_index is None:
+                # if axis attributes are missing
+                # assume last var in dimension is "y"
+                # assume second to last is "x"
+                warning_msg = ('Unable to unambiguously determine variable slice axes. '
+                               'Proceeding with assumption based on position.'
+                               )
+                warnings.warn(warning_msg,
+                              RuntimeWarning
+                              )
+                if sg_variable.dimensions[sliced_index] == sg_variable.dimensions[-2]:
+                    subset_x = subset_x + slice_start
+                if sg_variable.dimensions[sliced_index] == sg_variable.dimensions[-1]:
+                    subset_y = subset_y + slice_start
+        return subset_x, subset_y
+    
+    def _expand_vector_indices(self, indices_subset, sg_variable, vectorstep, axis_def):
+        axis, center_axis = axis_def
+        subset_max = indices_subset.max()
+        if ((sg_variable.vector_axis and sg_variable.vector_axis.lower() == axis) or
+            (sg_variable.center_axis == center_axis)
+            ):
+            new_indices_subset = np.append(indices_subset, np.array(subset_max + 1, subset_max + 1*vectorstep))
+        else:
+            new_indices_subset = indices_subset
+        return new_indices_subset
+    
+    def _spatial_subset_adjustment(self, subset_x, subset_y, sg_variable, vectorstep=1):
+        if 'edge' in sg_variable.location:
+            subset_x_mod, subset_y_mod = self._vector_spatial_subset_adjustment(subset_x,
+                                                                                subset_y,
+                                                                                sg_variable,
+                                                                                vectorstep
+                                                                                )
+        else:
+            subset_x_mod = subset_x
+            subset_y_mod = subset_y
+        return subset_x_mod, subset_y_mod
+    
+    def _retrieve_data(self,
+                       request,
+                       nc_variable,
+                       sg_variable,
+                       layer,
+                       subset_x,
+                       subset_y,
+                       time_index,
+                       vectorstep
+                       ):
+        subset_x_mod, subset_y_mod = self._spatial_subset_adjustment(subset_x,
+                                                                     subset_y,
+                                                                     sg_variable,
+                                                                     vectorstep
+                                                                     )
+        if len(nc_variable.shape) == 4:
+            z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+            raw_data = nc_variable[time_index, z_index, subset_x_mod, subset_y_mod]
+        elif len(nc_variable.shape) == 3:
+            raw_data = nc_variable[time_index, subset_x_mod, subset_y_mod]
+        elif len(nc_variable.shape) == 2:
+            raw_data = nc_variable[subset_x_mod, subset_y_mod]
+        else:
+            raise BaseException('Unable to trim variable {0} data.'.format(layer.access_name))
+        return raw_data
+    
     # same as ugrid
     def depth_direction(self, layer):
         d = self.depth_variable(layer)

@@ -86,15 +86,15 @@ def find_appropriate_time(var_obj, time_variables):
     be found, raise an exception.
 
     """
+    time_set = set([v.name for v in time_variables])
     if hasattr(var_obj, 'coordinates'):
         coordinates = set(var_obj.coordinates.split(' '))
+        c_intersects = list(coordinates.intersection(time_set))
+        if len(c_intersects) > 0:
+            return c_intersects[0]
     dimensions = set(var_obj.dimensions)
-    time_set = set([v.name for v in time_variables])
-    c_intersects = list(coordinates.intersection(time_set))
     d_intersects = list(dimensions.intersection(time_set))
-    if len(c_intersects) > 0:
-        return c_intersects[0]
-    elif len(d_intersects) > 0:
+    if len(d_intersects) > 0:
         return d_intersects[0]
     else:
         raise ValueError('Unable to determine an appropriate variable to use as time.')

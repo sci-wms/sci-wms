@@ -10,6 +10,10 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from wms import logger
 
 
+def empty_response():
+    return HttpResponse(content_type='image/png')
+
+
 def _get_common_params(request):
     bbox = request.GET['bbox']
     width = request.GET['width']
