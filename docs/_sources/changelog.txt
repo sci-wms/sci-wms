@@ -2,9 +2,9 @@
 Changelog
 =========
 
-* :feature:`#86` Implement the ``pcolor`` image type for UGRID
-* :feature:`#91` Implement ``LOGSCALE`` on GetMap requests
-* :feature:`#90` Set ``cubehelix`` as the default colormap
+* :feature:`86` Implement the ``pcolor`` image type for UGRID
+* :feature:`91` Implement ``LOGSCALE`` on GetMap requests
+* :feature:`90` Set ``cubehelix`` as the default colormap
 * :release:`1.2.0 <2015-10-28>`
 * :feature:`-` Support Django>=1.7 (including 1.8)
 * :feature:`-` Upgrade to ``django-typed-models`` 0.5.0
