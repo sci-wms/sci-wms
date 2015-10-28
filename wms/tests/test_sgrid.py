@@ -97,6 +97,11 @@ class TestSgrid(TestCase):
         params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
+    def test_sgrid_filledcontours_50_logscale(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_cubehelix', numcontours=50, logscale=True)
+        self.do_test(params)
+
     @xfail(reason="facets is not yet implemented for SGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
@@ -106,6 +111,11 @@ class TestSgrid(TestCase):
     def test_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix')
+        self.do_test(params)
+
+    def test_sgrid_pcolor_logscale(self):
+        params = copy(self.url_params)
+        params.update(styles='pcolor_cubehelix', logscale=True)
         self.do_test(params)
 
     def test_sgrid_contours(self):

@@ -53,19 +53,27 @@ def tricontouring_response(tri_subset, data, request, dpi=80.0):
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
 
+    if request.GET['logscale'] is True:
+        norm_func = mpl.colors.LogNorm
+    else:
+        norm_func = mpl.colors.Normalize
+
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
-    lvls = nlvls
     if cmin and cmax:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         lvls = np.linspace(cmin, cmax, nlvls)
+        norm = norm_func(vmin=cmin, vmax=cmax)
+    else:
+        lvls = nlvls
+        norm = norm_func()
 
     if request.GET['image_type'] == 'filledcontours':
-        ax.tricontourf(tri_subset, data, lvls, cmap=colormap)
+        ax.tricontourf(tri_subset, data, lvls, norm=norm, cmap=colormap)
     elif request.GET['image_type'] == 'contours':
-        ax.tricontour(tri_subset, data, lvls, cmap=colormap)
+        ax.tricontour(tri_subset, data, lvls, norm=norm, cmap=colormap)
 
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)
@@ -110,19 +118,25 @@ def quiver_response(lon,
     mags = np.sqrt(dx**2 + dy**2)
 
     cmap = mpl.cm.get_cmap(colormap)
+
+    if request.GET['logscale'] is True:
+        norm_func = mpl.colors.LogNorm
+    else:
+        norm_func = mpl.colors.Normalize
+
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
-    norm = None
     if cmin is not None and cmax is not None:
         mags[mags > cmax] = cmax
         mags[mags < cmin] = cmin
-        bounds = np.linspace(cmin, cmax, 15)
-        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        norm = norm_func(vmin=cmin, vmax=cmax)
+    else:
+        norm = norm_func()
 
     # plot unit vectors
     if unit_vectors:
-        ax.quiver(x, y, dx/mags, dy/mags, mags, cmap=cmap, scale=vectorscale)
+        ax.quiver(x, y, dx/mags, dy/mags, mags, cmap=cmap, norm=norm, scale=vectorscale)
     else:
         ax.quiver(x, y, dx, dy, mags, cmap=cmap, norm=norm, scale=vectorscale)
 
@@ -153,16 +167,24 @@ def contouring_response(lon, lat, data, request, dpi=80):
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
 
-    lvls = nlvls
+    if request.GET['logscale'] is True:
+        norm_func = mpl.colors.LogNorm
+    else:
+        norm_func = mpl.colors.Normalize
+
     if cmin and cmax:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         lvls = np.linspace(cmin, cmax, nlvls)
+        norm = norm_func(vmin=cmin, vmax=cmax)
+    else:
+        lvls = nlvls
+        norm = norm_func()
 
     if request.GET['image_type'] == 'filledcontours':
-        ax.contourf(x, y, data, lvls, cmap=colormap)
+        ax.contourf(x, y, data, lvls, norm=norm, cmap=colormap)
     elif request.GET['image_type'] == 'contours':
-        ax.contour(x, y, data, lvls, cmap=colormap)
+        ax.contour(x, y, data, lvls, norm=norm, cmap=colormap)
 
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)
@@ -191,18 +213,21 @@ def pcolormesh_response(lon,
     fig.set_figwidth(width/dpi)
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
-    cmap = mpl.cm.get_cmap(colormap)
+
+    if request.GET['logscale'] is True:
+        norm_func = mpl.colors.LogNorm
+    else:
+        norm_func = mpl.colors.Normalize
 
     if cmin and cmax:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
-        bounds = np.linspace(cmin, cmax, 15)
-        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-        bounds = np.linspace(cmin, cmax, 15)
+        norm = norm = norm_func(vmin=cmin, vmax=cmax)
     else:
-        norm = None
+        norm = norm_func()
+
     masked = np.ma.masked_invalid(data)
-    ax.pcolormesh(x, y, masked, vmin=5, vmax=30, norm=norm)
+    ax.pcolormesh(x, y, masked, norm=norm, cmap=colormap)
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)
     ax.set_frame_on(False)
