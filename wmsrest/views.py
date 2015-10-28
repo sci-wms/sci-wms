@@ -15,7 +15,7 @@ class DatasetList(APIView):
     List all datasets, or create a new dataset.
     """
     def get(self, request, format=None):
-        snippets = Dataset.objects.select_related('layer_set__styles').all()
+        snippets = Dataset.objects.select_related().all()
         serializer = DatasetSerializer(snippets, many=True)
         return Response(serializer.data)
 
