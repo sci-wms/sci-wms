@@ -85,9 +85,14 @@ class TestUgrid(TestCase):
                 f.write(response.content)
         return outfile
 
-    def test_filledcontours(self):
+    def test_ugrid_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_jet')
+        self.do_test(params)
+
+    def test_ugrid_filledcontours_50(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet', numcontours=50)
         self.do_test(params)
 
     @xfail(reason="facets is not yet implemeted for UGRID datasets")
@@ -102,10 +107,14 @@ class TestUgrid(TestCase):
         params.update(styles='pcolor_jet')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemeted for UGRID datasets")
-    def test_contours(self):
+    def test_ugrid_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
+        self.do_test(params)
+
+    def test_ugrid_contours_50(self):
+        params = copy(self.url_params)
+        params.update(styles='contours_jet', numcontours=50)
         self.do_test(params)
 
     def test_ugrid_gfi_single_variable_csv(self):
@@ -254,7 +263,6 @@ class TestFVCOM(TestCase):
         params.update(styles='pcolor_jet', layers='u')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemeted for UGRID datasets")
     def test_fvcom_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet', layers='u')

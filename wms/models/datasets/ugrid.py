@@ -268,7 +268,7 @@ class UGridDataset(Dataset, NetCDFDataset):
                     logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
                     return self.empty_response(layer, request)
 
-                if request.GET['image_type'] == 'filledcontours':
+                if request.GET['image_type'] in ['contours', 'filledcontours']:
                     mask = np.isnan(data)  # array with NaNs appearing as True
                     if mask.any():
                         data_mask = ~mask  # negate the NaN boolean array; mask for non-NaN data elements
@@ -284,15 +284,11 @@ class UGridDataset(Dataset, NetCDFDataset):
                                                                       wgs84_bbox.maxx,
                                                                       wgs84_bbox.maxy
                                                                       )
-                    face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
+                        face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
                     tri_subset = Tri.Triangulation(lon,
                                                    lat,
-                                                   triangles=face_indicies[face_indicies_spatial_idx]
-                                                   )
-                    return mpl_handler.tricontourf_response(tri_subset,
-                                                            data,
-                                                            request
-                                                            )
+                                                   triangles=face_indicies[face_indicies_spatial_idx])
+                    return mpl_handler.tricontouring_response(tri_subset, data, request)
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 

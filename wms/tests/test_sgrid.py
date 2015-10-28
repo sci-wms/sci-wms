@@ -87,9 +87,14 @@ class TestSgrid(TestCase):
                 f.write(response.content)
         return outfile
 
-    def test_filledcontours(self):
+    def test_sgrid_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_jet')
+        self.do_test(params)
+
+    def test_sgrid_filledcontours_50(self):
+        params = copy(self.url_params)
+        params.update(styles='filledcontours_jet', numcontours=50)
         self.do_test(params)
 
     @xfail(reason="facets is not yet implemented for SGRID datasets")
@@ -103,10 +108,14 @@ class TestSgrid(TestCase):
         params.update(styles='pcolor_jet')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemented for SGRID datasets")
-    def test_contours(self):
+    def test_sgrid_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_jet')
+        self.do_test(params)
+
+    def test_sgrid_contours_50(self):
+        params = copy(self.url_params)
+        params.update(styles='contours_jet', numcontours=50)
         self.do_test(params)
 
     def test_vectors(self):

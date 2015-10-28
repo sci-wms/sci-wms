@@ -26,11 +26,7 @@ def _get_common_params(request):
     return params
 
 
-def tricontourf_response(tri_subset,
-                         data,
-                         request,
-                         dpi=80.0,
-                         nlvls=15):
+def tricontouring_response(tri_subset, data, request, dpi=80.0):
     """
     triang_subset is a matplotlib.Tri object in lat/lon units (will be converted to projected coordinates)
     xmin, ymin, xmax, ymax is the bounding pox of the plot in PROJETED COORDINATES!!!
@@ -44,6 +40,7 @@ def tricontourf_response(tri_subset,
     cmin = colorscalerange.min
     cmax = colorscalerange.max
     crs = request.GET['crs']
+    nlvls = request.GET['numcontours']
 
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
     tri_subset.x, tri_subset.y = pyproj.transform(EPSG4326, crs, tri_subset.x, tri_subset.y)
@@ -59,13 +56,16 @@ def tricontourf_response(tri_subset,
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
+    lvls = nlvls
     if cmin and cmax:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
-        lvls = np.linspace(float(cmin), float(cmax), int(nlvls))
-        ax.tricontourf(tri_subset, data, levels=lvls, cmap=colormap)
-    else:
-        ax.tricontourf(tri_subset, data, cmap=colormap)
+        lvls = np.linspace(cmin, cmax, nlvls)
+
+    if request.GET['image_type'] == 'filledcontours':
+        ax.tricontourf(tri_subset, data, lvls, cmap=colormap)
+    elif request.GET['image_type'] == 'contours':
+        ax.tricontour(tri_subset, data, lvls, cmap=colormap)
 
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)
@@ -138,33 +138,32 @@ def quiver_response(lon,
     return response
 
 
-def contourf_response(lon,
-                      lat,
-                      data,
-                      request,
-                      dpi=80
-                      ):
-    params = _get_common_params(request)
-    bbox, width, height, colormap, cmin, cmax, crs = params
+def contouring_response(lon, lat, data, request, dpi=80):
+    bbox, width, height, colormap, cmin, cmax, crs = _get_common_params(request)
+    nlvls = request.GET['numcontours']
+
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
     x, y = pyproj.transform(EPSG4326, crs, lon, lat)
+
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
     fig.set_figheight(height/dpi)
     fig.set_figwidth(width/dpi)
+
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
-    cmap = mpl.cm.get_cmap(colormap)
 
+    lvls = nlvls
     if cmin and cmax:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
-        bounds = np.linspace(cmin, cmax, 15)
-        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-        bounds = np.linspace(cmin, cmax, 15)
-    else:
-        norm = None
-    ax.contourf(x, y, data, vmin=5, vmax=30, norm=norm)
+        lvls = np.linspace(cmin, cmax, nlvls)
+
+    if request.GET['image_type'] == 'filledcontours':
+        ax.contourf(x, y, data, lvls, cmap=colormap)
+    elif request.GET['image_type'] == 'contours':
+        ax.contour(x, y, data, lvls, cmap=colormap)
+
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)
     ax.set_frame_on(False)
@@ -182,8 +181,7 @@ def pcolormesh_response(lon,
                         data,
                         request,
                         dpi=80):
-    params = _get_common_params(request)
-    bbox, width, height, colormap, cmin, cmax, crs = params
+    bbox, width, height, colormap, cmin, cmax, crs = _get_common_params(request)
 
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
     x, y = pyproj.transform(EPSG4326, crs, lon, lat)

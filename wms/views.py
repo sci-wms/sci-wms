@@ -127,7 +127,8 @@ def enhance_getmap_request(dataset, layer, request):
         image_type=wms_handler.get_imagetype(request),
         logscale=wms_handler.get_logscale(request, defaults.logscale),
         vectorscale=wms_handler.get_vectorscale(request),
-        vectorstep=wms_handler.get_vectorstep(request)
+        vectorstep=wms_handler.get_vectorstep(request),
+        numcontours=wms_handler.get_num_contours(request)
     )
     gettemp.update(newgets)
     request.GET = gettemp
