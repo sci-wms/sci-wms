@@ -18,7 +18,7 @@ class Style(models.Model):
 
     @classmethod
     def defaults(cls):
-        return Style.objects.filter(colormap='jet', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
+        return Style.objects.filter(colormap='cubehelix', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
 
     @property
     def code(self):

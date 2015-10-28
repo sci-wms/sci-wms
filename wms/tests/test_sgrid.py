@@ -89,48 +89,48 @@ class TestSgrid(TestCase):
 
     def test_sgrid_filledcontours(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet')
+        params.update(styles='filledcontours_cubehelix')
         self.do_test(params)
 
     def test_sgrid_filledcontours_50(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet', numcontours=50)
+        params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
     @xfail(reason="facets is not yet implemented for SGRID datasets")
     def test_facets(self):
         params = copy(self.url_params)
-        params.update(styles='facets_jet')
+        params.update(styles='facets_cubehelix')
         self.do_test(params)
 
     def test_pcolor(self):
         params = copy(self.url_params)
-        params.update(styles='pcolor_jet')
+        params.update(styles='pcolor_cubehelix')
         self.do_test(params)
 
     def test_sgrid_contours(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet')
+        params.update(styles='contours_cubehelix')
         self.do_test(params)
 
     def test_sgrid_contours_50(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet', numcontours=50)
+        params.update(styles='contours_cubehelix', numcontours=50)
         self.do_test(params)
 
     def test_vectors(self):
         params = copy(self.url_params)
-        params.update(styles='vectors_jet', layers='u,v')
+        params.update(styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
         
     def test_sgrid_vectorscale(self):
         params = copy(self.url_params)
-        params.update(vectorscale=25, styles='vectors_jet', layers='u,v')
+        params.update(vectorscale=25, styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
         
     def test_sgrid_vectorstep(self):
         params = copy(self.url_params)
-        params.update(vectorstep=5, styles='vectors_jet', layers='u,v')
+        params.update(vectorstep=5, styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
 
     def test_sgrid_gfi_single_variable_csv(self):

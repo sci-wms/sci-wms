@@ -87,34 +87,34 @@ class TestUgrid(TestCase):
 
     def test_ugrid_filledcontours(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet')
+        params.update(styles='filledcontours_cubehelix')
         self.do_test(params)
 
     def test_ugrid_filledcontours_50(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet', numcontours=50)
+        params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
     @xfail(reason="facets is not yet implemeted for UGRID datasets")
     def test_facets(self):
+        params.update(styles='facets_cubehelix')
         params = copy(self.url_params)
-        params.update(styles='facets_jet')
         self.do_test(params)
 
     @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
     def test_pcolor(self):
         params = copy(self.url_params)
-        params.update(styles='pcolor_jet')
+        params.update(styles='pcolor_cubehelix')
         self.do_test(params)
 
     def test_ugrid_contours(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet')
+        params.update(styles='contours_cubehelix')
         self.do_test(params)
 
     def test_ugrid_contours_50(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet', numcontours=50)
+        params.update(styles='contours_cubehelix', numcontours=50)
         self.do_test(params)
 
     def test_ugrid_gfi_single_variable_csv(self):
@@ -147,7 +147,7 @@ class TestUgrid(TestCase):
     def test_ugrid_vectorscale(self):
         params = copy(self.url_params)
         params['vectorscale'] = 25
-        params['styles'] = 'vectors_jet'
+        params['styles'] = 'vectors_cubehelix'
         params['layers'] = 'u,v'
         self.do_test(params)
 
@@ -155,7 +155,7 @@ class TestUgrid(TestCase):
     def test_ugrid_vectorstep(self):
         params = copy(self.url_params)
         params['vectorstep'] = 5
-        params['styles'] = 'vectors_jet'
+        params['styles'] = 'vectors_cubehelix'
         params['layers'] = 'u,v'
         self.do_test(params)
 
@@ -248,24 +248,24 @@ class TestFVCOM(TestCase):
 
     def test_fvcom_filledcontours(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet', layers='u')
+        params.update(styles='filledcontours_cubehelix', layers='u')
         self.do_test(params)
 
     @xfail(reason="facets is not yet implemeted for UGRID datasets")
     def test_fvcom_facets(self):
         params = copy(self.url_params)
-        params.update(styles='facets_jet', layers='u')
+        params.update(styles='facets_cubehelix', layers='u')
         self.do_test(params)
 
     @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
     def test_fvcom_pcolor(self):
         params = copy(self.url_params)
-        params.update(styles='pcolor_jet', layers='u')
+        params.update(styles='pcolor_cubehelix', layers='u')
         self.do_test(params)
 
     def test_fvcom_contours(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet', layers='u')
+        params.update(styles='contours_cubehelix', layers='u')
         self.do_test(params)
 
     def test_fvcom_gfi_single_variable_csv(self):
@@ -280,13 +280,13 @@ class TestFVCOM(TestCase):
     def test_fvcom_vectorscale(self):
         params = copy(self.url_params)
         params['vectorscale'] = 10
-        params['styles'] = 'vectors_jet'
+        params['styles'] = 'vectors_cubehelix'
         self.do_test(params)
 
     def test_fvcom_vectorstep(self):
         params = copy(self.url_params)
         params['vectorstep'] = 10
-        params['styles'] = 'vectors_jet'
+        params['styles'] = 'vectors_cubehelix'
         self.do_test(params)
 
     def test_fvcom_getCaps(self):

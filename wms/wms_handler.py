@@ -195,7 +195,7 @@ def get_colormap(request, parameter=None):
         requested_cm = request.GET.get(parameter).split(',')[0].split('_')[1]
         return next(x for x in colormaps() if x.lower() == requested_cm)
     except (AttributeError, TypeError, StopIteration):
-        return 'jet'
+        return 'cubehelix'
 
 
 def get_imagetype(request, parameter=None):

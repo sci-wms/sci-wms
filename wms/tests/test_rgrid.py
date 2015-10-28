@@ -57,22 +57,22 @@ class TestRgrid(TestCase):
 
     def test_filledcontours(self):
         params = copy(self.url_params)
-        params.update(styles='filledcontours_jet')
+        params.update(styles='filledcontours_cubehelix')
         self.do_test(params)
 
     def test_facets(self):
         params = copy(self.url_params)
-        params.update(styles='facets_jet')
+        params.update(styles='facets_cubehelix')
         self.do_test(params)
 
     def test_pcolor(self):
         params = copy(self.url_params)
-        params.update(styles='pcolor_jet')
+        params.update(styles='pcolor_cubehelix')
         self.do_test(params)
 
     def test_contours(self):
         params = copy(self.url_params)
-        params.update(styles='contours_jet')
+        params.update(styles='contours_cubehelix')
         self.do_test(params)
 
     def test_getCaps(self):

@@ -32,7 +32,7 @@ class TestUgridLegendGraphic(TestCase):
             width   = 100,
             height  = 300,
             colorscalerange='1,50',
-            style='pcolor_jet'
+            style='pcolor_cubehelix'
         )
 
     def image_name(self, fmt):
@@ -84,17 +84,17 @@ class TestUgridLegendGraphic(TestCase):
 
     def test_ugrid_legend_filledcontours(self):
         params = copy(self.url_params)
-        params.update(style='filledcontours_jet')
+        params.update(style='filledcontours_cubehelix')
         self.do_test(params)
 
     def test_ugrid_legend_contours(self):
         params = copy(self.url_params)
-        params.update(style='contours_jet')
+        params.update(style='contours_cubehelix')
         self.do_test(params)
 
     def test_ugrid_legend_contours_horizontal(self):
         params = copy(self.url_params)
-        params.update(style='contours_jet', horizontal='true', width=500, height=100)
+        params.update(style='contours_cubehelix', horizontal='true', width=500, height=100)
         self.do_test(params)
 
 
@@ -122,7 +122,7 @@ class TestSgridLegendGraphic(TestCase):
             width   = 100,
             height  = 300,
             colorscalerange='1,50',
-            style='pcolor_jet'
+            style='pcolor_cubehelix'
         )
 
     def image_name(self, fmt):
@@ -174,15 +174,15 @@ class TestSgridLegendGraphic(TestCase):
 
     def test_sgrid_legend_filledcontours(self):
         params = copy(self.url_params)
-        params.update(style='filledcontours_jet')
+        params.update(style='filledcontours_cubehelix')
         self.do_test(params)
 
     def test_sgrid_legend_contours(self):
         params = copy(self.url_params)
-        params.update(style='contours_jet')
+        params.update(style='contours_cubehelix')
         self.do_test(params)
 
     def test_sgrid_legend_contours_horizontal(self):
         params = copy(self.url_params)
-        params.update(style='contours_jet', horizontal='true', width=500, height=100)
+        params.update(style='contours_cubehelix', horizontal='true', width=500, height=100)
         self.do_test(params)

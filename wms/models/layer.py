@@ -104,7 +104,7 @@ class VirtualLayer(LayerBase):
                                                          description="U ({}) and V ({}) vectors".format(u._name, v._name),
                                                          dataset_id=dataset_id,
                                                          active=True)
-                        vl.styles.add(Style.objects.get(colormap='jet', image_type=style))
+                        vl.styles.add(Style.objects.get(colormap='cubehelix', image_type=style))
                         vl.save()
                         break
                     except:
