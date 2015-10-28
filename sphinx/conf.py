@@ -47,9 +47,9 @@ project = u'SCI-WMS'
 # built documents.
 #
 # The short X.Y version.
-version = '0.0'
+version = '1.3.0'
 # The full version, including alpha/beta/rc tags.
-release = '1.0.0'
+release = '1.3.0-dev'
 
 rst_epilog = """
 .. |github_repo| replace:: https://github.com/sci-wms/sci-wms
