@@ -2,8 +2,9 @@
 Changelog
 =========
 
-* :feature:`89` Add contours support to GetMap
-* :feature:`88` Add NUMCONTOURS support to GetMap :doc:`/advanced`
+* :feature:`-` Upgrade to ``django-typed-models`` 0.5.0
+* :feature:`89` Add ``contours`` support to GetMap
+* :feature:`88` Add ``NUMCONTOURS`` support to GetMap :doc:`/advanced`
 * :release:`1.0.0 <2015-07-08>`
 * :feature:`18` Much improved documentation :doc:`/advanced`
 * :feature:`4` Much improved documentation :doc:`/roadmap`
