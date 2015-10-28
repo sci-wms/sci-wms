@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :release:`1.2.0 <2015-10-28>`
+* :feature:`-` Support Django>=1.7 (including 1.8)
 * :feature:`-` Upgrade to ``django-typed-models`` 0.5.0
 * :feature:`89` Add ``contours`` support to GetMap
 * :feature:`88` Add ``NUMCONTOURS`` support to GetMap :doc:`/advanced`
