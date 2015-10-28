@@ -108,7 +108,7 @@ class TestSgrid(TestCase):
         params.update(styles='facets_cubehelix')
         self.do_test(params)
 
-    def test_pcolor(self):
+    def test_sgrid_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix')
         self.do_test(params)

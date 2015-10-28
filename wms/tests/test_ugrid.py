@@ -95,16 +95,20 @@ class TestUgrid(TestCase):
         params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
-    @xfail(reason="facets is not yet implemeted for UGRID datasets")
-    def test_facets(self):
-        params.update(styles='facets_cubehelix')
-        params = copy(self.url_params)
-        self.do_test(params)
-
-    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
-    def test_pcolor(self):
+    def test_ugrid_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix')
+        self.do_test(params)
+
+    def test_ugrid_pcolor_logscale(self):
+        params = copy(self.url_params)
+        params.update(styles='pcolor_cubehelix', logscale=True)
+        self.do_test(params)
+
+    @xfail(reason="facets is not yet implemeted for UGRID datasets")
+    def test_ugrid_facets(self):
+        params = copy(self.url_params)
+        params.update(styles='facets_cubehelix')
         self.do_test(params)
 
     def test_ugrid_contours(self):
@@ -251,16 +255,15 @@ class TestFVCOM(TestCase):
         params.update(styles='filledcontours_cubehelix', layers='u')
         self.do_test(params)
 
+    def test_fvcom_pcolor(self):
+        params = copy(self.url_params)
+        params.update(styles='pcolor_cubehelix', layers='u')
+        self.do_test(params)
+
     @xfail(reason="facets is not yet implemeted for UGRID datasets")
     def test_fvcom_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_cubehelix', layers='u')
-        self.do_test(params)
-
-    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
-    def test_fvcom_pcolor(self):
-        params = copy(self.url_params)
-        params.update(styles='pcolor_cubehelix', layers='u')
         self.do_test(params)
 
     def test_fvcom_contours(self):
