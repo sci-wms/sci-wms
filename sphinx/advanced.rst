@@ -59,8 +59,8 @@ Suported parameter expressions:
 ``[layer_1],[layer_2]`` This will treat layer_1 as a U vector and layer_2 as a V vector and produce vector plots.
 
 
-Custom Djago Settings
-~~~~~~~~~~~~~~~~~~~~~
+Custom Django Settings
+~~~~~~~~~~~~~~~~~~~~~~
 
 You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** and configure any Django settings you wish.
 
