@@ -5,7 +5,7 @@ from urlparse import urlparse
 
 
 from django.db import models
-from typedmodels import TypedModel
+from typedmodels.models import TypedModel
 from jsonfield import JSONField
 
 from django.conf import settings

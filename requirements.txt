@@ -11,7 +11,7 @@ pyugrid
 pysgrid>=0.1.0
 pyaxiom>=0.0.9
 django-grappelli
-django-typed-models
+django-typed-models==0.5.0
 pyproj
 dj-static
 pandas
