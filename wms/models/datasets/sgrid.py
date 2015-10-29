@@ -19,7 +19,7 @@ from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
 
 import pandas as pd
 
-import rtree
+from rtree import index
 
 from wms import mpl_handler
 from wms import gfi_handler
@@ -56,21 +56,13 @@ class SGridDataset(Dataset, NetCDFDataset):
         return os.path.exists(self.topology_file)
 
     def make_rtree(self):
-        p = rtree.index.Property()
+        p = index.Property()
         p.overwrite = True
-        p.storage   = rtree.index.RT_Disk
+        p.storage   = index.RT_Disk
         p.Dimension = 2
 
         with self.dataset() as nc:
             sg = from_nc_dataset(nc)
-
-            class FastRtree(rtree.Rtree):
-                def dumps(self, obj):
-                    try:
-                        import cPickle
-                        return cPickle.dumps(obj, -1)
-                    except ImportError:
-                        super(FastRtree, self).dumps(obj)
 
             def rtree_generator_function():
                 for i, axis in enumerate(sg.centers):
@@ -80,11 +72,11 @@ class SGridDataset(Dataset, NetCDFDataset):
             logger.info("Building Faces (centers) Rtree Topology Cache for {0}".format(self.name))
             _, temp_file = tempfile.mkstemp(suffix='.face')
             start = time.time()
-            FastRtree(temp_file,
-                      rtree_generator_function(),
-                      properties=p,
-                      overwrite=True,
-                      interleaved=True)
+            index.Index(temp_file,
+                        rtree_generator_function(),
+                        properties=p,
+                        overwrite=True,
+                        interleaved=True)
             logger.info("Built Faces (centers) Rtree Topology Cache in {0} seconds.".format(time.time() - start))
 
             shutil.move('{}.dat'.format(temp_file), self.face_tree_data_file)
