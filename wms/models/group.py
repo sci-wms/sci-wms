@@ -7,5 +7,5 @@ class Group(models.Model):
     abstract = models.CharField(max_length=2000, blank=True, help_text="Short Description of the Group")
     datasets = models.ManyToManyField('wms.Dataset', blank=True, help_text="Choose the datasets to add to this group, or create a dataset to add to this group")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name

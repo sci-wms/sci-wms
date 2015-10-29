@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url, patterns
 from rest_framework.urlpatterns import format_suffix_patterns
-from .views import DatasetList, DatasetDetail, LayerDetail, VirtuallLayerDetail, DefaultDetail, DefaultList
+from wmsrest.views import DatasetList, DatasetDetail, LayerDetail, VirtuallLayerDetail, DefaultDetail, DefaultList
 
 
 urlpatterns = patterns('',

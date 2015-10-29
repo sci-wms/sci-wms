@@ -24,5 +24,5 @@ class Style(models.Model):
     def code(self):
         return '{}_{}'.format(self.image_type, self.colormap)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{}_{}'.format(self.image_type, self.colormap)

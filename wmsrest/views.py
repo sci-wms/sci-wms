@@ -2,7 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from wms.models import Dataset, Layer, VirtualLayer, Variable
-from serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer, VariableSerializer
+from wmsrest.serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer, VariableSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import mixins

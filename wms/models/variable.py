@@ -12,5 +12,5 @@ class Variable(models.Model):
     class Meta:
         unique_together = ('std_name', 'units',)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{}_{}'.format(self.std_name, self.units)

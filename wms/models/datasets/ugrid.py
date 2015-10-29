@@ -19,7 +19,7 @@ import pandas as pd
 
 import matplotlib.tri as Tri
 
-import rtree
+from rtree import index
 
 from wms.models import Dataset, Layer, VirtualLayer, NetCDFDataset
 from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor, find_appropriate_time
@@ -52,21 +52,13 @@ class UGridDataset(Dataset, NetCDFDataset):
         return os.path.exists(self.topology_file)
 
     def make_rtree(self):
-        p = rtree.index.Property()
+        p = index.Property()
         p.overwrite = True
-        p.storage   = rtree.index.RT_Disk
+        p.storage   = index.RT_Disk
         p.Dimension = 2
 
         with self.dataset() as nc:
             ug = UGrid.from_nc_dataset(nc=nc)
-
-            class FastRtree(rtree.Rtree):
-                def dumps(self, obj):
-                    try:
-                        import cPickle
-                        return cPickle.dumps(obj, -1)
-                    except ImportError:
-                        super(FastRtree, self).dumps(obj)
 
             def rtree_faces_generator_function():
                 for face_idx, node_list in enumerate(ug.faces):
@@ -77,11 +69,12 @@ class UGridDataset(Dataset, NetCDFDataset):
             logger.info("Building Faces Rtree Topology Cache for {0}".format(self.name))
             _, face_temp_file = tempfile.mkstemp(suffix='.face')
             start = time.time()
-            FastRtree(face_temp_file,
-                      rtree_faces_generator_function(),
-                      properties=p,
-                      overwrite=True,
-                      interleaved=True)
+
+            index.Index(face_temp_file,
+                        rtree_faces_generator_function(),
+                        properties=p,
+                        overwrite=True,
+                        interleaved=True)
             logger.info("Built Faces Rtree Topology Cache in {0} seconds.".format(time.time() - start))
             shutil.move('{}.dat'.format(face_temp_file), self.face_tree_data_file)
             shutil.move('{}.idx'.format(face_temp_file), self.face_tree_index_file)
@@ -92,11 +85,11 @@ class UGridDataset(Dataset, NetCDFDataset):
             logger.info("Building Nodes Rtree Topology Cache for {0}".format(self.name))
             _, node_temp_file = tempfile.mkstemp(suffix='.node')
             start = time.time()
-            FastRtree(node_temp_file,
-                      rtree_nodes_generator_function(),
-                      properties=p,
-                      overwrite=True,
-                      interleaved=True)
+            index.Index(node_temp_file,
+                        rtree_nodes_generator_function(),
+                        properties=p,
+                        overwrite=True,
+                        interleaved=True)
             logger.info("Built Nodes Rtree Topology Cache in {0} seconds.".format(time.time() - start))
             shutil.move('{}.dat'.format(node_temp_file), self.node_tree_data_file)
             shutil.move('{}.idx'.format(node_temp_file), self.node_tree_index_file)

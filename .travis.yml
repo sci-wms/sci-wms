@@ -1,6 +1,7 @@
 language: python
 python:
   - "2.7"
+  - "3.4"
 sudo: false
 before_install:
   # Install miniconda
@@ -27,7 +28,7 @@ before_install:
 install:
   # Customise the testing environment
   # ---------------------------------
-  - conda install --channel ioos --file requirements.txt
+  - conda install --channel ioos --channel axiom-data-science --file requirements.txt
   - conda install --channel ioos --file requirements-test.txt
   - pip install django-extensions django-debug-toolbar
   - conda list

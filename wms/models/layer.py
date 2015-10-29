@@ -47,7 +47,7 @@ class LayerBase(models.Model):
 
         return DotDict(min=lmin, max=lmax, logscale=llog)
 
-    def __unicode__(self):
+    def __str__(self):
         z = self.var_name
         z += ' ({})'.format(self.std_name) if self.std_name else ''
         z += ' - Active: {}'.format(self.active)

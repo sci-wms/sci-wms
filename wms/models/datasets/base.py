@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import glob
-from urlparse import urlparse
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 
 from django.db import models
@@ -37,7 +41,7 @@ class Dataset(TypedModel):
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
     slug = AutoSlugField(populate_from='name', slugify=only_underscores)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @classmethod

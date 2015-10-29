@@ -93,7 +93,7 @@ def update_dataset(request, dataset):
 
 def normalize_get_params(request):
     gettemp = request.GET.copy()
-    for key in request.GET.iterkeys():
+    for key in request.GET.keys():
         gettemp[key.lower()] = request.GET[key]
     request.GET = gettemp
     return request
