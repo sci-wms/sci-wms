@@ -71,6 +71,10 @@ class Dataset(TypedModel):
                 return glg_handler.contour(request)
             elif 'vector' in request.GET['image_type']:
                 return glg_handler.vector(request)
+            elif 'filledhatches' in request.GET['image_type']:
+                return glg_handler.filledhatches(request)
+            elif 'hatches' in request.GET['image_type']:
+                return glg_handler.hatches(request)
             else:
                 return glg_handler.gradiant(request)
         except BaseException:

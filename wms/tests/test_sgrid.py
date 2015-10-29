@@ -128,6 +128,21 @@ class TestSgrid(TestCase):
         params.update(styles='contours_cubehelix', numcontours=50)
         self.do_test(params)
 
+    def test_sgrid_filledhatches(self):
+        params = copy(self.url_params)
+        params.update(styles='filledhatches_cubehelix')
+        self.do_test(params)
+
+    def test_sgrid_filledhatches_20(self):
+        params = copy(self.url_params)
+        params.update(styles='filledhatches_cubehelix', numcontours=20)
+        self.do_test(params)
+
+    def test_sgrid_hatches(self):
+        params = copy(self.url_params)
+        params.update(styles='hatches_cubehelix')
+        self.do_test(params)
+
     def test_vectors(self):
         params = copy(self.url_params)
         params.update(styles='vectors_cubehelix', layers='u,v')

@@ -10,6 +10,16 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from wms import logger
 
 
+DEFAULT_HATCHES = ['.', '+', '*', '-', '/', ',', '\\', 'x', 'o', '[', ']', '^',
+                   '_', '`', '#', '"', "'", '(', ')', '0', '1', '2', '3', '4',
+                   '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
+                   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+                   'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                   'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                   'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                   'w', 'x', 'y', 'z', '{', '|', '}', '~']
+
+
 def _get_common_params(request):
     bbox = request.GET['bbox']
     width = request.GET['width']
@@ -243,6 +253,12 @@ def contouring_response(lon, lat, data, request, dpi=80):
         ax.contourf(x, y, data, lvls, norm=norm, cmap=colormap)
     elif request.GET['image_type'] == 'contours':
         ax.contour(x, y, data, lvls, norm=norm, cmap=colormap)
+    elif request.GET['image_type'] == 'filledhatches':
+        hatches = DEFAULT_HATCHES[:lvls]
+        ax.contourf(x, y, data, lvls, norm=norm, cmap=colormap, hatches=hatches)
+    elif request.GET['image_type'] == 'hatches':
+        hatches = DEFAULT_HATCHES[:lvls]
+        ax.contourf(x, y, data, lvls, norm=norm, colors='none', hatches=hatches)
 
     ax.set_xlim(bbox.minx, bbox.maxx)
     ax.set_ylim(bbox.miny, bbox.maxy)

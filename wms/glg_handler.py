@@ -9,6 +9,7 @@ from matplotlib.pyplot import get_cmap, colorbar, legend
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
+from wms.mpl_handler import DEFAULT_HATCHES
 from wms import logger
 
 from matplotlib import rcParams
@@ -89,6 +90,86 @@ def filledcontour(request):
         levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
         x, y = np.meshgrid(np.arange(1), np.arange(1))
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), extend='both')
+        cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
+        if request.GET['showvalues'] is False:
+            cb.set_ticks([])
+        else:
+            cb.set_ticks(levs)
+            cb.set_ticklabels([ "%.1f" % x for x in levs ])
+
+    if request.GET['showlabel'] is True:
+        cb.set_label(request.GET['units'])
+
+    # Return HttpResponse
+    return figure_response(fig, request)
+
+
+def hatches(request):
+    # Create figure
+    fig, ax, norm = create_axis(request, get_position(request))
+
+    orientation = 'vertical'
+    if request.GET['horizontal'] is True:
+        orientation = 'horizontal'
+    csr = request.GET['colorscalerange']
+
+    if request.GET['logscale'] is True:
+        levs = np.hstack(([csr.min-3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+40]))
+        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        hatches = DEFAULT_HATCHES[:levs.size]
+        cs = ax.contourf(x, y, x, levels=levs, norm=norm, colors='none', hatches=hatches)
+        cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
+        if request.GET['showvalues'] is False:
+            cb.set_ticks([])
+        else:
+            cb.set_ticks(levs[1:-1])
+            cb.set_ticklabels([ "%.1f" % x for x in levs[1:-1] ])
+
+    else:
+        levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
+        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        hatches = DEFAULT_HATCHES[:levs.size]
+        cs = ax.contourf(x, y, x, levels=levs, norm=norm, colors='none', extend='both', hatches=hatches)
+        cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
+        if request.GET['showvalues'] is False:
+            cb.set_ticks([])
+        else:
+            cb.set_ticks(levs)
+            cb.set_ticklabels([ "%.1f" % x for x in levs ])
+
+    if request.GET['showlabel'] is True:
+        cb.set_label(request.GET['units'])
+
+    # Return HttpResponse
+    return figure_response(fig, request)
+
+
+def filledhatches(request):
+    # Create figure
+    fig, ax, norm = create_axis(request, get_position(request))
+
+    orientation = 'vertical'
+    if request.GET['horizontal'] is True:
+        orientation = 'horizontal'
+    csr = request.GET['colorscalerange']
+
+    if request.GET['logscale'] is True:
+        levs = np.hstack(([csr.min-3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+40]))
+        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        hatches = DEFAULT_HATCHES[:levs.size]
+        cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), hatches=hatches)
+        cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
+        if request.GET['showvalues'] is False:
+            cb.set_ticks([])
+        else:
+            cb.set_ticks(levs[1:-1])
+            cb.set_ticklabels([ "%.1f" % x for x in levs[1:-1] ])
+
+    else:
+        levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
+        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        hatches = DEFAULT_HATCHES[:levs.size]
+        cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), extend='both', hatches=hatches)
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
         if request.GET['showvalues'] is False:
             cb.set_ticks([])

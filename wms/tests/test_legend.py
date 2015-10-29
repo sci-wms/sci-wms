@@ -182,6 +182,21 @@ class TestSgridLegendGraphic(TestCase):
         params.update(style='contours_cubehelix')
         self.do_test(params)
 
+    def test_sgrid_legend_filledhatches(self):
+        params = copy(self.url_params)
+        params.update(style='filledhatches_cubehelix')
+        self.do_test(params)
+
+    def test_sgrid_legend_filledhatches_horizontal(self):
+        params = copy(self.url_params)
+        params.update(style='filledhatches_cubehelix', horizontal='true', width=500, height=100)
+        self.do_test(params)
+
+    def test_sgrid_legend_hatches(self):
+        params = copy(self.url_params)
+        params.update(style='hatches_cubehelix')
+        self.do_test(params)
+
     def test_sgrid_legend_contours_horizontal(self):
         params = copy(self.url_params)
         params.update(style='contours_cubehelix', horizontal='true', width=500, height=100)

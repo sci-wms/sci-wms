@@ -285,6 +285,8 @@ class UGridDataset(Dataset, NetCDFDataset):
                         return mpl_handler.tripcolor_response(tri_subset, data, request, data_location=data_location)
                     else:
                         return mpl_handler.tricontouring_response(tri_subset, data, request)
+                elif request.GET['image_type'] in ['filledhatches', 'hatches']:
+                    raise NotImplementedError('matplotlib does not support hatching on triangular grids... sorry!')
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 

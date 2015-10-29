@@ -243,7 +243,7 @@ class SGridDataset(Dataset, NetCDFDataset):
 
                 if request.GET['image_type'] == 'pcolor':
                     return mpl_handler.pcolormesh_response(lon, lat, data=raw_data, request=request)
-                elif request.GET['image_type'] in ['filledcontours', 'contours']:
+                elif request.GET['image_type'] in ['filledhatches', 'hatches', 'filledcontours', 'contours']:
                     return mpl_handler.contouring_response(lon, lat, data=raw_data, request=request)
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
