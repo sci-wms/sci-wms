@@ -28,6 +28,7 @@ before_install:
 install:
   # Customise the testing environment
   # ---------------------------------
+  - conda install --channel rustychris libspatialindex
   - conda install --channel ioos --file requirements.txt
   - conda install --channel ioos --file requirements-test.txt
   - pip install django-extensions django-debug-toolbar

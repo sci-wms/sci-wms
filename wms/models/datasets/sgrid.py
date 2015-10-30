@@ -56,23 +56,26 @@ class SGridDataset(Dataset, NetCDFDataset):
         return os.path.exists(self.topology_file)
 
     def make_rtree(self):
-        p = index.Property()
-        p.overwrite = True
-        p.storage   = index.RT_Disk
-        p.Dimension = 2
 
         with self.dataset() as nc:
             sg = from_nc_dataset(nc)
 
             def rtree_generator_function():
+                c = 0
                 for i, axis in enumerate(sg.centers):
                     for j, (x, y) in enumerate(axis):
-                        yield (i+j, (x, y, x, y), (i, j))
+                        c += 1
+                        yield (c, (x, y, x, y), (i, j))
 
             logger.info("Building Faces (centers) Rtree Topology Cache for {0}".format(self.name))
             _, temp_file = tempfile.mkstemp(suffix='.face')
             start = time.time()
-            index.Index(temp_file,
+            p = index.Property()
+            p.filename = str(temp_file)
+            p.overwrite = True
+            p.storage   = index.RT_Disk
+            p.dimension = 2
+            index.Index(p.filename.decode('utf-8'),
                         rtree_generator_function(),
                         properties=p,
                         overwrite=True,

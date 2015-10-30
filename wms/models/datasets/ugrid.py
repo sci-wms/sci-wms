@@ -52,10 +52,6 @@ class UGridDataset(Dataset, NetCDFDataset):
         return os.path.exists(self.topology_file)
 
     def make_rtree(self):
-        p = index.Property()
-        p.overwrite = True
-        p.storage   = index.RT_Disk
-        p.Dimension = 2
 
         with self.dataset() as nc:
             ug = UGrid.from_nc_dataset(nc=nc)
@@ -67,14 +63,19 @@ class UGridDataset(Dataset, NetCDFDataset):
                     xmax, ymax = np.max(nodes, 0)
                     yield (face_idx, (xmin, ymin, xmax, ymax), face_idx)
             logger.info("Building Faces Rtree Topology Cache for {0}".format(self.name))
-            _, face_temp_file = tempfile.mkstemp(suffix='.face')
             start = time.time()
-
-            index.Index(face_temp_file,
-                        rtree_faces_generator_function(),
-                        properties=p,
-                        overwrite=True,
-                        interleaved=True)
+            _, face_temp_file = tempfile.mkstemp(suffix='.face')
+            pf = index.Property()
+            pf.filename = str(face_temp_file)
+            pf.overwrite = True
+            pf.storage   = index.RT_Disk
+            pf.dimension = 2
+            idx = index.Index(pf.filename.decode('utf-8'),
+                              rtree_faces_generator_function(),
+                              properties=pf,
+                              interleaved=True,
+                              overwrite=True)
+            idx.close()
             logger.info("Built Faces Rtree Topology Cache in {0} seconds.".format(time.time() - start))
             shutil.move('{}.dat'.format(face_temp_file), self.face_tree_data_file)
             shutil.move('{}.idx'.format(face_temp_file), self.face_tree_index_file)
@@ -83,13 +84,19 @@ class UGridDataset(Dataset, NetCDFDataset):
                 for node_index, (x, y) in enumerate(ug.nodes):
                     yield (node_index, (x, y, x, y), node_index)
             logger.info("Building Nodes Rtree Topology Cache for {0}".format(self.name))
-            _, node_temp_file = tempfile.mkstemp(suffix='.node')
             start = time.time()
-            index.Index(node_temp_file,
-                        rtree_nodes_generator_function(),
-                        properties=p,
-                        overwrite=True,
-                        interleaved=True)
+            _, node_temp_file = tempfile.mkstemp(suffix='.node')
+            pn = index.Property()
+            pn.filename = str(node_temp_file)
+            pn.overwrite = True
+            pn.storage   = index.RT_Disk
+            pn.dimension = 2
+            idx = index.Index(pn.filename.decode('utf-8'),
+                              rtree_nodes_generator_function(),
+                              properties=pn,
+                              interleaved=True,
+                              overwrite=True)
+            idx.close()
             logger.info("Built Nodes Rtree Topology Cache in {0} seconds.".format(time.time() - start))
             shutil.move('{}.dat'.format(node_temp_file), self.node_tree_data_file)
             shutil.move('{}.idx'.format(node_temp_file), self.node_tree_index_file)
