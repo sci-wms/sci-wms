@@ -31,7 +31,7 @@ def crossdomain(request):
 
 @cache_page(604800)
 def favicon(request):
-    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "favicon.ico")) as f:
+    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "favicon.ico"), 'rb') as f:
         response = HttpResponse(content_type="image/x-icon")
         response.write(f.read())
     return response
