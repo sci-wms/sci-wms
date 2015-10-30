@@ -1,5 +1,6 @@
 import os
 import json
+from collections import OrderedDict
 
 from django.conf import settings
 from django.template import RequestContext
@@ -14,7 +15,7 @@ from django.views.generic import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 
-from wms.models import Dataset, Server, Variable
+from wms.models import Dataset, Server, Variable, Style
 from wms.utils import get_layer_from_request
 from wms import wms_handler
 from wms import logger
@@ -119,16 +120,16 @@ def enhance_getmap_request(dataset, layer, request):
         crs=wms_handler.get_projection(request),
         bbox=wms_handler.get_bbox(request),
         wgs84_bbox=wms_handler.get_wgs84_bbox(request),
-        colormap=wms_handler.get_colormap(request),
+        colormap=wms_handler.get_colormap(request, default=defaults.colormap),
         colorscalerange=wms_handler.get_colorscalerange(request, defaults.min, defaults.max),
         elevation=wms_handler.get_elevation(request),
         width=dimensions.width,
         height=dimensions.height,
-        image_type=wms_handler.get_imagetype(request),
+        image_type=wms_handler.get_imagetype(request, default=defaults.image_type),
         logscale=wms_handler.get_logscale(request, defaults.logscale),
         vectorscale=wms_handler.get_vectorscale(request),
         vectorstep=wms_handler.get_vectorstep(request),
-        numcontours=wms_handler.get_num_contours(request)
+        numcontours=wms_handler.get_num_contours(request, default=defaults.numcontours)
     )
     gettemp.update(newgets)
     request.GET = gettemp
@@ -148,15 +149,15 @@ def enhance_getlegendgraphic_request(dataset, layer, request):
         colorscalerange=wms_handler.get_colorscalerange(request, defaults.min, defaults.max),
         width=dimensions.width,
         height=dimensions.height,
-        image_type=wms_handler.get_imagetype(request, parameter='style'),
-        colormap=wms_handler.get_colormap(request, parameter='style'),
+        image_type=wms_handler.get_imagetype(request, parameter='style', default=defaults.image_type),
+        colormap=wms_handler.get_colormap(request, parameter='style', default=defaults.colormap),
         format=wms_handler.get_format(request),
         showlabel=wms_handler.get_show_label(request),
         showvalues=wms_handler.get_show_values(request),
         units=wms_handler.get_units(request, layer.units),
         logscale=wms_handler.get_logscale(request, defaults.logscale),
         horizontal=wms_handler.get_horizontal(request),
-        numcontours=wms_handler.get_num_contours(request)
+        numcontours=wms_handler.get_num_contours(request, default=defaults.numcontours)
     )
     gettemp.update(newgets)
     request.GET = gettemp
@@ -219,7 +220,9 @@ class DatasetShowView(View):
 
     def get(self, request, dataset):
         dataset = get_object_or_404(Dataset, slug=dataset)
-        return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset))
+        styles = { x.code: x.code for x in Style.objects.order_by('image_type') }
+        styles = json.dumps(OrderedDict(sorted(styles.items(), key=lambda x: x[0])))
+        return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset, styles=styles))
 
 
 class DatasetListView(View):

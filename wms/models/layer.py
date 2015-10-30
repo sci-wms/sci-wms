@@ -20,6 +20,7 @@ class LayerBase(models.Model):
     styles      = models.ManyToManyField('Style')
     default_min = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the min.  If None, autoscale is used.")
     default_max = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the max.  If None, autoscale is used.")
+    default_numcontours = models.IntegerField(default=20)
 
     class Meta:
         abstract = True
@@ -28,6 +29,10 @@ class LayerBase(models.Model):
     @property
     def access_name(self):
         return self.var_name
+
+    @property
+    def all_styles(self):
+        return list(set(self.styles.all()).union(set([self.default_style])))
 
     @property
     def defaults(self):
@@ -45,7 +50,9 @@ class LayerBase(models.Model):
             if llog is None and default.logscale is not None:
                 llog = default.logscale
 
-        return DotDict(min=lmin, max=lmax, logscale=llog)
+        image_type, colormap = self.default_style.code.split('_', maxsplit=1)
+
+        return DotDict(min=lmin, max=lmax, logscale=llog, image_type=image_type, colormap=colormap, numcontours=self.default_numcontours)
 
     def __str__(self):
         z = self.var_name
@@ -54,7 +61,24 @@ class LayerBase(models.Model):
         return z
 
 
+def get_default_layer_style():
+    try:
+        return Style.objects.get(image_type='filledcontours', colormap='cubehelix').pk
+    except Style.DoesNotExists:
+        return 1
+
+
+def get_default_vlayer_style():
+    try:
+        return Style.objects.get(image_type='vectors', colormap='cubehelix').pk
+    except Style.DoesNotExists:
+        return 1
+
+
 class Layer(LayerBase):
+
+    default_style = models.ForeignKey('Style', on_delete=models.SET_DEFAULT, null=False, related_name='l_default_style', default=get_default_layer_style)
+
     def wgs84_bounds(self):
         return self.dataset.wgs84_bounds(self)
 
@@ -82,6 +106,8 @@ class Layer(LayerBase):
 
 
 class VirtualLayer(LayerBase):
+
+    default_style = models.ForeignKey('Style', on_delete=models.SET_DEFAULT, null=False, related_name='vl_default_style', default=get_default_vlayer_style)
 
     @classmethod
     def make_vector_layer(cls, us, vs, std_name, style, dataset_id):

@@ -142,8 +142,8 @@ class Dataset(TypedModel):
         return list(layers) + list(vlayers)
 
     def all_layers(self):
-        layers = self.layer_set.prefetch_related('styles').all()
-        vlayers = self.virtuallayer_set.prefetch_related('styles').all()
+        layers = self.layer_set.prefetch_related('styles', 'default_style').all()
+        vlayers = self.virtuallayer_set.prefetch_related('styles', 'default_style').all()
         return sorted(list(layers) + list(vlayers), key=lambda x: x.active, reverse=True)
 
     @property

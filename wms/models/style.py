@@ -10,15 +10,14 @@ class Style(models.Model):
                                    choices=sorted((m, m) for m in plt.cm.datad if not m.endswith("_r")))
     image_type  = models.CharField(max_length=200, default="filledcontours", choices=(("filledcontours", "filledcontours"),
                                                                                       ("contours", "contours"),
+                                                                                      ("filledhatches", "filledhatches"),
+                                                                                      ("hatches", "hatches"),
                                                                                       ("pcolor", "pcolor"),
-                                                                                      ("facets", "facets"),
-                                                                                      ("composite", "composite"),
-                                                                                      ("vectors", "vectors"),
-                                                                                      ("barbs", "barbs")))
+                                                                                      ("vectors", "vectors")))
 
     @classmethod
     def defaults(cls):
-        return Style.objects.filter(colormap='cubehelix', image_type__in=['filledcontours', 'contours', 'facets', 'pcolor'])
+        return Style.objects.filter(colormap='cubehelix', image_type__in=['filledcontours', 'contours', 'filledhatches', 'hatches', 'pcolor'])
 
     @property
     def code(self):

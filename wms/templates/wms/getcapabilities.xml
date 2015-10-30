@@ -100,12 +100,12 @@
                     <Dimension name="elevation" units="EPSG:5030" postive="{{ layer.depth_direction }}"/>
                     <Extent default="{{ layer.depths | first }}" name="elevation">{{ layer.depths | join:','}}</Extent>
                 {% endif %}
-                {% for style in layer.styles.all %}
+                {% for style in layer.all_styles %}
                 <Style>
                     <Name>{{ style.code }}</Name>
                     <Title>{{ style.code }}</Title>
                     <Abstract>{{ style.description }}</Abstract>
-                    <LegendURL height="80" width="50">
+                    <LegendURL height="500" width="100">
                         <Format>image/png</Format>
                     </LegendURL>
                 </Style>

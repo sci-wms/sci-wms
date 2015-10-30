@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, Variable
+from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, Variable, Style
 
 
 class VariableSerializer(serializers.ModelSerializer):
@@ -10,20 +10,37 @@ class VariableSerializer(serializers.ModelSerializer):
         fields = ('id', 'std_name', 'units', 'default_min', 'default_max', 'logscale')
 
 
+class DefaultStyleField(serializers.RelatedField):
+
+    queryset = Style.objects.all()
+
+    def to_representation(self, value):
+        return value.code
+
+    def to_internal_value(self, data):
+        image_type, colormap = data.split('_', maxsplit=1)
+        try:
+            return Style.objects.get(image_type=image_type, colormap=colormap)
+        except Style.DoesNotExist:
+            return None
+
+
 class LayerSerializer(serializers.ModelSerializer):
     styles = serializers.StringRelatedField(many=True, read_only=True)
+    default_style = DefaultStyleField(many=False)
 
     class Meta:
         model = Layer
-        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale')
+        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale', 'default_style', 'default_numcontours')
 
 
 class VirtualLayerSerializer(serializers.ModelSerializer):
     styles = serializers.StringRelatedField(many=True, read_only=True)
+    default_style = DefaultStyleField(many=False)
 
     class Meta:
         model = VirtualLayer
-        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale')
+        fields = ('id', 'var_name', 'std_name', 'units', 'description', 'active', 'styles', 'default_min', 'default_max', 'logscale', 'default_style', 'default_numcontours')
 
 
 class DatasetSerializer(serializers.ModelSerializer):

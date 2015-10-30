@@ -87,6 +87,11 @@ class TestSgrid(TestCase):
                 f.write(response.content)
         return outfile
 
+    def test_sgrid_default_styles(self):
+        params = copy(self.url_params)
+        logger.info(params)
+        self.do_test(params)
+
     def test_sgrid_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_cubehelix')

@@ -10,7 +10,6 @@ from wms.utils import DotDict
 from wms import logger
 
 
-
 def get_bbox(request):
     """
     Return the [lonmin, latmin, lonmax, lonmax] - [lower (x,y), upper(x,y)]
@@ -95,14 +94,15 @@ def get_show_values(request):
         return True
 
 
-def get_num_contours(request):
+def get_num_contours(request, default=None):
     """
     Return the NUMCONTOURS for GetLegendGraphic requests
     """
+    default = default or 8
     try:
         return int(float(request.GET['numcontours'].lower()))
     except (KeyError, ValueError):
-        return 8
+        return default
 
 
 def get_info_format(request):
@@ -188,22 +188,27 @@ def get_times(request):
     return DotDict(min=times[0], max=times[-1])
 
 
-def get_colormap(request, parameter=None):
+def get_colormap(request, parameter=None, default=None):
     parameter = parameter or 'styles'
+    default = default or 'cubehelix'
     try:
         from matplotlib.pyplot import colormaps
-        requested_cm = request.GET.get(parameter).split(',')[0].split('_')[1]
+        requested_cm = request.GET.get(parameter).split(',')[0].split('_', maxsplit=1)[1]
+        assert requested_cm
         return next(x for x in colormaps() if x.lower() == requested_cm)
-    except (AttributeError, TypeError, StopIteration):
-        return 'cubehelix'
+    except (AssertionError, IndexError, AttributeError, TypeError, StopIteration):
+        return default
 
 
-def get_imagetype(request, parameter=None):
+def get_imagetype(request, parameter=None, default=None):
     parameter = parameter or 'styles'
+    default = default or 'filledcontours'
     try:
-        return request.GET.get(parameter).split(',')[0].split('_')[0].lower()
-    except (AttributeError, TypeError):
-        return 'filledcontours'
+        z = request.GET.get(parameter).split(',')[0].split('_', maxsplit=1)[0].lower()
+        assert z
+        return z
+    except (AssertionError, IndexError, AttributeError, TypeError):
+        return default
     
     
 def get_vectorscale(request):
