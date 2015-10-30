@@ -6,6 +6,7 @@ from django.db import models
 from wms.models import Style, Variable
 from wms.utils import DotDict
 
+from wms.utils import split
 from wms import logger
 
 
@@ -50,7 +51,7 @@ class LayerBase(models.Model):
             if llog is None and default.logscale is not None:
                 llog = default.logscale
 
-        image_type, colormap = self.default_style.code.split('_', maxsplit=1)
+        image_type, colormap = split(self.default_style.code, '_', maxsplit=1)
 
         return DotDict(min=lmin, max=lmax, logscale=llog, image_type=image_type, colormap=colormap, numcontours=self.default_numcontours)
 

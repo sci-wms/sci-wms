@@ -5,6 +5,15 @@ import numpy as np
 from wms import logger
 
 
+def split(string, char, maxsplit=None):
+    maxsplit = maxsplit or -1
+    import sys
+    if sys.version_info[0] == 2:
+        return string.split(char, maxsplit)
+    elif sys.version_info[0] == 3:
+        return string.split(char, maxsplit=maxsplit)
+
+
 def get_layer_from_request(dataset, request):
     # Find the layer we are working with
     requested_layers = request.GET.get('layers')

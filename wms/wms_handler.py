@@ -5,7 +5,7 @@ from dateutil.parser import parse
 from dateutil.tz import tzutc
 import pyproj
 
-from wms.utils import DotDict
+from wms.utils import DotDict, split
 
 from wms import logger
 
@@ -193,7 +193,7 @@ def get_colormap(request, parameter=None, default=None):
     default = default or 'cubehelix'
     try:
         from matplotlib.pyplot import colormaps
-        requested_cm = request.GET.get(parameter).split(',')[0].split('_', maxsplit=1)[1]
+        requested_cm = split(request.GET.get(parameter).split(',')[0], '_', maxsplit=1)[1]
         assert requested_cm
         return next(x for x in colormaps() if x.lower() == requested_cm)
     except (AssertionError, IndexError, AttributeError, TypeError, StopIteration):
@@ -204,7 +204,7 @@ def get_imagetype(request, parameter=None, default=None):
     parameter = parameter or 'styles'
     default = default or 'filledcontours'
     try:
-        z = request.GET.get(parameter).split(',')[0].split('_', maxsplit=1)[0].lower()
+        z = split(request.GET.get(parameter).split(',')[0], '_', maxsplit=1)[0].lower()
         assert z
         return z
     except (AssertionError, IndexError, AttributeError, TypeError):

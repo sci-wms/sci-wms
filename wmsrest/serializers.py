@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, Variable, Style
+from wms.utils import split
 
 
 class VariableSerializer(serializers.ModelSerializer):
@@ -18,7 +19,7 @@ class DefaultStyleField(serializers.RelatedField):
         return value.code
 
     def to_internal_value(self, data):
-        image_type, colormap = data.split('_', maxsplit=1)
+        image_type, colormap = split(data, '_', maxsplit=1)
         try:
             return Style.objects.get(image_type=image_type, colormap=colormap)
         except Style.DoesNotExist:
