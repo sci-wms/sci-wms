@@ -87,7 +87,6 @@ class TestUgrid(TestCase):
 
     def test_ugrid_default_styles(self):
         params = copy(self.url_params)
-        logger.info(params)
         self.do_test(params)
 
     def test_ugrid_filledcontours(self):
@@ -151,22 +150,6 @@ class TestUgrid(TestCase):
         params = copy(self.gmd_params)
         params['item']  = 'minmax'
         self.do_test(params, fmt='json')
-
-    @xfail(reason='current ugrid test dataset does contain a vector variable')
-    def test_ugrid_vectorscale(self):
-        params = copy(self.url_params)
-        params['vectorscale'] = 25
-        params['styles'] = 'vectors_cubehelix'
-        params['layers'] = 'u,v'
-        self.do_test(params)
-
-    @xfail(reason='current ugrid test dataset does contain a vector variable')
-    def test_ugrid_vectorstep(self):
-        params = copy(self.url_params)
-        params['vectorstep'] = 5
-        params['styles'] = 'vectors_cubehelix'
-        params['layers'] = 'u,v'
-        self.do_test(params)
 
     def test_getCaps(self):
         params = dict(request='GetCapabilities')

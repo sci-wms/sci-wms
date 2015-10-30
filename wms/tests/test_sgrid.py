@@ -89,7 +89,6 @@ class TestSgrid(TestCase):
 
     def test_sgrid_default_styles(self):
         params = copy(self.url_params)
-        logger.info(params)
         self.do_test(params)
 
     def test_sgrid_filledcontours(self):
