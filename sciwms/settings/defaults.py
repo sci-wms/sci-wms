@@ -20,6 +20,7 @@ This file is part of SCI-WMS.
 # Django settings for fvcom_compute project.
 import os
 import sys
+import shutil
 
 WSGI_APPLICATION = "sciwms.wsgi.application"
 
@@ -37,10 +38,18 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db"))
+if not os.path.isdir(db_path):
+    os.makedirs(db_path)
+old_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms.db"))
+new_path = os.path.join(db_path, "sci-wms.db")
+if os.path.exists(old_path) and not os.path.exists(new_path):
+    shutil.move(old_path, new_path)
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms.db"))  # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME':  new_path,
     }
 }
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'

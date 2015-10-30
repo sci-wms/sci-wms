@@ -7,7 +7,7 @@
 
 # Default Topology location
 wms/topology/
-sciwms/*.db
+*.db
 !.gitkeep
 
 #dev environment stuff
