@@ -61,6 +61,7 @@ Create Database
 
     export DJANGO_SETTINGS_MODULE="sciwms.settings.prod"
     python manage.py migrate
+    python manage.py collectstatic
     python manage.py createsuperuser  # prompts to create superuser account
 
 

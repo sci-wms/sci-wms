@@ -96,6 +96,7 @@ pip install -r requirements-prod.txt
 <h2>Create Database<a class="headerlink" href="#create-database" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
 python manage.py migrate
+python manage.py collectstatic
 python manage.py createsuperuser  <span class="c"># prompts to create superuser account</span>
 </pre></div>
 </div>
