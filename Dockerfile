@@ -29,7 +29,6 @@ ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
 
 # handle admin user
 RUN chmod +x docker/*.sh
-RUN touch ./.firstrun
 
 VOLUME ["/data"]
 VOLUME ["/srv/sci-wms/sciwms/settings/local"]
