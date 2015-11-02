@@ -23,7 +23,7 @@ from wms import logger
 
 @cache_page(604800)
 def crossdomain(request):
-    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "crossdomain.xml")) as f:
+    with open(os.path.join(settings.PROJECT_ROOT, "..", "wms", "static", "wms", "crossdomain.xml")) as f:
         response = HttpResponse(content_type="text/xml")
         response.write(f.read())
     return response
@@ -31,7 +31,7 @@ def crossdomain(request):
 
 @cache_page(604800)
 def favicon(request):
-    with open(os.path.join(settings.PROJECT_ROOT, "static", "sciwms", "favicon.ico"), 'rb') as f:
+    with open(os.path.join(settings.PROJECT_ROOT, "..", "wms", "static", "wms", "favicon.ico"), 'rb') as f:
         response = HttpResponse(content_type="image/x-icon")
         response.write(f.read())
     return response
