@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :release:`1.3.0 <2015-11-02>`
+* :feature:`95` Release sci-wms on Dockerhub
 * :feature:`97` Added default_style and default_numcontours to Layer
 * :feature:`94` Updated RTree library
 * :feature:`93` Python 3.4 support
