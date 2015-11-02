@@ -3,6 +3,8 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.db.utils import OperationalError, ProgrammingError
 
+import pytz
+from datetime import datetime, timedelta
 from wms import logger
 
 
@@ -21,11 +23,16 @@ class WmsConfig(AppConfig):
             try:
                 for d in Dataset.objects.all():
                     try:
+                        update_delta = timedelta(minute=1)
+                        now = datetime.utcnow().replace(tzinfo=pytz.utc)
                         if not d.has_cache():
+                            d.update_cache()
                             logger.info('Creating {} successful'.format(d.name))
+                        elif d.cache_last_updated and (now - d.cache_last_updated) < update_delta:
+                            logger.info('Updating {} skipped. It was just done!'.format(d.name))
                         else:
+                            d.update_cache()
                             logger.info('Updating {} successful'.format(d.name))
-                        d.update_cache()
                     except NotImplementedError:
                         logger.info('Updating {} failed.  Dataset type not implemented.'.format(d.name))
                     except BaseException as e:
