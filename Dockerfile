@@ -22,7 +22,7 @@ RUN conda install --channel rustychris libspatialindex
 
 RUN mkdir -p /srv/sci-wms
 COPY . /srv/sci-wms
-RUN rm -f /srv/sci-wms/sciwms/sci-wms.db
+RUN rm -f /srv/sci-wms/sciwms/db/sci-wms.db
 WORKDIR /srv/sci-wms
 
 ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
