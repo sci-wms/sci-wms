@@ -26,8 +26,8 @@
     <link rel="top" title="SCI-WMS 1.3.0-dev documentation" href="index.html" />
     <link rel="prev" title="Roadmap" href="roadmap.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -36,41 +36,45 @@
         <li class="right" >
           <a href="roadmap.html" title="Roadmap"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="Next feature release">
 <h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/sci-wms/sci-wms/tree/master">Next feature release</a></h2><ul class="simple">
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/90">#90</a><span>:</span> Set <tt class="docutils literal"><span class="pre">cubehelix</span></tt> as the default colormap</li>
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/91">#91</a><span>:</span> Implement <tt class="docutils literal"><span class="pre">LOGSCALE</span></tt> on GetMap requests</li>
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/86">#86</a><span>:</span> Implement the <tt class="docutils literal"><span class="pre">pcolor</span></tt> image type for UGRID</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/90">#90</a><span>:</span> Set <code class="docutils literal"><span class="pre">cubehelix</span></code> as the default colormap</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/91">#91</a><span>:</span> Implement <code class="docutils literal"><span class="pre">LOGSCALE</span></code> on GetMap requests</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/86">#86</a><span>:</span> Implement the <code class="docutils literal"><span class="pre">pcolor</span></code> image type for UGRID</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/92">#92</a><span>:</span> Added hatching styles</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/93">#93</a><span>:</span> Python 3.4 support</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/94">#94</a><span>:</span> Updated RTree library</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/97">#97</a><span>:</span> Added default_style and default_numcontours to Layer</li>
 </ul>
 </div>
 <div class="section" id="1.2.0">
 <h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/sci-wms/sci-wms/tree/1.2.0">1.2.0</a> <span style="font-size: 75%%;">2015-10-28</span></h2><ul class="simple">
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/88">#88</a><span>:</span> Add <tt class="docutils literal"><span class="pre">NUMCONTOURS</span></tt> support to GetMap <a class="reference internal" href="advanced.html"><em>Advanced Usage</em></a></li>
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/89">#89</a><span>:</span> Add <tt class="docutils literal"><span class="pre">contours</span></tt> support to GetMap</li>
-<li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Upgrade to <tt class="docutils literal"><span class="pre">django-typed-models</span></tt> 0.5.0</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/88">#88</a><span>:</span> Add <code class="docutils literal"><span class="pre">NUMCONTOURS</span></code> support to GetMap <a class="reference internal" href="advanced.html"><em>Advanced Usage</em></a></li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/89">#89</a><span>:</span> Add <code class="docutils literal"><span class="pre">contours</span></code> support to GetMap</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Upgrade to <code class="docutils literal"><span class="pre">django-typed-models</span></code> 0.5.0</li>
 <li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Support Django&gt;=1.7 (including 1.8)</li>
 </ul>
 </div>
 <div class="section" id="1.0.0">
 <h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/sci-wms/sci-wms/tree/1.0.0">1.0.0</a> <span style="font-size: 75%%;">2015-07-08</span></h2><ul class="simple">
 <li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Ability to set min/max limits in web interface</li>
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/45">#45</a><span>:</span> Support datasets with more than one <tt class="docutils literal"><span class="pre">standard_name:</span> <span class="pre">time</span></tt></li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/45">#45</a><span>:</span> Support datasets with more than one <code class="docutils literal"><span class="pre">standard_name:</span> <span class="pre">time</span></code></li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/7">#7</a><span>:</span> Upgrade to Django 1.7</li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/32">#32</a><span>:</span> Integration of COMT branch</li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/36">#36</a><span>:</span> Support for running in a Docker container</li>
-<li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Support CF-UGRID datasets via <tt class="docutils literal"><span class="pre">pysgrid</span></tt></li>
-<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/35">#35</a><span>:</span> Support CF-SGRID datasets via <tt class="docutils literal"><span class="pre">pyugrid</span></tt></li>
+<li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> Support CF-UGRID datasets via <code class="docutils literal"><span class="pre">pysgrid</span></code></li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/35">#35</a><span>:</span> Support CF-SGRID datasets via <code class="docutils literal"><span class="pre">pyugrid</span></code></li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/8">#8</a><span>:</span> Much improved documentation <a class="reference internal" href="deployment.html"><em>Deployment</em></a></li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/4">#4</a><span>:</span> Much improved documentation <a class="reference internal" href="roadmap.html"><em>Roadmap</em></a></li>
 <li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/sci-wms/sci-wms/issues/18">#18</a><span>:</span> Much improved documentation <a class="reference internal" href="advanced.html"><em>Advanced Usage</em></a></li>
@@ -82,12 +86,12 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="roadmap.html"
                         title="previous chapter">Roadmap</a></p>
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -104,7 +108,7 @@
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -113,11 +117,11 @@
         <li class="right" >
           <a href="roadmap.html" title="Roadmap"
              >previous</a> |</li>
-        <li><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    <div class="footer" role="contentinfo">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

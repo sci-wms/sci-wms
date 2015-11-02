@@ -27,8 +27,8 @@
     <link rel="next" title="Deployment" href="deployment.html" />
     <link rel="prev" title="Welcome to sci-wms" href="index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -40,14 +40,14 @@
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
@@ -106,19 +106,19 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
 <div class="highlight-bash"><div class="highlight"><pre>pip install -r requirements-test.txt
 </pre></div>
 </div>
-<p>Test that <tt class="docutils literal"><span class="pre">sci-wms</span></tt> is fully functional by running the following command</p>
+<p>Test that <code class="docutils literal"><span class="pre">sci-wms</span></code> is fully functional by running the following command</p>
 <div class="highlight-bash"><div class="highlight"><pre>py.test -rxs --verbose
 </pre></div>
 </div>
 </div>
 <div class="section" id="updating">
 <h2>Updating<a class="headerlink" href="#updating" title="Permalink to this headline">¶</a></h2>
-<p>From version 1.0.0 <tt class="docutils literal"><span class="pre">sci-wms</span></tt> is easily upgraded to a newer version:</p>
+<p>From version 1.0.0 <code class="docutils literal"><span class="pre">sci-wms</span></code> is easily upgraded to a newer version:</p>
 <ol class="arabic simple">
-<li>Stop any running instances of <tt class="docutils literal"><span class="pre">sci-wms</span></tt></li>
-<li>Replace your current <tt class="docutils literal"><span class="pre">sci-wms</span></tt> directory with the new version (using git pull)</li>
-<li>Migrate the database: <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;sciwms.settings.prod&quot;</span> <span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">migrate</span></tt></li>
-<li>Start <tt class="docutils literal"><span class="pre">sci-wms</span></tt> as you usually would</li>
+<li>Stop any running instances of <code class="docutils literal"><span class="pre">sci-wms</span></code></li>
+<li>Replace your current <code class="docutils literal"><span class="pre">sci-wms</span></code> directory with the new version (using git pull)</li>
+<li>Migrate the database: <code class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;sciwms.settings.prod&quot;</span> <span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">migrate</span></code></li>
+<li>Start <code class="docutils literal"><span class="pre">sci-wms</span></code> as you usually would</li>
 </ol>
 </div>
 </div>
@@ -127,7 +127,7 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -148,7 +148,7 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
   <h4>Next topic</h4>
   <p class="topless"><a href="deployment.html"
                         title="next chapter">Deployment</a></p>
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -165,7 +165,7 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -177,11 +177,11 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              >previous</a> |</li>
-        <li><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.3.0-dev documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    <div class="footer" role="contentinfo">
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`97` Added default_style and default_numcontours to Layer
+* :feature:`94` Updated RTree library
+* :feature:`93` Python 3.4 support
+* :feature:`92` Added hatching styles
 * :feature:`86` Implement the ``pcolor`` image type for UGRID
 * :feature:`91` Implement ``LOGSCALE`` on GetMap requests
 * :feature:`90` Set ``cubehelix`` as the default colormap
