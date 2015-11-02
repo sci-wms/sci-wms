@@ -7,25 +7,40 @@ Docker
 
 ``sci-wms`` supports running inside of a Docker container
 
-Build
+Pull
 
 .. code-block:: bash
 
-    docker build -t sci-wms .
+    docker pull axiom/sci-wms
 
 Run, interactively
 
 .. code-block:: bash
 
-    docker run --rm -it -p 7002:7002 sci-wms
+    docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
 
 Run, daemonized
 
 .. code-block:: bash
 
-    docker run -d -p 7002:7002 sci-wms
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
 
 ``sci-wms`` will be running on http://localhost:7002.  Adjust the `-p` value to your liking.
+
+Custom Paths
+............
+
+Run, with a custom Django config (see ``Custom Django Settings``)
+
+.. code-block:: bash
+
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local sci-wms
+
+Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)
+
+.. code-block:: bash
+
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology sci-wms
 
 Superuser
 .........
@@ -62,7 +77,7 @@ Suported parameter expressions:
 Custom Django Settings
 ~~~~~~~~~~~~~~~~~~~~~~
 
-You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** and configure any Django settings you wish.
+You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** or **path/to/sci-wms/sci-wms/settings/local/settings.py** and configure any Django settings you wish.  The latter takes presedence over the former.
 
 The following settings are recommended:
 

@@ -7,25 +7,40 @@ Docker
 
 ``sci-wms`` supports running inside of a Docker container
 
-Build
+Pull
 
 .. code-block:: bash
 
-    docker build -t sci-wms .
+    docker pull axiom/sci-wms
 
 Run, interactively
 
 .. code-block:: bash
 
-    docker run --rm -it -p 7002:7002 sci-wms
+    docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
 
 Run, daemonized
 
 .. code-block:: bash
 
-    docker run -d -p 7002:7002 sci-wms
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
 
 ``sci-wms`` will be running on http://localhost:7002.  Adjust the `-p` value to your liking.
+
+Custom Paths
+............
+
+Run, with a custom Django config (see ``Custom Django Settings``)
+
+.. code-block:: bash
+
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local sci-wms
+
+Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)
+
+.. code-block:: bash
+
+    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology sci-wms
 
 Superuser
 .........
@@ -62,7 +77,7 @@ Suported parameter expressions:
 Custom Django Settings
 ~~~~~~~~~~~~~~~~~~~~~~
 
-You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** and configure any Django settings you wish.
+You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** or **path/to/sci-wms/sci-wms/settings/local/settings.py** and configure any Django settings you wish.  The latter takes presedence over the former.
 
 The following settings are recommended:
 
@@ -142,6 +157,6 @@ WMS Extensions
    "UNITLABEL", "GetLegendGraphic", "``[text]``", "Set the unit label on a legend to a custom value", "``meters`` ``degC``"
    "HORIZONTAL", "GetLegendGraphic", "``true``, ``false``", "Return a horizontal legend (vertical is the default)", "``true`` ``false``"
    "NUMCONTOURS", "GetLegendGraphic GetMap", "``[int]``", "Return request with the specified number of contours. Only valid for the ``image_type`` of ``contours`` or ``filledcontours``).", "``8``  ``30``"
-   "STYLE", "GetLegendGraphic GetMap", "``[image_type]``/``[colormap]``", "While some styles are defined in the GetCapabilities document, a use can specify any combination of an ``image_type`` (``filledcontours``, ``contours``, ``pcolor``, ``vectors``) and a matplotlib ``colormap`` (http://matplotlib.org/examples/color/colormaps_reference.html)", "``contours_jet``  ``vectors_blues``"
+   "STYLE", "GetLegendGraphic GetMap", "``[image_type]``_``[colormap]``", "While some styles are defined in the GetCapabilities document, a use can specify any combination of an ``image_type`` (``filledcontours``, ``contours``, ``pcolor``, ``vectors``, ``filledhatches``, ``hatches``) and a matplotlib ``colormap`` (http://matplotlib.org/examples/color/colormaps_reference.html)", "``contours_jet``  ``vectors_blues``"
    "VECTORSCALE", "GetMap", "``[float]``", "Controls the scale of vector arrows when plotting a ``vectors`` style. The ``vectorscale`` value represents the number of data units per arrow length unit. Smaller numbers lead to longer arrows, while larger numbers represent shorter arrows. This is consistent with the use of the ``scale`` keyword used by matplotlib (http://matplotlib.org/api/pyplot_api.html).", "``10.5`` ``30``"
    "VECTORSTEP", "GetMap", "``[int]``", "Set the number of vector steps to be used when rendering a GetMap request using a ``vectors`` style. A value of ``1`` will render with all vectors and is the default behavior.", "``2`` ``10``"
