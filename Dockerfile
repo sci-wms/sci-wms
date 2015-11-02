@@ -16,9 +16,9 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install requirements
 COPY requirements*.txt /tmp/
-RUN conda install --channel rustychris libspatialindex
 RUN conda install --channel ioos --file /tmp/requirements.txt
 RUN conda install --channel ioos --file /tmp/requirements-prod.txt
+RUN conda install --channel rustychris libspatialindex
 
 RUN mkdir -p /srv/sci-wms
 COPY . /srv/sci-wms
