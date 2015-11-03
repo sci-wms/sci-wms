@@ -195,7 +195,7 @@ def get_colormap(request, parameter=None, default=None):
         from matplotlib.pyplot import colormaps
         requested_cm = split(request.GET.get(parameter).split(',')[0], '_', maxsplit=1)[1]
         assert requested_cm
-        return next(x for x in colormaps() if x.lower() == requested_cm)
+        return next(x for x in colormaps() if x.lower() == requested_cm.lower())
     except (AssertionError, IndexError, AttributeError, TypeError, StopIteration):
         return default
 
