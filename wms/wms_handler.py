@@ -209,16 +209,13 @@ def get_imagetype(request, parameter=None, default=None):
         return z
     except (AssertionError, IndexError, AttributeError, TypeError):
         return default
-    
-    
+
+
 def get_vectorscale(request):
     try:
         vectorscale = float(request.GET.get('vectorscale'))
     except (AttributeError, TypeError):
-        if get_imagetype(request) == 'vectors':
-            vectorscale = 20  # this seems a reasonable number
-        else:
-            vectorscale = None  # don't bother with a default if vectors aren't being plotted
+        vectorscale = 1
     return vectorscale
 
 
@@ -226,10 +223,7 @@ def get_vectorstep(request):
     try:
         vectorstep = int(request.GET.get('vectorstep'))
     except TypeError:
-        if get_imagetype(request) == 'vectors':
-            vectorstep = 1  # equivalent to getting all the data
-        else:
-            vectorstep = None
+        vectorstep = 1  # equivalent to getting all the data
     return vectorstep
 
 
