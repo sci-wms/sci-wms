@@ -46,7 +46,7 @@
         <tr class="{{ layer.active | yesno:'success,warning' }}">
 
           <td>
-            <a href="#" data-type="select" class="inline-edits" id="active" data-source="{'True': 'Active', 'False':'Disabled'}" data-value="{{ layer.active }}" aria-label="Active?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="select" class="inline-edits" id="active" data-source="{'True': 'Active', 'False':'Disabled'}" data-value="{{ layer.active }}" aria-label="Active?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{% if layer.active == True %}Active{% else %}Disabled{% endif %}</span>
           </td>
 
           <td>{{ layer.var_name }} {% if layer|class_name == 'VirtualLayer' %}<span class="label label-info">Virtual</span>{% endif %}</td>
@@ -62,23 +62,23 @@
           <td>{{ layer.units }}</td>
 
           <td>
-            <a href="#" data-type="select" class="inline-edits" id="default_style" data-source="{{ styles }}" data-value="{{ layer.default_style }}" aria-label="Default style" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="select" class="inline-edits" id="default_style" data-source="{{ styles }}" data-value="{{ layer.default_style }}" aria-label="Default style" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{{ layer.default_style }}</span>
           </td>
 
           <td>
-            <a href="#" data-type="text" class="inline-edits" id="default_numcontours" data-value="{{ layer.default_numcontours }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="text" class="inline-edits" id="default_numcontours" data-value="{{ layer.default_numcontours }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{{ layer.default_numcontours }}</span>
           </td>
 
           <td>
-            <a href="#" data-type="select" class="inline-edits" id="logscale" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ layer.logscale }}" aria-label="Logscale?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="select" class="inline-edits" id="logscale" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ layer.logscale }}" aria-label="Logscale?" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{% if layer.logscale == True %}True{% else %}False{% endif %}</span>
           </td>
 
           <td>
-            <a href="#" data-type="text" class="inline-edits" id="default_min" data-value="{{ layer.default_min | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="text" class="inline-edits" id="default_min" data-value="{{ layer.default_min | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{{ layer.default_min | default_if_none:'' }}</span>
           </td>
 
           <td>
-            <a href="#" data-type="text" class="inline-edits" id="default_max" data-value="{{ layer.default_max | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}"></a>
+            <span href="#" data-type="text" class="inline-edits" id="default_max" data-value="{{ layer.default_max | default_if_none:'' }}" data-edit-url="{% if layer|class_name == 'VirtualLayer' %}{% url 'vlayer-detail' pk=layer.pk %}{% else %}{% url 'layer-detail' pk=layer.pk %}{% endif %}">{{ layer.default_max | default_if_none:'' }}</span>
           </td>
 
         </tr>

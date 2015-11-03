@@ -169,7 +169,9 @@
 .editable-click, 
 a.editable-click, 
 a.editable-click:hover {
+    color: #0088cc;
     text-decoration: none;
+    cursor: pointer;
     border-bottom: dashed 1px #0088cc;
 }
 
