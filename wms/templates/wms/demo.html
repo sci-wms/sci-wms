@@ -30,8 +30,10 @@
                 <div class="panel-body">
                   <div class="list-group">
                     {% for vl in dataset.active_layers %}
-                    {% if vl.styles %}
-                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-style="{{ vl.styles.first }}" data-dataset="{{ dataset.slug }}">{{vl.var_name}} ({{vl.std_name}})</a>
+                    {% if vl.default_style %}
+                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-min="{{ vl.default_min }}" data-max="{{ vl.default_max }}" data-numcontours="{{ vl.default_numcontours }}" data-logscale="{{ vl.logscale }}" data-style="{{ vl.default_style }}" data-dataset="{{ dataset.slug }}">{{vl.var_name}} ({{vl.std_name}})</a>
+                    {% elif vl.styles %}
+                        <a href="#" class="list-group-item layers" data-layer="{{ vl.var_name }}" data-min="{{ vl.default_min }}" data-max="{{ vl.default_max }}" data-numcontours="{{ vl.default_numcontours }}" data-logscale="{{ vl.logscale }}" data-style="{{ vl.styles.first }}" data-dataset="{{ dataset.slug }}">{{vl.var_name}} ({{vl.std_name}})</a>
                     {% else %}
                         {{vl.layer}} (no styles)
                     {% endif %}
@@ -78,22 +80,44 @@
         layer = $(this).data('layer');
         style = $(this).data('style');
 		vectors = style.indexOf('vectors');
+		numcontours = $(this).data('numcontours')
+		logscale = $(this).data('logscale')
+		if (logscale == "True") {
+			logscale = "true";
+		} else {
+			logscale = "false";
+		}
+
+		min = $(this).data('min')
+		if (min == "None") {
+			min = 0;
+		}
+
+		max = $(this).data('max')
+		if (max == "None") {
+			max = 10;
+		}
+
 		l = eval(dataset_slug);
-		var colorscale = '0,1';
+		var colorscale = min + "," + max;
 		if (vectors >= 0) {
 	        l.setParams({
 	            layers: layer,
 	            styles: style,
 	            colorscalerange: colorscale,
-	            vectorscale: 20
-	        });			
+	            vectorscale: 20,
+                numcontours: numcontours,
+                logscale: logscale
+	        });
 		}
 		else {
 	        l.setParams({
 	            layers: layer,
 	            styles: style,
-	            colorscalerange: colorscale
-	        });				
+	            colorscalerange: colorscale,
+                numcontours: numcontours,
+                logscale: logscale
+	        });
 		}
         // -- clear existing layers
         displayed_layers.clearLayers();
