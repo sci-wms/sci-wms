@@ -23,6 +23,10 @@ DEBUG          = True
 TEMPLATE_DEBUG = True
 TESTING        = False
 
+LOGFILE = os.path.join(PROJECT_ROOT, "..", "logs", "sci-wms.log")
+if not os.path.exists(os.path.dirname(LOGFILE)):
+    os.makedirs(os.path.dirname(LOGFILE))
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -49,6 +53,14 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'backupCount': 5,
+            'maxBytes': 1024*1024*20,  # 20MB
+            'filename': LOGFILE,
+            'formatter': 'verbose'
+        },
         'mail_admins': {
             'level': 'DEBUG',
             'filters': ['require_debug_false'],
@@ -58,7 +70,7 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'WARNING',
             'propagate': True,
         },
@@ -68,12 +80,12 @@ LOGGING = {
             'propagate': True,
         },
         'sci-wms': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'wms': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url
-from wms.views import DatasetListView, WmsView, DatasetShowView, DefaultsView
+from wms.views import DatasetListView, WmsView, DatasetShowView, DefaultsView, LogsView
 
 urlpatterns = patterns('',
                        url(r'^$', 'wms.views.index', name='wms-index'),
@@ -12,5 +12,6 @@ urlpatterns = patterns('',
                        # Clients
                        url(r'^demo', 'wms.views.demo', name='demo'),
                        url(r'^defaults$', DefaultsView.as_view(), name='defaults'),
-                       url(r'^groups/(?P<group>.*)/', 'wms.views.groups')
+                       url(r'^groups/(?P<group>.*)/', 'wms.views.groups'),
+                       url(r'^logs$', LogsView.as_view(), name='logs')
                     )

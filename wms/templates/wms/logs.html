@@ -1,0 +1,19 @@
+{% extends "wms/base.html" %}
+
+{% block header %}
+<style>
+    textarea {
+        font-size: 12px;
+        padding: 20px;
+        outline: none;
+        resize: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="row" class="col-md-12">
+         <textarea wrap="off" class="col-md-12" rows="30" readonly="readonly" autofocus="autofocus">{{ lines }}</textarea>
+    </div>
+{% endblock %}

@@ -209,6 +209,18 @@ def enhance_getmetadata_request(dataset, layer, request):
     return request
 
 
+class LogsView(View):
+
+    def get(self, request):
+        if settings.LOGFILE is not None and os.path.isfile(settings.LOGFILE):
+            with open(settings.LOGFILE) as f:
+                lines = "\n".join([ x.strip() for x in f.readlines()[-400:] ])
+        else:
+            lines = "No logfile is setup in sci-wms!"
+
+        return TemplateResponse(request, 'wms/logs.html', dict(lines=lines))
+
+
 class DefaultsView(View):
 
     def get(self, request):

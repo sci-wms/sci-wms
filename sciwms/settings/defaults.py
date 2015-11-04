@@ -31,6 +31,8 @@ TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topolog
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
+LOGFILE = None
+
 DEBUG = False
 TEMPLATE_DEBUG = False
 
