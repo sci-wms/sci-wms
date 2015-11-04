@@ -13,6 +13,13 @@ from wms.utils import find_appropriate_time
 from wms.models import VirtualLayer, Layer, Style
 
 
+def try_float(obj):
+    try:
+        return int(obj)
+    except ValueError:
+        return None
+
+
 class NetCDFDataset(object):
 
     @contextmanager
@@ -194,13 +201,13 @@ class NetCDFDataset(object):
 
                     nc_var = nc.variables[v]
                     if hasattr(nc_var, 'valid_range'):
-                        l.default_min = nc_var.valid_range[0]
-                        l.default_max = nc_var.valid_range[-1]
+                        l.default_min = try_float(nc_var.valid_range[0])
+                        l.default_max = try_float(nc_var.valid_range[-1])
                     # valid_min and valid_max take presendence
                     if hasattr(nc_var, 'valid_min'):
-                        l.default_min = nc_var.valid_min
+                        l.default_min = try_float(nc_var.valid_min)
                     if hasattr(nc_var, 'valid_max'):
-                        l.default_max = nc_var.valid_max
+                        l.default_max = try_float(nc_var.valid_max)
 
                     if hasattr(nc_var, 'standard_name'):
                         std_name = nc_var.standard_name
