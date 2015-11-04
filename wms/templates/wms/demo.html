@@ -79,46 +79,46 @@
         dataset_slug = $(this).data('dataset');
         layer = $(this).data('layer');
         style = $(this).data('style');
-		vectors = style.indexOf('vectors');
-		numcontours = $(this).data('numcontours')
-		logscale = $(this).data('logscale')
-		if (logscale == "True") {
-			logscale = "true";
-		} else {
-			logscale = "false";
-		}
+        vectors = style.indexOf('vectors');
+        numcontours = $(this).data('numcontours')
+        logscale = $(this).data('logscale')
+        if (logscale == "True") {
+            logscale = "true";
+        } else {
+            logscale = "false";
+        }
 
-		min = $(this).data('min')
-		if (min == "None") {
-			min = 0;
-		}
+        min = $(this).data('min')
+        if (min == "None") {
+            min = 0;
+        }
 
-		max = $(this).data('max')
-		if (max == "None") {
-			max = 10;
-		}
+        max = $(this).data('max')
+        if (max == "None") {
+            max = 10;
+        }
 
-		l = eval(dataset_slug);
-		var colorscale = min + "," + max;
-		if (vectors >= 0) {
-	        l.setParams({
-	            layers: layer,
-	            styles: style,
-	            colorscalerange: colorscale,
-	            vectorscale: 20,
+        l = eval(dataset_slug);
+        var colorscale = min + "," + max;
+        if (vectors >= 0) {
+            l.setParams({
+                layers: layer,
+                styles: style,
+                colorscalerange: colorscale,
+                vectorscale: 20,
                 numcontours: numcontours,
                 logscale: logscale
-	        });
-		}
-		else {
-	        l.setParams({
-	            layers: layer,
-	            styles: style,
-	            colorscalerange: colorscale,
+            });
+        }
+        else {
+            l.setParams({
+                layers: layer,
+                styles: style,
+                colorscalerange: colorscale,
                 numcontours: numcontours,
                 logscale: logscale
-	        });
-		}
+            });
+        }
         // -- clear existing layers
         displayed_layers.clearLayers();
         // -- add this layer
