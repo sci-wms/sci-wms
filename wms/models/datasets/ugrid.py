@@ -410,10 +410,10 @@ class UGridDataset(Dataset, NetCDFDataset):
                 elif data_location == 'edge':
                     coords = ug.edge_coordinates
 
-                minx = np.nanmin(coords[:, 1])
-                miny = np.nanmin(coords[:, 0])
-                maxx = np.nanmax(coords[:, 1])
-                maxy = np.nanmax(coords[:, 0])
+                minx = np.nanmin(coords[:, 0])
+                miny = np.nanmin(coords[:, 1])
+                maxx = np.nanmax(coords[:, 0])
+                maxy = np.nanmax(coords[:, 1])
 
                 return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
             except AttributeError:
