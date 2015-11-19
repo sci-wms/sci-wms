@@ -48,6 +48,11 @@ class TestUgridLegendGraphic(TestCase):
                 f.write(response.content)
         return outfile
 
+    def test_ugrid_legend_no_dimensions(self):
+        params = copy(self.url_params)
+        params.update(width=None, height=None)
+        self.do_test(params)
+
     def test_ugrid_legend_pcolor(self):
         params = copy(self.url_params)
         self.do_test(params)
@@ -140,6 +145,11 @@ class TestSgridLegendGraphic(TestCase):
 
     def test_sgrid_legend_pcolor(self):
         params = copy(self.url_params)
+        self.do_test(params)
+
+    def test_sgrid_legend_no_dimensions(self):
+        params = copy(self.url_params)
+        params.update(width=None, height=None)
         self.do_test(params)
 
     def test_sgrid_legend_pcolor_logscale(self):

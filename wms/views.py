@@ -142,7 +142,7 @@ def enhance_getmap_request(dataset, layer, request):
 def enhance_getlegendgraphic_request(dataset, layer, request):
     gettemp = request.GET.copy()
 
-    dimensions = wms_handler.get_dimensions(request)
+    dimensions = wms_handler.get_dimensions(request, default_width=110, default_height=264)
     defaults = layer.defaults
 
     newgets = dict(

@@ -235,7 +235,7 @@ def get_colorscalerange(request, default_min, default_max):
         return DotDict(min=default_min, max=default_max)
 
 
-def get_dimensions(request):
+def get_dimensions(request, default_width=None, default_height=None):
     """
     Return width and height of requested view.
     RETURNS width, height request should be in pixel units.
@@ -245,7 +245,7 @@ def get_dimensions(request):
         height = float(request.GET.get("height"))
         return DotDict(width=width, height=height)
     except:
-        return DotDict(width=None, height=None)
+        return DotDict(width=default_width, height=default_height)
 
 
 def get_gfi_positions(xy, bbox, crs, dims):
