@@ -14,6 +14,7 @@ from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
 
 from wms.models import Dataset, Server, Variable, Style
 from wms.utils import get_layer_from_request
@@ -211,6 +212,7 @@ def enhance_getmetadata_request(dataset, layer, request):
 
 class LogsView(View):
 
+    @method_decorator(login_required)
     def get(self, request):
         if settings.LOGFILE is not None and os.path.isfile(settings.LOGFILE):
             with open(settings.LOGFILE) as f:
