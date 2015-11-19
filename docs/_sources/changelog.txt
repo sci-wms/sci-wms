@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :release:`1.4.0 <2015-11-19>`
+* :feature:`106` Support the ``COLORBARONLY`` parameter in GetLegendGraphic
+* :feature:`101` Ability to view sci-wms logs from the web client (login only)
+* :bug:`105` Allow empty width/height parameters in GetLegendGraphic requests
+* :bug:`107` Fix lat/lon order on UGRID datasets
 * :release:`1.3.0 <2015-11-02>`
 * :feature:`95` Release sci-wms on Dockerhub
 * :feature:`97` Added default_style and default_numcontours to Layer
@@ -27,6 +32,3 @@ Changelog
 * :feature:`7` Upgrade to Django 1.7
 * :feature:`45` Support datasets with more than one ``standard_name: time``
 * :feature:`-` Ability to set min/max limits in web interface
-
-
-

@@ -154,6 +154,7 @@ WMS Extensions
    "COLORSCALERANGE", "GetLegendGraphic GetMap", "``[min],[max]``", "A tuple in the format [min],[max] that defines the scale range to visualize", "``1,100``  ``4.5,30``"
    "SHOWLABEL", "GetLegendGraphic", "``true``, ``false``", "If the units label should be shows in the legend", "``true`` ``false``"
    "SHOWVALUES", "GetLegendGraphic", "``true``, ``false``", "If the value ticks should be shows in the legend", "``true`` ``false``"
+   "COLORBARONLY", "GetLegendGraphic", "``true``, ``false``", "If ``true``, effectively sets ``SHOWVALUES`` and ``SHOWLABEL`` to ``false``. This will override the individual setttings of ``SHOWVALUES`` and ``SHOWLABEL``. No effect if this is set to ``false``.", "``true`` ``false``"
    "UNITLABEL", "GetLegendGraphic", "``[text]``", "Set the unit label on a legend to a custom value", "``meters`` ``degC``"
    "HORIZONTAL", "GetLegendGraphic", "``true``, ``false``", "Return a horizontal legend (vertical is the default)", "``true`` ``false``"
    "NUMCONTOURS", "GetLegendGraphic GetMap", "``[int]``", "Return request with the specified number of contours. Only valid for the ``image_type`` of ``contours`` or ``filledcontours``).", "``8``  ``30``"

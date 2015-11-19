@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Advanced Usage &mdash; SCI-WMS 1.4.0-dev documentation</title>
+    <title>Advanced Usage &mdash; SCI-WMS 1.4.0 documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.4.0-dev',
+        VERSION:     '1.4.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="SCI-WMS 1.4.0-dev documentation" href="index.html" />
+    <link rel="top" title="SCI-WMS 1.4.0 documentation" href="index.html" />
     <link rel="next" title="Roadmap" href="roadmap.html" />
     <link rel="prev" title="Deployment" href="deployment.html" /> 
   </head>
@@ -40,7 +40,7 @@
         <li class="right" >
           <a href="deployment.html" title="Deployment"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.4.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.4.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -203,37 +203,43 @@ sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
 <td>If the value ticks should be shows in the legend</td>
 <td><code class="docutils literal"><span class="pre">true</span></code> <code class="docutils literal"><span class="pre">false</span></code></td>
 </tr>
-<tr class="row-even"><td>UNITLABEL</td>
+<tr class="row-even"><td>COLORBARONLY</td>
+<td>GetLegendGraphic</td>
+<td><code class="docutils literal"><span class="pre">true</span></code>, <code class="docutils literal"><span class="pre">false</span></code></td>
+<td>If <code class="docutils literal"><span class="pre">true</span></code>, effectively sets <code class="docutils literal"><span class="pre">SHOWVALUES</span></code> and <code class="docutils literal"><span class="pre">SHOWLABEL</span></code> to <code class="docutils literal"><span class="pre">false</span></code>. This will override the individual setttings of <code class="docutils literal"><span class="pre">SHOWVALUES</span></code> and <code class="docutils literal"><span class="pre">SHOWLABEL</span></code>. No effect if this is set to <code class="docutils literal"><span class="pre">false</span></code>.</td>
+<td><code class="docutils literal"><span class="pre">true</span></code> <code class="docutils literal"><span class="pre">false</span></code></td>
+</tr>
+<tr class="row-odd"><td>UNITLABEL</td>
 <td>GetLegendGraphic</td>
 <td><code class="docutils literal"><span class="pre">[text]</span></code></td>
 <td>Set the unit label on a legend to a custom value</td>
 <td><code class="docutils literal"><span class="pre">meters</span></code> <code class="docutils literal"><span class="pre">degC</span></code></td>
 </tr>
-<tr class="row-odd"><td>HORIZONTAL</td>
+<tr class="row-even"><td>HORIZONTAL</td>
 <td>GetLegendGraphic</td>
 <td><code class="docutils literal"><span class="pre">true</span></code>, <code class="docutils literal"><span class="pre">false</span></code></td>
 <td>Return a horizontal legend (vertical is the default)</td>
 <td><code class="docutils literal"><span class="pre">true</span></code> <code class="docutils literal"><span class="pre">false</span></code></td>
 </tr>
-<tr class="row-even"><td>NUMCONTOURS</td>
+<tr class="row-odd"><td>NUMCONTOURS</td>
 <td>GetLegendGraphic GetMap</td>
 <td><code class="docutils literal"><span class="pre">[int]</span></code></td>
 <td>Return request with the specified number of contours. Only valid for the <code class="docutils literal"><span class="pre">image_type</span></code> of <code class="docutils literal"><span class="pre">contours</span></code> or <code class="docutils literal"><span class="pre">filledcontours</span></code>).</td>
 <td><code class="docutils literal"><span class="pre">8</span></code>  <code class="docutils literal"><span class="pre">30</span></code></td>
 </tr>
-<tr class="row-odd"><td>STYLE/STYLES</td>
+<tr class="row-even"><td>STYLE/STYLES</td>
 <td>GetLegendGraphic GetMap</td>
 <td><code class="docutils literal"><span class="pre">[image_type]_[colormap]</span></code></td>
 <td>While some styles are defined in the GetCapabilities document, a use can specify any combination of an <code class="docutils literal"><span class="pre">image_type</span></code> (<code class="docutils literal"><span class="pre">filledcontours</span></code>, <code class="docutils literal"><span class="pre">contours</span></code>, <code class="docutils literal"><span class="pre">pcolor</span></code>, <code class="docutils literal"><span class="pre">vectors</span></code>, <code class="docutils literal"><span class="pre">filledhatches</span></code>, <code class="docutils literal"><span class="pre">hatches</span></code>) and a matplotlib <code class="docutils literal"><span class="pre">colormap</span></code> (<a class="reference external" href="http://matplotlib.org/examples/color/colormaps_reference.html">http://matplotlib.org/examples/color/colormaps_reference.html</a>)</td>
 <td><code class="docutils literal"><span class="pre">contours_jet</span></code>  <code class="docutils literal"><span class="pre">vectors_blues</span></code></td>
 </tr>
-<tr class="row-even"><td>VECTORSCALE</td>
+<tr class="row-odd"><td>VECTORSCALE</td>
 <td>GetMap</td>
 <td><code class="docutils literal"><span class="pre">[float]</span></code></td>
 <td>Controls the scale of vector arrows when plotting a <code class="docutils literal"><span class="pre">vectors</span></code> style. The <code class="docutils literal"><span class="pre">vectorscale</span></code> value represents the number of data units per arrow length unit. Smaller numbers lead to longer arrows, while larger numbers represent shorter arrows. This is consistent with the use of the <code class="docutils literal"><span class="pre">scale</span></code> keyword used by matplotlib (<a class="reference external" href="http://matplotlib.org/api/pyplot_api.html">http://matplotlib.org/api/pyplot_api.html</a>).</td>
 <td><code class="docutils literal"><span class="pre">10.5</span></code> <code class="docutils literal"><span class="pre">30</span></code></td>
 </tr>
-<tr class="row-odd"><td>VECTORSTEP</td>
+<tr class="row-even"><td>VECTORSTEP</td>
 <td>GetMap</td>
 <td><code class="docutils literal"><span class="pre">[int]</span></code></td>
 <td>Set the number of vector steps to be used when rendering a GetMap request using a <code class="docutils literal"><span class="pre">vectors</span></code> style. A value of <code class="docutils literal"><span class="pre">1</span></code> will render with all vectors and is the default behavior.</td>
@@ -306,7 +312,7 @@ sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
         <li class="right" >
           <a href="deployment.html" title="Deployment"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.4.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.4.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
