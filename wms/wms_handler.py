@@ -49,7 +49,10 @@ def get_show_label(request):
     Return the SHOWLABEL for GetLegendGraphic requests
     """
     try:
-        return request.GET['showlabel'].lower() == 'true'
+        if 'colorbaronly' in request.GET and request.GET['colorbaronly'].lower() == 'true':
+            return False
+        else:
+            return request.GET['showlabel'].lower() == 'true'
     except KeyError:
         return True
 
@@ -89,7 +92,10 @@ def get_show_values(request):
     Return the SHOWVALUES for GetLegendGraphic requests
     """
     try:
-        return request.GET['showvalues'].lower() == 'true'
+        if 'colorbaronly' in request.GET and request.GET['colorbaronly'].lower() == 'true':
+            return False
+        else:
+            return request.GET['showvalues'].lower() == 'true'
     except KeyError:
         return True
 
