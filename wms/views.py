@@ -146,8 +146,11 @@ def enhance_getlegendgraphic_request(dataset, layer, request):
     dimensions = wms_handler.get_dimensions(request, default_width=110, default_height=264)
     defaults = layer.defaults
 
+    default_min = defaults.min or 0
+    default_max = defaults.max or 10
+
     newgets = dict(
-        colorscalerange=wms_handler.get_colorscalerange(request, defaults.min, defaults.max),
+        colorscalerange=wms_handler.get_colorscalerange(request, default_min, default_max),
         width=dimensions.width,
         height=dimensions.height,
         image_type=wms_handler.get_imagetype(request, parameter='style', default=defaults.image_type),
