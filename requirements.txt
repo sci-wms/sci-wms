@@ -1,7 +1,7 @@
 numpy
 Django==1.8.4
 python-dateutil
-matplotlib>=1.2.0
+matplotlib==1.4.3
 netCDF4>=1.0.2
 rtree==0.8.2
 jsonfield==1.0.3
