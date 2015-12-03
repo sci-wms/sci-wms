@@ -13,8 +13,8 @@ wms/topology/
 #dev environment stuff
 .pydevproject
 .project
+.cache/
+.ipynb_checkpoints/
 
 /static
 wms/tests/images/
-
-.ipynb_checkpoints

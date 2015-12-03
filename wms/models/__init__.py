@@ -10,3 +10,4 @@ from wms.models.datasets.base import Dataset
 from wms.models.datasets.ugrid import UGridDataset
 from wms.models.datasets.sgrid import SGridDataset
 from wms.models.datasets.rgrid import RGridDataset
+from wms.models.datasets.ugrid_tides import UGridTideDataset

@@ -17,3 +17,4 @@ dj-static==0.0.6
 pandas
 django-autoslug==1.9.3
 isodate
+utide

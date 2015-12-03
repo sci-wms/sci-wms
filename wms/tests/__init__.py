@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
 from django.db import IntegrityError
 
-from wms.models import Dataset, Group, Server, UGridDataset, SGridDataset, RGridDataset
+from wms.models import Dataset, Group, Server, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset
 
 from sciwms import logger
 
@@ -34,6 +34,8 @@ def add_dataset(name, klass, filename):
         model_class = SGridDataset
     elif klass.lower() == 'rgrid':
         model_class = RGridDataset
+    elif klass.lower() == 'ugrid_tides':
+        model_class = UGridTideDataset
 
     d, _ = model_class.objects.get_or_create(uri                   = os.path.join(resource_path, filename),
                                              name                  = name,
@@ -41,8 +43,8 @@ def add_dataset(name, klass, filename):
                                              abstract              = "Test data set for sci-wms tests.",
                                              display_all_timesteps = False,
                                              keep_up_to_date       = False)
-    d.update_cache(force=True)
     d.process_layers()
+    d.update_cache(force=True)
     d.save()
     return d
 

@@ -139,7 +139,10 @@ class VirtualLayer(LayerBase):
 
     @property
     def access_name(self):
-        return self.single_layer.var_name
+        try:
+            return self.single_layer.var_name
+        except AttributeError:
+            return re.findall(r"[^*,]+", self.var_name)[0]
 
     @property
     def single_layer(self):
