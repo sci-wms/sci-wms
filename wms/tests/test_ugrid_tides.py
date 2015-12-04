@@ -161,13 +161,3 @@ class TestUgridTides(TestCase):
         assert d.virtuallayer_set.count() == 1
         assert d.virtuallayer_set.first().var_name == 'u,v'
         assert d.virtuallayer_set.first().access_name == 'u'
-
-    def test_ugrid_tides_delete_cache_signal(self):
-        d = add_dataset("ugrid_tides_deleting", "ugrid_tides", "adcirc_tides.nc")
-        self.assertTrue(d.has_cache())
-        d.clear_cache()
-        self.assertFalse(d.has_cache())
-
-    def test_get_tidal_vectors(self):
-        d = Dataset.objects.get(name=self.dataset_slug)
-        d.get_tidal_vectors(d.virtuallayer_set.first(), datetime.utcnow(), [-85.25, 29.58, -84.75, 29.83])
