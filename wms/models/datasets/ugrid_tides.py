@@ -32,7 +32,6 @@ class UGridTideDataset(UGridDataset):
         except (RuntimeError, AttributeError):
             return False
 
-    @timeit
     def update_cache(self, force=False):
         with self.dataset() as nc:
             ug = UGrid.from_nc_dataset(nc)
@@ -121,7 +120,6 @@ class UGridTideDataset(UGridDataset):
         magnitude = np.sqrt((us*us) + (vs*vs))
         return gmd_handler.from_dict(dict(min=np.min(magnitude), max=np.max(magnitude)))
 
-    @timeit
     def get_tidal_vectors(self, layer, time, bbox, vector_scale, vector_step):
 
         with netCDF4.Dataset(self.topology_file) as nc:
@@ -222,9 +220,6 @@ class UGridTideDataset(UGridDataset):
     def getfeatureinfo(self, layer, request):
         raise NotImplementedError("No GFI suuport for UGRID-TIDES (yet)")
 
-    def humanize(self):
-        return "UTIDES"
-
     def analyze_virtual_layers(self):
         vl = VirtualLayer.objects.create(var_name='u,v',
                                          std_name='barotropic_sea_water_velocity',
@@ -276,3 +271,6 @@ class UGridTideDataset(UGridDataset):
 
     def depth_variable(self, layer):
         return None
+
+    def humanize(self):
+        return "UTIDES"
