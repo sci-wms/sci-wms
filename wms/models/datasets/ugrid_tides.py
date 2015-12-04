@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 
@@ -12,7 +12,7 @@ import numpy as np
 from wms.models import Style
 
 from wms.models import UGridDataset, VirtualLayer
-from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit
+from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit, DotDict
 
 from wms import data_handler
 from wms import mpl_handler
@@ -240,3 +240,39 @@ class UGridTideDataset(UGridDataset):
 
     def nearest_time(self, layer, time):
         return None, time
+
+    def times(self, layer):
+        return datetime.utcnow().replace(tzinfo=pytz.utc)
+
+    def wgs84_bounds(self, layer):
+        with netCDF4.Dataset(self.topology_file) as nc:
+            try:
+                data_location = nc.variables['u'].location
+                mesh_name = nc.variables['u'].mesh
+                # Use local topology for pulling bounds data
+                ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+                coords = np.empty(0)
+                if data_location == 'node':
+                    coords = ug.nodes
+                elif data_location == 'face':
+                    coords = ug.face_coordinates
+                elif data_location == 'edge':
+                    coords = ug.edge_coordinates
+
+                minx = np.nanmin(coords[:, 0])
+                miny = np.nanmin(coords[:, 1])
+                maxx = np.nanmax(coords[:, 0])
+                maxy = np.nanmax(coords[:, 1])
+
+                return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy, bbox=(minx, miny, maxx, maxy))
+            except AttributeError:
+                pass
+
+    def time_windows(self, layer):
+        s = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) - timedelta(days=365*100)
+        e = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) + timedelta(days=365*100)
+        d = timedelta(minutes=5)
+        return [(s, e, d)]
+
+    def depth_variable(self, layer):
+        return None
