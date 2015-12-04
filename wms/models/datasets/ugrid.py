@@ -161,7 +161,7 @@ class UGridDataset(Dataset, NetCDFDataset):
 
             lon = coords[:, 0]
             lat = coords[:, 1]
-            spatial_idx = data_handler.lat_lon_subset_idx(lon, lat, wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy)
+            spatial_idx = data_handler.ugrid_lat_lon_subset_idx(lon, lat, bbox=wgs84_bbox.bbox)
 
             vmin = None
             vmax = None
@@ -225,35 +225,27 @@ class UGridDataset(Dataset, NetCDFDataset):
             lon = coords[:, 0]
             lat = coords[:, 1]
 
-            if request.GET['vectorscale'] is not None:  # is not None if vectors are being plotted
-                vectorscale = request.GET['vectorscale']
-                padding_factor = calc_safety_factor(vectorscale)
-                vectorstep = request.GET['vectorstep']  # returns 1 by default if vectors are being plotted
-                spatial_idx_padding = calc_lon_lat_padding(lon, lat, padding_factor) * vectorstep
-                spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
-                                                              wgs84_bbox.minx,
-                                                              wgs84_bbox.miny,
-                                                              wgs84_bbox.maxx,
-                                                              wgs84_bbox.maxy,
-                                                              padding=spatial_idx_padding
-                                                              )
-                if vectorstep > 1:
-                    np.random.shuffle(spatial_idx)
-                    nvec = int(len(spatial_idx) / vectorstep)
-                    spatial_idx = spatial_idx[:nvec]
-            else:
-                spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
-                                                              wgs84_bbox.minx,
-                                                              wgs84_bbox.miny,
-                                                              wgs84_bbox.maxx,
-                                                              wgs84_bbox.maxy
-                                                              )
-            face_indicies = ug.faces[:]
-            face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
+            # Calculate any vector padding if we need to
+            padding = None
+            vector_step = request.GET['vectorstep']
+            if request.GET['image_type'] == 'vectors':
+                padding_factor = calc_safety_factor(request.GET['vectorscale'])
+                padding = calc_lon_lat_padding(lon, lat, padding_factor) * vector_step
+
+            # Calculate the boolean spatial mask to slice with
+            bool_spatial_idx = data_handler.ugrid_lat_lon_subset_idx(lon, lat,
+                                                                     bbox=wgs84_bbox.bbox,
+                                                                     padding=padding)
+
+            # Randomize vectors to subset if we need to
+            if request.GET['image_type'] == 'vectors' and vector_step > 1:
+                num_vec = int(bool_spatial_idx.size / vector_step)
+                step = int(bool_spatial_idx.size / num_vec)
+                bool_spatial_idx[np.where(bool_spatial_idx==True)][0::step] = False
 
             # If no triangles intersect the field of view, return a transparent tile
-            if (len(spatial_idx) == 0) or (len(face_indicies_spatial_idx) == 0):
-                logger.debug("No triangles in field of view, returning empty tile.")
+            if not np.any(bool_spatial_idx):
+                logger.warning("No triangles in field of view, returning empty tile.")
                 return self.empty_response(layer, request)
 
             if isinstance(layer, Layer):
@@ -269,25 +261,15 @@ class UGridDataset(Dataset, NetCDFDataset):
                     return self.empty_response(layer, request)
 
                 if request.GET['image_type'] in ['pcolor', 'contours', 'filledcontours']:
-                    mask = np.isnan(data)  # array with NaNs appearing as True
-                    if mask.any():
-                        data_mask = ~mask  # negate the NaN boolean array; mask for non-NaN data elements
-                        # slice the data, lon, and lat to get elements that correspond to non-NaN values
-                        data = data_mask[data_mask]
-                        lon = lon[data_mask]
-                        lat = lat[data_mask]
-                        # recalculate the spatial index using the subsetted lat/lon
-                        spatial_idx = data_handler.lat_lon_subset_idx(lon,
-                                                                      lat,
-                                                                      wgs84_bbox.minx,
-                                                                      wgs84_bbox.miny,
-                                                                      wgs84_bbox.maxx,
-                                                                      wgs84_bbox.maxy
-                                                                      )
-                        face_indicies_spatial_idx = data_handler.faces_subset_idx(face_indicies, spatial_idx)
-                    tri_subset = Tri.Triangulation(lon,
-                                                   lat,
-                                                   triangles=face_indicies[face_indicies_spatial_idx])
+                    # Avoid triangles with nan values
+                    bool_spatial_idx[np.isnan(data)] = False
+
+                    # Get the faces to plot
+                    faces = ug.faces[:]
+                    face_idx = data_handler.face_idx_from_node_idx(faces, bool_spatial_idx)
+                    faces_subset = faces[face_idx]
+                    tri_subset = Tri.Triangulation(lon, lat, triangles=faces_subset)
+
                     if request.GET['image_type'] == 'pcolor':
                         return mpl_handler.tripcolor_response(tri_subset, data, request, data_location=data_location)
                     else:
@@ -298,30 +280,27 @@ class UGridDataset(Dataset, NetCDFDataset):
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
             elif isinstance(layer, VirtualLayer):
-
                 # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
                 data = []
                 for l in layer.layers:
                     data_obj = nc.variables[l.var_name]
                     if (len(data_obj.shape) == 3):
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        data.append(data_obj[time_index, z_index, :])
+                        data.append(data_obj[time_index, z_index, bool_spatial_idx])
                     elif (len(data_obj.shape) == 2):
-                        data.append(data_obj[time_index, :])
+                        data.append(data_obj[time_index, bool_spatial_idx])
                     elif len(data_obj.shape) == 1:
-                        data.append(data_obj[:])
+                        data.append(data_obj[bool_spatial_idx])
                     else:
                         logger.debug("Dimension Mismatch: data_obj.shape == {0} and time = {1}".format(data_obj.shape, time_value))
                         return self.empty_response(layer, request)
 
                 if request.GET['image_type'] == 'vectors':
-                    return mpl_handler.quiver_response(lon[spatial_idx],
-                                                       lat[spatial_idx],
-                                                       data[0][spatial_idx],
-                                                       data[1][spatial_idx],
-                                                       request,
-                                                       vectorscale
-                                                       )
+                    return mpl_handler.quiver_response(lon[bool_spatial_idx],
+                                                       lat[bool_spatial_idx],
+                                                       data[0],
+                                                       data[1],
+                                                       request)
                 else:
                     raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
@@ -415,7 +394,7 @@ class UGridDataset(Dataset, NetCDFDataset):
                 maxx = np.nanmax(coords[:, 0])
                 maxy = np.nanmax(coords[:, 1])
 
-                return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
+                return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy, bbox=(minx, miny, maxx, maxy))
             except AttributeError:
                 pass
 

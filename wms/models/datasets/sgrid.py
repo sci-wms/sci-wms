@@ -403,7 +403,8 @@ class SGridDataset(Dataset, NetCDFDataset):
             return DotDict(minx=lon_min,
                            miny=lat_min,
                            maxx=lon_max,
-                           maxy=lat_max
+                           maxy=lat_max,
+                           bbox=(lon_min, lat_min, lon_max, lat_max)
                            )
 
     def nearest_z(self, layer, z):

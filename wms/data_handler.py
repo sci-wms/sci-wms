@@ -23,7 +23,14 @@ def faces_subset_idx(face_indicies, spatial_idx):
     Return row indicies into the nv data structure which have indicies
     inside the bounding box defined by lat_lon_subset_idx
     """
-    return np.asarray(np.where(np.all(np.in1d(face_indicies, spatial_idx).reshape(face_indicies.shape), 1))).squeeze()
+    return np.asarray(np.where(np.all(np.in1d(face_indicies, spatial_idx).reshape(face_indicies.shape), axis=1))).squeeze()
+
+
+def face_idx_from_node_idx(faces, spatial_idx):
+    subset_indexes = np.where(spatial_idx==True)  # Convert from bool array to index array  noqa
+    intersect = np.in1d(faces, subset_indexes).reshape(faces.shape)  # Intersect on the node indexes
+    faces_idx = np.all(intersect, axis=1)  # Only save faces where there are all nodes indexed
+    return faces_idx
 
 
 def blank_canvas(width, height, dpi=5):
@@ -41,3 +48,21 @@ def blank_canvas(width, height, dpi=5):
     ax.set_position([0, 0, 1, 1])
     canvas = FigureCanvasAgg(fig)
     return canvas
+
+
+def ugrid_lat_lon_subset_idx(lon, lat, bbox, padding=None):
+    """
+    Assumes the size of lat/lon are equal (UGRID variables).
+    Returns a boolean mask array of the indexes, suitable for slicing
+    """
+
+    padding = padding or 0.18
+
+    minlon = bbox[0] - padding
+    minlat = bbox[1] - padding
+    maxlon = bbox[2] + padding
+    maxlat = bbox[3] + padding
+
+    land = np.logical_and
+    return land(land(lon >= minlon, lon <= maxlon),
+                land(lat >= minlat, lat <= maxlat))

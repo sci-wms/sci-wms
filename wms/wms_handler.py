@@ -31,7 +31,7 @@ def get_wgs84_bbox(request):
     wgs84_minx, wgs84_miny = pyproj.transform(crs, EPSG4326, bbox.minx, bbox.miny)
     wgs84_maxx, wgs84_maxy = pyproj.transform(crs, EPSG4326, bbox.maxx, bbox.maxy)
 
-    return DotDict(minx=wgs84_minx, miny=wgs84_miny, maxx=wgs84_maxx, maxy=wgs84_maxy)
+    return DotDict(minx=wgs84_minx, miny=wgs84_miny, maxx=wgs84_maxx, maxy=wgs84_maxy, bbox=(wgs84_minx, wgs84_miny, wgs84_maxx, wgs84_maxy))
 
 
 def get_format(request):

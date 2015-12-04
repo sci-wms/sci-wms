@@ -36,12 +36,15 @@ def _get_common_params(request):
     return params
 
 
-def tripcolor_response(tri_subset, data, request, data_location=None, dpi=80.0):
+def tripcolor_response(tri_subset, data, request, data_location=None, dpi=None):
     """
     triang_subset is a matplotlib.Tri object in lat/lon units (will be converted to projected coordinates)
     xmin, ymin, xmax, ymax is the bounding pox of the plot in PROJETED COORDINATES!!!
     request is the original getMap request object
     """
+
+    dpi = dpi or 80.
+
     bbox = request.GET['bbox']
     width = request.GET['width']
     height = request.GET['height']
@@ -94,12 +97,15 @@ def tripcolor_response(tri_subset, data, request, data_location=None, dpi=80.0):
     return response
 
 
-def tricontouring_response(tri_subset, data, request, dpi=80.0):
+def tricontouring_response(tri_subset, data, request, dpi=None):
     """
     triang_subset is a matplotlib.Tri object in lat/lon units (will be converted to projected coordinates)
     xmin, ymin, xmax, ymax is the bounding pox of the plot in PROJETED COORDINATES!!!
     request is the original getMap request object
     """
+
+    dpi = dpi or 80.
+
     bbox = request.GET['bbox']
     width = request.GET['width']
     height = request.GET['height']
@@ -155,23 +161,20 @@ def tricontouring_response(tri_subset, data, request, dpi=80.0):
     return response
 
 
-def quiver_response(lon,
-                    lat,
-                    dx,
-                    dy,
-                    request,
-                    vectorscale,
-                    unit_vectors=False,
-                    dpi=80):
+def quiver_response(lon, lat, dx, dy, request, dpi=None):
+
+    dpi = dpi or 80.
 
     bbox = request.GET['bbox']
     width = request.GET['width']
     height = request.GET['height']
     colormap = request.GET['colormap']
     colorscalerange = request.GET['colorscalerange']
+    vectorscale = request.GET['vectorscale']
     cmin = colorscalerange.min
     cmax = colorscalerange.max
     crs = request.GET['crs']
+    unit_vectors = None  # We don't support requesting these yet, but wouldn't be hard
 
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
     x, y = pyproj.transform(EPSG4326, crs, lon, lat)  # TODO order for non-inverse?
@@ -220,7 +223,10 @@ def quiver_response(lon,
     return response
 
 
-def contouring_response(lon, lat, data, request, dpi=80):
+def contouring_response(lon, lat, data, request, dpi=None):
+
+    dpi = dpi or 80.
+
     bbox, width, height, colormap, cmin, cmax, crs = _get_common_params(request)
     nlvls = request.GET['numcontours']
 
@@ -272,11 +278,10 @@ def contouring_response(lon, lat, data, request, dpi=80):
     return response
 
 
-def pcolormesh_response(lon,
-                        lat,
-                        data,
-                        request,
-                        dpi=80):
+def pcolormesh_response(lon, lat, data, request, dpi=None):
+
+    dpi = dpi or 80.
+
     bbox, width, height, colormap, cmin, cmax, crs = _get_common_params(request)
 
     EPSG4326 = pyproj.Proj(init='EPSG:4326')
