@@ -65,19 +65,19 @@ class UGridTideDataset(UGridDataset):
 
                 # We are changing the variable names to 'u' and 'v' from 'u_amp' and 'v_amp' so
                 # the layer.access_method can find the variable from the virtual layer 'u,v'
-                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[ntides/2, nlocs/4])
+                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[1, nlocs/4])
                 for x in uamp.ncattrs():
                     if x != '_FillValue':
                         ua.setncattr(x, uamp.getncattr(x))
-                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[ntides/2, nlocs/4])
+                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[1, nlocs/4])
                 for x in vamp.ncattrs():
                     if x != '_FillValue':
                         va.setncattr(x, vamp.getncattr(x))
-                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[ntides/2, nlocs/4])
+                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[1, nlocs/4])
                 for x in uphase.ncattrs():
                     if x != '_FillValue':
                         up.setncattr(x, uphase.getncattr(x))
-                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[ntides/2, nlocs/4])
+                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[1, nlocs/4])
                 for x in vphase.ncattrs():
                     if x != '_FillValue':
                         vp.setncattr(x, vphase.getncattr(x))
