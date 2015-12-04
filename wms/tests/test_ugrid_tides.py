@@ -100,43 +100,43 @@ class TestUgridTides(TestCase):
         params = copy(self.url_params)
         self.do_test(params)
 
-    @xfail(reason="filledcontours is not yet implemeted for UGRID datasets")
+    @xfail(reason="filledcontours is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_cubehelix')
         self.do_test(params)
 
-    @xfail(reason="filledcontours is not yet implemeted for UGRID datasets")
+    @xfail(reason="filledcontours is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_filledcontours_50(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
-    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
+    @xfail(reason="pcolor is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix')
         self.do_test(params)
 
-    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
+    @xfail(reason="pcolor is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_pcolor_logscale(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix', logscale=True)
         self.do_test(params)
 
-    @xfail(reason="facets is not yet implemeted for UGRID datasets")
+    @xfail(reason="facets is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_facets(self):
         params = copy(self.url_params)
         params.update(styles='facets_cubehelix')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemeted for UGRID datasets")
+    @xfail(reason="contours is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_cubehelix')
         self.do_test(params)
 
-    @xfail(reason="contours is not yet implemeted for UGRID datasets")
+    @xfail(reason="contours is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_contours_50(self):
         params = copy(self.url_params)
         params.update(styles='contours_cubehelix', numcontours=50)
