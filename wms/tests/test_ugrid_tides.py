@@ -2,8 +2,6 @@
 from copy import copy
 from datetime import datetime
 
-import pandas as pd
-
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, UGridDataset
@@ -102,21 +100,25 @@ class TestUgridTides(TestCase):
         params = copy(self.url_params)
         self.do_test(params)
 
+    @xfail(reason="filledcontours is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_filledcontours(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_cubehelix')
         self.do_test(params)
 
+    @xfail(reason="filledcontours is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_filledcontours_50(self):
         params = copy(self.url_params)
         params.update(styles='filledcontours_cubehelix', numcontours=50)
         self.do_test(params)
 
+    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_pcolor(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix')
         self.do_test(params)
 
+    @xfail(reason="pcolor is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_pcolor_logscale(self):
         params = copy(self.url_params)
         params.update(styles='pcolor_cubehelix', logscale=True)
@@ -128,11 +130,13 @@ class TestUgridTides(TestCase):
         params.update(styles='facets_cubehelix')
         self.do_test(params)
 
+    @xfail(reason="contours is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_contours(self):
         params = copy(self.url_params)
         params.update(styles='contours_cubehelix')
         self.do_test(params)
 
+    @xfail(reason="contours is not yet implemeted for UGRID datasets")
     def test_ugrid_tides_contours_50(self):
         params = copy(self.url_params)
         params.update(styles='contours_cubehelix', numcontours=50)
@@ -141,23 +145,6 @@ class TestUgridTides(TestCase):
     def test_ugrid_tides_gfi_single_variable_csv(self):
         params = copy(self.gfi_params)
         self.do_test(params, fmt='csv')
-
-    def test_gfi_single_variable_csv_4326(self):
-        params = copy(self.gfi_params)
-        params['srs']  = 'EPSG:4326'
-        params['bbox'] = '-123.57421875,46.19504211,-123.3984375,46.31658418'
-        self.do_test(params, fmt='csv')
-
-    def test_gfi_single_variable_tsv(self):
-        params = copy(self.gfi_params)
-        params['info_format']  = 'text/tsv'
-        params['query_layers'] = 'surface_temp'
-        self.do_test(params, fmt='tsv')
-
-    def test_gfi_single_variable_json(self):
-        params = copy(self.gfi_params)
-        params['info_format']  = 'application/json'
-        self.do_test(params, fmt='json')
 
     def test_ugrid_tides_getmetadata_minmax(self):
         params = copy(self.gmd_params)
@@ -168,11 +155,14 @@ class TestUgridTides(TestCase):
         params = dict(request='GetCapabilities')
         self.do_test(params, fmt='xml', write=True)
 
-    def test_create_layers(self):
+    def test_ugrid_tides_create_layers(self):
         d = Dataset.objects.get(name=self.dataset_slug)
-        assert d.layer_set.count() == 2
+        assert d.layer_set.count() == 0
+        assert d.virtuallayer_set.count() == 1
+        assert d.virtuallayer_set.first().var_name == 'u,v'
+        assert d.virtuallayer_set.first().access_name == 'u'
 
-    def test_delete_cache_signal(self):
+    def test_ugrid_tides_delete_cache_signal(self):
         d = add_dataset("ugrid_tides_deleting", "ugrid_tides", "adcirc_tides.nc")
         self.assertTrue(d.has_cache())
         d.clear_cache()

@@ -1,31 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
-import time
-import bisect
-import shutil
-import tempfile
 import calendar
-import itertools
-from math import sqrt
 from datetime import datetime
 
 import pytz
 
 from pyugrid import UGrid
-from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
+from pyaxiom.netcdf import EnhancedDataset
 import numpy as np
-import netCDF4
 
 from wms.models import Style
 
-import pandas as pd
-
-import matplotlib.tri as Tri
-
-from rtree import index
-
-from wms.models import Dataset, Layer, VirtualLayer, NetCDFDataset
-from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor, find_appropriate_time
+from wms.models import UGridDataset
+from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit
 
 from wms import data_handler
 from wms import mpl_handler
@@ -35,75 +22,17 @@ from wms import gmd_handler
 from wms import logger
 
 
-class UGridTideDataset(Dataset, NetCDFDataset):
+class UGridTideDataset(UGridDataset):
 
     @classmethod
     def is_valid(cls, uri):
         try:
             with EnhancedDataset(uri) as ds:
-                return 'ugrid' in ds.Conventions.lower()
-        except RuntimeError:
-            try:
-                with EnhancedMFDataset(uri, aggdim='time') as ds:
-                    return 'ugrid' in ds.Conventions.lower()
-            except (AttributeError, RuntimeError):
-                return False
-        except AttributeError:
+                return 'utides' in ds.Conventions.lower()
+        except (RuntimeError, AttributeError):
             return False
 
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
-
-    def make_rtree(self):
-
-        with self.dataset() as nc:
-            ug = UGrid.from_nc_dataset(nc=nc)
-
-            def rtree_faces_generator_function():
-                for face_idx, node_list in enumerate(ug.faces):
-                    nodes = ug.nodes[node_list]
-                    xmin, ymin = np.min(nodes, 0)
-                    xmax, ymax = np.max(nodes, 0)
-                    yield (face_idx, (xmin, ymin, xmax, ymax), face_idx)
-            logger.info("Building Faces Rtree Topology Cache for {0}".format(self.name))
-            start = time.time()
-            _, face_temp_file = tempfile.mkstemp(suffix='.face')
-            pf = index.Property()
-            pf.filename = str(face_temp_file)
-            pf.overwrite = True
-            pf.storage   = index.RT_Disk
-            pf.dimension = 2
-            idx = index.Index(pf.filename.decode('utf-8'),
-                              rtree_faces_generator_function(),
-                              properties=pf,
-                              interleaved=True,
-                              overwrite=True)
-            idx.close()
-            logger.info("Built Faces Rtree Topology Cache in {0} seconds.".format(time.time() - start))
-            shutil.move('{}.dat'.format(face_temp_file), self.face_tree_data_file)
-            shutil.move('{}.idx'.format(face_temp_file), self.face_tree_index_file)
-
-            def rtree_nodes_generator_function():
-                for node_index, (x, y) in enumerate(ug.nodes):
-                    yield (node_index, (x, y, x, y), node_index)
-            logger.info("Building Nodes Rtree Topology Cache for {0}".format(self.name))
-            start = time.time()
-            _, node_temp_file = tempfile.mkstemp(suffix='.node')
-            pn = index.Property()
-            pn.filename = str(node_temp_file)
-            pn.overwrite = True
-            pn.storage   = index.RT_Disk
-            pn.dimension = 2
-            idx = index.Index(pn.filename.decode('utf-8'),
-                              rtree_nodes_generator_function(),
-                              properties=pn,
-                              interleaved=True,
-                              overwrite=True)
-            idx.close()
-            logger.info("Built Nodes Rtree Topology Cache in {0} seconds.".format(time.time() - start))
-            shutil.move('{}.dat'.format(node_temp_file), self.node_tree_data_file)
-            shutil.move('{}.idx'.format(node_temp_file), self.node_tree_index_file)
-
+    @timeit
     def update_cache(self, force=False):
         with self.dataset() as nc:
             ug = UGrid.from_nc_dataset(nc=nc)
@@ -122,30 +51,37 @@ class UGridTideDataset(Dataset, NetCDFDataset):
                 tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
                 tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
 
-                mesh_name = uamp.mesh
-
                 ntides = uamp.shape[uamp.dimensions.index('ntides')]
+                nlocs = uamp.shape[uamp.dimensions.index(uamp.location)]
                 cnc.createDimension('ntides', ntides)
                 cnc.createDimension('maxStrlen64', 64)
 
+                vdims = ('ntides', '{}_num_{}'.format(uamp.mesh, uamp.location))
+
+                # Swap ntides to always be the first dimension.. it can be the second in the source files!
+                transpose = False
+                if uamp.shape[0] > uamp.shape[1]:
+                    logger.info("Found flipped dimensions in source file... fixing in local cache.")
+                    transpose = True
+
                 # We are changing the variable names to 'u' and 'v' from 'u_amp' and 'v_amp' so
                 # the layer.access_method can find the variable from the virtual layer 'u,v'
-                ua = cnc.createVariable('u', uamp.dtype, ('ntides', '{}_num_node'.format(mesh_name)), zlib=True, fill_value=uamp._FillValue)
+                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[ntides/2, nlocs/4])
                 for x in uamp.ncattrs():
                     if x != '_FillValue':
                         ua.setncattr(x, uamp.getncattr(x))
-                va = cnc.createVariable('v', vamp.dtype, ('ntides', '{}_num_node'.format(mesh_name)), zlib=True, fill_value=vamp._FillValue)
+                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[ntides/2, nlocs/4])
                 for x in vamp.ncattrs():
                     if x != '_FillValue':
-                        ua.setncattr(x, vamp.getncattr(x))
-                up = cnc.createVariable('u_phase', uphase.dtype, ('ntides', '{}_num_node'.format(mesh_name)), zlib=True, fill_value=uphase._FillValue)
+                        va.setncattr(x, vamp.getncattr(x))
+                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[ntides/2, nlocs/4])
                 for x in uphase.ncattrs():
                     if x != '_FillValue':
-                        ua.setncattr(x, uphase.getncattr(x))
-                vp = cnc.createVariable('v_phase', vphase.dtype, ('ntides', '{}_num_node'.format(mesh_name)), zlib=True, fill_value=vphase._FillValue)
+                        up.setncattr(x, uphase.getncattr(x))
+                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[ntides/2, nlocs/4])
                 for x in vphase.ncattrs():
                     if x != '_FillValue':
-                        ua.setncattr(x, vphase.getncattr(x))
+                        vp.setncattr(x, vphase.getncattr(x))
 
                 tc = cnc.createVariable('tidenames', tnames.dtype, tnames.dimensions)
                 tc[:] = tnames[:]
@@ -161,10 +97,16 @@ class UGridTideDataset(Dataset, NetCDFDataset):
 
                 for r in range(ntides):
                     logger.info("Saving ntide {} into cache".format(r))
-                    ua[:, r] = uamp[r, :]
-                    va[:, r] = vamp[r, :]
-                    up[:, r] = uphase[r, :]
-                    vp[:, r] = vphase[r, :]
+                    if transpose is True:
+                        ua[r, :] = uamp[:, r].T
+                        va[r, :] = vamp[:, r].T
+                        up[r, :] = uphase[:, r].T
+                        vp[r, :] = vphase[:, r].T
+                    else:
+                        ua[r, :] = uamp[r, :]
+                        va[r, :] = vamp[r, :]
+                        up[r, :] = uphase[r, :]
+                        vp[r, :] = vphase[r, :]
 
             # Now do the RTree index
             self.make_rtree()
@@ -176,10 +118,11 @@ class UGridTideDataset(Dataset, NetCDFDataset):
         _, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
         us, vs, _, _ = self.get_tidal_vectors(layer, time=time_value, bbox=(wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy))
+        magnitude = np.sqrt((us*us) + (vs*vs))
+        return gmd_handler.from_dict(dict(min=np.min(magnitude), max=np.max(magnitude)))
 
-        return gmd_handler.from_dict(dict(min=np.min(us), max=np.max(us)))
-
-    def get_tidal_vectors(self, layer, time, bbox):
+    @timeit
+    def get_tidal_vectors(self, layer, time, bbox, vector_scale, vector_step):
 
         with EnhancedDataset(self.topology_file) as nc:
             data_obj = nc.variables[layer.access_name]
@@ -198,9 +141,11 @@ class UGridTideDataset(Dataset, NetCDFDataset):
             lon = coords[:, 0]
             lat = coords[:, 1]
 
-            land = np.logical_and
-            spatial_idx = land(land(lon >= bbox[0], lon <= bbox[2]),
-                               land(lat >= bbox[1], lat <= bbox[3]))
+            padding_factor = calc_safety_factor(vector_scale)
+            padding = calc_lon_lat_padding(lon, lat, padding_factor) * vector_step
+            spatial_idx = data_handler.ugrid_lat_lon_subset_idx(lon, lat,
+                                                                bbox=bbox,
+                                                                padding=padding)
 
             tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
             tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
@@ -255,169 +200,30 @@ class UGridTideDataset(Dataset, NetCDFDataset):
 
     def getmap(self, layer, request):
         _, time_value = self.nearest_time(layer, request.GET['time'])
-        wgs84_bbox = request.GET['wgs84_bbox']
-        us, vs, lons, lats = self.get_tidal_vectors(layer, time=time_value, bbox=(wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy))
 
-        logger.info(us)
+        vector_scale = 1
+        vector_step = 1
 
-        return mpl_handler.quiver_response(lons,
-                                           lats,
-                                           us,
-                                           vs,
-                                           request,
-                                           1
-                                           )
+        if request.GET['image_type'] == 'vectors':
+            vector_scale = request.GET['vectorscale']
+            vector_step = request.GET['vectorstep']
+
+        us, vs, lons, lats = self.get_tidal_vectors(layer,
+                                                    time=time_value,
+                                                    bbox=request.GET['wgs84_bbox'].bbox,
+                                                    vector_scale=vector_scale,
+                                                    vector_step=vector_step)
+
+        if request.GET['image_type'] == 'vectors':
+            return mpl_handler.quiver_response(lons, lats, us, vs, request)
+        else:
+            raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
     def getfeatureinfo(self, layer, request):
-        with self.dataset() as nc:
-            with self.topology() as topo:
-                data_obj = nc.variables[layer.access_name]
-                data_location = data_obj.location
-                # mesh_name = data_obj.mesh
-                # Use local topology for pulling bounds data
-                # ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
-
-                geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(topo, data_obj, request, location=data_location)
-
-                logger.info("Start index: {}".format(start_time_index))
-                logger.info("End index: {}".format(end_time_index))
-                logger.info("Geo index: {}".format(geo_index))
-
-                return_arrays = []
-                z_value = None
-                if isinstance(layer, Layer):
-                    if len(data_obj.shape) == 3:
-                        z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                        data = data_obj[start_time_index:end_time_index, z_index, geo_index]
-                    elif len(data_obj.shape) == 2:
-                        data = data_obj[start_time_index:end_time_index, geo_index]
-                    elif len(data_obj.shape) == 1:
-                        data = data_obj[geo_index]
-                    else:
-                        raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
-
-                    return_arrays.append((layer.var_name, data))
-
-                elif isinstance(layer, VirtualLayer):
-
-                    # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
-                    for l in layer.layers:
-                        data_obj = nc.variables[l.var_name]
-                        if len(data_obj.shape) == 3:
-                            z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                            data = data_obj[start_time_index:end_time_index, z_index, geo_index]
-                        elif len(data_obj.shape) == 2:
-                            data = data_obj[start_time_index:end_time_index, geo_index]
-                        elif len(data_obj.shape) == 1:
-                            data = data_obj[geo_index]
-                        else:
-                            raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
-
-                        return_arrays.append((l.var_name, data))
-
-                # Data is now in the return_arrays list, as a list of numpy arrays.  We need
-                # to add time and depth to them to create a single Pandas DataFrame
-                if (len(data_obj.shape) == 3):
-                    df = pd.DataFrame({'time': return_dates,
-                                       'x': closest_x,
-                                       'y': closest_y,
-                                       'z': z_value})
-                elif (len(data_obj.shape) == 2):
-                    df = pd.DataFrame({'time': return_dates,
-                                       'x': closest_x,
-                                       'y': closest_y})
-                elif (len(data_obj.shape) == 1):
-                    df = pd.DataFrame({'x': closest_x,
-                                       'y': closest_y})
-                else:
-                    df = pd.DataFrame()
-
-                # Now add a column for each member of the return_arrays list
-                for (var_name, np_array) in return_arrays:
-                    df.loc[:, var_name] = pd.Series(np_array, index=df.index)
-
-                return gfi_handler.from_dataframe(request, df)
-
-    def wgs84_bounds(self, layer):
-        with self.dataset() as nc:
-            try:
-                data_location = nc.variables[layer.access_name].location
-                mesh_name = nc.variables[layer.access_name].mesh
-                # Use local topology for pulling bounds data
-                ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
-                coords = np.empty(0)
-                if data_location == 'node':
-                    coords = ug.nodes
-                elif data_location == 'face':
-                    coords = ug.face_coordinates
-                elif data_location == 'edge':
-                    coords = ug.edge_coordinates
-
-                minx = np.nanmin(coords[:, 0])
-                miny = np.nanmin(coords[:, 1])
-                maxx = np.nanmax(coords[:, 0])
-                maxy = np.nanmax(coords[:, 1])
-
-                return DotDict(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
-            except AttributeError:
-                pass
-
-    def nearest_z(self, layer, z):
-        """
-        Return the z index and z value that is closest
-        """
-        depths = self.depths(layer)
-        depth_idx = bisect.bisect_right(depths, z)
-        try:
-            depths[depth_idx]
-        except IndexError:
-            depth_idx -= 1
-        return depth_idx, depths[depth_idx]
-
-    def times(self, layer):
-        with self.topology() as nc:
-            time_vars = nc.get_variables_by_attributes(standard_name='time')
-            if len(time_vars) == 1:
-                time_var = time_vars[0]
-            else:
-                # if there is more than variable with standard_name = time
-                # fine the appropriate one to use with the layer
-                var_obj = nc.variables[layer.access_name]
-                time_var_name = find_appropriate_time(var_obj, time_vars)
-                time_var = nc.variables[time_var_name]
-            return netCDF4.num2date(time_var[:], units=time_var.units)
-
-    def depth_variable(self, layer):
-        with self.dataset() as nc:
-            try:
-                layer_var = nc.variables[layer.access_name]
-                for cv in layer_var.coordinates.strip().split():
-                    try:
-                        coord_var = nc.variables[cv]
-                        if hasattr(coord_var, 'axis') and coord_var.axis.lower().strip() == 'z':
-                            return coord_var
-                        elif hasattr(coord_var, 'positive') and coord_var.positive.lower().strip() in ['up', 'down']:
-                            return coord_var
-                    except BaseException:
-                        pass
-            except AttributeError:
-                pass
-
-    def depth_direction(self, layer):
-        d = self.depth_variable(layer)
-        if d is not None:
-            if hasattr(d, 'positive'):
-                return d.positive
-        return 'unknown'
-
-    def depths(self, layer):
-        d = self.depth_variable(layer)
-        if d is not None:
-            return range(0, d.shape[0])
-        return []
+        raise NotImplementedError("No GFI suuport for UGRID-TIDES (yet)")
 
     def humanize(self):
-        return "UGRID-TIDES"
+        return "UTIDES"
 
     def analyze_virtual_layers(self):
         vl = VirtualLayer.objects.create(var_name='u,v',

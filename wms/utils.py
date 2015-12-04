@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import time
+
 from datetime import timedelta
 import numpy as np
 
@@ -139,3 +141,17 @@ def calculate_time_windows(times):
         yield [times[starting], times[ending], (times[ending] - times[starting]) / (ending - starting)]
     except ZeroDivisionError:
         yield [times[starting], times[ending], times[ending] - times[starting]]
+
+
+def timeit(f):
+
+    def timed(*args, **kw):
+
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+
+        logger.info('func:{} took: {} sec'.format(f.__name__, te-ts))
+        return result
+
+    return timed
