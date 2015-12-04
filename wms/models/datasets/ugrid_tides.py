@@ -116,11 +116,14 @@ class UGridTideDataset(UGridDataset):
     def minmax(self, layer, request):
         _, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
-        us, vs, _, _ = self.get_tidal_vectors(layer, time=time_value, bbox=(wgs84_bbox.minx, wgs84_bbox.miny, wgs84_bbox.maxx, wgs84_bbox.maxy))
+        us, vs, _, _ = self.get_tidal_vectors(layer, time=time_value, bbox=wgs84_bbox.bbox)
         magnitude = np.sqrt((us*us) + (vs*vs))
         return gmd_handler.from_dict(dict(min=np.min(magnitude), max=np.max(magnitude)))
 
-    def get_tidal_vectors(self, layer, time, bbox, vector_scale, vector_step):
+    def get_tidal_vectors(self, layer, time, bbox, vector_scale=None, vector_step=None):
+
+        vector_scale = vector_scale or 1
+        vector_step = vector_step or 1
 
         with netCDF4.Dataset(self.topology_file) as nc:
             data_obj = nc.variables[layer.access_name]
@@ -199,8 +202,8 @@ class UGridTideDataset(UGridDataset):
     def getmap(self, layer, request):
         _, time_value = self.nearest_time(layer, request.GET['time'])
 
-        vector_scale = 1
-        vector_step = 1
+        vector_scale = None
+        vector_step = None
 
         if request.GET['image_type'] == 'vectors':
             vector_scale = request.GET['vectorscale']
