@@ -6,12 +6,12 @@ from datetime import datetime
 import pytz
 
 from pyugrid import UGrid
-from pyaxiom.netcdf import EnhancedDataset
+import netCDF4
 import numpy as np
 
 from wms.models import Style
 
-from wms.models import UGridDataset
+from wms.models import UGridDataset, VirtualLayer
 from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit
 
 from wms import data_handler
@@ -27,7 +27,7 @@ class UGridTideDataset(UGridDataset):
     @classmethod
     def is_valid(cls, uri):
         try:
-            with EnhancedDataset(uri) as ds:
+            with netCDF4.Dataset(uri) as ds:
                 return 'utides' in ds.Conventions.lower()
         except (RuntimeError, AttributeError):
             return False
@@ -35,21 +35,21 @@ class UGridTideDataset(UGridDataset):
     @timeit
     def update_cache(self, force=False):
         with self.dataset() as nc:
-            ug = UGrid.from_nc_dataset(nc=nc)
+            ug = UGrid.from_nc_dataset(nc)
             ug.save_as_netcdf(self.topology_file)
 
             if not os.path.exists(self.topology_file):
                 logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
                 return
 
-            with EnhancedDataset(self.topology_file, mode='a') as cnc:
+            uamp = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_amplitude')[0]
+            vamp = nc.get_variables_by_attributes(standard_name='northward_sea_water_velocity_amplitude')[0]
+            uphase = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_phase')[0]
+            vphase = nc.get_variables_by_attributes(standard_name='northward_sea_water_velocity_phase')[0]
+            tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
+            tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
 
-                uamp = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_amplitude')[0]
-                vamp = nc.get_variables_by_attributes(standard_name='northward_sea_water_velocity_amplitude')[0]
-                uphase = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_phase')[0]
-                vphase = nc.get_variables_by_attributes(standard_name='northward_sea_water_velocity_phase')[0]
-                tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
-                tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
+            with netCDF4.Dataset(self.topology_file, mode='a') as cnc:
 
                 ntides = uamp.shape[uamp.dimensions.index('ntides')]
                 nlocs = uamp.shape[uamp.dimensions.index(uamp.location)]
@@ -108,8 +108,8 @@ class UGridTideDataset(UGridDataset):
                         up[r, :] = uphase[r, :]
                         vp[r, :] = vphase[r, :]
 
-            # Now do the RTree index
-            self.make_rtree()
+        # Now do the RTree index
+        #self.make_rtree()
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
@@ -124,12 +124,12 @@ class UGridTideDataset(UGridDataset):
     @timeit
     def get_tidal_vectors(self, layer, time, bbox, vector_scale, vector_step):
 
-        with EnhancedDataset(self.topology_file) as nc:
+        with netCDF4.Dataset(self.topology_file) as nc:
             data_obj = nc.variables[layer.access_name]
             data_location = data_obj.location
             mesh_name = data_obj.mesh
 
-            ug = UGrid.from_ncfile(self.topology_file, mesh_name=mesh_name)
+            ug = UGrid.from_nc_dataset(nc, mesh_name=mesh_name)
             coords = np.empty(0)
             if data_location == 'node':
                 coords = ug.nodes
