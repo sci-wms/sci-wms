@@ -142,6 +142,7 @@ class TestUgridTides(TestCase):
         params.update(styles='contours_cubehelix', numcontours=50)
         self.do_test(params)
 
+    @xfail(reason="GetFeatureInfo is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_gfi_single_variable_csv(self):
         params = copy(self.gfi_params)
         self.do_test(params, fmt='csv')
