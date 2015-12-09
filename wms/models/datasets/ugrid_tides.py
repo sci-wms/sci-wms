@@ -221,16 +221,18 @@ class UGridTideDataset(UGridDataset):
             raise NotImplementedError('Image type "{}" is not supported.'.format(request.GET['image_type']))
 
     def getfeatureinfo(self, layer, request):
-        raise NotImplementedError("No GFI suuport for UGRID-TIDES (yet)")
+        raise NotImplementedError("No GFI support for UGRID-TIDES (yet)")
 
     def analyze_virtual_layers(self):
-        vl = VirtualLayer.objects.create(var_name='u,v',
-                                         std_name='barotropic_sea_water_velocity',
-                                         units='m/s',
-                                         description="Barotropic sea water velocity from tidal constituents",
-                                         dataset_id=self.pk,
-                                         active=True)
-        vl.styles.add(Style.objects.get(colormap='cubehelix', image_type='vectors'))
+        vl, created = VirtualLayer.objects.get_or_create(var_name='u,v', dataset_id=self.pk)
+        vl.std_name = 'barotropic_sea_water_velocity'
+        vl.units = 'm/s'
+        vl.description = "Barotropic sea water velocity from tidal constituents"
+
+        if created is True:
+            vl.active = True
+            vl.styles.add(Style.objects.get(colormap='cubehelix', image_type='vectors'))
+
         vl.save()
 
     def process_layers(self):
