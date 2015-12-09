@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
-from wms.models import Dataset, UGridDataset
+from wms.models import Dataset, UGridTideDataset
 
 from wms import logger
 
@@ -72,7 +72,7 @@ class TestUgridTides(TestCase):
     def test_identify(self):
         d = Dataset.objects.get(name=self.dataset_slug)
         klass = Dataset.identify(d.uri)
-        assert klass == UGridDataset
+        assert klass == UGridTideDataset
 
     def do_test(self, params, fmt=None, write=True):
         fmt = fmt or 'png'
