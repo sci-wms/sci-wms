@@ -100,6 +100,11 @@ class TestUgridTides(TestCase):
         params = copy(self.url_params)
         self.do_test(params)
 
+    def test_ugrid_tides_empty_response(self):
+        params = copy(self.url_params)
+        params['bbox'] = '0,0,1,1',
+        self.do_test(params)
+
     @xfail(reason="filledcontours is not yet implemeted for UTIDE datasets")
     def test_ugrid_tides_filledcontours(self):
         params = copy(self.url_params)

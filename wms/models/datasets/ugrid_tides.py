@@ -108,7 +108,7 @@ class UGridTideDataset(UGridDataset):
                         vp[r, :] = vphase[r, :]
 
         # Now do the RTree index
-        #self.make_rtree()
+        self.make_rtree()
 
         self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
         self.save()
@@ -117,6 +117,10 @@ class UGridTideDataset(UGridDataset):
         _, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']
         us, vs, _, _ = self.get_tidal_vectors(layer, time=time_value, bbox=wgs84_bbox.bbox)
+
+        if us.size == 0 or vs.size == 0:
+            return gmd_handler.from_dict(dict(min=None, max=None))
+
         magnitude = np.sqrt((us*us) + (vs*vs))
         return gmd_handler.from_dict(dict(min=np.min(magnitude), max=np.max(magnitude)))
 
@@ -127,7 +131,7 @@ class UGridTideDataset(UGridDataset):
 
         with netCDF4.Dataset(self.topology_file) as nc:
             data_obj = nc.variables[layer.access_name]
-            data_location = data_obj.location
+            data_location = getattr(data_obj, 'location', 'node')
             mesh_name = data_obj.mesh
 
             ug = UGrid.from_nc_dataset(nc, mesh_name=mesh_name)
@@ -173,6 +177,10 @@ class UGridTideDataset(UGridDataset):
             for n in extract_names:
                 extract_mask[names.index(n)] = True
 
+            if not spatial_idx.any() or not extract_mask.any():
+                e = np.ma.empty(0)
+                return e, e, e, e
+
             ua = nc.variables['u'][extract_mask, spatial_idx]
             va = nc.variables['v'][extract_mask, spatial_idx]
             up = nc.variables['u_phase'][extract_mask, spatial_idx]
@@ -214,6 +222,9 @@ class UGridTideDataset(UGridDataset):
                                                     bbox=request.GET['wgs84_bbox'].bbox,
                                                     vector_scale=vector_scale,
                                                     vector_step=vector_step)
+
+        if not lons.any() or not lats.any():
+            return self.empty_response(layer, request)
 
         if request.GET['image_type'] == 'vectors':
             return mpl_handler.quiver_response(lons, lats, us, vs, request)
