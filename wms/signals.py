@@ -8,30 +8,34 @@ from wms.models import UGridDataset, SGridDataset, RGridDataset, UGridTideDatase
 
 @receiver(post_save, sender=UGridTideDataset)
 def ugrid_tides_dataset_post_save(sender, instance, created, **kwargs):
-    instance.process_layers()
-    if settings.TESTING is not True and (created is True or not instance.has_cache()):
-        instance.update_cache()
+    if settings.TESTING is not True:
+        instance.process_layers()
+        if created is True or not instance.has_cache():
+            instance.update_cache()
 
 
 @receiver(post_save, sender=UGridDataset)
 def ugrid_dataset_post_save(sender, instance, created, **kwargs):
-    instance.process_layers()
-    if settings.TESTING is not True and (created is True or not instance.has_cache()):
-        instance.update_cache()
+    if settings.TESTING is not True:
+        instance.process_layers()
+        if created is True or not instance.has_cache():
+            instance.update_cache()
 
 
 @receiver(post_save, sender=SGridDataset)
 def sgrid_dataset_post_save(sender, instance, created, **kwargs):
-    instance.process_layers()
-    if settings.TESTING is not True and (created is True or not instance.has_cache()):
-        instance.update_cache()
+    if settings.TESTING is not True:
+        instance.process_layers()
+        if created is True or not instance.has_cache():
+            instance.update_cache()
 
 
 @receiver(post_save, sender=RGridDataset)
 def rgrid_dataset_post_save(sender, instance, created, **kwargs):
-    instance.process_layers()
-    if settings.TESTING is not True and (created is True or not instance.has_cache()):
-        instance.update_cache()
+    if settings.TESTING is not True:
+        instance.process_layers()
+        if created is True or not instance.has_cache():
+            instance.update_cache()
 
 
 @receiver(post_delete, sender=UGridTideDataset)
