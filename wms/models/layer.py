@@ -125,13 +125,16 @@ class VirtualLayer(LayerBase):
                     else:
                         units = None
                     try:
-                        vl = VirtualLayer.objects.create(var_name='{},{}'.format(u._name, v._name),
-                                                         std_name=std_name,
-                                                         units=units,
-                                                         description="U ({}) and V ({}) vectors".format(u._name, v._name),
-                                                         dataset_id=dataset_id,
-                                                         active=True)
-                        vl.styles.add(Style.objects.get(colormap='cubehelix', image_type=style))
+                        vl, created = VirtualLayer.objects.get_or_create(var_name='{},{}'.format(u._name, v._name),
+                                                                         dataset_id=dataset_id)
+                        vl.std_name = std_name
+                        vl.units = units
+                        vl.description = "U ({}) and V ({}) vectors".format(u._name, v._name)
+
+                        if created is True:
+                            vl.active = True
+                            vl.styles.add(Style.objects.get(colormap='cubehelix', image_type=style))
+
                         vl.save()
                         break
                     except:
