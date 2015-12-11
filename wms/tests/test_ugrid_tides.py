@@ -19,7 +19,7 @@ class TestUgridTides(TestCase):
         add_server()
         add_group()
         add_user()
-        add_dataset("ugrid_tides_testing", "ugrid_tides", "adcirc_tides.nc")
+        add_dataset("ugrid_tides_testing", "ugrid_tides", "shinnecock.nc")
 
     @classmethod
     def tearDownClass(cls):
@@ -38,7 +38,7 @@ class TestUgridTides(TestCase):
             height      = 256,
             width       = 256,
             srs         = 'EPSG:3857',
-            bbox        = '-9489986.59,3449676.20,-9434326.84,3481716.59'
+            bbox        = '-8071750.186914611,4980025.266835802,-8061966.247294108,4989809.2064563045',
         )
 
         self.gfi_params = dict(
@@ -48,7 +48,7 @@ class TestUgridTides(TestCase):
             query_layers = 'u,v',
             info_format  = 'text/csv',
             srs          = 'EPSG:3857',
-            bbox         = '-9489986.59,3449676.20,-9434326.84,3481716.59',
+            bbox         = '-8071750.186914611,4980025.266835802,-8061966.247294108,4989809.2064563045',
             height       = 256,
             width        = 256,
             x            = 256,  # Top right
@@ -61,7 +61,7 @@ class TestUgridTides(TestCase):
             version      = '1.1.1',
             query_layers = 'u,v',
             srs          = 'EPSG:3857',
-            bbox         = '-9489986.59,3449676.20,-9434326.84,3481716.59',
+            bbox         = '-8071750.186914611,4980025.266835802,-8061966.247294108,4989809.2064563045',
             height       = 256,
             width        = 256
         )
