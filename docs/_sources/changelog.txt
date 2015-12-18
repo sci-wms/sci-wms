@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :release:`1.5.0 <2015-12-18>`
+* :feature:`106` Add the UTIDES dataset type
+* :bug:`105 major` Changed default size of Legend to match ncWMS
 * :release:`1.4.0 <2015-11-19>`
 * :feature:`106` Support the ``COLORBARONLY`` parameter in GetLegendGraphic
 * :feature:`101` Ability to view sci-wms logs from the web client (login only)
