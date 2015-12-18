@@ -1,6 +1,6 @@
 FROM debian:jessie
 
-MAINTAINER Axiom Data Science <axiom+docker@axiomdatascience.com>
+MAINTAINER Kyle Wilcox <kyle@axiomdatascience.com>
 
 # Setup CONDA (https://hub.docker.com/r/continuumio/miniconda3/~/dockerfile/)
 RUN apt-get update && apt-get install -y wget bzip2 ca-certificates pwgen \
