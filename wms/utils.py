@@ -143,6 +143,13 @@ def calculate_time_windows(times):
         yield [times[starting], times[ending], times[ending] - times[starting]]
 
 
+def version():
+    import os
+    from django.conf import settings
+    with open(os.path.join(settings.PROJECT_ROOT, '..', 'VERSION')) as f:
+        return f.read()
+
+
 def timeit(f):
 
     def timed(*args, **kw):
