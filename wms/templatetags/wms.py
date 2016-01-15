@@ -20,9 +20,3 @@ def triple_period_format_z(ds):
     for w in ds:
         ws.append('/'.join([w[0].isoformat(), w[1].isoformat(), strftime(w[2], D_DEFAULT)]))
     return ','.join(ws)
-
-
-@register.filter(name='sciwms_version')
-def sciwms_version():
-    from wms.utils import version
-    return version()
