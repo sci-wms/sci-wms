@@ -8,6 +8,7 @@
 # Default Topology location
 wms/topology/
 logs/
+wms/tests/topology/
 *.db
 !.gitkeep
 

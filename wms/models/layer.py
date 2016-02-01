@@ -65,14 +65,14 @@ class LayerBase(models.Model):
 def get_default_layer_style():
     try:
         return Style.objects.get(image_type='filledcontours', colormap='cubehelix').pk
-    except Style.DoesNotExists:
+    except Style.DoesNotExist:
         return 1
 
 
 def get_default_vlayer_style():
     try:
         return Style.objects.get(image_type='vectors', colormap='cubehelix').pk
-    except Style.DoesNotExists:
+    except Style.DoesNotExist:
         return 1
 
 

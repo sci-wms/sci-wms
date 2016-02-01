@@ -19,3 +19,8 @@ pytz
 pyugrid
 rtree
 utide
+cmocean
+
+celery>=4.1
+hiredis
+django-redis-cache

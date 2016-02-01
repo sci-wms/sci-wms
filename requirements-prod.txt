@@ -1,3 +1,4 @@
 gunicorn
 setproctitle
 gevent
+psycopg2

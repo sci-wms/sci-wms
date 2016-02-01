@@ -146,7 +146,7 @@ def calculate_time_windows(times):
 def version():
     import os
     from django.conf import settings
-    with open(os.path.join(settings.PROJECT_ROOT, '..', 'VERSION')) as f:
+    with open(os.path.join(settings.BASE_DIR, 'VERSION')) as f:
         return f.read()
 
 

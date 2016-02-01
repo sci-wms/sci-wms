@@ -6,9 +6,6 @@ import shutil
 import tempfile
 import itertools
 from math import sqrt
-from datetime import datetime
-
-import pytz
 
 from pyugrid import UGrid
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
@@ -43,7 +40,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             try:
                 with EnhancedMFDataset(uri, aggdim='time') as ds:
                     return 'ugrid' in ds.Conventions.lower()
-            except (AttributeError, RuntimeError):
+            except (IndexError, AttributeError, RuntimeError, ValueError):
                 return False
         except AttributeError:
             return False
@@ -103,43 +100,52 @@ class UGridDataset(Dataset, NetCDFDataset):
 
     def update_cache(self, force=False):
         with self.dataset() as nc:
-            ug = UGrid.from_nc_dataset(nc=nc)
-            ug.save_as_netcdf(self.topology_file)
-
-            if not os.path.exists(self.topology_file):
-                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+            if nc is None:
+                logger.error("Failed update_cache, could not load dataset "
+                             "as a netCDF4 object")
                 return
 
-            time_vars = nc.get_variables_by_attributes(standard_name='time')
-            time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
-            unique_time_dims = list(set(time_dims))
-            with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
-                # create pertinent time dimensions if they aren't already present
-                for unique_time_dim in unique_time_dims:
-                    dim_size = len(nc.dimensions[unique_time_dim])
-                    try:
-                        cached_nc.createDimension(unique_time_dim, size=dim_size)
-                    except RuntimeError:
-                        continue
+            ug = UGrid.from_nc_dataset(nc=nc)
 
-                # support cases where there may be more than one variable with standard_name='time' in a dataset
-                for time_var in time_vars:
-                    try:
-                        time_var_obj = cached_nc.createVariable(time_var.name,
-                                                                time_var.dtype,
-                                                                time_var.dimensions)
-                    except RuntimeError:
-                        time_var_obj = cached_nc.variables[time_var.name]
+            # Atomic write
+            tmphandle, tmpsave = tempfile.mkstemp()
+            try:
+                ug.save_as_netcdf(tmpsave)
+                time_vars = nc.get_variables_by_attributes(standard_name='time')
+                time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
+                unique_time_dims = list(set(time_dims))
+                with EnhancedDataset(tmpsave, mode='a') as cached_nc:
+                    # create pertinent time dimensions if they aren't already present
+                    for unique_time_dim in unique_time_dims:
+                        dim_size = len(nc.dimensions[unique_time_dim])
+                        try:
+                            cached_nc.createDimension(unique_time_dim, size=dim_size)
+                        except RuntimeError:
+                            continue
 
-                    time_var_obj[:] = time_var[:]
-                    time_var_obj.units = time_var.units
-                    time_var_obj.standard_name = 'time'
+                    # support cases where there may be more than one variable with standard_name='time' in a dataset
+                    for time_var in time_vars:
+                        try:
+                            time_var_obj = cached_nc.createVariable(time_var.name,
+                                                                    time_var.dtype,
+                                                                    time_var.dimensions)
+                        except RuntimeError:
+                            time_var_obj = cached_nc.variables[time_var.name]
 
-            # Now do the RTree index
-            self.make_rtree()
+                        time_var_obj[:] = time_var[:]
+                        time_var_obj.units = time_var.units
+                        time_var_obj.standard_name = 'time'
 
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
+            finally:
+                os.close(tmphandle)
+                if os.path.isfile(tmpsave):
+                    shutil.move(tmpsave, self.topology_file)
+                else:
+                    logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset.name))
+                    return
+
+        # Now do the RTree index
+        self.make_rtree()
 
     def minmax(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])

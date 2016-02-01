@@ -20,7 +20,6 @@ class TestUgridLegendGraphic(TestCase):
     @classmethod
     def tearDownClass(cls):
         d = Dataset.objects.get(slug="ugrid_legend_testing")
-        d.clear_cache()
         d.delete()
 
     def setUp(self):

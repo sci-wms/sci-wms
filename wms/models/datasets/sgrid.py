@@ -2,7 +2,6 @@
 import os
 import time
 import shutil
-from datetime import datetime
 import bisect
 import tempfile
 import itertools
@@ -10,7 +9,6 @@ from math import sqrt
 
 import numpy as np
 import netCDF4 as nc4
-import pytz
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 from pysgrid import load_grid
 from pysgrid.read_netcdf import NetCDFDataset as SGrid
@@ -35,8 +33,8 @@ from wms import logger
 
 class SGridDataset(Dataset, NetCDFDataset):
 
-    @staticmethod
-    def is_valid(uri):
+    @classmethod
+    def is_valid(cls, uri):
         try:
             with EnhancedDataset(uri) as ds:
                 try:
@@ -58,7 +56,7 @@ class SGridDataset(Dataset, NetCDFDataset):
                             return True
                         else:
                             return False
-            except (AttributeError, RuntimeError):
+            except (IndexError, AttributeError, RuntimeError, ValueError):
                 return False
         except (AttributeError):
             return False
@@ -99,43 +97,52 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     def update_cache(self, force=False):
         with self.dataset() as nc:
-            sg = load_grid(nc)
-            sg.save_as_netcdf(self.topology_file)
-
-            if not os.path.exists(self.topology_file):
-                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+            if nc is None:
+                logger.error("Failed update_cache, could not load dataset "
+                             "as a netCDF4 object")
                 return
+            sg = load_grid(nc)
 
-            # add time to the cached topology
-            time_vars = nc.get_variables_by_attributes(standard_name='time')
-            time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
-            unique_time_dims = list(set(time_dims))
-            with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
-                # create pertinent time dimensions if they aren't already present
-                for unique_time_dim in unique_time_dims:
-                    dim_size = len(nc.dimensions[unique_time_dim])
-                    try:
-                        cached_nc.createDimension(unique_time_dim, size=dim_size)
-                    except RuntimeError:
-                        continue
-                # support cases where there may be more than one variable with standard_name='time' in a dataset
-                for time_var in time_vars:
-                    try:
-                        time_var_obj = cached_nc.createVariable(time_var.name,
-                                                                time_var.dtype,
-                                                                time_var.dimensions)
-                    except RuntimeError:
-                        time_var_obj = cached_nc.variables[time_var.name]
-                    finally:
-                        time_var_obj[:] = time_var[:]
-                        time_var_obj.units = time_var.units
-                        time_var_obj.standard_name = 'time'
+            # Atomic write
+            tmphandle, tmpsave = tempfile.mkstemp()
+            try:
+                sg.save_as_netcdf(tmpsave)
 
-            # Now do the RTree index
-            self.make_rtree()
+                # add time to the cached topology
+                time_vars = nc.get_variables_by_attributes(standard_name='time')
+                time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
+                unique_time_dims = list(set(time_dims))
+                with EnhancedDataset(tmpsave, mode='a') as cached_nc:
+                    # create pertinent time dimensions if they aren't already present
+                    for unique_time_dim in unique_time_dims:
+                        dim_size = len(nc.dimensions[unique_time_dim])
+                        try:
+                            cached_nc.createDimension(unique_time_dim, size=dim_size)
+                        except RuntimeError:
+                            continue
+                    # support cases where there may be more than one variable with standard_name='time' in a dataset
+                    for time_var in time_vars:
+                        try:
+                            time_var_obj = cached_nc.createVariable(time_var.name,
+                                                                    time_var.dtype,
+                                                                    time_var.dimensions)
+                        except RuntimeError:
+                            time_var_obj = cached_nc.variables[time_var.name]
+                        finally:
+                            time_var_obj[:] = time_var[:]
+                            time_var_obj.units = time_var.units
+                            time_var_obj.standard_name = 'time'
 
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
+            finally:
+                os.close(tmphandle)
+                if os.path.isfile(tmpsave):
+                    shutil.move(tmpsave, self.topology_file)
+                else:
+                    logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset.name))
+                    return
+
+        # Now do the RTree index
+        self.make_rtree()
 
     def minmax(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])

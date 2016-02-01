@@ -1,12 +1,14 @@
 #!python
 # coding=utf-8
 import os
+
 import matplotlib
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+BASE_DIR = os.path.dirname(PROJECT_ROOT)
 
 # Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topology"))
+TOPOLOGY_PATH = os.path.join(BASE_DIR, "wms", "topology")
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
@@ -26,9 +28,21 @@ USE_I18N           = False
 USE_L10N           = False
 USE_TZ             = True
 STATIC_URL         = '/static/'
-STATIC_ROOT        = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "static"))
+STATIC_ROOT        = os.path.abspath(os.path.join(BASE_DIR, "static"))
 MEDIA_URL          = '/media/'
-MEDIA_ROOT         = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "media"))
+MEDIA_ROOT         = os.path.abspath(os.path.join(BASE_DIR, "media"))
+
+db_path = os.path.join(PROJECT_ROOT, "db")
+if not os.path.isdir(db_path):
+    os.makedirs(db_path)
+db_file = os.path.join(db_path, "sci-wms.db")
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME':  db_file,
+    }
+}
 
 INSTALLED_APPS = [
     'grappelli',
@@ -40,7 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'wms',
     'wmsrest',
-    'rest_framework'
+    'rest_framework',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -81,19 +95,8 @@ REST_FRAMEWORK = {
     'PAGINATE_BY': 10
 }
 
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db"))
-if not os.path.isdir(db_path):
-    os.makedirs(db_path)
-db_file = os.path.join(db_path, "sci-wms.db")
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME':  db_file,
-    }
-}
-
-
+# Logging
 def setup_logging(default, logfile):
     if not os.path.exists(os.path.dirname(logfile)):
         os.makedirs(os.path.dirname(logfile))
@@ -130,6 +133,13 @@ def setup_logging(default, logfile):
                 'level': default,
                 'propagate': True,
             },
+            'celery': {
+                'handlers': ['file', 'console'],
+                'level': default,
+            },
+            'celery.task': {
+                'propagate': True,
+            },
             'pyugrid': {
                 'handlers': ['file', 'console'],
                 'level': 'WARNING',
@@ -142,4 +152,30 @@ def setup_logging(default, logfile):
     }
 
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+    'page': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
+
+# Database
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db"))
+if not os.path.isdir(db_path):
+    os.makedirs(db_path)
+db_file = os.path.join(db_path, "sci-wms.db")
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME':  db_file,
+    }
+}
+
+# Grappelli
+GRAPPELLI_ADMIN_TITLE = 'sci-wms'
+
+# Matplotlib
 matplotlib.use("Agg")

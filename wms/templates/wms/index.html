@@ -26,7 +26,7 @@
       <div class="collapse" id="addDataset">
         <div class="panel panel-default">
           <div class="panel-body">
-            <form id="datasetForm" class="form-inline" action="{% url 'add_dataset' %}">
+            <form id="datasetForm" class="form-inline" action="{% url 'add-dataset' %}">
               {% csrf_token %}
               <div class="form-group">
                 <label for="name">Name</label>
@@ -44,14 +44,62 @@
       </div>
     {% endif %}
 
+    {% if unidentified_datasets %}
+
+      <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
+        <h2>Pending</h3>
+        <thead>
+            <tr>
+                <th style="width: 100px">Name</th>
+                <th style="width: 100px">URI</th>
+                <th style="width: 100px">Status</th>
+                <th style="width: 350px">Messages</th>
+                <th style="width: 100px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for unid in unidentified_datasets %}
+                <tr>
+                    <td>{{ unid.name }}</td>
+                    <td>
+                        {% if unid.online %}
+                            <a href="{{ unid.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> DAP</a>
+                        {% else %}
+                            <abbr title="{{unid.uri}}"><span class="glyphicon glyphicon-new-window"></span> Local file(s)</abbr>
+                        {% endif %}
+                    </td>
+                    <td>{{ unid.status }}</td>
+                    <td>{{ unid.messages }}</td>
+                    <td>
+                        {% if user.is_authenticated %}
+                        <!-- Update -->
+                        <a href="{% url 'add-dataset' %}" data-name="{{ unid.name }}" data-uri="{{ unid.uri }}" data-del="{% url 'unid-detail' unid.pk %}">
+                            <button type="button" class="addButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh"></span> Try again
+                            </button>
+                        </a>
+                        <!-- Delete -->
+                        <a href="{% url 'unid-detail' unid.pk %}" data-pk="{{ unid.pk }}">
+                            <button type="button" class="deleteButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-trash"></span> Delete
+                            </button>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    {% endif %}
+
     {% if datasets %}
 
         <table class="table table-bordered table-striped table-hover" style="margin-top: 30px;">
+          <h2>Available</h2>
             <thead>
                 <tr>
-                    <th style="width: 300px">Description</th>
-                    <th style="width: 125px">Preview</th>
-                    <th style="width: 225px">Info</th>
+                    <th style="width: 200px">Description</th>
+                    <th style="width: 150px">URI</th>
+                    <th style="width: 300px">Cache</th>
                     <th style="width: 100px">Actions</th>
                 </tr>
             </thead>
@@ -69,43 +117,44 @@
                     </td>
 
                     <td>
-                        <a href="#" class="thumbnail" alt="{{ dataset.name }} thumbnail">n/a</a>
+                        {% if dataset.online %}
+                            <a href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
+                        {% else %}
+                            <abbr title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
+                        {% endif %}
                     </td>
 
                     <td>
-                        <a class="row" href="{% url 'dataset' dataset.slug %}?REQUEST=GetCapabilities">
-                            <span class="glyphicon glyphicon-new-window"></span> GetCaps
-                        </a>
-                        {% if dataset.online %}
-                            <a class="row" href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
-                        {% else %}
-                            <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
-                        {% endif %}
-
-                        <hr />
+                        <span>Status: {{ dataset.status }}</span>
                         {% if dataset.cache_last_updated %}
                             <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
                         {% else %}
                             <span class="row">Updated: never</span>
                         {% endif %}
-                        <span class="row">
-                            <span>Keep up to date:</span>
+
+                        <span class='row'>
                             {% if dataset.keep_up_to_date %}
-                                <span style="color: green" class="glyphicon glyphicon-ok"></span>
+                                <span style="color: green" class="glyphicon glyphicon-ok"></span> <span>Keep up to date every {{ dataset.update_every }} seconds</span>
                             {% else %}
-                                <span style="color: red" class="glyphicon glyphicon-remove"></span>
+                                <span style="color: red" class="glyphicon glyphicon-remove"></span> <span>Keep up to date</span>
                             {% endif %}
                         </span>
                     </td>
 
                     <td>
-                        <!-- Update -->
-                        <a href="{% url 'update_dataset' dataset.slug %}">
+                        <a href="{% url 'dataset' dataset.slug %}?REQUEST=GetCapabilities" target="_blank">
                             <button type="button" class="btn btn-default btn-xs">
-                                <span class="glyphicon glyphicon-refresh"></span> Update
+                                <span class="glyphicon glyphicon-new-window"></span> GetCapabilities
                             </button>
                         </a>
+                        <hr />
                         {% if user.is_authenticated %}
+                        <!-- Update -->
+                        <a href="{% url 'update_dataset' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh"></span> Update cache
+                            </button>
+                        </a>
                         <!-- Delete -->
                         <a href="{% url 'dataset-detail' dataset.pk %}">
                             <button type="button" class="deleteButton btn btn-default btn-xs">
@@ -113,24 +162,12 @@
                             </button>
                         </a>
                         {% endif %}
+                        <div id="messages_{{ dataset.slug }}"></div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-
-    {% else %}
-
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">No datasets found.  Add datasets using the Admin link above.</a></h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     {% endif %}
 
     <script>
@@ -175,6 +212,58 @@
                                 $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
                             });
     });
+
+    $(".updateButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        var posting = $.ajax({
+                                type: "GET",
+                                url: a_tag.attr("href"),
+                                success: function(data) {
+                                    $("#messages_" + a_tag.data('slug')).hide().html('<div class="alert alert-success">' + data.message + '</div>').fadeIn();
+                                }
+                            }).fail(function(data) {
+                                $("#messages_" + a_tag.data('slug')).hide().html('<div class="alert alert-danger">Failed. Check logs!</div>').fadeIn();
+                            });
+    });
+
+    $(".addButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        $.ajax({
+            type: "DELETE",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+            },
+            url: a_tag.data('del'),
+            success: function(data) {
+                a_tag.parent().parent().remove();
+                $.ajax({
+                    type: "POST",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+                    },
+                    data: {
+                      name: a_tag.data('name'),
+                      uri: a_tag.data('uri')
+                    },
+                    url: a_tag.attr("href"),
+                    success: function(data) {
+                        $("#dataset-messages").hide().html('<div class="alert alert-success">Dataset added, refresh to update</div>').fadeIn();
+                    }
+                }).fail(function(data) {
+                    $("#messages_" + a_tag.data('slug')).hide().html('<div class="alert alert-danger">Failed. Check logs!</div>').fadeIn();
+                });
+            }
+        }).fail(function(data) {
+            $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+        });
+    });
+
     {% endif %}
     </script>
 

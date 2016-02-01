@@ -1,0 +1,71 @@
+version: '3.2'
+
+volumes:
+  sciwmsdb:
+
+services:
+
+  db:
+    image: postgres:10.3
+    environment:
+      POSTGRES_USER: sciwms
+      POSTGRES_PASSWORD: sciwms
+      POSTGRES_DB: sciwms
+    volumes:
+      - sciwmsdb:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+
+  web:
+    #image: axiom/sci-wms
+    image: sci-wms
+    build: "."
+    environment:
+      SCIWMS_USERNAME: sciwms
+      SCIWMS_PASSWORD: sciwms
+      SCIWMS_WEB_WORKERS: 16
+      DJANGO_SETTINGS_MODULE: sciwms.settings.prod
+      DJANGO_SECRET_KEY: abcdefg
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      POSTGRES_HOST: db
+    ports:
+      - "7002:7002"
+    depends_on:
+      - redis
+    command: docker/wait.sh db:5432 -- docker/run.sh
+
+  worker:
+    #image: axiom/sci-wms
+    image: sci-wms
+    build: "."    
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.prod
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      POSTGRES_HOST: db
+    depends_on:
+      - redis
+    command: docker/wait.sh web:7002 -- celery worker -A sciwms -E -c 1 -n %n
+
+  flower:
+    image: 31z4/celery-flower:4-alpine
+    environment:
+      FLOWER_BASIC_AUTH: sciwms:sciwms
+    depends_on:
+      - redis
+    ports:
+      - "5555:5555"
+    command: celery flower --broker=redis://redis:6379/0 --broker_api=redis://redis:6379/0
+
+  beat:
+    image: sci-wms
+    build: "."    
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.prod
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+    command: docker/wait.sh redis:6379 -- celery beat -A sciwms

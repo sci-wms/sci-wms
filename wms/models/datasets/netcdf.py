@@ -34,11 +34,11 @@ class NetCDFDataset(object):
             try:
                 self._dataset = EnhancedDataset(self.path())
                 yield self._dataset
-            except RuntimeError:
+            except (RuntimeError, FileNotFoundError):
                 try:
                     self._dataset = EnhancedMFDataset(self.path(), aggdim='time')
                     yield self._dataset
-                except RuntimeError:
+                except (IndexError, RuntimeError, FileNotFoundError):
                     yield None
 
     @contextmanager
@@ -113,7 +113,11 @@ class NetCDFDataset(object):
                 tree = rtree.index.Index(self.node_tree_root)
             else:
                 raise NotImplementedError("No RTree for location '{}'".format(location))
-            nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+
+            try:
+                nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+            except IndexError:
+                raise ValueError("No cells in the {} tree for point {}, {}".format(location, longitude, latitude))
             closest_x, closest_y = tuple(nindex.bbox[2:])
             geo_index = nindex.object
         except BaseException:

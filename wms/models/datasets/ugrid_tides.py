@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+import shutil
 import calendar
+import tempfile
 from datetime import datetime, timedelta
 
 import pytz
@@ -33,13 +35,12 @@ class UGridTideDataset(UGridDataset):
 
     def update_cache(self, force=False):
         with self.dataset() as nc:
-            ug = UGrid.from_nc_dataset(nc)
-            ug.save_as_netcdf(self.topology_file)
-
-            if not os.path.exists(self.topology_file):
-                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+            if nc is None:
+                logger.error("Failed update_cache, could not load dataset "
+                             "as a netCDF4 object")
                 return
 
+            ug = UGrid.from_nc_dataset(nc)
             uamp = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_amplitude')[0]
             vamp = nc.get_variables_by_attributes(standard_name='northward_sea_water_velocity_amplitude')[0]
             uphase = nc.get_variables_by_attributes(standard_name='eastward_sea_water_velocity_phase')[0]
@@ -47,70 +48,77 @@ class UGridTideDataset(UGridDataset):
             tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
             tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
 
-            with netCDF4.Dataset(self.topology_file, mode='a') as cnc:
+            # Atomic write
+            tmphandle, tmpsave = tempfile.mkstemp()
+            try:
+                ug.save_as_netcdf(tmpsave)
+                with netCDF4.Dataset(tmpsave, mode='a') as cnc:
+                    ntides = uamp.shape[uamp.dimensions.index('ntides')]
+                    nlocs = uamp.shape[uamp.dimensions.index(uamp.location)]
+                    cnc.createDimension('ntides', ntides)
+                    cnc.createDimension('maxStrlen64', 64)
 
-                ntides = uamp.shape[uamp.dimensions.index('ntides')]
-                nlocs = uamp.shape[uamp.dimensions.index(uamp.location)]
-                cnc.createDimension('ntides', ntides)
-                cnc.createDimension('maxStrlen64', 64)
+                    vdims = ('ntides', '{}_num_{}'.format(uamp.mesh, uamp.location))
 
-                vdims = ('ntides', '{}_num_{}'.format(uamp.mesh, uamp.location))
+                    # Swap ntides to always be the first dimension.. it can be the second in the source files!
+                    transpose = False
+                    if uamp.shape[0] > uamp.shape[1]:
+                        logger.info("Found flipped dimensions in source file... fixing in local cache.")
+                        transpose = True
 
-                # Swap ntides to always be the first dimension.. it can be the second in the source files!
-                transpose = False
-                if uamp.shape[0] > uamp.shape[1]:
-                    logger.info("Found flipped dimensions in source file... fixing in local cache.")
-                    transpose = True
+                    # We are changing the variable names to 'u' and 'v' from 'u_amp' and 'v_amp' so
+                    # the layer.access_method can find the variable from the virtual layer 'u,v'
+                    ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[1, nlocs / 4])
+                    for x in uamp.ncattrs():
+                        if x != '_FillValue':
+                            ua.setncattr(x, uamp.getncattr(x))
+                    va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[1, nlocs / 4])
+                    for x in vamp.ncattrs():
+                        if x != '_FillValue':
+                            va.setncattr(x, vamp.getncattr(x))
+                    up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[1, nlocs / 4])
+                    for x in uphase.ncattrs():
+                        if x != '_FillValue':
+                            up.setncattr(x, uphase.getncattr(x))
+                    vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[1, nlocs / 4])
+                    for x in vphase.ncattrs():
+                        if x != '_FillValue':
+                            vp.setncattr(x, vphase.getncattr(x))
 
-                # We are changing the variable names to 'u' and 'v' from 'u_amp' and 'v_amp' so
-                # the layer.access_method can find the variable from the virtual layer 'u,v'
-                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[1, nlocs / 4])
-                for x in uamp.ncattrs():
-                    if x != '_FillValue':
-                        ua.setncattr(x, uamp.getncattr(x))
-                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[1, nlocs / 4])
-                for x in vamp.ncattrs():
-                    if x != '_FillValue':
-                        va.setncattr(x, vamp.getncattr(x))
-                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[1, nlocs / 4])
-                for x in uphase.ncattrs():
-                    if x != '_FillValue':
-                        up.setncattr(x, uphase.getncattr(x))
-                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[1, nlocs / 4])
-                for x in vphase.ncattrs():
-                    if x != '_FillValue':
-                        vp.setncattr(x, vphase.getncattr(x))
+                    tc = cnc.createVariable('tidenames', tnames.dtype, tnames.dimensions)
+                    tc[:] = tnames[:]
+                    for x in tnames.ncattrs():
+                        if x != '_FillValue':
+                            tc.setncattr(x, tnames.getncattr(x))
 
-                tc = cnc.createVariable('tidenames', tnames.dtype, tnames.dimensions)
-                tc[:] = tnames[:]
-                for x in tnames.ncattrs():
-                    if x != '_FillValue':
-                        tc.setncattr(x, tnames.getncattr(x))
+                    tf = cnc.createVariable('tidefreqs', tfreqs.dtype, ('ntides',))
+                    tf[:] = tfreqs[:]
+                    for x in tfreqs.ncattrs():
+                        if x != '_FillValue':
+                            tf.setncattr(x, tfreqs.getncattr(x))
 
-                tf = cnc.createVariable('tidefreqs', tfreqs.dtype, ('ntides',))
-                tf[:] = tfreqs[:]
-                for x in tfreqs.ncattrs():
-                    if x != '_FillValue':
-                        tf.setncattr(x, tfreqs.getncattr(x))
-
-                for r in range(ntides):
-                    logger.info("Saving ntide {} into cache".format(r))
-                    if transpose is True:
-                        ua[r, :] = uamp[:, r].T
-                        va[r, :] = vamp[:, r].T
-                        up[r, :] = uphase[:, r].T
-                        vp[r, :] = vphase[:, r].T
-                    else:
-                        ua[r, :] = uamp[r, :]
-                        va[r, :] = vamp[r, :]
-                        up[r, :] = uphase[r, :]
-                        vp[r, :] = vphase[r, :]
+                    for r in range(ntides):
+                        logger.info("Saving ntide {} into cache".format(r))
+                        if transpose is True:
+                            ua[r, :] = uamp[:, r].T
+                            va[r, :] = vamp[:, r].T
+                            up[r, :] = uphase[:, r].T
+                            vp[r, :] = vphase[:, r].T
+                        else:
+                            ua[r, :] = uamp[r, :]
+                            va[r, :] = vamp[r, :]
+                            up[r, :] = uphase[r, :]
+                            vp[r, :] = vphase[r, :]
+            finally:
+                os.close(tmphandle)
+                if os.path.isfile(tmpsave):
+                    shutil.move(tmpsave, self.topology_file)
+                else:
+                    logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset.name))
+                    return
 
         # Now do the RTree index
         self.make_rtree()
-
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
 
     def minmax(self, layer, request):
         _, time_value = self.nearest_time(layer, request.GET['time'])

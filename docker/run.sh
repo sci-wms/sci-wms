@@ -3,7 +3,7 @@
 echo "Sourcing profile..."
 . /etc/profile
 
-export DJANGO_SETTINGS_MODULE=sciwms.settings.prod
+export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-sciwms.settings.prod}
 
 echo "Migrating sci-wms..."
 python manage.py migrate
@@ -13,6 +13,7 @@ python manage.py collectstatic --noinput -v 0
 
 USER=${SCIWMS_USERNAME:-sciwmsuser}
 PASS=${SCIWMS_PASSWORD:-$(pwgen -s -1 16)}
+SCIWMS_WEB_WORKERS=${SCIWMS_WEB_WORKERS:-4}
 
 cat << EOF | python manage.py shell >/dev/null 2>&1
 from django.contrib.auth.models import User
@@ -37,8 +38,8 @@ gunicorn --access-logfile - \
          --log-level warning \
          -t 300 \
          -b 0.0.0.0:7002 \
-         -w 8 \
+         -w $SCIWMS_WEB_WORKERS \
          -k gevent \
-         -e DJANGO_SETTINGS_MODULE=sciwms.settings.prod \
+         -e DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE \
          -n sciwms \
          sciwms.wsgi:application

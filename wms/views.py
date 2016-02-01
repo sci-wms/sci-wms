@@ -7,21 +7,20 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
 from django.core import serializers
-from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 
-from wms.models import Dataset, Server, Variable, Style
+from wms.models import Dataset, Server, Variable, Style, UnidentifiedDataset
 from wms.utils import get_layer_from_request
+from wms.tasks import update_dataset as update_dataset_task
 from wms import wms_handler
 from wms import logger
 
 
-@cache_page(604800)
+@cache_page(604800, cache="page")
 def crossdomain(request):
     with open(os.path.join(settings.PROJECT_ROOT, "..", "wms", "static", "wms", "crossdomain.xml")) as f:
         response = HttpResponse(content_type="text/xml")
@@ -29,7 +28,7 @@ def crossdomain(request):
     return response
 
 
-@cache_page(604800)
+@cache_page(604800, cache="page")
 def favicon(request):
     with open(os.path.join(settings.PROJECT_ROOT, "..", "wms", "static", "wms", "favicon.ico"), 'rb') as f:
         response = HttpResponse(content_type="image/x-icon")
@@ -38,7 +37,6 @@ def favicon(request):
 
 
 def datasets(request):
-    from django.core import serializers
     datasets = Dataset.objects.all()
     data = serializers.serialize('json', datasets)
     return HttpResponse(data, content_type='application/json')
@@ -46,7 +44,8 @@ def datasets(request):
 
 def index(request):
     datasets = Dataset.objects.all()
-    context = { "datasets" : datasets }
+    unidentified_datasets = UnidentifiedDataset.objects.all()
+    context = { "datasets" : datasets, "unidentified_datasets" : unidentified_datasets }
     return TemplateResponse(request, 'wms/index.html', context)
 
 
@@ -76,20 +75,6 @@ def authenticate_view(request):
 
 def logout_view(request):
     logout(request)
-
-
-def update_dataset(request, dataset):
-    if authenticate_view(request):
-        if dataset is None:
-            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
-        else:
-            d = Dataset.objects.get(slug=dataset)
-            d.update_cache(force=True)
-            return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
-    else:
-        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), content_type='application/json')
-
-    logout_view(request)
 
 
 def normalize_get_params(request):
@@ -241,27 +226,13 @@ class DatasetShowView(View):
         return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset, styles=styles))
 
 
-class DatasetListView(View):
+class DatasetUpdateView(View):
 
-    @method_decorator(csrf_protect)
-    def post(self, request):
-        try:
-            uri = request.POST['uri']
-            name = request.POST['name']
-            assert uri and name
-        except (AssertionError, KeyError):
-            return HttpResponse('URI and Name are required. Please try again.', status=500, reason="Could not process inputs", content_type="text/plain")
-
-        klass = Dataset.identify(uri)
-        if klass is not None:
-            try:
-                ds = klass.objects.create(uri=uri, name=name)
-            except IntegrityError:
-                return HttpResponse('Name is already taken, please choose another', status=500, reason="Could not process inputs", content_type="application/json")
-
-            return HttpResponse(serializers.serialize('json', [ds]), status=201, content_type="application/json")
-        else:
-            return HttpResponse('Could not process the URI with any of the available Dataset types. Please check the URI and try again', status=500, reason="Could not process inputs", content_type="application/json")
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        update_dataset_task.delay(dataset.pk, force=True)
+        return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
 
 
 class WmsView(View):

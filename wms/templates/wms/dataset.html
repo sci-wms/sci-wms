@@ -22,7 +22,28 @@
         {% endif %}
       </tr>
       <tr>
+        <td colspan="2"><b>cache</b>:
+          <span class="row">Status: {{ dataset.status }}</span>
+          {% if dataset.cache_last_updated %}
+              <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
+          {% else %}
+              <span class="row">Updated: never</span>
+          {% endif %}
+
+          <span class='row'>
+              {% if dataset.keep_up_to_date %}
+                  <span style="color: green" class="glyphicon glyphicon-ok"></span> <span>Keep up to date every {{ dataset.update_every }} seconds</span>
+              {% else %}
+                  <span style="color: red" class="glyphicon glyphicon-remove"></span> <span>Keep up to date</span>
+              {% endif %}
+          </span>
+        </td>
+      </tr>
+      {% if dataset.json %}
+      <tr>
         <td colspan="2"><b>additional dataset attributes</b>: <pre>{% autoescape off %}{{ dataset.json }}{% endautoescape %}</pre></td>
+      </tr>
+      {% endif %}
     </table>
   </form>
 

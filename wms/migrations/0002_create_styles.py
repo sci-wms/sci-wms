@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.db import migrations, utils
 
 
@@ -29,7 +27,7 @@ def remove_styles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wms', '0009_auto_20150428_2030'),
+        ('wms', '0001_initial'),
     ]
 
     operations = [
