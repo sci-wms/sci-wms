@@ -56,71 +56,43 @@
 <ul class="simple">
 <li>&gt;= 4GB RAM But it depends directly on the size and extents of the datasets you will be visualizing.</li>
 <li>&gt; 2 CPU (&gt; 4 CPU Better)</li>
-<li>Python 2.7.x with sqlite</li>
-<li>LibGeos (<a class="reference external" href="http://download.osgeo.org/geos/">http://download.osgeo.org/geos/</a>)</li>
-<li>LibSpatialIndex (<a class="reference external" href="http://libspatialindex.github.com">http://libspatialindex.github.com</a>)</li>
-<li>netCDF4 C library (with opendap enabled, if opendap/remote functionality is desired)</li>
-<li>libhdf5 C library (dependency of netCDF4)</li>
-<li>libcurl (required for opendap)</li>
-<li>libfreetype</li>
-<li>libpng</li>
-<li>libevent</li>
-<li>libjpeg</li>
 </ul>
 </div>
-<div class="section" id="download">
-<h2>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="docker">
+<h2>Docker<a class="headerlink" href="#docker" title="Permalink to this headline">¶</a></h2>
+<p><cite>docker pull axiom/sci-wms</cite></p>
+</div>
+<div class="section" id="source">
+<h2>Source<a class="headerlink" href="#source" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/sci-wms/sci-wms">Download the compressed project and unpack anywhere.</a> This is where the installation will live.</p>
-</div>
-<div class="section" id="install">
-<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
-<p>Install Python dependencies using pip</p>
-<div class="highlight-bash"><div class="highlight"><pre>pip install -r requirements.txt
-pip install -r requirements-dev.txt
-pip install -r requirements-prod.txt
+<div class="section" id="install-dependencies">
+<h3>Install Dependencies<a class="headerlink" href="#install-dependencies" title="Permalink to this headline">¶</a></h3>
+<p>If you need the <cite>conda</cite> executable command, see <a class="reference external" href="http://conda.pydata.org/miniconda.html">this</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre>conda install -c axiom-data-science -c ioos  install --file requirements.txt
+conda install -c axiom-data-science -c ioos  install --file requirements-dev.txt
+conda install -c axiom-data-science -c ioos  install --file requirements-prod.txt
 </pre></div>
 </div>
-<p><em>if NetCDF4 and HDF5 libraries are in non-typical locations, pass the locations to pip</em></p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">NETCDF4_DIR</span><span class="o">=</span>... <span class="nv">HDF5_DIR</span><span class="o">=</span>... pip install -r requirements.txt
-pip install -r requirements-dev.txt
-pip install -r requirements-prod.txt
-</pre></div>
-</div>
-<p>If you would like Gunicorn to use an alternative worker, the following are also supported:</p>
-<ul class="simple">
-<li>eventlet</li>
-<li>tornado</li>
-</ul>
 </div>
 <div class="section" id="create-database">
-<h2>Create Database<a class="headerlink" href="#create-database" title="Permalink to this headline">¶</a></h2>
+<h3>Create Database<a class="headerlink" href="#create-database" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
 python manage.py migrate
 python manage.py collectstatic
-python manage.py createsuperuser  <span class="c"># prompts to create superuser account</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="run-the-tests">
-<h2>Run the Tests<a class="headerlink" href="#run-the-tests" title="Permalink to this headline">¶</a></h2>
+<h3>Run the Tests<a class="headerlink" href="#run-the-tests" title="Permalink to this headline">¶</a></h3>
 <p>Install the testing dependencies</p>
-<div class="highlight-bash"><div class="highlight"><pre>pip install -r requirements-test.txt
+<div class="highlight-bash"><div class="highlight"><pre>conda install -c axiom-data-science -c ioos  install --file requirements-test.txt
 </pre></div>
 </div>
 <p>Test that <code class="docutils literal"><span class="pre">sci-wms</span></code> is fully functional by running the following command</p>
-<div class="highlight-bash"><div class="highlight"><pre>py.test -rxs --verbose
+<div class="highlight-bash"><div class="highlight"><pre>py.test -s -rxs -v
 </pre></div>
 </div>
 </div>
-<div class="section" id="updating">
-<h2>Updating<a class="headerlink" href="#updating" title="Permalink to this headline">¶</a></h2>
-<p>From version 1.0.0 <code class="docutils literal"><span class="pre">sci-wms</span></code> is easily upgraded to a newer version:</p>
-<ol class="arabic simple">
-<li>Stop any running instances of <code class="docutils literal"><span class="pre">sci-wms</span></code></li>
-<li>Replace your current <code class="docutils literal"><span class="pre">sci-wms</span></code> directory with the new version (using git pull)</li>
-<li>Migrate the database: <code class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;sciwms.settings.prod&quot;</span> <span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">migrate</span></code></li>
-<li>Start <code class="docutils literal"><span class="pre">sci-wms</span></code> as you usually would</li>
-</ol>
 </div>
 </div>
 
@@ -134,11 +106,13 @@ python manage.py createsuperuser  <span class="c"># prompts to create superuser 
   <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#system-requirements">System Requirements</a></li>
-<li><a class="reference internal" href="#download">Download</a></li>
-<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#docker">Docker</a></li>
+<li><a class="reference internal" href="#source">Source</a><ul>
+<li><a class="reference internal" href="#install-dependencies">Install Dependencies</a></li>
 <li><a class="reference internal" href="#create-database">Create Database</a></li>
 <li><a class="reference internal" href="#run-the-tests">Run the Tests</a></li>
-<li><a class="reference internal" href="#updating">Updating</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

@@ -51,50 +51,6 @@
             
   <div class="section" id="advanced-usage">
 <h1>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="docker">
-<h2>Docker<a class="headerlink" href="#docker" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">sci-wms</span></code> supports running inside of a Docker container</p>
-<p>Pull</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker pull axiom/sci-wms
-</pre></div>
-</div>
-<p>Run, interactively</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
-</pre></div>
-</div>
-<p>Run, daemonized</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">sci-wms</span></code> will be running on <a class="reference external" href="http://localhost:7002">http://localhost:7002</a>.  Adjust the <cite>-p</cite> value to your liking.</p>
-<div class="section" id="custom-paths">
-<h3>Custom Paths<a class="headerlink" href="#custom-paths" title="Permalink to this headline">¶</a></h3>
-<p>Run, with a custom Django config (see <code class="docutils literal"><span class="pre">Custom</span> <span class="pre">Django</span> <span class="pre">Settings</span></code>)</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local sci-wms
-</pre></div>
-</div>
-<p>Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology sci-wms
-</pre></div>
-</div>
-</div>
-<div class="section" id="superuser">
-<h3>Superuser<a class="headerlink" href="#superuser" title="Permalink to this headline">¶</a></h3>
-<p>On first run, this image will create a superuser account that can be used to access the <code class="docutils literal"><span class="pre">sci-wms</span></code> admin area, and echo it to the screen, like so:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="o">========================================================================</span>
-sci-wms user:         <span class="s2">&quot;sciwmsuser&quot;</span>
-sci-wms user email:   <span class="s2">&quot;sciwmsuser@localhost&quot;</span>
-sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
-<span class="o">========================================================================</span>
-</pre></div>
-</div>
-<p>The default username and email are as shown, and the password is randomly set.  You can manually set all of these by with the environment variables <cite>SCIWMS_USERNAME</cite>, <cite>SCIWMS_EMAIL</cite>, and <cite>SCIWMS_PASSWORD</cite> via the <cite>docker -e</cite> parameter.</p>
-<p>For example</p>
-<div class="highlight-bash"><div class="highlight"><pre>docker run -d -e <span class="nv">SCIWMS_USERNAME</span><span class="o">=</span>daf -e <span class="nv">SCIWMS_PASSWORD</span><span class="o">=</span>hunter2 sci-wms
-</pre></div>
-</div>
-</div>
-</div>
 <div class="section" id="virtual-layers">
 <h2>Virtual layers<a class="headerlink" href="#virtual-layers" title="Permalink to this headline">¶</a></h2>
 <p><strong>Virtual Layers</strong> allow you to use a parameter expression to access multiple variables from a dataset in a special way, while specifying a descriptive layer name that will also appear in the <em>GetCapabilities</em> documents. This is so that generic web clients don&#8217;t necessarility need to know the intracacies of assembling <code class="docutils literal"><span class="pre">sci-wms</span></code> parameter expressions in requests.</p>
@@ -259,11 +215,6 @@ sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Advanced Usage</a><ul>
-<li><a class="reference internal" href="#docker">Docker</a><ul>
-<li><a class="reference internal" href="#custom-paths">Custom Paths</a></li>
-<li><a class="reference internal" href="#superuser">Superuser</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#virtual-layers">Virtual layers</a></li>
 <li><a class="reference internal" href="#custom-django-settings">Custom Django Settings</a></li>
 <li><a class="reference internal" href="#topology-cache">Topology Cache</a><ul>

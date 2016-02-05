@@ -2,68 +2,6 @@ Advanced Usage
 ==============
 
 
-Docker
-~~~~~~
-
-``sci-wms`` supports running inside of a Docker container
-
-Pull
-
-.. code-block:: bash
-
-    docker pull axiom/sci-wms
-
-Run, interactively
-
-.. code-block:: bash
-
-    docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
-
-Run, daemonized
-
-.. code-block:: bash
-
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
-
-``sci-wms`` will be running on http://localhost:7002.  Adjust the `-p` value to your liking.
-
-Custom Paths
-............
-
-Run, with a custom Django config (see ``Custom Django Settings``)
-
-.. code-block:: bash
-
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local sci-wms
-
-Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)
-
-.. code-block:: bash
-
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology sci-wms
-
-Superuser
-.........
-
-On first run, this image will create a superuser account that can be used to access the ``sci-wms`` admin area, and echo it to the screen, like so:
-
-.. code-block:: bash
-
-    ========================================================================
-    sci-wms user:         "sciwmsuser"
-    sci-wms user email:   "sciwmsuser@localhost"
-    sci-wms password:     "6DZDoN8jmntgj2RY"
-    ========================================================================
-
-The default username and email are as shown, and the password is randomly set.  You can manually set all of these by with the environment variables `SCIWMS_USERNAME`, `SCIWMS_EMAIL`, and `SCIWMS_PASSWORD` via the `docker -e` parameter.
-
-For example
-
-.. code-block:: bash
-
-    docker run -d -e SCIWMS_USERNAME=daf -e SCIWMS_PASSWORD=hunter2 sci-wms
-
-
 Virtual layers
 ~~~~~~~~~~~~~~
 

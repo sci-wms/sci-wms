@@ -51,26 +51,92 @@
             
   <div class="section" id="deployment">
 <h1>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="docker-recommended">
+<h2>Docker (RECOMMENDED)<a class="headerlink" href="#docker-recommended" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">sci-wms</span></code> supports running inside of a Docker container</p>
+<p>Pull</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker pull axiom/sci-wms
+</pre></div>
+</div>
+<p>Run, interactively</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
+</pre></div>
+</div>
+<p>Run, daemonized</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ sci-wms
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">sci-wms</span></code> will be running on <a class="reference external" href="http://localhost:7002">http://localhost:7002</a>.  Adjust the <cite>-p</cite> value to your liking.</p>
+<div class="section" id="custom-paths">
+<h3>Custom Paths<a class="headerlink" href="#custom-paths" title="Permalink to this headline">¶</a></h3>
+<p>Run, with a custom Django config (see <code class="docutils literal"><span class="pre">Custom</span> <span class="pre">Django</span> <span class="pre">Settings</span></code>)</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local sci-wms
+</pre></div>
+</div>
+<p>Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology sci-wms
+</pre></div>
+</div>
+</div>
+<div class="section" id="superuser">
+<h3>Superuser<a class="headerlink" href="#superuser" title="Permalink to this headline">¶</a></h3>
+<p>On first run, this image will create a superuser account that can be used to access the <code class="docutils literal"><span class="pre">sci-wms</span></code> admin area, and echo it to the screen, like so:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="o">========================================================================</span>
+sci-wms user:         <span class="s2">&quot;sciwmsuser&quot;</span>
+sci-wms user email:   <span class="s2">&quot;sciwmsuser@localhost&quot;</span>
+sci-wms password:     <span class="s2">&quot;6DZDoN8jmntgj2RY&quot;</span>
+<span class="o">========================================================================</span>
+</pre></div>
+</div>
+<p>The default username and email are as shown, and the password is randomly set.  You can manually set all of these by with the environment variables <cite>SCIWMS_USERNAME</cite>, <cite>SCIWMS_EMAIL</cite>, and <cite>SCIWMS_PASSWORD</cite> via the <cite>docker -e</cite> parameter.</p>
+<p>For example</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker run -d -e <span class="nv">SCIWMS_USERNAME</span><span class="o">=</span>daf -e <span class="nv">SCIWMS_PASSWORD</span><span class="o">=</span>hunter2 sci-wms
+</pre></div>
+</div>
+</div>
+</div>
 <div class="section" id="quick-start-development-only">
 <h2>Quick Start (DEVELOPMENT ONLY)<a class="headerlink" href="#quick-start-development-only" title="Permalink to this headline">¶</a></h2>
 <p>To start <code class="docutils literal"><span class="pre">sci-wms</span></code> with the Django development server on port :7000, type the following commands</p>
-<div class="highlight-bash"><div class="highlight"><pre>python manage.py runserver 0.0.0.0:7002
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>docker run -d --name sciwms-redis -p 6060:6379 redis
+<span class="nv">$ </span>python manage.py runserver 0.0.0.0:7002
+<span class="nv">$ </span>celery worker -A sciwms
+<span class="nv">$ </span>celery beat -A sciwms
 </pre></div>
 </div>
 <p>This server is not considered secure for production implementations,
 and it is recommended you use an alternative wsgi server like <em>Gunicorn</em>.</p>
 </div>
+<div class="section" id="from-source-not-recommended">
+<h2>From Source (NOT RECOMMENDED)<a class="headerlink" href="#from-source-not-recommended" title="Permalink to this headline">¶</a></h2>
+<p>You really should be using the Docker image to run <code class="docutils literal"><span class="pre">sci-wms</span></code>. This <code class="docutils literal"><span class="pre">From</span> <span class="pre">Source</span></code> method won&#8217;t be supported forever!</p>
+<p>You must have a redis instance installed and running on localhost. <code class="docutils literal"><span class="pre">sci-wms</span></code> will use databases <code class="docutils literal"><span class="pre">0</span></code> and <code class="docutils literal"><span class="pre">1</span></code>. You should look at the Advanced section for instructions on how to supply your own Django configuration options if you want to configure the Redis connection.</p>
 <div class="section" id="using-the-gunicorn-server">
-<h2>Using the Gunicorn Server<a class="headerlink" href="#using-the-gunicorn-server" title="Permalink to this headline">¶</a></h2>
+<h3>Using the Gunicorn Server<a class="headerlink" href="#using-the-gunicorn-server" title="Permalink to this headline">¶</a></h3>
 <p>Gunicorn is recommended for production servers</p>
-<p>start services on port 7002 (port specified in <cite>gunicorn_config_prod.py</cite>)</p>
-<div class="highlight-bash"><div class="highlight"><pre>gunicorn -c gunicorn_config_prod.py sciwms.wsgi:application
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>celery worker -A sciwms
+<span class="nv">$ </span>celery beat -A sciwms
+<span class="nv">$ </span>gunicorn <span class="se">\</span>
+    --access-logfile - <span class="se">\</span>
+    --error-logfile - <span class="se">\</span>
+    --max-requests <span class="m">100</span> <span class="se">\</span>
+    --graceful-timeout <span class="m">300</span> <span class="se">\</span>
+    --keep-alive <span class="m">5</span> <span class="se">\</span>
+    --backlog <span class="m">50</span> <span class="se">\</span>
+    --log-level warning <span class="se">\</span>
+    -t <span class="m">300</span> <span class="se">\</span>
+    -b 0.0.0.0:7002 <span class="se">\</span>
+    -w <span class="m">4</span> <span class="se">\</span>
+    -k tornado <span class="se">\</span>
+    -e <span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span>sciwms.settings.prod <span class="se">\</span>
+    -n sciwms <span class="se">\</span>
+    sciwms.wsgi:application <span class="p">|</span> logger -t gunicorn
 </pre></div>
 </div>
 <p><a class="reference external" href="http://gunicorn.org/">Gunicorn WSGI server configuration</a></p>
 </div>
 <div class="section" id="management-with-supervisord">
-<h2>Management with Supervisord<a class="headerlink" href="#management-with-supervisord" title="Permalink to this headline">¶</a></h2>
+<h3>Management with Supervisord<a class="headerlink" href="#management-with-supervisord" title="Permalink to this headline">¶</a></h3>
 <p>Sample supervisord configuration for <code class="docutils literal"><span class="pre">sci-wms</span></code> assuming installation at <code class="docutils literal"><span class="pre">/srv/sci-wms</span></code>
 and running as the <code class="docutils literal"><span class="pre">sciwms</span></code> user.  You should specify the full path to the <code class="docutils literal"><span class="pre">gunicorn</span></code> executable
 you want to use (the one installed inside of your virtualenv).</p>
@@ -84,7 +150,30 @@ you want to use (the one installed inside of your virtualenv).</p>
 <span class="nv">stopasgroup</span><span class="o">=</span><span class="nb">true</span>
 <span class="nv">numprocs</span><span class="o">=</span>1
 <span class="nv">environment</span><span class="o">=</span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
+
+<span class="o">[</span>program:sci-wms-worker<span class="o">]</span>
+<span class="nb">command</span><span class="o">=</span>celery worker -E -c <span class="m">4</span> -A sciwms
+<span class="nv">directory</span><span class="o">=</span>/srv/sci-wms
+<span class="nv">user</span><span class="o">=</span>sciwms
+<span class="nv">autostart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">autorestart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">redirect_stderr</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">stopasgroup</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">numprocs</span><span class="o">=</span>1
+<span class="nv">environment</span><span class="o">=</span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
+
+<span class="o">[</span>program:sci-wms-beat<span class="o">]</span>
+<span class="nb">command</span><span class="o">=</span>celery beat -A sciwms
+<span class="nv">directory</span><span class="o">=</span>/srv/sci-wms
+<span class="nv">user</span><span class="o">=</span>sciwms
+<span class="nv">autostart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">autorestart</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">redirect_stderr</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">stopasgroup</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">numprocs</span><span class="o">=</span>1
+<span class="nv">environment</span><span class="o">=</span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
 </pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -98,9 +187,17 @@ you want to use (the one installed inside of your virtualenv).</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Deployment</a><ul>
+<li><a class="reference internal" href="#docker-recommended">Docker (RECOMMENDED)</a><ul>
+<li><a class="reference internal" href="#custom-paths">Custom Paths</a></li>
+<li><a class="reference internal" href="#superuser">Superuser</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#quick-start-development-only">Quick Start (DEVELOPMENT ONLY)</a></li>
+<li><a class="reference internal" href="#from-source-not-recommended">From Source (NOT RECOMMENDED)</a><ul>
 <li><a class="reference internal" href="#using-the-gunicorn-server">Using the Gunicorn Server</a></li>
 <li><a class="reference internal" href="#management-with-supervisord">Management with Supervisord</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
