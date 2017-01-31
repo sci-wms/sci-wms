@@ -26,9 +26,9 @@ If you need the `conda` executable command, see `this <http://conda.pydata.org/m
 
 .. code-block:: bash
 
-    conda install -c axiom-data-science -c ioos  install --file requirements.txt
-    conda install -c axiom-data-science -c ioos  install --file requirements-dev.txt
-    conda install -c axiom-data-science -c ioos  install --file requirements-prod.txt
+    conda install -c axiom-data-science -c ioos  --file requirements.txt
+    conda install -c axiom-data-science -c ioos  --file requirements-dev.txt
+    conda install -c axiom-data-science -c ioos  --file requirements-prod.txt
 
 
 Create Database
@@ -48,7 +48,7 @@ Install the testing dependencies
 
 .. code-block:: bash
 
-    conda install -c axiom-data-science -c ioos  install --file requirements-test.txt
+    conda install -c axiom-data-science -c ioos  --file requirements-test.txt
 
 Test that ``sci-wms`` is fully functional by running the following command
 
