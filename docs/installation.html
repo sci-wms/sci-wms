@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; SCI-WMS 1.6.0-dev documentation</title>
+    <title>Installation &#8212; SCI-WMS 1.6.0-dev documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -23,6 +23,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="top" title="SCI-WMS 1.6.0-dev documentation" href="index.html" />
     <link rel="next" title="Deployment" href="deployment.html" />
     <link rel="prev" title="Welcome to sci-wms" href="index.html" /> 
@@ -40,7 +42,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -68,7 +70,7 @@
 <div class="section" id="install-dependencies">
 <h3>Install Dependencies<a class="headerlink" href="#install-dependencies" title="Permalink to this headline">¶</a></h3>
 <p>If you need the <cite>conda</cite> executable command, see <a class="reference external" href="http://conda.pydata.org/miniconda.html">this</a>.</p>
-<div class="highlight-bash"><div class="highlight"><pre>conda install -c axiom-data-science -c ioos --file requirements.txt
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda install -c axiom-data-science -c ioos --file requirements.txt
 conda install -c axiom-data-science -c ioos --file requirements-dev.txt
 conda install -c axiom-data-science -c ioos --file requirements-prod.txt
 </pre></div>
@@ -76,7 +78,7 @@ conda install -c axiom-data-science -c ioos --file requirements-prod.txt
 </div>
 <div class="section" id="create-database">
 <h3>Create Database<a class="headerlink" href="#create-database" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">export </span><span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">DJANGO_SETTINGS_MODULE</span><span class="o">=</span><span class="s2">&quot;sciwms.settings.prod&quot;</span>
 python manage.py migrate
 python manage.py collectstatic
 </pre></div>
@@ -85,11 +87,11 @@ python manage.py collectstatic
 <div class="section" id="run-the-tests">
 <h3>Run the Tests<a class="headerlink" href="#run-the-tests" title="Permalink to this headline">¶</a></h3>
 <p>Install the testing dependencies</p>
-<div class="highlight-bash"><div class="highlight"><pre>conda install -c axiom-data-science -c ioos -c conda-forge --file requirements-test.txt
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda install -c axiom-data-science -c ioos -c conda-forge --file requirements-test.txt
 </pre></div>
 </div>
 <p>Test that <code class="docutils literal"><span class="pre">sci-wms</span></code> is fully functional by running the following command</p>
-<div class="highlight-bash"><div class="highlight"><pre>py.test -s -rxs -v
+<div class="highlight-bash"><div class="highlight"><pre><span></span>py.test -s -rxs -v
 </pre></div>
 </div>
 </div>
@@ -126,14 +128,11 @@ python manage.py collectstatic
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -152,11 +151,11 @@ python manage.py collectstatic
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.
     </div>
   </body>
 </html>

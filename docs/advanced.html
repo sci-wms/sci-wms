@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Advanced Usage &mdash; SCI-WMS 1.6.0-dev documentation</title>
+    <title>Advanced Usage &#8212; SCI-WMS 1.6.0-dev documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -23,6 +23,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="top" title="SCI-WMS 1.6.0-dev documentation" href="index.html" />
     <link rel="next" title="Roadmap" href="roadmap.html" />
     <link rel="prev" title="Deployment" href="deployment.html" /> 
@@ -40,7 +42,7 @@
         <li class="right" >
           <a href="deployment.html" title="Deployment"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -61,13 +63,13 @@
 <h2>Custom Django Settings<a class="headerlink" href="#custom-django-settings" title="Permalink to this headline">¶</a></h2>
 <p>You may create a file at <strong>path/to/sci-wms/sci-wms/settings/local_settings.py</strong> or <strong>path/to/sci-wms/sci-wms/settings/local/settings.py</strong> and configure any Django settings you wish.  The latter takes presedence over the former.</p>
 <p>The following settings are recommended:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># Specific host(s) that that server should be accessible on</span>
-<span class="n">ALLOWED_HOSTS</span>  <span class="o">=</span> <span class="p">[</span><span class="s">&quot;sciwms.external-host.com&quot;</span><span class="p">,</span> <span class="s">&quot;YOUR_IP_ADDRESS&quot;</span><span class="p">,</span> <span class="s">&quot;sciwms.internal-host&quot;</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Specific host(s) that that server should be accessible on</span>
+<span class="n">ALLOWED_HOSTS</span>  <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sciwms.external-host.com&quot;</span><span class="p">,</span> <span class="s2">&quot;YOUR_IP_ADDRESS&quot;</span><span class="p">,</span> <span class="s2">&quot;sciwms.internal-host&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># Sci-wms caches data on disk so it does not have to read static data from each dataset every request.</span>
-<span class="c"># By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.</span>
-<span class="n">TOPOLOGY_PATH</span> <span class="o">=</span> <span class="s">&quot;/data/sci-wms-topology&quot;</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Sci-wms caches data on disk so it does not have to read static data from each dataset every request.</span>
+<span class="c1"># By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.</span>
+<span class="n">TOPOLOGY_PATH</span> <span class="o">=</span> <span class="s2">&quot;/data/sci-wms-topology&quot;</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">TOPOLOGY_PATH</span><span class="p">):</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">TOPOLOGY_PATH</span><span class="p">)</span>
 </pre></div>
@@ -93,23 +95,20 @@
 <h2>Default Layer Settings<a class="headerlink" href="#default-layer-settings" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">sci-wms</span></code> takes a three tier approach to figure out what the <code class="docutils literal"><span class="pre">min</span></code>, <code class="docutils literal"><span class="pre">max</span></code>, and <code class="docutils literal"><span class="pre">logscale</span></code> values should be for a request.</p>
 <p>In order of precedence:</p>
-<ol class="arabic">
+<ol class="arabic simple">
 <li><dl class="first docutils">
 <dt>URL request arguments</dt>
-<dd><p class="first last">Always preferred for maximum client control. Controlled with the <code class="docutils literal"><span class="pre">LOGSCALE</span></code> and <code class="docutils literal"><span class="pre">COLORSCALERANGE</span></code> URL parameters.</p>
-</dd>
+<dd>Always preferred for maximum client control. Controlled with the <code class="docutils literal"><span class="pre">LOGSCALE</span></code> and <code class="docutils literal"><span class="pre">COLORSCALERANGE</span></code> URL parameters.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>Layer defaults</dt>
-<dd><p class="first last">Used when populated on a <code class="docutils literal"><span class="pre">Layer</span></code> not specified in the URL request. Controlled on each dataset page on a per-variable basis.</p>
-</dd>
+<dd>Used when populated on a <code class="docutils literal"><span class="pre">Layer</span></code> not specified in the URL request. Controlled on each dataset page on a per-variable basis.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>Global defaults</dt>
-<dd><p class="first last">Used when the previous two are not populated. Controlled on the global defaults page on a <code class="docutils literal"><span class="pre">standard_name</span></code> and <code class="docutils literal"><span class="pre">units</span></code> basis.</p>
-</dd>
+<dd>Used when the previous two are not populated. Controlled on the global defaults page on a <code class="docutils literal"><span class="pre">standard_name</span></code> and <code class="docutils literal"><span class="pre">units</span></code> basis.</dd>
 </dl>
 </li>
 </ol>
@@ -117,7 +116,7 @@
 <div class="section" id="wms-extensions">
 <h2>WMS Extensions<a class="headerlink" href="#wms-extensions" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">sci-wms</span></code> implements a number of additional WMS parameters that are not defined in the WMS specification while remaining completely backwards compatible.</p>
-<table border="1" class="docutils" id="id1">
+<table border="1" class="colwidths-given docutils" id="id1">
 <caption><span class="caption-text">WMS Extensions</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col width="7%" />
@@ -237,14 +236,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -263,11 +259,11 @@
         <li class="right" >
           <a href="deployment.html" title="Deployment"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">SCI-WMS 1.6.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.
     </div>
   </body>
 </html>
