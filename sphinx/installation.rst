@@ -48,7 +48,7 @@ Install the testing dependencies
 
 .. code-block:: bash
 
-    conda install -c axiom-data-science -c ioos  --file requirements-test.txt
+    conda install -c axiom-data-science -c ioos -c conda-forge --file requirements-test.txt
 
 Test that ``sci-wms`` is fully functional by running the following command
 
