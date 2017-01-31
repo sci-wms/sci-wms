@@ -26,9 +26,9 @@ If you need the `conda` executable command, see `this <http://conda.pydata.org/m
 
 .. code-block:: bash
 
-    conda install -c axiom-data-science -c ioos  --file requirements.txt
-    conda install -c axiom-data-science -c ioos  --file requirements-dev.txt
-    conda install -c axiom-data-science -c ioos  --file requirements-prod.txt
+    conda install -c axiom-data-science -c ioos --file requirements.txt
+    conda install -c axiom-data-science -c ioos --file requirements-dev.txt
+    conda install -c axiom-data-science -c ioos --file requirements-prod.txt
 
 
 Create Database
