@@ -73,7 +73,7 @@ def tripcolor_response(tri_subset, data, request, data_location=None, dpi=None):
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
-    if cmin and cmax:
+    if cmin is not None and cmax is not None:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         norm = norm_func(vmin=cmin, vmax=cmax)
@@ -135,7 +135,7 @@ def tricontouring_response(tri_subset, data, request, dpi=None):
     # Set out of bound data to NaN so it shows transparent?
     # Set to black like ncWMS?
     # Configurable by user?
-    if cmin and cmax:
+    if cmin is not None and cmax is not None:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         lvls = np.linspace(cmin, cmax, nlvls)
@@ -246,7 +246,7 @@ def contouring_response(lon, lat, data, request, dpi=None):
     else:
         norm_func = mpl.colors.Normalize
 
-    if cmin and cmax:
+    if cmin is not None and cmax is not None:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         lvls = np.linspace(cmin, cmax, nlvls)
@@ -298,7 +298,7 @@ def pcolormesh_response(lon, lat, data, request, dpi=None):
     else:
         norm_func = mpl.colors.Normalize
 
-    if cmin and cmax:
+    if cmin is not None and cmax is not None:
         data[data > cmax] = cmax
         data[data < cmin] = cmin
         norm = norm = norm_func(vmin=cmin, vmax=cmax)
