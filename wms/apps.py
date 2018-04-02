@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!python
+# coding=utf-8
 from django.apps import AppConfig
 from django.conf import settings
 from django.db.utils import OperationalError, ProgrammingError
