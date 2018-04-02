@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import glob
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 
 from django.db import models

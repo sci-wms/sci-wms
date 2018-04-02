@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from django.db import migrations
 from django.conf import settings

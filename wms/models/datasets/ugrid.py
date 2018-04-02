@@ -70,7 +70,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             pf.overwrite = True
             pf.storage   = index.RT_Disk
             pf.dimension = 2
-            idx = index.Index(pf.filename.decode('utf-8'),
+            idx = index.Index(pf.filename,
                               rtree_faces_generator_function(),
                               properties=pf,
                               interleaved=True,
@@ -91,7 +91,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             pn.overwrite = True
             pn.storage   = index.RT_Disk
             pn.dimension = 2
-            idx = index.Index(pn.filename.decode('utf-8'),
+            idx = index.Index(pn.filename,
                               rtree_nodes_generator_function(),
                               properties=pn,
                               interleaved=True,
