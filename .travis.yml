@@ -1,37 +1,28 @@
 language: python
-python:
-  - "2.7"
-  - "3.4"
+
 sudo: false
+
+matrix:
+  fast_finish: true
+  include:
+  - python: 2.7
+    env: TEST_TARGET=default
+  - python: 3.5
+    env: TEST_TARGET=default
+  - python: 3.6
+    env: TEST_TARGET=default
+
 before_install:
-  # Install miniconda
-  # -----------------
-  - export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then
-      wget ${CONDA_BASE}-3.7.0-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget ${CONDA_BASE}3-3.7.0-Linux-x86_64.sh -O miniconda.sh;
-    fi
+  - wget http://bit.ly/miniconda -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes --set changeps1 no --set show_channel_urls true
+  - conda update conda
+  - conda config --add channels conda-forge --force
+  - conda create -n TEST python=$TRAVIS_PYTHON_VERSION --file requirements.txt --file requirements-test.txt
+  - source activate TEST
 
-  # Create the basic testing environment
-  # ------------------------------------
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --set show_channel_urls True
-  - conda config --add create_default_packages pip
-  - conda update --quiet conda
-  - ENV_NAME='test-environment'
-  - conda create --quiet -n $ENV_NAME python=$TRAVIS_PYTHON_VERSION
-  - source activate $ENV_NAME
-
-install:
-  # Customise the testing environment
-  # ---------------------------------
-  - conda install --channel ioos --file requirements.txt
-  - conda install --channel ioos --file requirements-test.txt
-  - conda install --channel rustychris libspatialindex==1.8.0
-  - pip install django-extensions django-debug-toolbar
-  - conda list
-
-script: py.test -rxs --verbose
+script:
+  - if [[ $TEST_TARGET == 'default' ]]; then
+      py.test -rxs --verbose ;
+    fi
