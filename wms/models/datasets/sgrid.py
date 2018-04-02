@@ -146,9 +146,8 @@ class SGridDataset(Dataset, NetCDFDataset):
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
             lat_obj = getattr(cached_sg, lat_name)
-            centers = cached_sg.centers
-            lon = centers[..., 0][lon_obj.center_slicing]
-            lat = centers[..., 1][lat_obj.center_slicing]
+            lon = cached_sg.center_lon[lon_obj.center_slicing]
+            lat = cached_sg.center_lat[lat_obj.center_slicing]
             spatial_idx = data_handler.lat_lon_subset_idx(lon, lat,
                                                           lonmin=wgs84_bbox.minx,
                                                           latmin=wgs84_bbox.miny,
@@ -228,9 +227,8 @@ class SGridDataset(Dataset, NetCDFDataset):
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
             lat_obj = getattr(cached_sg, lat_name)
-            centers = cached_sg.centers
-            lon = centers[..., 0][lon_obj.center_slicing]
-            lat = centers[..., 1][lat_obj.center_slicing]
+            lon = cached_sg.center_lon[lon_obj.center_slicing]
+            lat = cached_sg.center_lat[lat_obj.center_slicing]
 
             if isinstance(layer, Layer):
                 data_obj = getattr(cached_sg, layer.access_name)
@@ -400,14 +398,11 @@ class SGridDataset(Dataset, NetCDFDataset):
         except:
             pass
         else:
-            centers = cached_sg.centers
-            longitudes = centers[..., 0]
-            latitudes = centers[..., 1]
             lon_name, lat_name = cached_sg.face_coordinates
             lon_var_obj = getattr(cached_sg, lon_name)
             lat_var_obj = getattr(cached_sg, lat_name)
-            lon_trimmed = longitudes[lon_var_obj.center_slicing]
-            lat_trimmed = latitudes[lat_var_obj.center_slicing]
+            lon_trimmed = cached_sg.center_lon[lon_var_obj.center_slicing]
+            lat_trimmed = cached_sg.center_lat[lat_var_obj.center_slicing]
             lon_max = lon_trimmed.max()
             lon_min = lon_trimmed.min()
             lat_max = lat_trimmed.max()
