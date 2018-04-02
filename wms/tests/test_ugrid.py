@@ -129,7 +129,7 @@ class TestUgrid(TestCase):
         params = copy(self.gfi_params)
         r = self.do_test(params, fmt='csv')
         df = pd.read_csv(r)
-        assert df['time'][0] == '2015-04-28 02:30:00'
+        assert df['time'][0] == '2015-04-28 02:45:00'
         assert df['x'][0] == -123.4863
         assert df['y'][0] == 46.256
         assert df['surface_salt'][0] == 0
@@ -140,7 +140,7 @@ class TestUgrid(TestCase):
         params['bbox'] = '-123.57421875,46.1950421087,-123.3984375,46.3165841818'
         r = self.do_test(params, fmt='csv')
         df = pd.read_csv(r)
-        assert df['time'][0] == '2015-04-28 02:30:00'
+        assert df['time'][0] == '2015-04-28 02:45:00'
         assert df['x'][0] == -123.4863
         assert df['y'][0] == 46.256
         assert df['surface_salt'][0] == 0
