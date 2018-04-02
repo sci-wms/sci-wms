@@ -12,8 +12,7 @@ import numpy as np
 import netCDF4 as nc4
 import pytz
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
-from pysgrid import from_nc_dataset, from_ncfile
-from pysgrid.custom_exceptions import SGridNonCompliantError
+from pysgrid import load_grid
 from pysgrid.read_netcdf import NetCDFDataset as SGrid
 from pysgrid.processing_2d import avg_to_cell_center, rotate_vectors
 
@@ -40,16 +39,28 @@ class SGridDataset(Dataset, NetCDFDataset):
     def is_valid(uri):
         try:
             with EnhancedDataset(uri) as ds:
-                nc_ds = SGrid(ds)
-                return nc_ds.sgrid_compliant_file() or 'sgrid' in ds.Conventions.lower()
+                try:
+                    SGrid(ds)
+                    return True
+                except ValueError:
+                    if 'sgrid' in ds.Conventions.lower():
+                        return True
+                    else:
+                        return False
         except RuntimeError:
             try:
                 with EnhancedMFDataset(uri, aggdim='time') as ds:
-                    nc_ds = SGrid(ds)
-                    return nc_ds.sgrid_compliant_file() or 'sgrid' in ds.Conventions.lower()
-            except (AttributeError, RuntimeError, SGridNonCompliantError):
+                    try:
+                        SGrid(ds)
+                        return True
+                    except ValueError:
+                        if 'sgrid' in ds.Conventions.lower():
+                            return True
+                        else:
+                            return False
+            except (AttributeError, RuntimeError):
                 return False
-        except (AttributeError, SGridNonCompliantError):
+        except (AttributeError):
             return False
 
     def has_cache(self):
@@ -58,11 +69,12 @@ class SGridDataset(Dataset, NetCDFDataset):
     def make_rtree(self):
 
         with self.dataset() as nc:
-            sg = from_nc_dataset(nc)
+            sg = load_grid(nc)
 
             def rtree_generator_function():
                 c = 0
-                for i, axis in enumerate(sg.centers):
+                centers = np.dstack((sg.center_lon, sg.center_lat))
+                for i, axis in enumerate(centers):
                     for j, (x, y) in enumerate(axis):
                         c += 1
                         yield (c, (x, y, x, y), (i, j))
@@ -75,7 +87,7 @@ class SGridDataset(Dataset, NetCDFDataset):
             p.overwrite = True
             p.storage   = index.RT_Disk
             p.dimension = 2
-            index.Index(p.filename.decode('utf-8'),
+            index.Index(p.filename,
                         rtree_generator_function(),
                         properties=p,
                         overwrite=True,
@@ -87,7 +99,7 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     def update_cache(self, force=False):
         with self.dataset() as nc:
-            sg = from_nc_dataset(nc)
+            sg = load_grid(nc)
             sg.save_as_netcdf(self.topology_file)
 
             if not os.path.exists(self.topology_file):
@@ -130,7 +142,7 @@ class SGridDataset(Dataset, NetCDFDataset):
         wgs84_bbox = request.GET['wgs84_bbox']
 
         with self.dataset() as nc:
-            cached_sg = from_ncfile(self.topology_file)
+            cached_sg = load_grid(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
             lat_obj = getattr(cached_sg, lat_name)
@@ -212,7 +224,7 @@ class SGridDataset(Dataset, NetCDFDataset):
         wgs84_bbox = request.GET['wgs84_bbox']
 
         with self.dataset() as nc:
-            cached_sg = from_ncfile(self.topology_file)
+            cached_sg = load_grid(self.topology_file)
             lon_name, lat_name = cached_sg.face_coordinates
             lon_obj = getattr(cached_sg, lon_name)
             lat_obj = getattr(cached_sg, lat_name)
@@ -384,7 +396,7 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     def wgs84_bounds(self, layer):
         try:
-            cached_sg = from_ncfile(self.topology_file)
+            cached_sg = load_grid(self.topology_file)
         except:
             pass
         else:

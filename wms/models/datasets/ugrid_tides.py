@@ -12,11 +12,10 @@ import numpy as np
 from wms.models import Style
 
 from wms.models import UGridDataset, VirtualLayer
-from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit, DotDict
+from wms.utils import calc_lon_lat_padding, calc_safety_factor, DotDict
 
 from wms import data_handler
 from wms import mpl_handler
-from wms import gfi_handler
 from wms import gmd_handler
 
 from wms import logger
@@ -65,19 +64,19 @@ class UGridTideDataset(UGridDataset):
 
                 # We are changing the variable names to 'u' and 'v' from 'u_amp' and 'v_amp' so
                 # the layer.access_method can find the variable from the virtual layer 'u,v'
-                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[1, nlocs/4])
+                ua = cnc.createVariable('u', uamp.dtype, vdims, zlib=True, fill_value=uamp._FillValue, chunksizes=[1, nlocs / 4])
                 for x in uamp.ncattrs():
                     if x != '_FillValue':
                         ua.setncattr(x, uamp.getncattr(x))
-                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[1, nlocs/4])
+                va = cnc.createVariable('v', vamp.dtype, vdims, zlib=True, fill_value=vamp._FillValue, chunksizes=[1, nlocs / 4])
                 for x in vamp.ncattrs():
                     if x != '_FillValue':
                         va.setncattr(x, vamp.getncattr(x))
-                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[1, nlocs/4])
+                up = cnc.createVariable('u_phase', uphase.dtype, vdims, zlib=True, fill_value=uphase._FillValue, chunksizes=[1, nlocs / 4])
                 for x in uphase.ncattrs():
                     if x != '_FillValue':
                         up.setncattr(x, uphase.getncattr(x))
-                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[1, nlocs/4])
+                vp = cnc.createVariable('v_phase', vphase.dtype, vdims, zlib=True, fill_value=vphase._FillValue, chunksizes=[1, nlocs / 4])
                 for x in vphase.ncattrs():
                     if x != '_FillValue':
                         vp.setncattr(x, vphase.getncattr(x))
@@ -121,7 +120,7 @@ class UGridTideDataset(UGridDataset):
         if us.size == 0 or vs.size == 0:
             return gmd_handler.from_dict(dict(min=None, max=None))
 
-        magnitude = np.sqrt((us*us) + (vs*vs))
+        magnitude = np.sqrt((us * us) + (vs * vs))
         return gmd_handler.from_dict(dict(min=np.min(magnitude), max=np.max(magnitude)))
 
     def get_tidal_vectors(self, layer, time, bbox, vector_scale=None, vector_step=None):
@@ -155,12 +154,8 @@ class UGridTideDataset(UGridDataset):
             tnames = nc.get_variables_by_attributes(standard_name='tide_constituent')[0]
             tfreqs = nc.get_variables_by_attributes(standard_name='tide_frequency')[0]
 
-            from utide import _ut_constants_fname
-            from utide.utilities import loadmatbunch
-            con_info = loadmatbunch(_ut_constants_fname)['const']
-
-            # Get names from the utide constant file
-            utide_const_names = [ e.strip() for e in con_info['name'].tolist() ]
+            from utide import constit_index_dict
+            utide_const_names = list(constit_index_dict.keys())
 
             # netCDF4-python is returning ugly arrays of bytes...
             names = []
@@ -280,8 +275,8 @@ class UGridTideDataset(UGridDataset):
                 pass
 
     def time_windows(self, layer):
-        s = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) - timedelta(days=365*100)
-        e = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) + timedelta(days=365*100)
+        s = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) - timedelta(days=365 * 100)
+        e = datetime.utcnow().replace(second=0, minute=0, microsecond=0, tzinfo=pytz.utc) + timedelta(days=365 * 100)
         d = timedelta(minutes=5)
         return [(s, e, d)]
 

@@ -19,3 +19,4 @@ logs/
 
 /static
 wms/tests/images/
+.pytest_cache

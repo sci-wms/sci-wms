@@ -166,8 +166,7 @@ class TestSgrid(TestCase):
         params = copy(self.gfi_params)
         r = self.do_test(params, fmt='csv')
         df = pd.read_csv(r, index_col='time')
-        logger.info(df)
-        #assert df['time'][0] == datetime(2015, 04, 30, 0, 0, 0)
+        # assert df['time'][0] == datetime(2015, 04, 30, 0, 0, 0)
         assert df['x'][0] == -71.6979
         assert df['y'][0] == 40.9888
         assert df['u'][0] == -0.0315
@@ -178,8 +177,7 @@ class TestSgrid(TestCase):
         params['bbox'] = '-73.125,39.90973623,-71.71875,40.97989807'
         r = self.do_test(params, fmt='csv')
         df = pd.read_csv(r, index_col='time')
-        logger.info(df)
-        #assert df['time'][0] == datetime(2015, 4, 30)
+        # assert df['time'][0] == datetime(2015, 4, 30)
         assert df['x'][0] == -71.6979
         assert df['y'][0] == 40.9888
         assert df['u'][0] == -0.0315
