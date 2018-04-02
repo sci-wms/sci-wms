@@ -52,8 +52,8 @@ class TestUgrid(TestCase):
             bbox         = '-13756219.106426599,5811660.1345785195,-13736651.227185594,5831228.013819524',
             height       = 256,
             width        = 256,
-            x            = 256,  # Top right
-            y            = 0     # Top right
+            x            = 128,  # middle
+            y            = 128   # middle
         )
 
         self.gmd_params = dict(
@@ -127,21 +127,31 @@ class TestUgrid(TestCase):
 
     def test_ugrid_gfi_single_variable_csv(self):
         params = copy(self.gfi_params)
-        self.do_test(params, fmt='csv')
+        r = self.do_test(params, fmt='csv')
+        df = pd.read_csv(r)
+        assert df['time'][0] == '2015-04-28 02:30:00'
+        assert df['x'][0] == -123.4863
+        assert df['y'][0] == 46.256
+        assert df['surface_salt'][0] == 0
 
-    def test_gfi_single_variable_csv_4326(self):
+    def test_ugrid_gfi_single_variable_csv_4326(self):
         params = copy(self.gfi_params)
         params['srs']  = 'EPSG:4326'
-        params['bbox'] = '-123.57421875,46.19504211,-123.3984375,46.31658418'
-        self.do_test(params, fmt='csv')
+        params['bbox'] = '-123.57421875,46.1950421087,-123.3984375,46.3165841818'
+        r = self.do_test(params, fmt='csv')
+        df = pd.read_csv(r)
+        assert df['time'][0] == '2015-04-28 02:30:00'
+        assert df['x'][0] == -123.4863
+        assert df['y'][0] == 46.256
+        assert df['surface_salt'][0] == 0
 
-    def test_gfi_single_variable_tsv(self):
+    def test_ugrid_gfi_single_variable_tsv(self):
         params = copy(self.gfi_params)
         params['info_format']  = 'text/tsv'
         params['query_layers'] = 'surface_temp'
         self.do_test(params, fmt='tsv')
 
-    def test_gfi_single_variable_json(self):
+    def test_ugrid_gfi_single_variable_json(self):
         params = copy(self.gfi_params)
         params['info_format']  = 'application/json'
         self.do_test(params, fmt='json')

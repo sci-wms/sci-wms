@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 
-from datetime import datetime
 import pandas as pd
 
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, SGridDataset
 
-from wms import logger
+from wms import logger  # noqa
 
 import pytest
 xfail = pytest.mark.xfail
@@ -54,8 +53,8 @@ class TestSgrid(TestCase):
             bbox         = '-8140237.76425813,4852834.051769271,-7983694.730330088,5009377.085697313',
             height       = 256,
             width        = 256,
-            x            = 256,  # Top right
-            y            = 0     # Top right
+            x            = 128,  # middle
+            y            = 128   # middle
         )
 
         self.gmd_params = dict(
@@ -151,12 +150,12 @@ class TestSgrid(TestCase):
         params = copy(self.url_params)
         params.update(styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
-        
+
     def test_sgrid_vectorscale(self):
         params = copy(self.url_params)
         params.update(vectorscale=25, styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
-        
+
     def test_sgrid_vectorstep(self):
         params = copy(self.url_params)
         params.update(vectorstep=5, styles='vectors_cubehelix', layers='u,v')
@@ -165,22 +164,22 @@ class TestSgrid(TestCase):
     def test_sgrid_gfi_single_variable_csv(self):
         params = copy(self.gfi_params)
         r = self.do_test(params, fmt='csv')
-        df = pd.read_csv(r, index_col='time')
-        # assert df['time'][0] == datetime(2015, 04, 30, 0, 0, 0)
-        assert df['x'][0] == -71.6979
-        assert df['y'][0] == 40.9888
-        assert df['u'][0] == -0.0315
+        df = pd.read_csv(r)
+        assert df['time'][0] == '2015-04-30'
+        assert df['x'][0] == -72.4485
+        assert df['y'][0] == 40.4664
+        assert df['u'][0] == 0.0925
 
     def test_sgrid_gfi_single_variable_csv_4326(self):
         params = copy(self.gfi_params)
         params['srs']  = 'EPSG:4326'
-        params['bbox'] = '-73.125,39.90973623,-71.71875,40.97989807'
+        params['bbox'] = '-73.125,39.9097362345,-71.71875,40.9798980696'
         r = self.do_test(params, fmt='csv')
-        df = pd.read_csv(r, index_col='time')
-        # assert df['time'][0] == datetime(2015, 4, 30)
-        assert df['x'][0] == -71.6979
-        assert df['y'][0] == 40.9888
-        assert df['u'][0] == -0.0315
+        df = pd.read_csv(r)
+        assert df['time'][0] == '2015-04-30'
+        assert df['x'][0] == -72.4252
+        assert df['y'][0] == 40.4118
+        assert df['u'][0] == 0.0868
 
     def test_gfi_single_variable_tsv(self):
         params = copy(self.gfi_params)
