@@ -7,7 +7,7 @@ from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset, image_path
 from wms.models import Dataset, UGridDataset
 
-from wms import logger
+from wms import logger  # noqa
 
 import pytest
 xfail = pytest.mark.xfail

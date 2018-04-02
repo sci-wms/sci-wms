@@ -5,7 +5,7 @@ from django.test import TestCase
 from wms.tests import *
 from wms.models import Dataset
 
-from sciwms import logger
+from sciwms import logger  # noqa
 
 
 class TestUgridLegendGraphic(TestCase):

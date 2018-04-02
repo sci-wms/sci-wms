@@ -1,2 +1,7 @@
 .git
+*~
+*.pyc
+*.log
+*.db
 logs/
+.pytest_cache/

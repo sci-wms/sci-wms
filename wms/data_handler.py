@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import io
+
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+
+from django.http.response import HttpResponse
 
 
 def lat_lon_subset_idx(lon, lat, lonmin, latmin, lonmax, latmax, padding=0.18):
@@ -33,7 +37,15 @@ def face_idx_from_node_idx(faces, spatial_idx):
     return faces_idx
 
 
-def blank_canvas(width, height, dpi=5):
+def figure_response(fig, request, adjust=None, **kwargs):
+    canvas = FigureCanvasAgg(fig)
+    figdata = io.BytesIO()
+    canvas.print_png(figdata, bbox_inches='tight', pad_inches=0.1, **kwargs)
+    response = HttpResponse(figdata.getvalue(), content_type='image/png')
+    return response
+
+
+def blank_figure(width, height, dpi=5):
     """
     return a transparent (blank) response
     used for tiles with no intersection with the current view or for some other error.
@@ -41,13 +53,12 @@ def blank_canvas(width, height, dpi=5):
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
     ax = fig.add_axes([0, 0, 1, 1])
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
     ax.set_frame_on(False)
     ax.set_clip_on(False)
     ax.set_position([0, 0, 1, 1])
-    canvas = FigureCanvasAgg(fig)
-    return canvas
+    return fig
 
 
 def ugrid_lat_lon_subset_idx(lon, lat, bbox, padding=None):

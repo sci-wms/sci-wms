@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-from django.http import HttpResponse
-
 import pyproj
 import numpy as np
 import matplotlib as mpl
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-from wms import logger
+from wms.data_handler import figure_response
+
+from wms import logger  # noqa
 
 
 DEFAULT_HATCHES = ['.', '+', '*', '-', '/', ',', '\\', 'x', 'o', '[', ']', '^',
@@ -59,8 +58,8 @@ def tripcolor_response(tri_subset, data, request, data_location=None, dpi=None):
 
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
 
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
@@ -91,10 +90,7 @@ def tripcolor_response(tri_subset, data, request, data_location=None, dpi=None):
     ax.set_clip_on(False)
     ax.set_position([0., 0., 1., 1.])
 
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    return figure_response(fig, request)
 
 
 def tricontouring_response(tri_subset, data, request, dpi=None):
@@ -121,8 +117,8 @@ def tricontouring_response(tri_subset, data, request, dpi=None):
 
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
 
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
@@ -155,10 +151,7 @@ def tricontouring_response(tri_subset, data, request, dpi=None):
     ax.set_clip_on(False)
     ax.set_position([0., 0., 1., 1.])
 
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    return figure_response(fig, request)
 
 
 def quiver_response(lon, lat, dx, dy, request, dpi=None):
@@ -181,8 +174,8 @@ def quiver_response(lon, lat, dx, dy, request, dpi=None):
 
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
 
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
@@ -207,7 +200,7 @@ def quiver_response(lon, lat, dx, dy, request, dpi=None):
 
     # plot unit vectors
     if unit_vectors:
-        ax.quiver(x, y, dx/mags, dy/mags, mags, cmap=cmap, norm=norm, scale=vectorscale)
+        ax.quiver(x, y, dx / mags, dy / mags, mags, cmap=cmap, norm=norm, scale=vectorscale)
     else:
         ax.quiver(x, y, dx, dy, mags, cmap=cmap, norm=norm, scale=vectorscale)
 
@@ -217,10 +210,7 @@ def quiver_response(lon, lat, dx, dy, request, dpi=None):
     ax.set_clip_on(False)
     ax.set_position([0., 0., 1., 1.])
 
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    return figure_response(fig, request)
 
 
 def contouring_response(lon, lat, data, request, dpi=None):
@@ -235,8 +225,8 @@ def contouring_response(lon, lat, data, request, dpi=None):
 
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
 
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
@@ -272,10 +262,7 @@ def contouring_response(lon, lat, data, request, dpi=None):
     ax.set_clip_on(False)
     ax.set_position([0., 0., 1., 1.])
 
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    return figure_response(fig, request)
 
 
 def pcolormesh_response(lon, lat, data, request, dpi=None):
@@ -288,8 +275,8 @@ def pcolormesh_response(lon, lat, data, request, dpi=None):
     x, y = pyproj.transform(EPSG4326, crs, lon, lat)
     fig = Figure(dpi=dpi, facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figheight(height/dpi)
-    fig.set_figwidth(width/dpi)
+    fig.set_figheight(height / dpi)
+    fig.set_figwidth(width / dpi)
     ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
     ax.set_axis_off()
 
@@ -313,7 +300,4 @@ def pcolormesh_response(lon, lat, data, request, dpi=None):
     ax.set_clip_on(False)
     ax.set_position([0., 0., 1., 1.])
 
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    return figure_response(fig, request)

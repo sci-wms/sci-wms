@@ -7,7 +7,8 @@ TESTING        = False
 
 ALLOWED_HOSTS  = ["*"]
 
-LOGGING = setup_logging(default='WARNING')
+LOGFILE = os.path.join(PROJECT_ROOT, "..", "logs", "sci-wms.log")
+LOGGING = setup_logging(default='WARNING', logfile=LOGFILE)
 
 LOCAL_APPS = ()
 try:

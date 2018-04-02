@@ -94,9 +94,7 @@ DATABASES = {
 }
 
 
-def setup_logging(default):
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    logfile = os.path.join(project_root, "..", "logs", "sci-wms.log")
+def setup_logging(default, logfile):
     if not os.path.exists(os.path.dirname(logfile)):
         os.makedirs(os.path.dirname(logfile))
 
@@ -131,6 +129,10 @@ def setup_logging(default):
                 'handlers': ['file', 'console'],
                 'level': default,
                 'propagate': True,
+            },
+            'pyugrid': {
+                'handlers': ['file', 'console'],
+                'level': 'WARNING',
             },
             '': {
                 'handlers': ['file', 'console'],

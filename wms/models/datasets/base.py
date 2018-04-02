@@ -9,17 +9,17 @@ from typedmodels.models import TypedModel
 from jsonfield import JSONField
 
 from django.conf import settings
-from django.http.response import HttpResponse
 from autoslug import AutoSlugField
 from autoslug.settings import slugify as default_slugify
 
 import numpy as np
 
 from wms.utils import DotDict, calculate_time_windows
-from wms.data_handler import blank_canvas
+from wms.data_handler import blank_figure
+from wms.mpl_handler import figure_response
 from wms import glg_handler
 
-from wms import logger
+from wms import logger  # noqa
 
 
 def only_underscores(value):
@@ -92,10 +92,8 @@ class Dataset(TypedModel):
         if content_type == 'image/png':
             width = request.GET['width']
             height = request.GET['height']
-            canvas = blank_canvas(width, height)
-            response = HttpResponse(content_type=content_type)
-            canvas.print_png(response)
-        return response
+            fig = blank_figure(width, height)
+            return figure_response(fig, request)
 
     def wgs84_bounds(self, layer):
         raise NotImplementedError

@@ -5,7 +5,8 @@ from .defaults import *
 DEBUG          = True
 TESTING        = True
 
-LOGGING = setup_logging(default='INFO')
+LOGFILE = os.path.join(PROJECT_ROOT, "..", "logs", "sci-wms.log")
+LOGGING = setup_logging(default='INFO', logfile=LOGFILE)
 
 LOCAL_APPS = ()
 try:

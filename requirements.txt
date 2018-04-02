@@ -7,6 +7,7 @@ Django>=1.10,<2.0
 djangorestframework
 isodate
 jsonfield
+matplotlib>2.0,<3.0
 netCDF4
 numpy
 pandas
@@ -14,7 +15,6 @@ pyaxiom
 pyproj
 pysgrid
 python-dateutil
-matplotlib==1.4.3
 pytz
 pyugrid
 rtree
