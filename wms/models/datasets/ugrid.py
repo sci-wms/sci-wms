@@ -125,7 +125,7 @@ class UGridDataset(Dataset, NetCDFDataset):
                 # support cases where there may be more than one variable with standard_name='time' in a dataset
                 for time_var in time_vars:
                     try:
-                        time_var_obj = cached_nc.createVariable(time_var._name,
+                        time_var_obj = cached_nc.createVariable(time_var.name,
                                                                 time_var.dtype,
                                                                 time_var.dimensions)
                     except RuntimeError:

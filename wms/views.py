@@ -3,7 +3,6 @@ import json
 from collections import OrderedDict
 
 from django.conf import settings
-from django.template import RequestContext
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
