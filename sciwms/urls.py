@@ -18,27 +18,31 @@ This file is part of SCI-WMS.
 '''
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from django.contrib.auth.views import logout
+
+import wms.views
+
 admin.autodiscover()
 
-urlpatterns = patterns( '',
-                        url(r'^grappelli/', include('grappelli.urls')),
-                        url(r'^admin/', include(admin.site.urls), name='admin'),
+urlpatterns = [
+    url(r'^grappelli/', include('grappelli.urls')),
+    url(r'^admin/', include(admin.site.urls), name='admin'),
 
-                        url(r'^$', 'wms.views.index', name='index'),
+    url(r'^$', wms.views.index, name='index'),
 
-                        url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
-                        url(r'^favicon.ico$', 'wms.views.favicon'),
+    url(r'^crossdomain\.xml$', wms.views.crossdomain),
+    url(r'^favicon.ico$', wms.views.favicon),
 
-                        url(r'^wms/', include('wms.urls')),
-                        url(r'^rest/', include('wmsrest.urls')),
+    url(r'^wms/', include('wms.urls')),
+    url(r'^rest/', include('wmsrest.urls')),
 
-                        url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout')
-                    )
+    url(r'^logout/$', logout, {'next_page': '/'}, name='logout')
+]
 
 # So we don't have to run "collectstatic" in development mode
 if settings.DEBUG:

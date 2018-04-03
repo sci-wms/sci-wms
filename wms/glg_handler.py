@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
-from django.http import HttpResponse
-
 import numpy as np
-
 import matplotlib
-
-from matplotlib.pyplot import get_cmap, colorbar, legend
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.pyplot import get_cmap, colorbar, legend
 
 from wms.mpl_handler import DEFAULT_HATCHES
-from wms import logger
+from wms.data_handler import figure_response
+from wms import logger  # noqa
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'sans-serif'
@@ -41,14 +37,6 @@ def create_axis(request, position=None):
     return fig, ax, norm
 
 
-def figure_response(fig, request, adjust=None, **kwargs):
-
-    canvas = FigureCanvasAgg(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response, bbox_inches='tight', pad_inches=0.1, **kwargs)
-    return response
-
-
 def get_position(request):
     if request.GET['horizontal'] is True:
         base = [0.08, 0.5, 0.8, 0.4]
@@ -76,8 +64,8 @@ def filledcontour(request):
     csr = request.GET['colorscalerange']
 
     if request.GET['logscale'] is True:
-        levs = np.hstack(([csr.min-3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+40]))
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        levs = np.hstack(([csr.min - 3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max + 40]))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']))
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
         if request.GET['showvalues'] is False:
@@ -88,7 +76,7 @@ def filledcontour(request):
 
     else:
         levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), extend='both')
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
         if request.GET['showvalues'] is False:
@@ -114,8 +102,8 @@ def hatches(request):
     csr = request.GET['colorscalerange']
 
     if request.GET['logscale'] is True:
-        levs = np.hstack(([csr.min-3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+40]))
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        levs = np.hstack(([csr.min - 3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max + 40]))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         hatches = DEFAULT_HATCHES[:levs.size]
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, colors='none', hatches=hatches)
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
@@ -127,7 +115,7 @@ def hatches(request):
 
     else:
         levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         hatches = DEFAULT_HATCHES[:levs.size]
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, colors='none', extend='both', hatches=hatches)
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
@@ -154,8 +142,8 @@ def filledhatches(request):
     csr = request.GET['colorscalerange']
 
     if request.GET['logscale'] is True:
-        levs = np.hstack(([csr.min-3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+40]))
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        levs = np.hstack(([csr.min - 3], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max + 40]))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         hatches = DEFAULT_HATCHES[:levs.size]
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), hatches=hatches)
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
@@ -167,7 +155,7 @@ def filledhatches(request):
 
     else:
         levs = np.linspace(csr.min, csr.max, request.GET['numcontours'])
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         hatches = DEFAULT_HATCHES[:levs.size]
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), extend='both', hatches=hatches)
         cb = colorbar(mappable=cs, cax=ax, orientation=orientation, spacing='proportional', extendrect=False, use_gridspec=True)
@@ -193,11 +181,14 @@ def contour(request):
     csr = request.GET['colorscalerange']
 
     if request.GET['logscale'] is True:
-        levs = np.hstack(([csr.min-1], np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max+1]))
+        levs = np.hstack((
+            [csr.min - 1],
+            np.linspace(csr.min, csr.max, request.GET['numcontours']), [csr.max + 1]
+        ))
         levs_labels = [ "%.1f" % x for x in levs[1:-1] ]
         if request.GET['showvalues'] is False:
-            levs_labels = [ '' for x in range(levs.size-2) ]
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+            levs_labels = [ '' for x in range(levs.size - 2) ]
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']))
         proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 
@@ -206,7 +197,7 @@ def contour(request):
         levs_labels = [ "%.1f" % x for x in levs ]
         if request.GET['showvalues'] is False:
             levs_labels = [ '' for x in range(levs.size) ]
-        x, y = np.meshgrid(np.arange(1), np.arange(1))
+        x, y = np.meshgrid(np.ones(2), np.ones(2))
         cs = ax.contourf(x, y, x, levels=levs, norm=norm, cmap=get_cmap(request.GET['colormap']), extend='max')
         proxy = [plt.Rectangle((0, 0), 0, 0, fc=pc.get_facecolor()[0]) for pc in cs.collections]
 

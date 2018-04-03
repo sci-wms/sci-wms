@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 import os
 import rtree
-import bisect
+import numpy as np
 import netCDF4 as nc4
 
 from django.conf import settings
@@ -11,6 +11,8 @@ from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 from wms.utils import find_appropriate_time
 from wms.models import VirtualLayer, Layer, Style
+
+from wms import logger  # noqa
 
 
 def try_float(obj):
@@ -130,23 +132,13 @@ class NetCDFDataset(object):
         end_nc_num = round(nc4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
 
         all_times = time_var[:]
-        start_nc_index = bisect.bisect_right(all_times, start_nc_num)
-        end_nc_index = bisect.bisect_right(all_times, end_nc_num)
 
-        try:
-            all_times[start_nc_index]
-        except IndexError:
-            start_nc_index = all_times.size - 1
-        try:
-            all_times[end_nc_index]
-        except IndexError:
-            end_nc_index = all_times.size - 1
+        start_nc_index = np.searchsorted(all_times, start_nc_num, side='left')
+        start_nc_index = min(start_nc_index, len(all_times) - 1)
 
-        if start_nc_index == end_nc_index:
-            if start_nc_index > 0:
-                start_nc_index -= 1
-            elif end_nc_index < all_times.size:
-                end_nc_index += 1
+        end_nc_index = np.searchsorted(all_times, end_nc_num, side='right')
+        end_nc_index = max(end_nc_index, 1)  # Always pull the first index
+
         return_dates = nc4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
 
         return geo_index, closest_x, closest_y, start_nc_index, end_nc_index, return_dates
@@ -250,9 +242,7 @@ class NetCDFDataset(object):
             num_date = round(nc4.date2num(time, units=units, calendar=calendar))
 
             times = time_var[:]
-            time_index = bisect.bisect_right(times, num_date)
-            try:
-                times[time_index]
-            except IndexError:
-                time_index -= 1
+
+            time_index = np.searchsorted(times, num_date, side='left')
+            time_index = min(time_index, len(times) - 1)  # Don't do over the length of time
             return time_index, times[time_index]

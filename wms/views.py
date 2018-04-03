@@ -3,13 +3,12 @@ import json
 from collections import OrderedDict
 
 from django.conf import settings
-from django.template import RequestContext
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
 from django.core import serializers
 from django.db.utils import IntegrityError
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.utils.decorators import method_decorator
@@ -103,7 +102,7 @@ def normalize_get_params(request):
 
 def demo(request):
     context = { 'datasets'  : Dataset.objects.all()}
-    return render_to_response('wms/demo.html', context, context_instance=RequestContext(request))
+    return render(request, 'wms/demo.html', context)
 
 
 def enhance_getmap_request(dataset, layer, request):

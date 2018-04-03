@@ -38,7 +38,7 @@ gunicorn --access-logfile - \
          -t 300 \
          -b 0.0.0.0:7002 \
          -w 8 \
-         -k tornado \
+         -k gevent \
          -e DJANGO_SETTINGS_MODULE=sciwms.settings.prod \
          -n sciwms \
          sciwms.wsgi:application
