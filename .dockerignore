@@ -3,6 +3,7 @@
 *.pyc
 *.log
 logs/
+docs/
 sciwms/db
 .ipynb_checkpoints/
 .pytest_cache/

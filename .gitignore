@@ -21,3 +21,4 @@ wms/tests/topology/
 /static
 wms/tests/images/
 .pytest_cache
+docs/_site

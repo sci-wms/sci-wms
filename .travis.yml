@@ -2,6 +2,11 @@ language: python
 
 sudo: false
 
+env:
+  global:
+    # Doctr deploy key for sci-wms/sci-wms
+    - secure: "hpmpu9Wg5ZdSkrTb37ew0bC9zlLiHXTKyllIwRUTEbvDR0ieVVyq6s386YsrOoQkEHqUEI6/X/cWqaoMZzbnrcEQrd7/qfDbK2ReHFyh3Cs0oCFfwphQ+4gua5yZbrLD2Jkm6eSZAjYALi6G8aQyazuIqdGElyCedb2pEWj2ImE="
+
 matrix:
   fast_finish: true
   include:
@@ -9,9 +14,13 @@ matrix:
       env: TEST_TARGET=default
     - python: 3.6
       env: TEST_TARGET=coding_standards
+    - python: 3.6
+      env: TEST_TARGET=docs
   allow_failures:
     - python: 3.6
       env: TEST_TARGET=coding_standards
+    - python: 3.6
+      env: TEST_TARGET=docs
 
 before_install:
   - wget http://bit.ly/miniconda -O miniconda.sh
@@ -32,4 +41,8 @@ script:
 
   - if [[ $TEST_TARGET == "coding_standards" ]]; then
       py.test --verbose --flake8 -m flake8 -q ;
+    fi
+
+  - if [[ $TEST_TARGET == "docs" ]]; then
+      ./docs/deploy.sh ;
     fi
