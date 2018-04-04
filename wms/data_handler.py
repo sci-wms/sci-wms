@@ -31,7 +31,8 @@ def faces_subset_idx(face_indicies, spatial_idx):
 
 
 def face_idx_from_node_idx(faces, spatial_idx):
-    subset_indexes = np.where(spatial_idx==True)  # Convert from bool array to index array  noqa
+    # Convert from bool array to index array
+    subset_indexes = np.where(spatial_idx==True)  # noqa: E225
     intersect = np.in1d(faces, subset_indexes).reshape(faces.shape)  # Intersect on the node indexes
     faces_idx = np.all(intersect, axis=1)  # Only save faces where there are all nodes indexed
     return faces_idx

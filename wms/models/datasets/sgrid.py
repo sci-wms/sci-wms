@@ -219,7 +219,10 @@ class SGridDataset(Dataset, NetCDFDataset):
 
                 if ',' in layer.var_name and raw_data is not None:
                     # Vectors, so return magnitude
-                    data = [ sqrt((u*u) + (v*v)) for (u, v,) in zip(x_var.flatten(), y_var.flatten()) if u != np.nan and v != np.nan]
+                    data = [
+                        sqrt((u * u) + (v * v)) for (u, v,) in
+                        zip(x_var.flatten(), y_var.flatten()) if u != np.nan and v != np.nan
+                    ]
                     vmin = min(data)
                     vmax = max(data)
 
@@ -402,7 +405,7 @@ class SGridDataset(Dataset, NetCDFDataset):
     def wgs84_bounds(self, layer):
         try:
             cached_sg = load_grid(self.topology_file)
-        except:
+        except BaseException:
             pass
         else:
             lon_name, lat_name = cached_sg.face_coordinates

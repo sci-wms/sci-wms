@@ -11,3 +11,19 @@ from wms.models.datasets.ugrid import UGridDataset
 from wms.models.datasets.sgrid import SGridDataset
 from wms.models.datasets.rgrid import RGridDataset
 from wms.models.datasets.ugrid_tides import UGridTideDataset
+
+__all__ = [
+    'Dataset',
+    'Group',
+    'Layer',
+    'NetCDFDataset',
+    'RGridDataset',
+    'Server',
+    'SGridDataset',
+    'Style',
+    'UGridDataset',
+    'UGridTideDataset',
+    'UnidentifiedDataset',
+    'Variable',
+    'VirtualLayer',
+]

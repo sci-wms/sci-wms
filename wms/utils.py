@@ -158,7 +158,7 @@ def timeit(f):
         result = f(*args, **kw)
         te = time.time()
 
-        logger.info('func:{} took: {} sec'.format(f.__name__, te-ts))
+        logger.info('func:{} took: {} sec'.format(f.__name__, te - ts))
         return result
 
     return timed

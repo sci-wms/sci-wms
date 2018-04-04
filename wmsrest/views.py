@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework import generics
 from django.http import Http404
 
-from wms import logger
+from wms import logger  # noqa
 
 
 class UnidentifiedDatasetList(APIView):

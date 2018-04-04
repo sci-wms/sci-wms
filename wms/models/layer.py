@@ -7,7 +7,7 @@ from wms.models import Style, Variable
 from wms.utils import DotDict
 
 from wms.utils import split
-from wms import logger
+from wms import logger  # noqa
 
 
 class LayerBase(models.Model):
@@ -137,7 +137,7 @@ class VirtualLayer(LayerBase):
 
                         vl.save()
                         break
-                    except:
+                    except BaseException:
                         raise
 
     @property

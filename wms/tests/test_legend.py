@@ -2,7 +2,13 @@
 from copy import copy
 
 from django.test import TestCase
-from wms.tests import *
+from wms.tests import (
+    add_server,
+    add_group,
+    add_user,
+    add_dataset,
+    image_path
+)
 from wms.models import Dataset
 
 from sciwms import logger  # noqa

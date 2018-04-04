@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import unittest
 from copy import copy
 
 from django.test import TestCase

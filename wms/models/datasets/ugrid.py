@@ -204,7 +204,10 @@ class UGridDataset(Dataset, NetCDFDataset):
 
                 if ',' in layer.var_name and data:
                     # Vectors, so return magnitude
-                    data = [ sqrt((u*u) + (v*v)) for (u, v,) in data.T if u != np.nan and v != np.nan]
+                    data = [
+                        sqrt((u * u) + (v * v)) for (u, v,) in
+                        data.T if u != np.nan and v != np.nan
+                    ]
                     vmin = min(data)
                     vmax = max(data)
 
@@ -247,7 +250,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             if request.GET['image_type'] == 'vectors' and vector_step > 1:
                 num_vec = int(bool_spatial_idx.size / vector_step)
                 step = int(bool_spatial_idx.size / num_vec)
-                bool_spatial_idx[np.where(bool_spatial_idx==True)][0::step] = False
+                bool_spatial_idx[np.where(bool_spatial_idx==True)][0::step] = False  # noqa: E225
 
             # If no triangles intersect the field of view, return a transparent tile
             if not np.any(bool_spatial_idx):

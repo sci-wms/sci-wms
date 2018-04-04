@@ -7,7 +7,7 @@ from django.db import IntegrityError
 
 from wms.models import Group, Server, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset
 
-from sciwms import logger
+from sciwms import logger  # noqa
 
 resource_path = os.path.abspath(os.path.join(settings.PROJECT_ROOT, '..', 'wms', 'resources'))
 

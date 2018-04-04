@@ -1,2 +1,3 @@
-pytest-django
 pytest
+pytest-django
+pytest-flake8

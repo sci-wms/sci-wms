@@ -6,8 +6,8 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from wms.models import UGridDataset, UnidentifiedDataset, Dataset, SGridDataset, UGridTideDataset
 
-from wms import logger
 from wms.tests import resource_path
+from wms import logger  # noqa
 
 
 class TestDatasetCreate(APITestCase):

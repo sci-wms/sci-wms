@@ -5,8 +5,13 @@ sudo: false
 matrix:
   fast_finish: true
   include:
-  - python: 3.6
-    env: TEST_TARGET=default
+    - python: 3.6
+      env: TEST_TARGET=default
+    - python: 3.6
+      env: TEST_TARGET=coding_standards
+  allow_failures:
+    - python: 3.6
+      env: TEST_TARGET=coding_standards
 
 before_install:
   - wget http://bit.ly/miniconda -O miniconda.sh
@@ -19,6 +24,12 @@ before_install:
   - source activate TEST
 
 script:
-  - if [[ $TEST_TARGET == 'default' ]]; then
+  - set -e
+
+  - if [[ $TEST_TARGET == "default" ]]; then
       py.test -rxs --verbose ;
+    fi
+
+  - if [[ $TEST_TARGET == "coding_standards" ]]; then
+      py.test --verbose --flake8 -m flake8 -q ;
     fi

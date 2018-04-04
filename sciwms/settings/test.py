@@ -1,6 +1,7 @@
 #!python
 # coding=utf-8
-from .defaults import *
+import os
+from .defaults import *  # noqa
 
 DEBUG          = True
 TESTING        = True
@@ -15,11 +16,11 @@ if not os.path.exists(TOPOLOGY_PATH):
 
 LOCAL_APPS = []
 try:
-    from local_settings import *
+    from local_settings import *  # noqa
 except ImportError:
     pass
 try:
-    from local.settings import *
+    from local.settings import *  # noqa
 except ImportError:
     pass
 INSTALLED_APPS += LOCAL_APPS
