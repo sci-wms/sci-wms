@@ -196,14 +196,36 @@ class NetCDFDataset(object):
                     l, _ = Layer.objects.get_or_create(dataset_id=self.id, var_name=v)
 
                     nc_var = nc.variables[v]
-                    if hasattr(nc_var, 'valid_range'):
+
+                    # *_min and *_max attributes take presendence over the *_range attributes
+                    # scale_* attributes take presedence over valid_* attributes
+
+                    # *_range
+                    if hasattr(nc_var, 'scale_range'):
+                        l.default_min = try_float(nc_var.scale_range[0])
+                        l.default_max = try_float(nc_var.scale_range[-1])
+                    elif hasattr(nc_var, 'valid_range'):
                         l.default_min = try_float(nc_var.valid_range[0])
                         l.default_max = try_float(nc_var.valid_range[-1])
-                    # valid_min and valid_max take presendence
-                    if hasattr(nc_var, 'valid_min'):
+
+                    # *_min
+                    if hasattr(nc_var, 'scale_min'):
+                        l.default_min = try_float(nc_var.scale_min)
+                    elif hasattr(nc_var, 'valid_min'):
                         l.default_min = try_float(nc_var.valid_min)
-                    if hasattr(nc_var, 'valid_max'):
+
+                    # *_max
+                    if hasattr(nc_var, 'scale_max'):
+                        l.default_max = try_float(nc_var.scale_max)
+                    elif hasattr(nc_var, 'valid_max'):
                         l.default_max = try_float(nc_var.valid_max)
+
+                    # type
+                    if hasattr(nc_var, 'scale_type'):
+                        if nc_var.scale_type in ['logarithmic', 'log']:
+                            l.logscale = True
+                        elif nc_var.scale_type in ['linear']:
+                            l.logscale = False
 
                     if hasattr(nc_var, 'standard_name'):
                         std_name = nc_var.standard_name
