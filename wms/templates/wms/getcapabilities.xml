@@ -51,9 +51,9 @@
                 </DCPType>
             </GetMap>
             <GetFeatureInfo>
-                <Format>image/png</Format>
-                <Format>text/csv</Format>
-                <Format>text/javascript</Format>
+                {% for f in gfi_formats %}
+                <Format>{{ f }}</Format>
+                {% endfor %}
                 <DCPType>
                     <HTTP>
                         <Get>

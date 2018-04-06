@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from wms.models import Dataset, Server, Variable, Style, UnidentifiedDataset
 from wms.utils import get_layer_from_request
 from wms.tasks import update_dataset
+from wms import gfi_handler
 from wms import wms_handler
 from wms import logger
 
@@ -245,7 +246,7 @@ class WmsView(View):
         # This calls the passed in 'request' method on a Dataset and returns the response
         try:
             if reqtype.lower() == 'getcapabilities':
-                return TemplateResponse(request, 'wms/getcapabilities.xml', dict(dataset=dataset, server=Server.objects.first()), content_type='application/xml')
+                return TemplateResponse(request, 'wms/getcapabilities.xml', dict(gfi_formats=gfi_handler.FORMATS, dataset=dataset, server=Server.objects.first()), content_type='application/xml')
             else:
                 layer = get_layer_from_request(dataset, request)
                 if not layer:
