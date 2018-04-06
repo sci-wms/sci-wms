@@ -2,6 +2,17 @@
 Changelog
 =========
 
+* :release:`2.0.0 <2018-04-06>`
+* :feature:`-` Implement background jobs using Huey
+* :feature:`-` Moved documentation under the docs/ folder
+* :feature:`-` Added coding standards to Travis
+* :bug:`79 major` Add ``scale_`` attribute parsing for min/max
+* :release:`1.6.0 <2018-04-05>`
+* :feature:`-` Upgrade all external libraries
+* :feature:`-` Drop support for Python<3.6
+* :bug:`122 major` Fix the docker build
+* :bug:`127 major` Fix time searching/indexing
+* :bug:`128 major` Fix issue when colorscalerange min was 0
 * :release:`1.5.0 <2015-12-18>`
 * :feature:`106` Add the UTIDES dataset type
 * :bug:`105 major` Changed default size of Legend to match ncWMS
