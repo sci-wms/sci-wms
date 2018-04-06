@@ -17,7 +17,6 @@ This file is part of SCI-WMS.
     You should have received a copy of the GNU General Public License
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
-
 import os
 import sys
 

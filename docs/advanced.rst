@@ -12,6 +12,8 @@ Suported parameter expressions:
 ``[layer_1],[layer_2]`` This will treat layer_1 as a U vector and layer_2 as a V vector and produce vector plots.
 
 
+.. _custom-django-settings:
+
 Custom Django Settings
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -28,11 +30,13 @@ The following settings are recommended:
 .. code-block:: python
 
     # Sci-wms caches data on disk so it does not have to read static data from each dataset every request.
-    # By default, the path is `SCIWMS_ROOT/sciwms/apps/wms/topology`.
-    TOPOLOGY_PATH = "/data/sci-wms-topology"
+    # By default, the path is `SCIWMS_ROOT/wms/topology`.
+    TOPOLOGY_PATH = "/some/other/folder/sci-wms-topology"
     if not os.path.exists(TOPOLOGY_PATH):
         os.makedirs(TOPOLOGY_PATH)
 
+
+.. _topology-cache:
 
 Topology Cache
 ~~~~~~~~~~~~~~
@@ -60,7 +64,6 @@ NetCDF (.nc)
 This file contains the up-to-date coordinate variable data for the dataset. This is typically Latitude/Longitude, and Time. For forecasts that are routinely updates, the time variable typically is growing with each update.  This file is updated if the Dataset is set to "Keep up to date" and an update is requested.
 
 
-
 Default Layer Settings
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -72,11 +75,15 @@ In order of precedence:
     Always preferred for maximum client control. Controlled with the ``LOGSCALE`` and ``COLORSCALERANGE`` URL parameters.
 
 2. Layer defaults
-    Used when populated on a ``Layer`` not specified in the URL request. Controlled on each dataset page on a per-variable basis.
+    Used when populated on a ``Layer``. Controlled on each dataset page on a per-variable basis. For each netCDF variable, we look for the following when processing a dataset in order of most precedence:
+
+      #. `scale_min` and `scale_max`
+      #. `scale_range`
+      #. `valid_min` and `valid_max`
+      #. `valid_range`
 
 3. Global defaults
     Used when the previous two are not populated. Controlled on the global defaults page on a ``standard_name`` and ``units`` basis.
-
 
 
 WMS Extensions

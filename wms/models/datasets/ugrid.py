@@ -42,7 +42,7 @@ class UGridDataset(Dataset, NetCDFDataset):
                     return 'ugrid' in ds.Conventions.lower()
             except (IndexError, AttributeError, RuntimeError, ValueError):
                 return False
-        except AttributeError:
+        except (FileNotFoundError, AttributeError):
             return False
 
     def has_cache(self):
@@ -254,7 +254,7 @@ class UGridDataset(Dataset, NetCDFDataset):
 
             # If no triangles intersect the field of view, return a transparent tile
             if not np.any(bool_spatial_idx):
-                logger.warning("No triangles in field of view, returning empty tile.")
+                logger.info("No triangles in field of view, returning empty tile.")
                 return self.empty_response(layer, request)
 
             if isinstance(layer, Layer):

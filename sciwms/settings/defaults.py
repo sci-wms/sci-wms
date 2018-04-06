@@ -32,18 +32,6 @@ STATIC_ROOT        = os.path.abspath(os.path.join(BASE_DIR, "static"))
 MEDIA_URL          = '/media/'
 MEDIA_ROOT         = os.path.abspath(os.path.join(BASE_DIR, "media"))
 
-db_path = os.path.join(PROJECT_ROOT, "db")
-if not os.path.isdir(db_path):
-    os.makedirs(db_path)
-db_file = os.path.join(db_path, "sci-wms.db")
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME':  db_file,
-    }
-}
-
 INSTALLED_APPS = [
     'grappelli',
     'django.contrib.admin',
@@ -55,6 +43,7 @@ INSTALLED_APPS = [
     'wms',
     'wmsrest',
     'rest_framework',
+    'huey.contrib.djhuey',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -133,12 +122,10 @@ def setup_logging(default, logfile):
                 'level': default,
                 'propagate': True,
             },
-            'celery': {
-                'handlers': ['file', 'console'],
-                'level': default,
-            },
-            'celery.task': {
-                'propagate': True,
+            'huey': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
             },
             'pyugrid': {
                 'handlers': ['file', 'console'],
@@ -154,19 +141,18 @@ def setup_logging(default, logfile):
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
     },
     'page': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
     }
 }
 
-
-# Database
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db"))
+db_path = os.path.join(PROJECT_ROOT, "db")
 if not os.path.isdir(db_path):
     os.makedirs(db_path)
 db_file = os.path.join(db_path, "sci-wms.db")
+huey_file = os.path.join(db_path, "huey.db")
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -179,3 +165,15 @@ GRAPPELLI_ADMIN_TITLE = 'sci-wms'
 
 # Matplotlib
 matplotlib.use("Agg")
+
+HUEY = {
+    'name': 'sciwms',
+    'filename': huey_file,
+    'result_store': True,  # Store return values of tasks.
+    'events': True,  # Consumer emits events allowing real-time monitoring.
+    'store_none': True,  # If a task returns None, do not save to results.
+    'always_eager': True,  # If DEBUG=True, run synchronously.
+    'store_errors': True,  # Store error info if task throws exception.
+    'blocking': False,  # Poll the queue rather than do blocking pop.
+    'backend_class': 'huey.contrib.sqlitedb.SqliteHuey',  # Use path to redis huey by default,
+}

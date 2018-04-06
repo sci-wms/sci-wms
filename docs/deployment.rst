@@ -1,158 +1,155 @@
 Deployment
 ==========
 
-Docker (RECOMMENDED)
-~~~~~~~~~~~~~~~~~~~~
+Quickstart
+~~~~~~~~~~
 
-``sci-wms`` supports running inside of a Docker container
-
-Pull
-
-.. code-block:: bash
-
-    docker pull axiom/sci-wms
-
-Run, interactively
+If you are working with a moderatly size sci-wms installation (tens of datasets) with light load
+you should be ok running a single instance.
 
 .. code-block:: bash
 
-    docker run --rm -it -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ axiom/sci-wms
+    $ docker run -d axiom/sci-wms
 
-Run, daemonized
+
+Advanced
+~~~~~~~~
+
+If for whatever reason you need to disttibute `sci-wms` instances over many servers it will require a bit more work:
+
+* `redis` for caching and communication between components
+* `postgresql` for metadata storage (not SQLite)
+* Background workers to perform tasks such as updating datasets
+* Shared filesystem for the topology cache
+
+Luckily some really nice person put together an example `docker-compose.yml` file that does it all for you (but on a single server):
+https://github.com/sci-wms/sci-wms/blob/background_jobs/docker-compose.yml. If you are at the point of needing to cluster `sci-wms`
+then this should help you get started.
 
 .. code-block:: bash
 
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ axiom/sci-wms
+    $ docker-compose up -d
 
-``sci-wms`` will be running on http://localhost:7002.  Adjust the `-p` value to your liking.
+You should see four docker containers:
+
+.. code-block:: bash
+
+    $ docker ps
+
+    CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+    cdc0655e12f2    sci-wms         "/tini -- docker/wai…"   0.0.0.0:7002->7002/tcp   sciwms_web_1
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_1
+    ee991f4eafbf    postgres:10.3   "docker-entrypoint.s…"   5432/tcp                 sciwms_db_1
+    cfa1bf74e03c    redis           "docker-entrypoint.s…"   6379/tcp                 sciwms_redis_1
+
+You can scale out the `worker` nodes as needed:
+
+.. code-block:: bash
+
+    $ docker-compose up -d --scale worker=4 worker
+
+    sciwms_redis_1 is up-to-date
+    Starting sciwms_worker_1 ... done
+    Starting sciwms_worker_2 ... done
+    Starting sciwms_worker_3 ... done
+    Starting sciwms_worker_4 ... done
+
+    $ docker ps
+
+    CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+    cdc0655e12f2    sci-wms         "/tini -- docker/wai…"   0.0.0.0:7002->7002/tcp   sciwms_web_1
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_1
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_2
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_3
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_4
+    ee991f4eafbf    postgres:10.3   "docker-entrypoint.s…"   5432/tcp                 sciwms_db_1
+    cfa1bf74e03c    redis           "docker-entrypoint.s…"   6379/tcp                 sciwms_redis_1
+
+
+**sci-wms will now be running on port 7002**. To obtain a python shell to test commands and such:
+
+.. code-block:: bash
+
+    $ docker exec -it sciwms_web_1 python
+
+
+Configuration
+~~~~~~~~~~~~~
+
 
 Custom Paths
 ............
 
-Run, with a custom Django config (see ``Custom Django Settings``)
+To run with a custom Django config, see :ref:`custom-django-settings`, edit the `docker-compose.yml` file
+and add a volume to the `web` and `worker` services that mount your custom config file at `/srv/sci-wms/sciwms/settings/local_settings.py`
 
 .. code-block:: bash
 
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/settings/folder/containing/settings.py/:/srv/sci-wms/sciwms/settings/local axiom/sci-wms
+    web:
+      ...
+      volumes:
+        - your/settings/file:/srv/sci-wms/sciwms/settings/local_settings.py
+      ...
 
-Run, with a custom topology path (where dataset grids are cached. Useful if load balancing many sci-wms servers together)
+    worker:
+      ...
+      volumes:
+        - your/settings/file:/srv/sci-wms/sciwms/settings/local_settings.py
+      ...
+
+To run with a custom Topology Cache path, see :ref:`topology-cache`, edit the `docker-compose.yml` file and add a volume to the `web` and `worker` services. This folder must be shared by all instances of the `worker` and `web`.
 
 .. code-block:: bash
 
-    docker run -d -p 7002:7002 -v /your/local/folder/for/sqlite/database:/srv/sci-wms/sciwms/db/ -v /path/to/toplogy/folder:/srv/sci-wms/wms/topology axiom/sci-wms
+    web:
+      ...
+      volumes:
+        - your/topology/directory:/srv/sci-wms/wms/topology
+      ...
+
+    worker:
+      ...
+      volumes:
+          - your/topology/directory:/srv/sci-wms/wms/topology
+      ...
+
 
 Superuser
 .........
 
-On first run, this image will create a superuser account that can be used to access the ``sci-wms`` admin area, and echo it to the screen, like so:
+On first run, this image will create a superuser account that can be used to access the ``sci-wms`` admin area. You can set the user and password by editing the `docker-compose.yml` file and editing the environment variables:
 
 .. code-block:: bash
 
-    ========================================================================
-    sci-wms user:         "sciwmsuser"
-    sci-wms user email:   "sciwmsuser@localhost"
-    sci-wms password:     "6DZDoN8jmntgj2RY"
-    ========================================================================
+  web:
+    ...
+    environment:
+      SCIWMS_USERNAME: sciwms
+      SCIWMS_PASSWORD: sciwms
+    ...
 
-The default username and email are as shown, and the password is randomly set.  You can manually set all of these by with the environment variables `SCIWMS_USERNAME`, `SCIWMS_EMAIL`, and `SCIWMS_PASSWORD` via the `docker -e` parameter.
-
-For example
-
-.. code-block:: bash
-
-    docker run -d -e SCIWMS_USERNAME=daf -e SCIWMS_PASSWORD=hunter2 axiom/sci-wms
-
-
-Quick Start (DEVELOPMENT ONLY)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To start ``sci-wms`` with the Django development server on port :7000, type the following commands
+To retrieve the username and password you can view the logs for the `web` service:
 
 .. code-block:: bash
 
-    $ docker run -d --name sciwms-redis -p 6060:6379 redis
+  $ docker logs sciwms_web_1
+
+    ...
+    ===============================
+    sci-wms user:         "sciwms"
+    sci-wms password:     "sciwms"
+    ===============================
+    ...
+
+
+Developers
+~~~~~~~~~~
+
+To start ``sci-wms`` with the Django development server on port :7002, type the following commands
+
+.. code-block:: bash
+
     $ python manage.py runserver 0.0.0.0:7002
-    $ celery worker -A sciwms
-    $ celery beat -A sciwms
 
-This server is not considered secure for production implementations,
-and it is recommended you use an alternative wsgi server like *Gunicorn*.
-
-
-From Source (NOT RECOMMENDED)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You really should be using the Docker image to run ``sci-wms``. This ``From Source`` method won't be supported forever!
-
-You must have a redis instance installed and running on localhost. ``sci-wms`` will use databases ``0`` and ``1``. You should look at the Advanced section for instructions on how to supply your own Django configuration options if you want to configure the Redis connection.
-
-
-Using the Gunicorn Server
-.........................
-
-Gunicorn is recommended for production servers
-
-.. code-block:: bash
-
-    $ celery worker -A sciwms
-    $ celery beat -A sciwms
-    $ gunicorn \
-        --access-logfile - \
-        --error-logfile - \
-        --max-requests 100 \
-        --graceful-timeout 300 \
-        --keep-alive 5 \
-        --backlog 50 \
-        --log-level warning \
-        -t 300 \
-        -b 0.0.0.0:7002 \
-        -w 4 \
-        -k tornado \
-        -e DJANGO_SETTINGS_MODULE=sciwms.settings.prod \
-        -n sciwms \
-        sciwms.wsgi:application | logger -t gunicorn
-
-`Gunicorn WSGI server configuration <http://gunicorn.org/>`_
-
-
-Management with Supervisord
-...........................
-
-Sample supervisord configuration for ``sci-wms`` assuming installation at ``/srv/sci-wms``
-and running as the ``sciwms`` user.  You should specify the full path to the ``gunicorn`` executable
-you want to use (the one installed inside of your virtualenv).
-
-.. code-block:: bash
-
-    [program:sci-wms]
-    command=gunicorn -w 8 -t 300 -b 127.0.0.1:7002 -n sciwms --max-requests 100 --access-logfile /srv/sci-wms/logs/gunicorn.access.log --error-logfile /srv/sci-wms/logs/gunicorn.error.log -k tornado sciwms.wsgi:application
-    directory=/srv/sci-wms
-    user=sciwms
-    autostart=true
-    autorestart=true
-    redirect_stderr=true
-    stopasgroup=true
-    numprocs=1
-    environment=DJANGO_SETTINGS_MODULE="sciwms.settings.prod"
-
-    [program:sci-wms-worker]
-    command=celery worker -E -c 4 -A sciwms
-    directory=/srv/sci-wms
-    user=sciwms
-    autostart=true
-    autorestart=true
-    redirect_stderr=true
-    stopasgroup=true
-    numprocs=1
-    environment=DJANGO_SETTINGS_MODULE="sciwms.settings.prod"
-
-    [program:sci-wms-beat]
-    command=celery beat -A sciwms
-    directory=/srv/sci-wms
-    user=sciwms
-    autostart=true
-    autorestart=true
-    redirect_stderr=true
-    stopasgroup=true
-    numprocs=1
-    environment=DJANGO_SETTINGS_MODULE="sciwms.settings.prod"
+This server is not considered secure for production implementations, and it is recommended you use
+an alternative wsgi server like *Gunicorn*.

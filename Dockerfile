@@ -39,6 +39,7 @@ RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
         && \
     /opt/conda/bin/conda config \
         --add create_default_packages pip \
+        --add channels axiom-data-science \
         --add channels conda-forge \
         && \
     /opt/conda/bin/conda install python=$PYTHON_VERSION && \
@@ -65,7 +66,6 @@ RUN mkdir -p "$SCIWMS_ROOT"
 COPY . $SCIWMS_ROOT
 WORKDIR $SCIWMS_ROOT
 
-ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
 VOLUME ["$SCIWMS_ROOT/sciwms/settings/local"]
 VOLUME ["$SCIWMS_ROOT/wms/topology"]
 VOLUME ["$SCIWMS_ROOT/sciwms/db"]

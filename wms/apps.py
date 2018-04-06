@@ -2,8 +2,6 @@
 # coding=utf-8
 from django.apps import AppConfig
 
-from wms import logger  # noqa
-
 
 class WmsConfig(AppConfig):
     name = 'wms'
@@ -16,6 +14,5 @@ class WmsConfig(AppConfig):
         # Load cmocean colormaps
         import cmocean
         import matplotlib.cm
-
         for n, m in cmocean.cm.cmap_d.items():
             matplotlib.cm.register_cmap(name=n, cmap=m)

@@ -28,6 +28,7 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda config --set always_yes yes --set changeps1 no --set show_channel_urls true
   - conda update conda
+  - conda config --add channels axiom-data-science --force
   - conda config --add channels conda-forge --force
   - conda create -n TEST python=$TRAVIS_PYTHON_VERSION --file requirements.txt --file requirements-test.txt
   - source activate TEST

@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 
 from wms.models import Dataset, Server, Variable, Style, UnidentifiedDataset
 from wms.utils import get_layer_from_request
-from wms.tasks import update_dataset as update_dataset_task
+from wms.tasks import update_dataset
 from wms import wms_handler
 from wms import logger
 
@@ -231,7 +231,7 @@ class DatasetUpdateView(View):
     @method_decorator(login_required)
     def get(self, request, dataset):
         dataset = get_object_or_404(Dataset, slug=dataset)
-        update_dataset_task.delay(dataset.pk, force=True)
+        update_dataset(dataset.pk)
         return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
 
 
@@ -258,18 +258,11 @@ class WmsView(View):
                     request = enhance_getfeatureinfo_request(dataset, layer, request)
                 elif reqtype.lower() == 'getmetadata':
                     request = enhance_getmetadata_request(dataset, layer, request)
-                try:
-                    response = getattr(dataset, reqtype.lower())(layer, request)
-                except AttributeError as e:
-                    logger.exception(e)
-                    return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
-                except NotImplementedError as e:
-                    return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
-                # Test formats, etc. before returning?
-                return response
-        except (AttributeError, ValueError) as e:
-            logger.exception(str(e))
-            return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")
+
+                return getattr(dataset, reqtype.lower())(layer, request)
+
         except NotImplementedError as e:
-            logger.exception(str(e))
             return HttpResponse('"{}" is not implemented for a {}'.format(reqtype, dataset.__class__.__name__), status=500, reason="Could not process inputs", content_type="application/json")
+        except BaseException as e:
+            logger.exception('Returning a 500:')
+            return HttpResponse(str(e), status=500, reason="Could not process inputs", content_type="application/json")

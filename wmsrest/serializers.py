@@ -86,7 +86,6 @@ class UnidentifiedDatasetSerializer(serializers.ModelSerializer):
         fields = ('id',
                   'uri',
                   'name',
-                  'job_id',
                   'messages')
 
 

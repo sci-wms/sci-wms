@@ -3,3 +3,4 @@ Werkzeug
 watchdog  # For better Werkzeug reloads
 django-debug-toolbar
 pyinotify
+peewee    # For sqlite Huey

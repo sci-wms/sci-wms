@@ -3,7 +3,6 @@ import os
 import glob
 from urllib.parse import urlparse
 
-from celery.result import AsyncResult
 from django.db import models
 from typedmodels.models import TypedModel
 from jsonfield import JSONField
@@ -35,7 +34,7 @@ class Dataset(TypedModel):
     update_every = models.IntegerField(default=86400, help_text="Seconds between updating this dataset. Assume datasets check at the top of the hour")
     display_all_timesteps = models.BooleanField(help_text="Check this box to display each time step in the GetCapabilities document, instead of just the range that the data spans.)", default=False)
     cache_last_updated = models.DateTimeField(null=True, editable=False)
-    update_task = models.CharField(blank=True, max_length=200, help_text="The Celery task_id when this dataset is updating. Used for progress and front-end stuff.")
+    update_task = models.CharField(blank=True, max_length=200, help_text="The Huey task_id when this dataset is updating. Used for progress and front-end stuff.")
     json = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
     slug = AutoSlugField(populate_from='name', slugify=only_underscores)
 
@@ -152,8 +151,8 @@ class Dataset(TypedModel):
 
     @property
     def status(self):
-        if self.update_task and not settings.DEBUG:
-            return AsyncResult(self.update_task).status
+        if self.update_task:
+            return 'UPDATING'
         elif self.has_cache():
             return "OK"
         else:
@@ -167,7 +166,6 @@ class UnidentifiedDataset(models.Model):
     uri = models.CharField(max_length=1000)
     name = models.CharField(max_length=200, unique=True, help_text="Name/ID to use. No special characters or spaces ('_','0123456789' and A-Z are allowed).")
     slug = AutoSlugField(populate_from='name', slugify=only_underscores)
-    job_id = models.TextField(blank=True, null=True)
     messages = models.TextField(blank=True, null=True)
 
     @property
@@ -176,4 +174,4 @@ class UnidentifiedDataset(models.Model):
 
     @property
     def status(self):
-        return AsyncResult(self.job_id).status
+        return 'Unknown'

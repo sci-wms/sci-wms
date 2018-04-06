@@ -6,11 +6,11 @@ Welcome to sci-wms
 .. toctree::
    :maxdepth: 2
 
-   installation
    deployment
    advanced
    roadmap
    changelog
+   support
 
 
 ==========
@@ -39,8 +39,8 @@ Features
 Authors
 =========
 .. codeauthor:: Alex Crosby <https://github.com/acrosby>
+.. codeauthor:: Andrew Yan <https://github.com/ayan-usgs>
 .. codeauthor:: Brandon Mayer <https://github.com/brandonmayer>
 .. codeauthor:: Brian McKenna <https://github.com/brianmckenna>
 .. codeauthor:: Dave Foster <https://github.com/daf>
 .. codeauthor:: Kyle Wilcox <https://github.com/kwilcox>
-.. codeauthor:: Andrew Yan <https://github.com/ayan-usgs>
