@@ -3,6 +3,7 @@ Changelog
 =========
 
 * :release:`2.0.0 <2018-04-06>`
+* :bug:`132 major` Support datasets with no time dimension
 * :feature:`-` Implement background jobs using Huey
 * :feature:`-` Moved documentation under the docs/ folder
 * :feature:`-` Added coding standards to Travis

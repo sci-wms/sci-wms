@@ -123,6 +123,9 @@ class DotDict(object):
 
 def calculate_time_windows(times):
 
+    if not times:
+        return
+
     if times.size == 1:
         yield [times[0], times[0], timedelta(days=0)]
         return

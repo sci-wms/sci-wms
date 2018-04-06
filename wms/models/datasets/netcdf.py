@@ -126,7 +126,13 @@ class NetCDFDataset(object):
             tree.close()
 
         # Get time indexes
-        time_var_name = find_appropriate_time(variable_object, ncd.get_variables_by_attributes(standard_name='time'))
+        time_vars = ncd.get_variables_by_attributes(standard_name='time')
+        if not time_vars:
+            start_nc_index = 0
+            end_nc_index = 0
+            return_dates = []
+
+        time_var_name = find_appropriate_time(variable_object, time_vars)
         time_var = ncd.variables[time_var_name]
         if hasattr(time_var, 'calendar'):
             calendar = time_var.calendar
@@ -252,6 +258,10 @@ class NetCDFDataset(object):
         """
         with self.dataset() as nc:
             time_vars = nc.get_variables_by_attributes(standard_name='time')
+
+            if not time_vars:
+                return None, None
+
             if len(time_vars) == 1:
                 time_var = time_vars[0]
             else:
@@ -260,6 +270,7 @@ class NetCDFDataset(object):
                 var_obj = nc.variables[layer.access_name]
                 time_var_name = find_appropriate_time(var_obj, time_vars)
                 time_var = nc.variables[time_var_name]
+
             units = time_var.units
             if hasattr(time_var, 'calendar'):
                 calendar = time_var.calendar

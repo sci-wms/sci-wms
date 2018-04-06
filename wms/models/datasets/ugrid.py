@@ -422,6 +422,10 @@ class UGridDataset(Dataset, NetCDFDataset):
     def times(self, layer):
         with self.topology() as nc:
             time_vars = nc.get_variables_by_attributes(standard_name='time')
+
+            if not time_vars:
+                return []
+
             if len(time_vars) == 1:
                 time_var = time_vars[0]
             else:
