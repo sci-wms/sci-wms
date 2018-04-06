@@ -90,11 +90,13 @@
                 <SRS>EPSG:3857</SRS>
                 <LatLonBoundingBox maxx="{{ layer.wgs84_bounds.maxx }}" maxy="{{ layer.wgs84_bounds.maxy }}" minx="{{ layer.wgs84_bounds.minx }}" miny="{{ layer.wgs84_bounds.miny }}" />
                 <BoundingBox SRS="EPSG:4326" maxx="{{ layer.wgs84_bounds.maxx }}" maxy="{{ layer.wgs84_bounds.maxy }}" minx="{{ layer.wgs84_bounds.minx }}" miny="{{ layer.wgs84_bounds.miny }}" />
+                {% if layer.times|length > 0 %}
                 <Dimension name="time" units="ISO8601" />
                 {% if dataset.display_all_timesteps %}
                     <Extent name="time">{{ layer.times | date_format_z }}</Extent>
                 {% else %}
                     <Extent name="time">{{ layer.time_windows | triple_period_format_z }}</Extent>
+                {% endif %}
                 {% endif %}
                 {% if layer.depths %}
                     <Dimension name="elevation" units="EPSG:5030" postive="{{ layer.depth_direction }}"/>
