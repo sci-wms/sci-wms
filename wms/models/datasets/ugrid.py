@@ -423,10 +423,9 @@ class UGridDataset(Dataset, NetCDFDataset):
         with self.topology() as nc:
             time_vars = nc.get_variables_by_attributes(standard_name='time')
 
-            if not time_vars:
+            if len(time_vars) == 0:
                 return []
-
-            if len(time_vars) == 1:
+            elif len(time_vars) == 1:
                 time_var = time_vars[0]
             else:
                 # if there is more than variable with standard_name = time

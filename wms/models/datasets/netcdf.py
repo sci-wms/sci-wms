@@ -127,7 +127,7 @@ class NetCDFDataset(object):
 
         # Get time indexes
         time_vars = ncd.get_variables_by_attributes(standard_name='time')
-        if not time_vars:
+        if len(time_vars) == 0:
             start_nc_index = 0
             end_nc_index = 0
             return_dates = []
