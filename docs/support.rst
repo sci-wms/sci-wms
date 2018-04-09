@@ -3,7 +3,7 @@ Support
 
 `sci-wms` would not be possible without the help and support from the following:
 
-- `AOOS <http://.aoos.org>`_
+- `AOOS <http://aoos.org>`_
 
 - `CeNCOOS <http://cencoos.org>`_
 

@@ -13,7 +13,7 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 livehtml:
-	sphinx-autobuild -b html $(SPHINXOPTS) "$(SOURCEDIR)" $(BUILDDIR)/html
+	sphinx-autobuild -b html --port 8001 $(SPHINXOPTS) "$(SOURCEDIR)" $(BUILDDIR)/html
 
 .PHONY: help Makefile
 

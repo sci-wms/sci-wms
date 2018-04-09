@@ -1,6 +1,8 @@
 Deployment
 ==========
 
+.. _quickstart-run:
+
 Quickstart
 ~~~~~~~~~~
 
@@ -11,6 +13,8 @@ you should be ok running a single instance.
 
     $ docker run -d axiom/sci-wms
 
+
+.. _advanced-run:
 
 Advanced
 ~~~~~~~~
@@ -75,6 +79,32 @@ You can scale out the `worker` nodes as needed:
 
 Configuration
 ~~~~~~~~~~~~~
+
+Web Concurrency
+...............
+
+If you find your instance can not serve WMS requests fast enough you can add additional web workers. `sci-wms` uses `eventlet`
+on the backend and a single web worker instance should be able to handle hundreds of simultaneos requests. If you are using
+the default :ref:`quickstart-run`, however, than the Update of each dataset will block a worker until it is done and you can safely
+add as many as you want. A good default is the number of CPU cores you have.
+
+
+Using :ref:`quickstart-run`
+
+.. code-block:: bash
+
+  $ docker run -d -e "WEB_CONCURRENCY=8" axiom/sci-wms
+
+
+Using :ref:`advanced-run`
+
+.. code-block:: bash
+
+  web:
+    ...
+    environment:
+      WEB_CONCURRENCY: 8
+    ...
 
 
 Custom Paths
