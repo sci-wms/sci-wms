@@ -2,5 +2,5 @@
 
 `sci-wms` is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data. It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.
 
-* [Full Documentation](http://sci-wms.github.io/sci-wms/docs)
+* [Full Documentation](http://sci-wms.github.io/sci-wms)
 * [Issues and Discussion](https://github.com/sci-wms/sci-wms/issues)
