@@ -59,8 +59,8 @@ def add_unidentified_dataset(pkey):
             klass = Dataset.identify(ud.uri)
             if klass is not None:
                 try:
-                    ds = klass.objects.create(name=ud.name, uri=ud.uri)
                     ud.delete()
+                    ds = klass.objects.create(name=ud.name, uri=ud.uri)
                     return 'Added {}'.format(ds.name)
                 except IntegrityError:
                     msg = 'Could not add dataset, name "{}" already exists'.format(ud.name)
