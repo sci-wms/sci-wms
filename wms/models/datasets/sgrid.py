@@ -299,7 +299,7 @@ class SGridDataset(Dataset, NetCDFDataset):
 
                 dim_lengths = [ len(v.dimensions) for v in raw_vars ]
                 if len(list(set(dim_lengths))) != 1:
-                    raise AttributeError('One or both of the specified variables has screwed up dimensions.')
+                    raise AttributeError('One or both of the specified variables has incorrect dimensions.')
 
                 if request.GET['image_type'] == 'vectors':
                     angles = cached_sg.angles[lon_obj.center_slicing]

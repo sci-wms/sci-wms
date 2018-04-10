@@ -133,7 +133,11 @@ class VirtualLayer(LayerBase):
 
                         if created is True:
                             vl.active = True
-                            vl.styles.add(Style.objects.get(colormap='cubehelix', image_type=style))
+                            try:
+                                sty = Style.objects.get(colormap='cubehelix', image_type=style)
+                            except Style.DoesNotExist:
+                                sty = get_default_vlayer_style()
+                            vl.styles.add(sty)
 
                         vl.save()
                         break

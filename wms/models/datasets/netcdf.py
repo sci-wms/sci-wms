@@ -178,6 +178,7 @@ class NetCDFDataset(object):
                 v_names = ['northward_wind']
                 us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+                # Hopefully we support barbs eventually
                 VirtualLayer.make_vector_layer(us, vs, 'winds', 'barbs', self.id)
 
                 # Grid projected Winds
@@ -185,6 +186,7 @@ class NetCDFDataset(object):
                 v_names = ['y_wind', 'grid_northward_wind']
                 us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+                # Hopefully we support barbs eventually
                 VirtualLayer.make_vector_layer(us, vs, 'grid_winds', 'barbs', self.id)
 
                 # Earth projected Ice velocity
