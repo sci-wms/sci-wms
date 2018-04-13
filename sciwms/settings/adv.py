@@ -80,6 +80,24 @@ CACHES = {
             'DB' : redis_db + 3,
             'PARSER_CLASS': 'redis.connection.HiredisParser',
         }
+    },
+    'time': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'TIMEOUT': 300,
+        'LOCATION': '{}:{}'.format(redis_host, redis_port),
+        'OPTIONS': {
+            'DB' : redis_db + 4,
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+        }
+    },
+    'topology': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'TIMEOUT': 300,
+        'LOCATION': '{}:{}'.format(redis_host, redis_port),
+        'OPTIONS': {
+            'DB' : redis_db + 5,
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+        }
     }
 }
 

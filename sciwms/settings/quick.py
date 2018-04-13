@@ -15,14 +15,24 @@ LOGGING = setup_logging(default='WARNING', logfile=LOGFILE)
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'sciwms-default-cache',
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
     },
     'page': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'sciwms-page-cache',
+    },
+    'time': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
+    },
+    'topology': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
     }
 }
+
+HUEY['always_eager'] = False
 
 LOCAL_APPS = []
 try:

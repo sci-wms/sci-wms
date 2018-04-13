@@ -3,7 +3,7 @@
 echo "Sourcing profile..."
 . /etc/profile
 
-export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-sciwms.settings.prod}
+export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-sciwms.settings.quick}
 
 echo "Migrating sci-wms..."
 python manage.py migrate

@@ -1,5 +1,5 @@
-Advanced Usage
-==============
+Advanced Topics
+===============
 
 
 Virtual layers
@@ -10,30 +10,6 @@ Virtual layers
 Suported parameter expressions:
 
 ``[layer_1],[layer_2]`` This will treat layer_1 as a U vector and layer_2 as a V vector and produce vector plots.
-
-
-.. _custom-django-settings:
-
-Custom Django Settings
-~~~~~~~~~~~~~~~~~~~~~~
-
-You may create a file at **path/to/sci-wms/sci-wms/settings/local_settings.py** or **path/to/sci-wms/sci-wms/settings/local/settings.py** and configure any Django settings you wish.  The latter takes presedence over the former.
-
-The following settings are recommended:
-
-.. code-block:: python
-
-    # Specific host(s) that that server should be accessible on
-    ALLOWED_HOSTS  = ["sciwms.external-host.com", "YOUR_IP_ADDRESS", "sciwms.internal-host"]
-
-
-.. code-block:: python
-
-    # Sci-wms caches data on disk so it does not have to read static data from each dataset every request.
-    # By default, the path is `SCIWMS_ROOT/wms/topology`.
-    TOPOLOGY_PATH = "/some/other/folder/sci-wms-topology"
-    if not os.path.exists(TOPOLOGY_PATH):
-        os.makedirs(TOPOLOGY_PATH)
 
 
 .. _topology-cache:
@@ -53,15 +29,15 @@ These files contain serialized *RTree* spatial objects that are used for quickly
 
 These are necessary for large unstructured meshes, but are also used for the logically rectangular grids as well.  Ideally it would be nice to move away from *RTree* into a better KD-Tree implementation, like *sklearn*'s, that will have better on disk performance lookup performance, but will be slower to initially build.
 
-These files are constructed once when the dataset is added and never updated.  If the grid for you model changes you must delete and re-add the model to regenerate the topology cache.
+These files are constructed once when the dataset is added and not updated unless an ``Update Dataset`` request is triggered via the ``sci-wms`` admin page or API. If a dataset is set to ``Keep up to date`` then it will update this cache every X seconds, depending on what the dataset is configured for.
 
-Adding a dataset via the website may timeout due to the topology cache taking along time to complete. If you run across this case, it is better to add the Dataset manually through the Django shell.
+Adding a new dataset through the website when running in :ref:`quickstart-run` mode may timeout due to the topology cache taking along time to complete. If you run across this case, it is better to add the Dataset manually through the command line (no documentation at this point) or to use the :ref:`advanced-run` mode of running ``sci-wms``.
 
 
 NetCDF (.nc)
 ............
 
-This file contains the up-to-date coordinate variable data for the dataset. This is typically Latitude/Longitude, and Time. For forecasts that are routinely updates, the time variable typically is growing with each update.  This file is updated if the Dataset is set to "Keep up to date" and an update is requested.
+This file contains the up-to-date coordinate variable data for the dataset. This is typically Latitude/Longitude, and Time. For forecasts that are routinely updates, the time variable typically is growing with each update.  This file is updated periodially if the ``Dataset`` is set to "Keep up to date" or an update is manually triggered via the ``sci-wms`` admin page or API.
 
 
 Default Layer Settings
@@ -75,7 +51,7 @@ In order of precedence:
     Always preferred for maximum client control. Controlled with the ``LOGSCALE`` and ``COLORSCALERANGE`` URL parameters.
 
 2. Layer defaults
-    Used when populated on a ``Layer``. Controlled on each dataset page on a per-variable basis. For each netCDF variable, we look for the following when processing a dataset in order of most precedence:
+    Used when populated on a ``Layer``. Controlled on each ``Dataset`` page on a per-variable basis. For each netCDF variable, we look for the following when processing a variable in order of most precedence first:
 
       #. `scale_min` and `scale_max`
       #. `scale_range`
@@ -106,3 +82,16 @@ WMS Extensions
    "STYLE/STYLES", "GetLegendGraphic GetMap", "``[image_type]_[colormap]``", "While some styles are defined in the GetCapabilities document, a use can specify any combination of an ``image_type`` (``filledcontours``, ``contours``, ``pcolor``, ``vectors``, ``filledhatches``, ``hatches``) and a matplotlib ``colormap`` (http://matplotlib.org/examples/color/colormaps_reference.html)", "``contours_jet``  ``vectors_blues``"
    "VECTORSCALE", "GetMap", "``[float]``", "Controls the scale of vector arrows when plotting a ``vectors`` style. The ``vectorscale`` value represents the number of data units per arrow length unit. Smaller numbers lead to longer arrows, while larger numbers represent shorter arrows. This is consistent with the use of the ``scale`` keyword used by matplotlib (http://matplotlib.org/api/pyplot_api.html).", "``10.5`` ``30``"
    "VECTORSTEP", "GetMap", "``[int]``", "Set the number of vector steps to be used when rendering a GetMap request using a ``vectors`` style. A value of ``1`` will render with all vectors and is the default behavior.", "``2`` ``10``"
+
+
+Developers
+~~~~~~~~~~
+
+To start ``sci-wms`` with the Django development server on port :7002, type the following commands
+
+.. code-block:: bash
+
+    $ python manage.py runserver 0.0.0.0:7002
+
+This server is not considered secure for production implementations, and it is recommended you use
+an alternative wsgi server like *Gunicorn*.

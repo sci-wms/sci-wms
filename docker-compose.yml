@@ -26,6 +26,7 @@ services:
     ports:
       - "7002:7002"
     depends_on:
+      - db
       - redis
     volumes:
       - topologydata:/srv/sci-wms/wms/topology:ro
@@ -37,6 +38,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: sciwms.settings.dist
     depends_on:
+      - db
       - redis
     volumes:
       - topologydata:/srv/sci-wms/wms/topology

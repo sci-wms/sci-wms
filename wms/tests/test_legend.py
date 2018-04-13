@@ -7,7 +7,7 @@ from wms.tests import (
     add_group,
     add_user,
     add_dataset,
-    image_path
+    image_path,
 )
 from wms.models import Dataset
 

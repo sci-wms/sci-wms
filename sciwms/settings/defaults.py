@@ -7,11 +7,6 @@ import matplotlib
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_ROOT)
 
-# Where to store the Topology data?
-TOPOLOGY_PATH = os.path.join(BASE_DIR, "wms", "topology")
-if not os.path.exists(TOPOLOGY_PATH):
-    os.makedirs(TOPOLOGY_PATH)
-
 DEBUG = False
 
 ADMINS = ()
@@ -139,16 +134,30 @@ def setup_logging(default, logfile):
     }
 
 
+# Where to store the Topology data?
+TOPOLOGY_PATH = os.environ.get('TOPOLOGY_PATH', os.path.join(BASE_DIR, "wms", "topology"))
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sciwms-default-cache',
     },
     'page': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
+    },
+    'time': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
+    },
+    'topology': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
     }
 }
 
-db_path = os.path.join(PROJECT_ROOT, "db")
+db_path = os.environ.get('SQLITE_DB_PATH', os.path.join(PROJECT_ROOT, "db"))
 if not os.path.isdir(db_path):
     os.makedirs(db_path)
 db_file = os.path.join(db_path, "sci-wms.db")
