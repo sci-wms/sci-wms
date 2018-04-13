@@ -1,24 +1,151 @@
----
-title: sci-wms
-published: true
-layout: page
----
 
-<h3>Python Web Mapping Service (WMS) for visualizing geospatial data</h3>
-<p>
-    sci-wms is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data.  It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.
-</p>
-<br />
-<h4>Core features</h4>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to sci-wms &#8212; sci-wms 1.6.0-dev documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Deployment" href="deployment.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-sci-wms">
+<h1>Welcome to sci-wms<a class="headerlink" href="#welcome-to-sci-wms" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data.  It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.</p>
+<div class="toctree-wrapper compound">
 <ul>
-    <li>Visualize structured or unstructured grids adhering to <a href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</li>
-    <li>Abstracts each dataset into two objects: a topology and corresponding model data</li>
-    <li>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</li>
-    <li>External data (over DAP) is subset, downloaded, and rendered for each request</li>
-    <li>Supports arbitrary cartographic projections</li>
-    <li>Web-based management console for managing datasets and variables</li>
-    <li>Lightweight client for testing</li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#quickstart">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#advanced">Advanced</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#configuration">Configuration</a></li>
 </ul>
-<br />
-For complete information, please see the <a href="/sci-wms/docs/">Documentation</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Topics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#virtual-layers">Virtual layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#topology-cache">Topology Cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#default-layer-settings">Default Layer Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#wms-extensions">WMS Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#developers">Developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>No tools for comparing multiple unstructured models out of the box</li>
+<li>Existing WMS technologies (ncWMS and GeoServer) don’t support unstructured meshes in a format the preserves topology</li>
+<li>Vast amount of large collections of met-ocean data available over OpenDAP</li>
+</ul>
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Visualize grids adhering to <a class="reference external" href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a class="reference external" href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</li>
+<li>Abstracts each dataset into two objects: a topology and corresponding model data</li>
+<li>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</li>
+<li>External data (over DAP) is subset, downloaded, and rendered for each request</li>
+<li>Supports arbitrary cartographic projections</li>
+<li>Web-based management console for managing datasets and variables</li>
+<li>Lightweight client for testing</li>
+</ul>
+</div>
+<div class="section" id="authors">
+<h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
+<p><em>Code author: Alex Crosby &lt;<a class="reference external" href="https://github.com/acrosby">https://github.com/acrosby</a>&gt;</em></p>
+<p><em>Code author: Andrew Yan &lt;<a class="reference external" href="https://github.com/ayan-usgs">https://github.com/ayan-usgs</a>&gt;</em></p>
+<p><em>Code author: Brandon Mayer &lt;<a class="reference external" href="https://github.com/brandonmayer">https://github.com/brandonmayer</a>&gt;</em></p>
+<p><em>Code author: Brian McKenna &lt;<a class="reference external" href="https://github.com/brianmckenna">https://github.com/brianmckenna</a>&gt;</em></p>
+<p><em>Code author: Dave Foster &lt;<a class="reference external" href="https://github.com/daf">https://github.com/daf</a>&gt;</em></p>
+<p><em>Code author: Kyle Wilcox &lt;<a class="reference external" href="https://github.com/kwilcox">https://github.com/kwilcox</a>&gt;</em></p>
+</div>
+</div>
 
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to sci-wms</a><ul>
+<li><a class="reference internal" href="#background">Background</a></li>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#authors">Authors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="deployment.html"
+                        title="next chapter">Deployment</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="deployment.html" title="Deployment"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

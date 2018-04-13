@@ -1,0 +1,343 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Deployment &#8212; sci-wms 1.6.0-dev documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced Topics" href="advanced.html" />
+    <link rel="prev" title="Welcome to sci-wms" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="advanced.html" title="Advanced Topics"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sci-wms"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="deployment">
+<h1>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="quickstart">
+<span id="quickstart-run"></span><h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>If you are working with a small <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> installation - a few small datasets and light load - you should ok running with this quickstart setup. The web and background workers need to share the same datasbase files so be sure to mount a database directory into both.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker run -d -p <span class="m">7002</span>:7002 -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms
+$ docker run -d -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms python manage.py run_huey
+</pre></div>
+</div>
+<p>Or using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code>:</p>
+<div class="highlight-docker notranslate"><div class="highlight"><pre><span></span>version: <span class="s1">&#39;3.2&#39;</span>
+
+services:
+
+  web:
+    image: axiom/sci-wms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.quick
+    ports:
+      - <span class="s2">&quot;7002:7002&quot;</span>
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology:ro
+      - dbdata:/srv/sci-wms/sciwms/db/
+
+  worker:
+    image: axiom/sci-wms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.quick
+    ports:
+      - <span class="s2">&quot;7002:7002&quot;</span>
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology
+      - dbdata:/srv/sci-wms/sciwms/db/
+
+volumes:
+  topologydata:
+  dbdata:
+</pre></div>
+</div>
+</div>
+<div class="section" id="advanced">
+<span id="advanced-run"></span><h2>Advanced<a class="headerlink" href="#advanced" title="Permalink to this headline">¶</a></h2>
+<p>If you are working with a moderatly size <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> installation you will need to run background workers to manage adding new datsets and updating existing datasets. This requires <a class="reference external" href="https://redis.io/">redis</a> to share information between the web and background workers as well as <a class="reference external" href="https://www.postgresql.org/">postgres</a> so the web and background workers can share the same metadata database.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat docker-compose.yml
+
+version: <span class="s1">&#39;3.2&#39;</span>
+
+services:
+
+  redis:
+    image: redis
+
+  db:
+    image: postgres:10.3
+    environment:
+      POSTGRES_USER: sciwms
+      POSTGRES_PASSWORD: sciwms
+      POSTGRES_DB: sciwms
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  web:
+    image: axiom/sci-wms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.adv
+    ports:
+      - <span class="s2">&quot;7002:7002&quot;</span>
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology:ro
+    command: docker/wait.sh db:5432 -- docker/run.sh
+
+  worker:
+    image: axiom/sci-wms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.adv
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology
+    command: docker/wait.sh web:7002 -- python manage.py run_huey
+
+volumes:
+  dbdata:
+  topologydata:
+</pre></div>
+</div>
+<p>Run the containers</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker-compose up -d
+</pre></div>
+</div>
+<p>You should see four docker containers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker ps
+
+CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+cdc0655e12f2    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">0</span>.0.0.0:7002-&gt;7002/tcp   sciwms_web_1
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_1
+ee991f4eafbf    postgres:10.3   <span class="s2">&quot;docker-entrypoint.s…&quot;</span>   <span class="m">5432</span>/tcp                 sciwms_db_1
+cfa1bf74e03c    redis           <span class="s2">&quot;docker-entrypoint.s…&quot;</span>   <span class="m">6379</span>/tcp                 sciwms_redis_1
+</pre></div>
+</div>
+<p>You can scale out the <code class="docutils literal notranslate"><span class="pre">worker</span></code> nodes as needed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker-compose up -d --scale <span class="nv">worker</span><span class="o">=</span><span class="m">4</span> worker
+
+Starting sciwms_worker_1 ... <span class="k">done</span>
+Starting sciwms_worker_2 ... <span class="k">done</span>
+Starting sciwms_worker_3 ... <span class="k">done</span>
+Starting sciwms_worker_4 ... <span class="k">done</span>
+
+$ docker ps
+
+CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+cdc0655e12f2    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">0</span>.0.0.0:7002-&gt;7002/tcp   sciwms_web_1
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_1
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_2
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_3
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_4
+ee991f4eafbf    postgres:10.3   <span class="s2">&quot;docker-entrypoint.s…&quot;</span>   <span class="m">5432</span>/tcp                 sciwms_db_1
+cfa1bf74e03c    redis           <span class="s2">&quot;docker-entrypoint.s…&quot;</span>   <span class="m">6379</span>/tcp                 sciwms_redis_1
+</pre></div>
+</div>
+<p><strong>sci-wms will now be running on port 7002</strong>. To obtain a python shell to test commands and such:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker <span class="nb">exec</span> -it sciwms_web_1 python
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="web-concurrency">
+<h3>Web Concurrency<a class="headerlink" href="#web-concurrency" title="Permalink to this headline">¶</a></h3>
+<p>If you find your instance can not serve WMS requests fast enough you can add additional web workers. <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> uses <code class="docutils literal notranslate"><span class="pre">eventlet</span></code> on the backend and a single web worker instance should be able to handle hundreds of simultaneous requests. If you are using the default <a class="reference internal" href="#quickstart-run"><span class="std std-ref">Quickstart</span></a>, however, than the Update of each dataset will block a worker until it is done and you can safely add as many as you want. A good default is the number of CPU cores you have or the number
+you would like to dedicate to <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> when under heavy load.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">docker</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker run -d -e <span class="s2">&quot;WEB_CONCURRENCY=8&quot;</span> axiom/sci-wms
+</pre></div>
+</div>
+<p>Using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>web:
+  ...
+  environment:
+    WEB_CONCURRENCY: <span class="m">8</span>
+  ...
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-django-settings">
+<span id="id1"></span><h3>Custom Django Settings<a class="headerlink" href="#custom-django-settings" title="Permalink to this headline">¶</a></h3>
+<p>You may create a file at <code class="docutils literal notranslate"><span class="pre">/srv/sci-wms/sciwms/settings/local_settings.py</span></code> or <code class="docutils literal notranslate"><span class="pre">/srv/sci-wms/</span> <span class="pre">sciwms/settings/local/settings.py</span></code> and configure any Django settings you wish.  The latter takes presedence over the former.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>web:
+  ...
+  volumes:
+    - your_settings.py:/srv/sci-wms/sciwms/settings/local_settings.py:ro
+  ...
+
+worker:
+  ...
+  volumes:
+    - your_settings.py:/srv/sci-wms/sciwms/settings/local_settings.py:ro
+  ...
+</pre></div>
+</div>
+<p>The following settings are recommended:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specific host(s) that that server should be accessible on</span>
+<span class="n">ALLOWED_HOSTS</span>  <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sciwms.external-host.com&quot;</span><span class="p">,</span> <span class="s2">&quot;YOUR_IP_ADDRESS&quot;</span><span class="p">,</span> <span class="s2">&quot;sciwms.internal-host&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="topology-cache">
+<h3>Topology Cache<a class="headerlink" href="#topology-cache" title="Permalink to this headline">¶</a></h3>
+<p>To run with a custom Topology Cache path, see <a class="reference internal" href="advanced.html#topology-cache"><span class="std std-ref">Topology Cache</span></a>, edit the <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> file and add a volume to the <code class="docutils literal notranslate"><span class="pre">web</span></code> and <code class="docutils literal notranslate"><span class="pre">worker</span></code> services. This folder must be shared by all instances of the <code class="docutils literal notranslate"><span class="pre">worker</span></code> and <code class="docutils literal notranslate"><span class="pre">web</span></code> but only the <code class="docutils literal notranslate"><span class="pre">worker</span></code> instances need to write to it.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>web:
+  ...
+  volumes:
+    - your/topology/directory:/srv/sci-wms/wms/topology:ro
+  ...
+
+worker:
+  ...
+  volumes:
+      - your/topology/directory:/srv/sci-wms/wms/topology
+  ...
+</pre></div>
+</div>
+</div>
+<div class="section" id="superuser">
+<h3>Superuser<a class="headerlink" href="#superuser" title="Permalink to this headline">¶</a></h3>
+<p>On first run, this image will create a superuser account that can be used to access the <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> admin area. You can set the user and password by editing the <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> file and editing the environment variables:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>web:
+  ...
+  environment:
+    SCIWMS_USERNAME: sciwms
+    SCIWMS_PASSWORD: sciwms
+  ...
+</pre></div>
+</div>
+<p>To retrieve the username and password you can view the logs for the <code class="docutils literal notranslate"><span class="pre">web</span></code> service:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker logs sciwms_web_1
+
+  ...
+  <span class="o">===============================</span>
+  sci-wms user:         <span class="s2">&quot;sciwms&quot;</span>
+  sci-wms password:     <span class="s2">&quot;sciwms&quot;</span>
+  <span class="o">===============================</span>
+  ...
+</pre></div>
+</div>
+</div>
+<div class="section" id="secret-key">
+<h3>Secret Key<a class="headerlink" href="#secret-key" title="Permalink to this headline">¶</a></h3>
+<p>You will need to set the <code class="docutils literal notranslate"><span class="pre">DJANGO_SECRET_KEY</span></code> environmental variable on any web worker containers. Set it to your favorite quote or a long random string</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">docker</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker run -d -e <span class="s2">&quot;DJANGO_SECRET_KEY=thewaytogetstartedistoquittalkingandbegindoing&quot;</span> axiom/sci-wms
+</pre></div>
+</div>
+<p>Using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>web:
+  ...
+  environment:
+    DJANGO_SECRET_KEY: thewaytogetstartedistoquittalkingandbegindoing
+  ...
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Deployment</a><ul>
+<li><a class="reference internal" href="#quickstart">Quickstart</a></li>
+<li><a class="reference internal" href="#advanced">Advanced</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li><a class="reference internal" href="#web-concurrency">Web Concurrency</a></li>
+<li><a class="reference internal" href="#custom-django-settings">Custom Django Settings</a></li>
+<li><a class="reference internal" href="#topology-cache">Topology Cache</a></li>
+<li><a class="reference internal" href="#superuser">Superuser</a></li>
+<li><a class="reference internal" href="#secret-key">Secret Key</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to sci-wms</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="advanced.html"
+                        title="next chapter">Advanced Topics</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/deployment.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="advanced.html" title="Advanced Topics"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to sci-wms"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
