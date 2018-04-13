@@ -500,7 +500,7 @@ class SGridDataset(Dataset, NetCDFDataset):
         """ sci-wms only deals in depth indexes at this time (no sigma) """
         d = self.depth_variable(layer)
         if d is not None:
-            return range(0, d.shape[0])
+            return list(range(0, d.shape[0]))
         return []
 
     def humanize(self):
