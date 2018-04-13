@@ -97,11 +97,11 @@ def find_appropriate_time(var_obj, time_variables):
     be found, raise an exception.
 
     """
-    if hasattr(var_obj, 'coordinates'):
-        coordinates = set(var_obj.coordinates.split(' '))
+    coords = getattr(var_obj, 'coordinates', '')
+    coords = set(coords.split(' '))
     dimensions = set(var_obj.dimensions)
     time_set = set([v.name for v in time_variables])
-    c_intersects = list(coordinates.intersection(time_set))
+    c_intersects = list(coords.intersection(time_set))
     d_intersects = list(dimensions.intersection(time_set))
     if len(c_intersects) > 0:
         return c_intersects[0]
