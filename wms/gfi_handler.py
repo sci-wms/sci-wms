@@ -1,5 +1,12 @@
 from django.http import HttpResponse
 
+FORMATS = [
+    'text/csv',
+    'text/tsv',
+    'application/json',
+    'text/html'
+]
+
 
 def from_dataframe(request, df):
     if request.GET['info_format'] == 'text/csv':
@@ -11,5 +18,8 @@ def from_dataframe(request, df):
     elif request.GET['info_format'] == 'application/json':
         response = HttpResponse(content_type='application/json')
         response.write(df.to_json(orient='records'))
+    elif request.GET['info_format'] == 'text/html':
+        response = HttpResponse(content_type='text/html')
+        response.write(df.to_html())
 
     return response

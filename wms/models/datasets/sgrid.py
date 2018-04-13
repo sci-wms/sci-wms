@@ -2,15 +2,12 @@
 import os
 import time
 import shutil
-from datetime import datetime
 import bisect
 import tempfile
-import itertools
 from math import sqrt
 
 import numpy as np
 import netCDF4 as nc4
-import pytz
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 from pysgrid import load_grid
 from pysgrid.read_netcdf import NetCDFDataset as SGrid
@@ -20,23 +17,23 @@ import pandas as pd
 
 from rtree import index
 
+from django.core.cache import caches
+
 from wms import mpl_handler
 from wms import gfi_handler
 from wms import data_handler
 from wms import gmd_handler
 
-
 from wms.models import Dataset, Layer, VirtualLayer, NetCDFDataset
 from wms.utils import DotDict, calc_lon_lat_padding, calc_safety_factor, find_appropriate_time
-
 
 from wms import logger
 
 
 class SGridDataset(Dataset, NetCDFDataset):
 
-    @staticmethod
-    def is_valid(uri):
+    @classmethod
+    def is_valid(cls, uri):
         try:
             with EnhancedDataset(uri) as ds:
                 try:
@@ -58,13 +55,24 @@ class SGridDataset(Dataset, NetCDFDataset):
                             return True
                         else:
                             return False
-            except (AttributeError, RuntimeError):
+            except (IndexError, AttributeError, RuntimeError, ValueError):
                 return False
-        except (AttributeError):
+        except (FileNotFoundError, AttributeError):
             return False
 
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
+    def has_grid_cache(self):
+        return all([
+            os.path.exists(self.topology_file),
+            os.path.exists(self.face_tree_data_file),
+            os.path.exists(self.face_tree_index_file)
+        ])
+
+    def has_time_cache(self):
+        return caches['time'].get(self.time_cache_file) is not None
+
+    def clear_cache(self):
+        super().clear_cache()
+        return caches['time'].delete(self.time_cache_file)
 
     def make_rtree(self):
 
@@ -87,55 +95,67 @@ class SGridDataset(Dataset, NetCDFDataset):
             p.overwrite = True
             p.storage   = index.RT_Disk
             p.dimension = 2
-            index.Index(p.filename,
-                        rtree_generator_function(),
-                        properties=p,
-                        overwrite=True,
-                        interleaved=True)
-            logger.info("Built Faces (centers) Rtree Topology Cache in {0} seconds.".format(time.time() - start))
+            idx = index.Index(p.filename,
+                              rtree_generator_function(),
+                              properties=p,
+                              overwrite=True,
+                              interleaved=True)
+            idx.close()
 
+            logger.info("Built Faces (centers) Rtree Topology Cache in {0} seconds.".format(time.time() - start))
             shutil.move('{}.dat'.format(temp_file), self.face_tree_data_file)
             shutil.move('{}.idx'.format(temp_file), self.face_tree_index_file)
 
-    def update_cache(self, force=False):
+    def update_time_cache(self):
         with self.dataset() as nc:
-            sg = load_grid(nc)
-            sg.save_as_netcdf(self.topology_file)
-
-            if not os.path.exists(self.topology_file):
-                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+            if nc is None:
+                logger.error("Failed update_time_cache, could not load dataset "
+                             "as a netCDF4 object")
                 return
 
-            # add time to the cached topology
+            time_cache = {}
+            layer_cache = {}
             time_vars = nc.get_variables_by_attributes(standard_name='time')
-            time_dims = list(itertools.chain.from_iterable([time_var.dimensions for time_var in time_vars]))
-            unique_time_dims = list(set(time_dims))
-            with EnhancedDataset(self.topology_file, mode='a') as cached_nc:
-                # create pertinent time dimensions if they aren't already present
-                for unique_time_dim in unique_time_dims:
-                    dim_size = len(nc.dimensions[unique_time_dim])
-                    try:
-                        cached_nc.createDimension(unique_time_dim, size=dim_size)
-                    except RuntimeError:
-                        continue
-                # support cases where there may be more than one variable with standard_name='time' in a dataset
-                for time_var in time_vars:
-                    try:
-                        time_var_obj = cached_nc.createVariable(time_var.name,
-                                                                time_var.dtype,
-                                                                time_var.dimensions)
-                    except RuntimeError:
-                        time_var_obj = cached_nc.variables[time_var.name]
-                    finally:
-                        time_var_obj[:] = time_var[:]
-                        time_var_obj.units = time_var.units
-                        time_var_obj.standard_name = 'time'
+            for time_var in time_vars:
+                time_cache[time_var.name] = nc4.num2date(
+                    time_var[:],
+                    time_var.units,
+                    getattr(time_var, 'calendar', 'standard')
+                )
 
-            # Now do the RTree index
-            self.make_rtree()
+            for ly in self.all_layers():
+                try:
+                    layer_cache[ly.access_name] = find_appropriate_time(nc.variables[ly.access_name], time_vars)
+                except ValueError:
+                    layer_cache[ly.access_name] = None
 
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
+            full_cache = {'times': time_cache, 'layers': layer_cache}
+            logger.info("Built time cache for {0}".format(self.name))
+            caches['time'].set(self.time_cache_file, full_cache, None)
+            return full_cache
+
+    def update_grid_cache(self, force=False):
+        with self.dataset() as nc:
+            if nc is None:
+                logger.error("Failed update_grid_cache, could not load dataset "
+                             "as a netCDF4 object")
+                return
+            sg = load_grid(nc)
+
+            # Atomic write
+            tmphandle, tmpsave = tempfile.mkstemp()
+            try:
+                sg.save_as_netcdf(tmpsave)
+            finally:
+                os.close(tmphandle)
+                if os.path.isfile(tmpsave):
+                    shutil.move(tmpsave, self.topology_file)
+                else:
+                    logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset.name))
+                    return
+
+        # Now do the RTree index
+        self.make_rtree()
 
     def minmax(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])
@@ -212,7 +232,10 @@ class SGridDataset(Dataset, NetCDFDataset):
 
                 if ',' in layer.var_name and raw_data is not None:
                     # Vectors, so return magnitude
-                    data = [ sqrt((u*u) + (v*v)) for (u, v,) in zip(x_var.flatten(), y_var.flatten()) if u != np.nan and v != np.nan]
+                    data = [
+                        sqrt((u * u) + (v * v)) for (u, v,) in
+                        zip(x_var.flatten(), y_var.flatten()) if u != np.nan and v != np.nan
+                    ]
                     vmin = min(data)
                     vmax = max(data)
 
@@ -289,7 +312,7 @@ class SGridDataset(Dataset, NetCDFDataset):
 
                 dim_lengths = [ len(v.dimensions) for v in raw_vars ]
                 if len(list(set(dim_lengths))) != 1:
-                    raise AttributeError('One or both of the specified variables has screwed up dimensions.')
+                    raise AttributeError('One or both of the specified variables has incorrect dimensions.')
 
                 if request.GET['image_type'] == 'vectors':
                     angles = cached_sg.angles[lon_obj.center_slicing]
@@ -334,14 +357,29 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     def getfeatureinfo(self, layer, request):
         with self.dataset() as nc:
-            with self.topology() as topo:
-                data_obj = nc.variables[layer.access_name]
+            data_obj = nc.variables[layer.access_name]
 
-                geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(topo, data_obj, request)
+            geo_index, closest_x, closest_y, start_time_index, end_time_index, return_dates = self.setup_getfeatureinfo(layer, request)
 
-                return_arrays = []
-                z_value = None
-                if isinstance(layer, Layer):
+            return_arrays = []
+            z_value = None
+            if isinstance(layer, Layer):
+                if len(data_obj.shape) == 4:
+                    z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
+                    data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
+                elif len(data_obj.shape) == 3:
+                    data = data_obj[start_time_index:end_time_index, geo_index[0], geo_index[1]]
+                elif len(data_obj.shape) == 2:
+                    data = data_obj[geo_index[0], geo_index[1]]
+                else:
+                    raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
+
+                return_arrays.append((layer.var_name, data))
+
+            elif isinstance(layer, VirtualLayer):
+
+                # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
+                for l in layer.layers:
                     if len(data_obj.shape) == 4:
                         z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
                         data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
@@ -351,51 +389,35 @@ class SGridDataset(Dataset, NetCDFDataset):
                         data = data_obj[geo_index[0], geo_index[1]]
                     else:
                         raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
+                    return_arrays.append((l.var_name, data))
 
-                    return_arrays.append((layer.var_name, data))
+            # Data is now in the return_arrays list, as a list of numpy arrays.  We need
+            # to add time and depth to them to create a single Pandas DataFrame
+            if len(data_obj.shape) == 4:
+                df = pd.DataFrame({'time': return_dates,
+                                   'x': closest_x,
+                                   'y': closest_y,
+                                   'z': z_value})
+            elif len(data_obj.shape) == 3:
+                df = pd.DataFrame({'time': return_dates,
+                                   'x': closest_x,
+                                   'y': closest_y})
+            elif len(data_obj.shape) == 2:
+                df = pd.DataFrame({'x': closest_x,
+                                   'y': closest_y})
+            else:
+                df = pd.DataFrame()
 
-                elif isinstance(layer, VirtualLayer):
+            # Now add a column for each member of the return_arrays list
+            for (var_name, np_array) in return_arrays:
+                df.loc[:, var_name] = pd.Series(np_array, index=df.index)
 
-                    # Data needs to be [var1,var2] where var are 1D (nodes only, elevation and time already handled)
-                    for l in layer.layers:
-                        if len(data_obj.shape) == 4:
-                            z_index, z_value = self.nearest_z(layer, request.GET['elevation'])
-                            data = data_obj[start_time_index:end_time_index, z_index, geo_index[0], geo_index[1]]
-                        elif len(data_obj.shape) == 3:
-                            data = data_obj[start_time_index:end_time_index, geo_index[0], geo_index[1]]
-                        elif len(data_obj.shape) == 2:
-                            data = data_obj[geo_index[0], geo_index[1]]
-                        else:
-                            raise ValueError("Dimension Mismatch: data_obj.shape == {0} and time indexes = {1} to {2}".format(data_obj.shape, start_time_index, end_time_index))
-                        return_arrays.append((l.var_name, data))
-
-                # Data is now in the return_arrays list, as a list of numpy arrays.  We need
-                # to add time and depth to them to create a single Pandas DataFrame
-                if len(data_obj.shape) == 4:
-                    df = pd.DataFrame({'time': return_dates,
-                                       'x': closest_x,
-                                       'y': closest_y,
-                                       'z': z_value})
-                elif len(data_obj.shape) == 3:
-                    df = pd.DataFrame({'time': return_dates,
-                                       'x': closest_x,
-                                       'y': closest_y})
-                elif len(data_obj.shape) == 2:
-                    df = pd.DataFrame({'x': closest_x,
-                                       'y': closest_y})
-                else:
-                    df = pd.DataFrame()
-
-                # Now add a column for each member of the return_arrays list
-                for (var_name, np_array) in return_arrays:
-                    df.loc[:, var_name] = pd.Series(np_array, index=df.index)
-
-                return gfi_handler.from_dataframe(request, df)
+            return gfi_handler.from_dataframe(request, df)
 
     def wgs84_bounds(self, layer):
         try:
             cached_sg = load_grid(self.topology_file)
-        except:
+        except BaseException:
             pass
         else:
             lon_name, lat_name = cached_sg.face_coordinates
@@ -427,17 +449,22 @@ class SGridDataset(Dataset, NetCDFDataset):
         return depth_idx, depths[depth_idx]
 
     def times(self, layer):
-        with self.topology() as nc:
-            time_vars = nc.get_variables_by_attributes(standard_name='time')
-            if len(time_vars) == 1:
-                time_var = time_vars[0]
-            else:
-                # if there is more than variable with standard_name = time
-                # fine the appropriate one to use with the layer
-                var_obj = nc.variables[layer.access_name]
-                time_var_name = find_appropriate_time(var_obj, time_vars)
-                time_var = nc.variables[time_var_name]
-            return nc4.num2date(time_var[:], units=time_var.units)
+        time_cache = caches['time'].get(self.time_cache_file, {'times': {}, 'layers': {}})
+
+        if layer.access_name not in time_cache['layers']:
+            logger.error("No layer ({}) in time cache, returning nothing".format(layer.access_name))
+            return []
+
+        ltv = time_cache['layers'].get(layer.access_name)
+        if ltv is None:
+            # Legit this might not be a layer with time so just return empty list (no error message)
+            return []
+
+        if ltv in time_cache['times']:
+            return time_cache['times'][ltv]
+        else:
+            logger.error("No time ({}) in time cache, returning nothing".format(ltv))
+            return []
 
     def depth_variable(self, layer):
         with self.dataset() as nc:
@@ -473,7 +500,7 @@ class SGridDataset(Dataset, NetCDFDataset):
         """ sci-wms only deals in depth indexes at this time (no sigma) """
         d = self.depth_variable(layer)
         if d is not None:
-            return range(0, d.shape[0])
+            return list(range(0, d.shape[0]))
         return []
 
     def humanize(self):

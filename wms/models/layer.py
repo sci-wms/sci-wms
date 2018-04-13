@@ -7,7 +7,7 @@ from wms.models import Style, Variable
 from wms.utils import DotDict
 
 from wms.utils import split
-from wms import logger
+from wms import logger  # noqa
 
 
 class LayerBase(models.Model):
@@ -65,14 +65,14 @@ class LayerBase(models.Model):
 def get_default_layer_style():
     try:
         return Style.objects.get(image_type='filledcontours', colormap='cubehelix').pk
-    except Style.DoesNotExists:
+    except Style.DoesNotExist:
         return 1
 
 
 def get_default_vlayer_style():
     try:
         return Style.objects.get(image_type='vectors', colormap='cubehelix').pk
-    except Style.DoesNotExists:
+    except Style.DoesNotExist:
         return 1
 
 
@@ -133,11 +133,15 @@ class VirtualLayer(LayerBase):
 
                         if created is True:
                             vl.active = True
-                            vl.styles.add(Style.objects.get(colormap='cubehelix', image_type=style))
+                            try:
+                                sty = Style.objects.get(colormap='cubehelix', image_type=style)
+                            except Style.DoesNotExist:
+                                sty = get_default_vlayer_style()
+                            vl.styles.add(sty)
 
                         vl.save()
                         break
-                    except:
+                    except BaseException:
                         raise
 
     @property

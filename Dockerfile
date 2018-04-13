@@ -61,18 +61,14 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
-RUN mkdir -p /srv/sci-wms
-COPY . /srv/sci-wms
-RUN rm -f /srv/sci-wms/sciwms/db/sci-wms.db
-WORKDIR /srv/sci-wms
+ENV SCIWMS_ROOT /srv/sci-wms
+RUN mkdir -p "$SCIWMS_ROOT"
+COPY . $SCIWMS_ROOT
+WORKDIR $SCIWMS_ROOT
 
-# handle admin user
-RUN chmod +x docker/*.sh
-
-VOLUME ["/data"]
-VOLUME ["/srv/sci-wms/sciwms/settings/local"]
-VOLUME ["/srv/sci-wms/wms/topology"]
-VOLUME ["/srv/sci-wms/sciwms/db"]
+VOLUME ["$SCIWMS_ROOT/sciwms/settings/local"]
+VOLUME ["$SCIWMS_ROOT/wms/topology"]
+VOLUME ["$SCIWMS_ROOT/sciwms/db"]
 
 EXPOSE 7002
 CMD ["docker/run.sh"]

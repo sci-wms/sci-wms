@@ -1,14 +1,11 @@
 #!python
 # coding=utf-8
 import os
+
 import matplotlib
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-# Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "wms", "topology"))
-if not os.path.exists(TOPOLOGY_PATH):
-    os.makedirs(TOPOLOGY_PATH)
+PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+BASE_DIR = os.path.dirname(PROJECT_ROOT)
 
 DEBUG = False
 
@@ -26,9 +23,9 @@ USE_I18N           = False
 USE_L10N           = False
 USE_TZ             = True
 STATIC_URL         = '/static/'
-STATIC_ROOT        = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "static"))
+STATIC_ROOT        = os.path.abspath(os.path.join(BASE_DIR, "static"))
 MEDIA_URL          = '/media/'
-MEDIA_ROOT         = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "media"))
+MEDIA_ROOT         = os.path.abspath(os.path.join(BASE_DIR, "media"))
 
 INSTALLED_APPS = [
     'grappelli',
@@ -40,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'wms',
     'wmsrest',
-    'rest_framework'
+    'rest_framework',
+    'huey.contrib.djhuey',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -81,19 +79,8 @@ REST_FRAMEWORK = {
     'PAGINATE_BY': 10
 }
 
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db"))
-if not os.path.isdir(db_path):
-    os.makedirs(db_path)
-db_file = os.path.join(db_path, "sci-wms.db")
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME':  db_file,
-    }
-}
-
-
+# Logging
 def setup_logging(default, logfile):
     if not os.path.exists(os.path.dirname(logfile)):
         os.makedirs(os.path.dirname(logfile))
@@ -130,6 +117,11 @@ def setup_logging(default, logfile):
                 'level': default,
                 'propagate': True,
             },
+            'huey': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
             'pyugrid': {
                 'handlers': ['file', 'console'],
                 'level': 'WARNING',
@@ -142,4 +134,55 @@ def setup_logging(default, logfile):
     }
 
 
+# Where to store the Topology data?
+TOPOLOGY_PATH = os.environ.get('TOPOLOGY_PATH', os.path.join(BASE_DIR, "wms", "topology"))
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sciwms-default-cache',
+    },
+    'page': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
+    },
+    'time': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
+    },
+    'topology': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': TOPOLOGY_PATH
+    }
+}
+
+db_path = os.environ.get('SQLITE_DB_PATH', os.path.join(PROJECT_ROOT, "db"))
+if not os.path.isdir(db_path):
+    os.makedirs(db_path)
+db_file = os.path.join(db_path, "sci-wms.db")
+huey_file = os.path.join(db_path, "huey.db")
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME':  db_file,
+    }
+}
+
+# Grappelli
+GRAPPELLI_ADMIN_TITLE = 'sci-wms'
+
+# Matplotlib
 matplotlib.use("Agg")
+
+HUEY = {
+    'name': 'sciwms',
+    'filename': huey_file,
+    'result_store': True,  # Store return values of tasks.
+    'events': True,  # Consumer emits events allowing real-time monitoring.
+    'store_none': True,  # If a task returns None, do not save to results.
+    'always_eager': True,  # If DEBUG=True, run synchronously.
+    'store_errors': True,  # Store error info if task throws exception.
+    'blocking': False,  # Poll the queue rather than do blocking pop.
+    'backend_class': 'huey.contrib.sqlitedb.SqliteHuey',  # Use path to redis huey by default,
+}

@@ -11,18 +11,82 @@
 
 <div class="row">
   <h2>{{dataset.name}} <span class="label label-default">{{ dataset.humanize }}</span></h2>
+  <div id="messages"></div>
   <form>
     <table class="table table-bordered" style="margin-top: 10px;">
       <tr>
-        <td width="75%"><b>description</b>: {{dataset.description}}</td>
+        <td><b>Description</b>: {{dataset.description}}</td>
+      </tr>
+      <tr>
         {% if dataset.online %}
-            <td><b>data</b>: <a class="row" href="{{ dataset.uri }}.html" target="_blank"><span class="glyphicon glyphicon-new-window"></span> OPeNDAP</a></td>
+            <td><b>URI</b>: <a class="row" href="{{ dataset.uri }}.html" target="_blank"><span class="glyphicon glyphicon-new-window"></span> OPeNDAP</a></td>
         {% else %}
-            <td><b>data</b>: <abbr class="row" title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Local file</abbr></td>
+            <td><b>URI</b>: <div><span class="glyphicon glyphicon-file"></span> {{dataset.uri}}</div></td>
         {% endif %}
       </tr>
       <tr>
+        <td colspan="2"><b>Cache</b>:
+
+          <p>Status: {{ dataset.status }}</p>
+
+          <p>
+          {% if user.is_authenticated %}
+            <a href="{% url 'update_dataset' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                <button type="button" class="updateButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-refresh {% if not dataset.has_cache %}text-danger{% endif %}"></span> All
+                </button>
+            </a>
+            <a href="{% url 'update_grid' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                <button type="button" class="updateButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-refresh {% if not dataset.has_grid_cache %}text-danger{% endif %}"></span> Grid
+                </button>
+            </a>
+            <a href="{% url 'update_time' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                <button type="button" class="updateButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-refresh {% if not dataset.has_time_cache %}text-danger{% endif %}"></span> Time
+                </button>
+            </a>
+            <a href="{% url 'update_layers' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                <button type="button" class="updateButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-refresh {% if not dataset.all_layers %}text-danger{% endif %}"></span> Layers
+                </button>
+            </a>
+            <a href="{% url 'delete_cache' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                <button type="button" class="updateButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-trash"></span> Clear
+                </button>
+            </a>
+            {% else %}
+            <span class="glyphicon {% if not dataset.has_grid_cache %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Grid
+            <span class="glyphicon {% if not dataset.has_time_cache %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Time
+            <span class="glyphicon {% if not dataset.all_layers %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Layers
+          {% endif %}
+          </p>
+
+          <p>
+          {% if dataset.cache_last_updated %}
+              <span>Last Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</abbr></span>
+          {% else %}
+              <span>Updated: never</span>
+          {% endif %}
+          </p>
+
+          <p>
+            <span>Keep up to date: </span>
+            <span href="#" data-type="select" class="inline-edits" id="keep_up_to_date" data-source="{'True':'Yes', 'False':'No'}" data-value="{{ dataset.keep_up_to_date }}" aria-label="Keep up to Date?" data-edit-url="{% url 'dataset-detail' pk=dataset.pk %}">{% if dataset.keep_up_to_date == True %}Yes{% else %}No{% endif %}</span>
+            {% if dataset.keep_up_to_date %}
+                <span> every </span>
+                <span href="#" data-type="text" class="inline-edits" id="update_every" data-value="{{ dataset.update_every }}" aria-label="Update every X seconds" data-edit-url="{% url 'dataset-detail' pk=dataset.pk %}">{{ dataset.update_every }}</span>
+                <span>seconds</span>
+            {% endif %}
+          </p>
+        </td>
+      </tr>
+      {% if dataset.json %}
+      <tr>
         <td colspan="2"><b>additional dataset attributes</b>: <pre>{% autoescape off %}{{ dataset.json }}{% endautoescape %}</pre></td>
+      </tr>
+      {% endif %}
     </table>
   </form>
 
@@ -112,6 +176,22 @@
         js = response.responseJSON
         return js[Object.keys(js)[0]]
       }
+    });
+
+    $(".updateButton").click(function(event) {
+      event.preventDefault();
+
+      a_tag = $(this).parent();
+
+      var posting = $.ajax({
+          type: "GET",
+          url: a_tag.attr("href"),
+          success: function(data) {
+              $("#messages").hide().html('<div class="alert alert-success">' + data.message + '</div>').fadeIn();
+          }
+      }).fail(function(data) {
+          $("#messages").hide().html('<div class="alert alert-danger">Failed. Check logs!</div>').fadeIn();
+      });
     });
 
   });

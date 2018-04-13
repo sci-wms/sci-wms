@@ -1,0 +1,49 @@
+version: '3.2'
+
+services:
+
+  redis:
+    image: redis
+
+  db:
+    image: postgres:10.3
+    environment:
+      POSTGRES_USER: sciwms
+      POSTGRES_PASSWORD: sciwms
+      POSTGRES_DB: sciwms
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  web:
+    #image: axiom/sci-wms
+    image: sci-wms
+    environment:
+      SCIWMS_USERNAME: sciwms
+      SCIWMS_PASSWORD: sciwms
+      WEB_CONCURRENCY: 16
+      DJANGO_SETTINGS_MODULE: sciwms.settings.dist
+      DJANGO_SECRET_KEY: abcdefg
+    ports:
+      - "7002:7002"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology:ro
+    command: docker/wait.sh db:5432 -- docker/run.sh
+
+  worker:
+    #image: axiom/sci-wms
+    image: sci-wms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.dist
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology
+    command: docker/wait.sh web:7002 -- python manage.py run_huey
+
+volumes:
+  dbdata:
+  topologydata:

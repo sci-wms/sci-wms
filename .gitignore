@@ -8,6 +8,7 @@
 # Default Topology location
 wms/topology/
 logs/
+wms/tests/topology/
 *.db
 !.gitkeep
 
@@ -20,3 +21,4 @@ logs/
 /static
 wms/tests/images/
 .pytest_cache
+docs/_site

@@ -1,10 +1,12 @@
+cmocean
 cython
 dj-static==0.0.6
 django-autoslug
 django-grappelli
 django-typed-models
-Django>=1.10,<2.0
+Django>=1.11,<2.0
 djangorestframework
+huey
 isodate
 jsonfield
 matplotlib>2.0,<3.0

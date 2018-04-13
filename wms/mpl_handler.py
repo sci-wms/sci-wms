@@ -250,10 +250,10 @@ def contouring_response(lon, lat, data, request, dpi=None):
     elif request.GET['image_type'] == 'contours':
         ax.contour(x, y, data, lvls, norm=norm, cmap=colormap)
     elif request.GET['image_type'] == 'filledhatches':
-        hatches = DEFAULT_HATCHES[:lvls]
+        hatches = DEFAULT_HATCHES[:nlvls]
         ax.contourf(x, y, data, lvls, norm=norm, cmap=colormap, hatches=hatches)
     elif request.GET['image_type'] == 'hatches':
-        hatches = DEFAULT_HATCHES[:lvls]
+        hatches = DEFAULT_HATCHES[:nlvls]
         ax.contourf(x, y, data, lvls, norm=norm, colors='none', hatches=hatches)
 
     ax.set_xlim(bbox.minx, bbox.maxx)

@@ -2,11 +2,25 @@ language: python
 
 sudo: false
 
+env:
+  global:
+    # Doctr deploy key for sci-wms/sci-wms
+    - secure: "hpmpu9Wg5ZdSkrTb37ew0bC9zlLiHXTKyllIwRUTEbvDR0ieVVyq6s386YsrOoQkEHqUEI6/X/cWqaoMZzbnrcEQrd7/qfDbK2ReHFyh3Cs0oCFfwphQ+4gua5yZbrLD2Jkm6eSZAjYALi6G8aQyazuIqdGElyCedb2pEWj2ImE="
+
 matrix:
   fast_finish: true
   include:
-  - python: 3.6
-    env: TEST_TARGET=default
+    - python: 3.6
+      env: TEST_TARGET=default
+    - python: 3.6
+      env: TEST_TARGET=coding_standards
+    - python: 3.6
+      env: TEST_TARGET=docs
+  allow_failures:
+    - python: 3.6
+      env: TEST_TARGET=coding_standards
+    - python: 3.6
+      env: TEST_TARGET=docs
 
 before_install:
   - wget http://bit.ly/miniconda -O miniconda.sh
@@ -14,11 +28,22 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda config --set always_yes yes --set changeps1 no --set show_channel_urls true
   - conda update conda
+  - conda config --add channels axiom-data-science --force
   - conda config --add channels conda-forge --force
   - conda create -n TEST python=$TRAVIS_PYTHON_VERSION --file requirements.txt --file requirements-test.txt
   - source activate TEST
 
 script:
-  - if [[ $TEST_TARGET == 'default' ]]; then
+  - set -e
+
+  - if [[ $TEST_TARGET == "default" ]]; then
       py.test -rxs --verbose ;
+    fi
+
+  - if [[ $TEST_TARGET == "coding_standards" ]]; then
+      py.test --verbose --flake8 -m flake8 -q ;
+    fi
+
+  - if [[ $TEST_TARGET == "docs" ]]; then
+      ./docs/deploy.sh ;
     fi

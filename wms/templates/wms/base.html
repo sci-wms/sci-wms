@@ -4,7 +4,7 @@
 <html>
   <head>
     <title>sci-wms</title>
-    <link rel="shortcut icon" href="{% static 'sciwms/favicon.ico' %}" />
+    <link rel="shortcut icon" href="{% static 'wms/favicon.ico' %}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
@@ -51,7 +51,7 @@
             <ul class="nav nav-pills">
               <li><a href="{% url 'index' %}"><span style="color: orange" class="glyphicon glyphicon-globe"></span> datasets</a></li>
               <li><a href="{% url 'defaults' %}"><span class="glyphicon glyphicon-list-alt"></span> defaults</a></li>
-              <li><a href="http://sci-wms.github.io/sci-wms/docs/" target="_blank"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
+              <li><a href="https://sci-wms.github.io/sci-wms" target="_blank"><span style="color: brown" class="glyphicon glyphicon-book"></span> documentation</a></li>
               <li><a href="{% url 'demo' %}"><span style="color: green" class="glyphicon glyphicon-leaf"></span> demo (Leaflet WMS client)</a></li>
               {% if user.is_authenticated %}
               <li><a href="{% url 'logs' %}"><span style="color: purple" class="glyphicon glyphicon-folder-open"></span> &nbsp;logs</a></li>

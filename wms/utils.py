@@ -97,11 +97,11 @@ def find_appropriate_time(var_obj, time_variables):
     be found, raise an exception.
 
     """
-    if hasattr(var_obj, 'coordinates'):
-        coordinates = set(var_obj.coordinates.split(' '))
+    coords = getattr(var_obj, 'coordinates', '')
+    coords = set(coords.split(' '))
     dimensions = set(var_obj.dimensions)
     time_set = set([v.name for v in time_variables])
-    c_intersects = list(coordinates.intersection(time_set))
+    c_intersects = list(coords.intersection(time_set))
     d_intersects = list(dimensions.intersection(time_set))
     if len(c_intersects) > 0:
         return c_intersects[0]
@@ -123,7 +123,9 @@ class DotDict(object):
 
 def calculate_time_windows(times):
 
-    if times.size == 1:
+    if times.size == 0:
+        return
+    elif times.size == 1:
         yield [times[0], times[0], timedelta(days=0)]
         return
 
@@ -146,7 +148,7 @@ def calculate_time_windows(times):
 def version():
     import os
     from django.conf import settings
-    with open(os.path.join(settings.PROJECT_ROOT, '..', 'VERSION')) as f:
+    with open(os.path.join(settings.BASE_DIR, 'VERSION')) as f:
         return f.read()
 
 
@@ -158,7 +160,7 @@ def timeit(f):
         result = f(*args, **kw)
         te = time.time()
 
-        logger.info('func:{} took: {} sec'.format(f.__name__, te-ts))
+        logger.info('func:{} took: {} sec'.format(f.__name__, te - ts))
         return result
 
     return timed

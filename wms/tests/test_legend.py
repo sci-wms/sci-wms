@@ -2,7 +2,13 @@
 from copy import copy
 
 from django.test import TestCase
-from wms.tests import *
+from wms.tests import (
+    add_server,
+    add_group,
+    add_user,
+    add_dataset,
+    image_path,
+)
 from wms.models import Dataset
 
 from sciwms import logger  # noqa
@@ -20,7 +26,6 @@ class TestUgridLegendGraphic(TestCase):
     @classmethod
     def tearDownClass(cls):
         d = Dataset.objects.get(slug="ugrid_legend_testing")
-        d.clear_cache()
         d.delete()
 
     def setUp(self):

@@ -3,7 +3,7 @@
 echo "Sourcing profile..."
 . /etc/profile
 
-export DJANGO_SETTINGS_MODULE=sciwms.settings.prod
+export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-sciwms.settings.quick}
 
 echo "Migrating sci-wms..."
 python manage.py migrate
@@ -29,16 +29,4 @@ echo "sci-wms password:     \"$PASS\""
 echo "========================================================================"
 
 echo "Starting sci-wms..."
-gunicorn --access-logfile - \
-         --error-logfile - \
-         --max-requests 50 \
-         --keep-alive 5 \
-         --backlog 50 \
-         --log-level warning \
-         -t 300 \
-         -b 0.0.0.0:7002 \
-         -w 8 \
-         -k gevent \
-         -e DJANGO_SETTINGS_MODULE=sciwms.settings.prod \
-         -n sciwms \
-         sciwms.wsgi:application
+gunicorn -c docker/gunicorn.conf sciwms.wsgi:application

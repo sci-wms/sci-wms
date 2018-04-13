@@ -7,11 +7,12 @@ import numpy as np
 import netCDF4 as nc4
 
 from django.conf import settings
+#from django.core.cache import caches
+
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 from wms.utils import find_appropriate_time
 from wms.models import VirtualLayer, Layer, Style
-
 from wms import logger  # noqa
 
 
@@ -34,11 +35,11 @@ class NetCDFDataset(object):
             try:
                 self._dataset = EnhancedDataset(self.path())
                 yield self._dataset
-            except RuntimeError:
+            except (RuntimeError, FileNotFoundError):
                 try:
                     self._dataset = EnhancedMFDataset(self.path(), aggdim='time')
                     yield self._dataset
-                except RuntimeError:
+                except (IndexError, RuntimeError, FileNotFoundError):
                     yield None
 
     @contextmanager
@@ -64,12 +65,13 @@ class NetCDFDataset(object):
         except BaseException:
             pass
 
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
-
     @property
     def topology_file(self):
         return os.path.join(settings.TOPOLOGY_PATH, '{}.nc'.format(self.safe_filename))
+
+    @property
+    def time_cache_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.npy'.format(self.safe_filename))
 
     @property
     def domain_file(self):
@@ -99,7 +101,7 @@ class NetCDFDataset(object):
     def face_tree_index_file(self):
         return '{}.idx'.format(self.face_tree_root)
 
-    def setup_getfeatureinfo(self, ncd, variable_object, request, location=None):
+    def setup_getfeatureinfo(self, layer, request, location=None):
 
         location = location or 'face'
 
@@ -113,7 +115,11 @@ class NetCDFDataset(object):
                 tree = rtree.index.Index(self.node_tree_root)
             else:
                 raise NotImplementedError("No RTree for location '{}'".format(location))
-            nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+
+            try:
+                nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+            except IndexError:
+                raise ValueError("No cells in the {} tree for point {}, {}".format(location, longitude, latitude))
             closest_x, closest_y = tuple(nindex.bbox[2:])
             geo_index = nindex.object
         except BaseException:
@@ -121,25 +127,15 @@ class NetCDFDataset(object):
         finally:
             tree.close()
 
-        # Get time indexes
-        time_var_name = find_appropriate_time(variable_object, ncd.get_variables_by_attributes(standard_name='time'))
-        time_var = ncd.variables[time_var_name]
-        if hasattr(time_var, 'calendar'):
-            calendar = time_var.calendar
-        else:
-            calendar = 'gregorian'
-        start_nc_num = round(nc4.date2num(request.GET['starting'], units=time_var.units, calendar=calendar))
-        end_nc_num = round(nc4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
-
-        all_times = time_var[:]
-
-        start_nc_index = np.searchsorted(all_times, start_nc_num, side='left')
+        all_times = self.times(layer)
+        logger.info(all_times)
+        start_nc_index = np.searchsorted(all_times, request.GET['starting'], side='left')
         start_nc_index = min(start_nc_index, len(all_times) - 1)
 
-        end_nc_index = np.searchsorted(all_times, end_nc_num, side='right')
+        end_nc_index = np.searchsorted(all_times, request.GET['ending'], side='right')
         end_nc_index = max(end_nc_index, 1)  # Always pull the first index
 
-        return_dates = nc4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
+        return_dates = all_times[start_nc_index:end_nc_index]
 
         return geo_index, closest_x, closest_y, start_nc_index, end_nc_index, return_dates
 
@@ -168,6 +164,7 @@ class NetCDFDataset(object):
                 v_names = ['northward_wind']
                 us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+                # Hopefully we support barbs eventually
                 VirtualLayer.make_vector_layer(us, vs, 'winds', 'barbs', self.id)
 
                 # Grid projected Winds
@@ -175,6 +172,7 @@ class NetCDFDataset(object):
                 v_names = ['y_wind', 'grid_northward_wind']
                 us = nc.get_variables_by_attributes(standard_name=lambda v: v in u_names)
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
+                # Hopefully we support barbs eventually
                 VirtualLayer.make_vector_layer(us, vs, 'grid_winds', 'barbs', self.id)
 
                 # Earth projected Ice velocity
@@ -184,7 +182,7 @@ class NetCDFDataset(object):
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
                 VirtualLayer.make_vector_layer(us, vs, 'sea_ice_velocity', 'vectors', self.id)
 
-    def process_layers(self):
+    def update_layers(self):
         with self.dataset() as nc:
             if nc is not None:
 
@@ -192,14 +190,36 @@ class NetCDFDataset(object):
                     l, _ = Layer.objects.get_or_create(dataset_id=self.id, var_name=v)
 
                     nc_var = nc.variables[v]
-                    if hasattr(nc_var, 'valid_range'):
+
+                    # *_min and *_max attributes take presendence over the *_range attributes
+                    # scale_* attributes take presedence over valid_* attributes
+
+                    # *_range
+                    if hasattr(nc_var, 'scale_range'):
+                        l.default_min = try_float(nc_var.scale_range[0])
+                        l.default_max = try_float(nc_var.scale_range[-1])
+                    elif hasattr(nc_var, 'valid_range'):
                         l.default_min = try_float(nc_var.valid_range[0])
                         l.default_max = try_float(nc_var.valid_range[-1])
-                    # valid_min and valid_max take presendence
-                    if hasattr(nc_var, 'valid_min'):
+
+                    # *_min
+                    if hasattr(nc_var, 'scale_min'):
+                        l.default_min = try_float(nc_var.scale_min)
+                    elif hasattr(nc_var, 'valid_min'):
                         l.default_min = try_float(nc_var.valid_min)
-                    if hasattr(nc_var, 'valid_max'):
+
+                    # *_max
+                    if hasattr(nc_var, 'scale_max'):
+                        l.default_max = try_float(nc_var.scale_max)
+                    elif hasattr(nc_var, 'valid_max'):
                         l.default_max = try_float(nc_var.valid_max)
+
+                    # type
+                    if hasattr(nc_var, 'scale_type'):
+                        if nc_var.scale_type in ['logarithmic', 'log']:
+                            l.logscale = True
+                        elif nc_var.scale_type in ['linear']:
+                            l.logscale = False
 
                     if hasattr(nc_var, 'standard_name'):
                         std_name = nc_var.standard_name
@@ -226,6 +246,10 @@ class NetCDFDataset(object):
         """
         with self.dataset() as nc:
             time_vars = nc.get_variables_by_attributes(standard_name='time')
+
+            if not time_vars:
+                return None, None
+
             if len(time_vars) == 1:
                 time_var = time_vars[0]
             else:
@@ -234,6 +258,7 @@ class NetCDFDataset(object):
                 var_obj = nc.variables[layer.access_name]
                 time_var_name = find_appropriate_time(var_obj, time_vars)
                 time_var = nc.variables[time_var_name]
+
             units = time_var.units
             if hasattr(time_var, 'calendar'):
                 calendar = time_var.calendar
