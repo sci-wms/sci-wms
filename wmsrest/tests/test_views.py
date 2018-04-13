@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+from django.conf import settings
+from django.core.cache import caches
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from rest_framework.test import APITestCase, APIClient
@@ -10,7 +12,15 @@ from wms.tests import resource_path
 from wms import logger  # noqa
 
 
-class TestDatasetCreate(APITestCase):
+class SciwmsAPITestCase(APITestCase):
+
+    def tearDown(self):
+        super().tearDown()
+        for c in settings.CACHES.keys():
+            caches[c].clear()
+
+
+class TestDatasetCreate(SciwmsAPITestCase):
 
     def setUp(self):
         self.username = 'tester_tdl'
@@ -55,7 +65,7 @@ class TestDatasetCreate(APITestCase):
         self.assertEqual(response.data['update_every'], 3600)
 
 
-class TestDatasetDetail(APITestCase):
+class TestDatasetDetail(SciwmsAPITestCase):
 
     def setUp(self):
         self.username = 'tester_tdd'
@@ -78,23 +88,21 @@ class TestDatasetDetail(APITestCase):
         self.assertEqual(status_code, status.HTTP_200_OK)
         self.assertEqual(resp_uri, 'fake_file_1.nc')
 
-    def test_put_dataset(self):
+    def test_patch_dataset(self):
         new_filename = 'updated_file_1.nc'
         test_data = {
             'uri': new_filename,
-            'name': 'a third fake file',
-            'title': 'some title',
-            'abstract': 'a third fake abstract',
-            'keep_up_to_date': False,
-            'update_every': 3600,
-            'display_all_timesteps': False,
-            'type': 'ugrid'
+            'keep_up_to_date': True,
+            'update_every': 7200,
+            'display_all_timesteps': True,
         }
-        response = self.ac.put(self.url, test_data, format='json')
+        response = self.ac.patch(self.url, test_data, format='json')
         status_code = response.status_code
         resp_uri = response.data['uri']
         self.assertEqual(resp_uri, new_filename)
-        self.assertEqual(response.data['update_every'], 3600)
+        self.assertEqual(response.data['update_every'], 7200)
+        self.assertEqual(response.data['keep_up_to_date'], True)
+        self.assertEqual(response.data['display_all_timesteps'], True)
         self.assertEqual(status_code, status.HTTP_200_OK)
 
     def test_delete_dataset(self):
@@ -103,11 +111,11 @@ class TestDatasetDetail(APITestCase):
         self.assertEqual(status_code, status.HTTP_204_NO_CONTENT)
 
 
-class TestUnidentifiedDataset(APITestCase):
+class TestUnidentifiedDataset(SciwmsAPITestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestUnidentifiedDataset, cls).setUpClass()
+        super().setUpClass()
         UnidentifiedDataset.objects.all().delete()
         Dataset.objects.all().delete()
 
@@ -171,7 +179,7 @@ class TestUnidentifiedDataset(APITestCase):
         assert UnidentifiedDataset.objects.count() == 1
 
 
-class TestAddUnidentifiedDataset(APITestCase):
+class TestAddUnidentifiedDataset(SciwmsAPITestCase):
 
     def setUp(self):
         self.username = 'tester_tdd'
@@ -183,7 +191,7 @@ class TestAddUnidentifiedDataset(APITestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestAddUnidentifiedDataset, cls).setUpClass()
+        super().setUpClass()
         Dataset.objects.all().delete()  # Revore UGridTest and SGridTest defaults
 
     def tearDown(cls):

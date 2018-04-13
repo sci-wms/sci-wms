@@ -63,9 +63,9 @@
                     <td>{{ unid.name }}</td>
                     <td>
                         {% if unid.online %}
-                            <a href="{{ unid.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> DAP</a>
+                            <a href="{{ unid.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> OPeNDAP</a>
                         {% else %}
-                            <abbr title="{{unid.uri}}"><span class="glyphicon glyphicon-new-window"></span> Local file(s)</abbr>
+                            <abbr title="{{unid.uri}}"><span class="glyphicon glyphicon-file"></span> Local file(s)</abbr>
                         {% endif %}
                     </td>
                     <td>{{ unid.status }}</td>
@@ -118,27 +118,57 @@
 
                     <td>
                         {% if dataset.online %}
-                            <a href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> Data (DAP)</a>
+                            <a href="{{ dataset.uri }}.html"><span class="glyphicon glyphicon-new-window"></span> OPeNDAP</a>
                         {% else %}
-                            <abbr title="{{dataset.uri}}"><span class="glyphicon glyphicon-new-window"></span> Data (Local file)</abbr>
+                            <abbr title="{{dataset.uri}}"><span class="glyphicon glyphicon-file"></span> Local file(s)</abbr>
                         {% endif %}
                     </td>
 
                     <td>
-                        <span>Status: {{ dataset.status }}</span>
-                        {% if dataset.cache_last_updated %}
-                            <span class="row">Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</span>
+                        <p>
+                            Status: {{ dataset.status }}
+                            <div id="messages_{{ dataset.slug }}"></div>
+                        </p>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'update_dataset' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh {% if not dataset.has_cache %}text-danger{% endif %}"></span> All
+                            </button>
+                        </a>
+                        <a href="{% url 'update_grid' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh {% if not dataset.has_grid_cache %}text-danger{% endif %}"></span> Grid
+                            </button>
+                        </a>
+                        <a href="{% url 'update_time' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh {% if not dataset.has_time_cache %}text-danger{% endif %}"></span> Time
+                            </button>
+                        </a>
+                        <a href="{% url 'update_layers' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-refresh {% if not dataset.all_layers %}text-danger{% endif %}"></span> Layers
+                            </button>
+                        </a>
+                        <a href="{% url 'delete_cache' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
+                                <span class="glyphicon glyphicon-trash"></span> Clear
+                            </button>
+                        </a>
                         {% else %}
-                            <span class="row">Updated: never</span>
+                        <span class="glyphicon {% if not dataset.has_grid_cache %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Grid
+                        <span class="glyphicon {% if not dataset.has_time_cache %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Time
+                        <span class="glyphicon {% if not dataset.all_layers %}text-danger glyphicon-remove{% else %}text-success glyphicon-ok{% endif %}"></span> Layers
                         {% endif %}
 
-                        <span class='row'>
-                            {% if dataset.keep_up_to_date %}
-                                <span style="color: green" class="glyphicon glyphicon-ok"></span> <span>Keep up to date every {{ dataset.update_every }} seconds</span>
-                            {% else %}
-                                <span style="color: red" class="glyphicon glyphicon-remove"></span> <span>Keep up to date</span>
+                        <p>
+                            {% if dataset.cache_last_updated %}
+                            <div>Last Updated: <abbr title="{{ dataset.cache_last_updated }}">{{ dataset.cache_last_updated | timesince }} ago</abbr></div>
                             {% endif %}
-                        </span>
+                            {% if dataset.keep_up_to_date %}
+                            <div>Updating every: {{ dataset.update_every }} seconds</div>
+                            {% endif %}
+                        </p>
                     </td>
 
                     <td>
@@ -147,22 +177,15 @@
                                 <span class="glyphicon glyphicon-new-window"></span> GetCapabilities
                             </button>
                         </a>
-                        <hr />
                         {% if user.is_authenticated %}
-                        <!-- Update -->
-                        <a href="{% url 'update_dataset' dataset.slug %}" data-slug="{{ dataset.slug }}">
-                            <button type="button" class="updateButton btn btn-default btn-xs">
-                                <span class="glyphicon glyphicon-refresh"></span> Update cache
-                            </button>
-                        </a>
                         <!-- Delete -->
+                        <hr />
                         <a href="{% url 'dataset-detail' dataset.pk %}">
                             <button type="button" class="deleteButton btn btn-default btn-xs">
                                 <span class="glyphicon glyphicon-trash"></span> Delete
                             </button>
                         </a>
                         {% endif %}
-                        <div id="messages_{{ dataset.slug }}"></div>
                     </td>
                 </tr>
                 {% endfor %}

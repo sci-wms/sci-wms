@@ -121,9 +121,18 @@ class Dataset(TypedModel):
         raise NotImplementedError
 
     def has_cache(self):
+        return self.has_grid_cache() and self.has_time_cache()
+
+    def has_grid_cache(self):
         raise NotImplementedError
 
-    def update_cache(self, force=False):
+    def has_time_cache(self):
+        raise NotImplementedError
+
+    def update_time_cache(self):
+        raise NotImplementedError
+
+    def update_grid_cache(self):
         raise NotImplementedError
 
     def clear_cache(self):

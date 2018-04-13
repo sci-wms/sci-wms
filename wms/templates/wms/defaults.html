@@ -52,30 +52,44 @@
           <th class='col-md-1'>logscale</th>
           <th class='col-md-2'>min</th>
           <th class='col-md-2'>max</th>
+          {% if user.is_authenticated %}
+            <th class='col-md-2'>actions</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
         {% for d in defaults %}
         <tr>
           <td>
-            <a href="#" class="inline-edits" id="std_name" data-type="text" data-value="{{ d.std_name }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+            <span href="#" class="inline-edits" id="std_name" data-type="text" aria-label="Standard Name" data-value="{{ d.std_name }}" data-edit-url="{% url 'default-detail' pk=d.pk %}">{{ d.std_name }}</span>
           </td>
 
           <td>
-            <a href="#" class="inline-edits" id="units" data-type="text" data-value="{{ d.units }}"  data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+            <span href="#" class="inline-edits" id="units" data-type="text" data-value="{{ d.units }}" data-edit-url="{% url 'default-detail' pk=d.pk %}">{{ d.units }}</span>
           </td>
 
           <td>
-            <a href="#" class="inline-edits" id="logscale" data-type="select" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ d.logscale }}" aria-label="Logscale?" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+            <span href="#" class="inline-edits" id="logscale" data-type="select" data-source="{'': 'None', 'True':'True' , 'False':'False'}" data-value="{{ d.logscale }}" aria-label="Logscale?" data-edit-url="{% url 'default-detail' pk=d.pk %}">{{ d.logscale | default_if_none:'' }}</span>
           </td>
 
           <td>
-            <a href="#" class="inline-edits" id="default_min" data-type="text" data-value="{{ d.default_min | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+            <span href="#" class="inline-edits" id="default_min" data-type="text" data-value="{{ d.default_min | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}">{{ d.default_min | default_if_none:'' }}</span>
           </td>
 
           <td>
-            <a href="#" class="inline-edits" id="default_max" data-type="text" data-value="{{ d.default_max | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}"></a>
+            <span href="#" class="inline-edits" id="default_max" data-type="text" data-value="{{ d.default_max | default_if_none:'' }}" data-edit-url="{% url 'default-detail' pk=d.pk %}">{{ d.default_max | default_if_none:'' }}</span>
           </td>
+
+          {% if user.is_authenticated %}
+          <td>
+            <!-- Delete -->
+            <a href="{% url 'default-detail' d.pk %}" data-pk="{{ d.pk }}">
+                <button type="button" class="deleteButton btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-trash"></span> Delete
+                </button>
+            </a>
+          </td>
+          {% endif %}
 
         </tr>
         {% endfor %}
@@ -110,25 +124,45 @@
       }
     });
 
+    $(".deleteButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        var posting = $.ajax({
+            type: "DELETE",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+            },
+            url: a_tag.attr("href"),
+            success: function(data) {
+                a_tag.parent().parent().remove();
+                $("#default-messages").hide().html('<div class="alert alert-success">Deleted</div>').fadeIn();
+            }
+        }).fail(function(data) {
+            $("#default-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+        });
+    });
+
     $("#defaultSubmit").click(function() {
 
         but = $(this)
         but.attr("disabled", "disabled");
 
         var posting = $.ajax({
-                                type: "POST",
-                                url: $("#defaultForm").attr("action"),
-                                data: $("#defaultForm").serialize(),
-                                success: function(data) {
-                                    // We get the Dataset back... we could prepend to the table?
-                                    but.attr("disabled", false);
-                                    location.reload();
-                                },
-                                dataType: "text"
-                            }).fail(function(data) {
-                                $("#default-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
-                                but.attr("disabled", false);
-                            });
+            type: "POST",
+            url: $("#defaultForm").attr("action"),
+            data: $("#defaultForm").serialize(),
+            success: function(data) {
+                // We get the Dataset back... we could prepend to the table?
+                but.attr("disabled", false);
+                location.reload();
+            },
+            dataType: "text"
+        }).fail(function(data) {
+            $("#default-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
+            but.attr("disabled", false);
+        });
       });
   });
 

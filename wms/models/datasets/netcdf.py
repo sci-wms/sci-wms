@@ -7,11 +7,12 @@ import numpy as np
 import netCDF4 as nc4
 
 from django.conf import settings
+#from django.core.cache import caches
+
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
 from wms.utils import find_appropriate_time
 from wms.models import VirtualLayer, Layer, Style
-
 from wms import logger  # noqa
 
 
@@ -64,12 +65,13 @@ class NetCDFDataset(object):
         except BaseException:
             pass
 
-    def has_cache(self):
-        return os.path.exists(self.topology_file)
-
     @property
     def topology_file(self):
         return os.path.join(settings.TOPOLOGY_PATH, '{}.nc'.format(self.safe_filename))
+
+    @property
+    def time_cache_file(self):
+        return os.path.join(settings.TOPOLOGY_PATH, '{}.npy'.format(self.safe_filename))
 
     @property
     def domain_file(self):
@@ -99,7 +101,7 @@ class NetCDFDataset(object):
     def face_tree_index_file(self):
         return '{}.idx'.format(self.face_tree_root)
 
-    def setup_getfeatureinfo(self, ncd, variable_object, request, location=None):
+    def setup_getfeatureinfo(self, layer, request, location=None):
 
         location = location or 'face'
 
@@ -125,31 +127,15 @@ class NetCDFDataset(object):
         finally:
             tree.close()
 
-        # Get time indexes
-        time_vars = ncd.get_variables_by_attributes(standard_name='time')
-        if len(time_vars) == 0:
-            start_nc_index = 0
-            end_nc_index = 0
-            return_dates = []
-
-        time_var_name = find_appropriate_time(variable_object, time_vars)
-        time_var = ncd.variables[time_var_name]
-        if hasattr(time_var, 'calendar'):
-            calendar = time_var.calendar
-        else:
-            calendar = 'gregorian'
-        start_nc_num = round(nc4.date2num(request.GET['starting'], units=time_var.units, calendar=calendar))
-        end_nc_num = round(nc4.date2num(request.GET['ending'], units=time_var.units, calendar=calendar))
-
-        all_times = time_var[:]
-
-        start_nc_index = np.searchsorted(all_times, start_nc_num, side='left')
+        all_times = self.times(layer)
+        logger.info(all_times)
+        start_nc_index = np.searchsorted(all_times, request.GET['starting'], side='left')
         start_nc_index = min(start_nc_index, len(all_times) - 1)
 
-        end_nc_index = np.searchsorted(all_times, end_nc_num, side='right')
+        end_nc_index = np.searchsorted(all_times, request.GET['ending'], side='right')
         end_nc_index = max(end_nc_index, 1)  # Always pull the first index
 
-        return_dates = nc4.num2date(all_times[start_nc_index:end_nc_index], units=time_var.units, calendar=calendar)
+        return_dates = all_times[start_nc_index:end_nc_index]
 
         return geo_index, closest_x, closest_y, start_nc_index, end_nc_index, return_dates
 
@@ -196,7 +182,7 @@ class NetCDFDataset(object):
                 vs = nc.get_variables_by_attributes(standard_name=lambda v: v in v_names)
                 VirtualLayer.make_vector_layer(us, vs, 'sea_ice_velocity', 'vectors', self.id)
 
-    def process_layers(self):
+    def update_layers(self):
         with self.dataset() as nc:
             if nc is not None:
 

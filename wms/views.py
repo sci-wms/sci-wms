@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 
 from wms.models import Dataset, Server, Variable, Style, UnidentifiedDataset
 from wms.utils import get_layer_from_request
-from wms.tasks import update_dataset
+from wms.tasks import update_dataset, update_layers, update_time_cache, update_grid_cache
 from wms import gfi_handler
 from wms import wms_handler
 from wms import logger
@@ -227,6 +227,33 @@ class DatasetShowView(View):
         return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset, styles=styles))
 
 
+class DatasetGridUpdateView(View):
+
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        update_grid_cache(dataset.pk)
+        return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
+
+
+class DatasetTimeUpdateView(View):
+
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        update_time_cache(dataset.pk)
+        return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
+
+
+class DatasetLayersUpdateView(View):
+
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        update_layers(dataset.pk)
+        return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
+
+
 class DatasetUpdateView(View):
 
     @method_decorator(login_required)
@@ -234,6 +261,15 @@ class DatasetUpdateView(View):
         dataset = get_object_or_404(Dataset, slug=dataset)
         update_dataset(dataset.pk)
         return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
+
+
+class DatasetDeleteCacheView(View):
+
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        dataset.clear_cache()
+        return HttpResponse(json.dumps({ "message" : 'Cleared' }), content_type='application/json')
 
 
 class WmsView(View):

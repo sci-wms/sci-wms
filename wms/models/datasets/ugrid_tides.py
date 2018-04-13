@@ -33,10 +33,19 @@ class UGridTideDataset(UGridDataset):
         except (RuntimeError, AttributeError, FileNotFoundError):
             return False
 
-    def update_cache(self, force=False):
+    def has_grid_cache(self):
+        return os.path.exists(self.topology_file)
+
+    def has_time_cache(self):
+        return True
+
+    def update_time_cache(self):
+        return {}
+
+    def update_grid_cache(self, force=False):
         with self.dataset() as nc:
             if nc is None:
-                logger.error("Failed update_cache, could not load dataset "
+                logger.error("Failed update_grid_cache, could not load dataset "
                              "as a netCDF4 object")
                 return
 
@@ -249,7 +258,7 @@ class UGridTideDataset(UGridDataset):
 
         vl.save()
 
-    def process_layers(self):
+    def update_layers(self):
         self.analyze_virtual_layers()
 
     def nearest_time(self, layer, time):

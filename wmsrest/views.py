@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from copy import copy
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from wms.models import Dataset, Layer, VirtualLayer, Variable, UnidentifiedDataset
@@ -70,15 +71,21 @@ class DatasetList(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        if 'ugrid' in request.data['type']:
-            request.data['type'] = 'wms.ugriddataset'
-            serializer = UGridDatasetSerializer(data=request.data)
-        elif 'sgrid' in request.data['type']:
-            request.data['type'] = 'wms.sgriddataset'
-            serializer = SGridDatasetSerializer(data=request.data)
-        elif 'rgrid' in request.data['type']:
-            request.data['type'] = 'wms.rgriddataset'
-            serializer = RGridDatasetSerializer(data=request.data)
+
+        d = copy(request.data)
+
+        if 'ugridtide' in d['type']:
+            d['type'] = 'wms.ugridtidedataset'
+            serializer = UGridTideDatasetSerializer(data=d)
+        if 'ugrid' in d['type']:
+            d['type'] = 'wms.ugriddataset'
+            serializer = UGridDatasetSerializer(data=d)
+        elif 'sgrid' in d['type']:
+            d['type'] = 'wms.sgriddataset'
+            serializer = SGridDatasetSerializer(data=d)
+        elif 'rgrid' in d['type']:
+            d['type'] = 'wms.rgriddataset'
+            serializer = RGridDatasetSerializer(data=d)
 
         if serializer.is_valid():
             serializer.save()
@@ -113,20 +120,21 @@ class DatasetDetail(APIView):
         serializer = DatasetSerializer(dataset)
         return Response(serializer.data)
 
-    def put(self, request, pk, format=None):
+    def patch(self, request, pk, format=None):
         dataset = self.get_object(pk)
-        if 'ugridtide' in request.data['type']:
-            request.data['type'] = 'wms.ugridtidedataset'
-            serializer = UGridTideDatasetSerializer(dataset, data=request.data)
-        elif 'ugrid' in request.data['type']:
-            request.data['type'] = 'wms.ugriddataset'
-            serializer = UGridDatasetSerializer(dataset, data=request.data)
-        elif 'sgrid' in request.data['type']:
-            request.data['type'] = 'wms.sgriddataset'
-            serializer = SGridDatasetSerializer(dataset, data=request.data)
-        elif 'rgrid' in request.data['type']:
-            request.data['type'] = 'wms.rgriddataset'
-            serializer = RGridDatasetSerializer(dataset, data=request.data)
+
+        d = copy(request.data)
+        d['type'] = dataset.type
+        serializer = DatasetSerializer(dataset, data=d)
+
+        if dataset.type == 'wms.ugridtidedataset':
+            serializer = UGridTideDatasetSerializer(dataset, data=request.data, partial=True)
+        elif dataset.type == 'wms.ugriddataset':
+            serializer = UGridDatasetSerializer(dataset, data=request.data, partial=True)
+        elif dataset.type == 'wms.sgriddataset':
+            serializer = SGridDatasetSerializer(dataset, data=request.data, partial=True)
+        elif dataset.type == 'wms.rgriddataset':
+            serializer = RGridDatasetSerializer(dataset, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -151,7 +159,7 @@ class VirtuallLayerDetail(generics.RetrieveUpdateAPIView):
     queryset = VirtualLayer.objects.all()
 
 
-class DefaultDetail(generics.RetrieveUpdateAPIView):
+class DefaultDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = VariableSerializer
     queryset = Variable.objects.all()
