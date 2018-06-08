@@ -36,8 +36,6 @@ Or using ``docker-compose``:
         image: axiom/sci-wms
         environment:
           DJANGO_SETTINGS_MODULE: sciwms.settings.quick
-        ports:
-          - "7002:7002"
         volumes:
           - topologydata:/srv/sci-wms/wms/topology
           - dbdata:/srv/sci-wms/sciwms/db/
