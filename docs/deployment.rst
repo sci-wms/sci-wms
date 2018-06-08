@@ -39,6 +39,7 @@ Or using ``docker-compose``:
         volumes:
           - topologydata:/srv/sci-wms/wms/topology
           - dbdata:/srv/sci-wms/sciwms/db/
+        command: python manage.py run_huey
 
     volumes:
       topologydata:
