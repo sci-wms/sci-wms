@@ -64,9 +64,9 @@ author = 'sci-wms developers'
 # built documents.
 #
 # The short X.Y version.
-version = '1.6.0'
+version = '2.0.0'
 # The full version, including alpha/beta/rc tags.
-release = '1.6.0-dev'
+release = '2.0.0-dev'
 
 rst_epilog = """
 .. |github_repo| replace:: https://github.com/sci-wms/sci-wms
