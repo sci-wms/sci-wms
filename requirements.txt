@@ -10,7 +10,7 @@ huey
 isodate
 jsonfield
 matplotlib>2.0,<3.0
-netCDF4
+netCDF4>=1.4.0
 numpy
 pandas
 pyaxiom
