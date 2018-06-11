@@ -1,6 +1,12 @@
 Deployment
 ==========
 
+
+Getting started
+~~~~~~~~~~~~~~~
+
+Deployment of sci-wms is simplified by using Docker. You will need do install `Docker <https://docs.docker.com/install/>`_ and `docker-compose <https://docs.docker.com/compose/install/>`_.
+
 .. _quickstart-run:
 
 Quickstart
@@ -8,15 +14,9 @@ Quickstart
 
 If you are working with a small ``sci-wms`` installation - a few small datasets and light load - you should ok running with this quickstart setup. The web and background workers need to share the same datasbase files so be sure to mount a database directory into both.
 
-.. code-block:: bash
-
-    $ docker run -d -p 7002:7002 -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms
-    $ docker run -d -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms python manage.py run_huey
-
-
-Or using ``docker-compose``:
-
 .. code-block:: docker
+
+    $ cat docker-compose.yml
 
     version: '3.2'
 
@@ -46,15 +46,30 @@ Or using ``docker-compose``:
       dbdata:
 
 
+Run the containers
+
+.. code-block:: bash
+
+  $ docker-compose up -d
+
+
+You should see *two* docker containers:
+
+.. code-block:: bash
+
+    $ docker ps
+
+    CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+    cdc0655e12f2    sci-wms         "/tini -- docker/wai…"   0.0.0.0:7002->7002/tcp   sciwms_web_1
+    b2493a0ce881    sci-wms         "/tini -- docker/wai…"   7002/tcp                 sciwms_worker_1
+
+
 .. _advanced-run:
 
 Advanced
 ~~~~~~~~
 
 If you are working with a moderatly size ``sci-wms`` installation you will need to run background workers to manage adding new datsets and updating existing datasets. This requires `redis <https://redis.io/>`_ to share information between the web and background workers as well as `postgres <https://www.postgresql.org/>`_ so the web and background workers can share the same metadata database.
-
-
-Using ``docker-compose``:
 
 .. code-block:: bash
 
@@ -112,7 +127,7 @@ Run the containers
   $ docker-compose up -d
 
 
-You should see four docker containers:
+You should see *four* docker containers:
 
 .. code-block:: bash
 

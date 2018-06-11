@@ -6,10 +6,10 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Deployment &#8212; sci-wms 1.6.0-dev documentation</title>
+    <title>Deployment &#8212; sci-wms 2.0.0-dev documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 2.0.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -42,15 +42,16 @@
             
   <div class="section" id="deployment">
 <h1>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Deployment of sci-wms is simplified by using Docker. You will need do install <a class="reference external" href="https://docs.docker.com/install/">Docker</a> and <a class="reference external" href="https://docs.docker.com/compose/install/">docker-compose</a>.</p>
+</div>
 <div class="section" id="quickstart">
 <span id="quickstart-run"></span><h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
 <p>If you are working with a small <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> installation - a few small datasets and light load - you should ok running with this quickstart setup. The web and background workers need to share the same datasbase files so be sure to mount a database directory into both.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker run -d -p <span class="m">7002</span>:7002 -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms
-$ docker run -d -v dbdata:/srv/sci-wms/sciwms/db/ axiom/sci-wms python manage.py run_huey
-</pre></div>
-</div>
-<p>Or using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code>:</p>
-<div class="highlight-docker notranslate"><div class="highlight"><pre><span></span>version: <span class="s1">&#39;3.2&#39;</span>
+<div class="highlight-docker notranslate"><div class="highlight"><pre><span></span>$ cat docker-compose.yml
+
+version: <span class="s1">&#39;3.2&#39;</span>
 
 services:
 
@@ -78,11 +79,22 @@ volumes:
   dbdata:
 </pre></div>
 </div>
+<p>Run the containers</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker-compose up -d
+</pre></div>
+</div>
+<p>You should see <em>two</em> docker containers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker ps
+
+CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
+cdc0655e12f2    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">0</span>.0.0.0:7002-&gt;7002/tcp   sciwms_web_1
+b2493a0ce881    sci-wms         <span class="s2">&quot;/tini -- docker/wai…&quot;</span>   <span class="m">7002</span>/tcp                 sciwms_worker_1
+</pre></div>
+</div>
 </div>
 <div class="section" id="advanced">
 <span id="advanced-run"></span><h2>Advanced<a class="headerlink" href="#advanced" title="Permalink to this headline">¶</a></h2>
 <p>If you are working with a moderatly size <code class="docutils literal notranslate"><span class="pre">sci-wms</span></code> installation you will need to run background workers to manage adding new datsets and updating existing datasets. This requires <a class="reference external" href="https://redis.io/">redis</a> to share information between the web and background workers as well as <a class="reference external" href="https://www.postgresql.org/">postgres</a> so the web and background workers can share the same metadata database.</p>
-<p>Using <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat docker-compose.yml
 
 version: <span class="s1">&#39;3.2&#39;</span>
@@ -134,7 +146,7 @@ volumes:
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker-compose up -d
 </pre></div>
 </div>
-<p>You should see four docker containers:</p>
+<p>You should see <em>four</em> docker containers:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ docker ps
 
 CONTAINER ID    IMAGE           COMMAND                  PORTS                    NAMES
@@ -278,6 +290,7 @@ worker:
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Deployment</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
 <li><a class="reference internal" href="#quickstart">Quickstart</a></li>
 <li><a class="reference internal" href="#advanced">Advanced</a></li>
 <li><a class="reference internal" href="#configuration">Configuration</a><ul>
@@ -333,7 +346,7 @@ worker:
         <li class="right" >
           <a href="index.html" title="Welcome to sci-wms"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 1.6.0-dev documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">sci-wms 2.0.0-dev documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
