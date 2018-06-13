@@ -15,13 +15,12 @@ services:
       - dbdata:/var/lib/postgresql/data
 
   web:
-    #image: axiom/sci-wms
-    image: sci-wms
+    image: axiom/sci-wms
     environment:
       SCIWMS_USERNAME: sciwms
       SCIWMS_PASSWORD: sciwms
       WEB_CONCURRENCY: 16
-      DJANGO_SETTINGS_MODULE: sciwms.settings.dist
+      DJANGO_SETTINGS_MODULE: sciwms.settings.adv
       DJANGO_SECRET_KEY: abcdefg
     ports:
       - "7002:7002"
@@ -33,10 +32,9 @@ services:
     command: docker/wait.sh db:5432 -- docker/run.sh
 
   worker:
-    #image: axiom/sci-wms
-    image: sci-wms
+    image: axiom/sci-wms
     environment:
-      DJANGO_SETTINGS_MODULE: sciwms.settings.dist
+      DJANGO_SETTINGS_MODULE: sciwms.settings.adv
     depends_on:
       - db
       - redis
