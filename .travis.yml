@@ -30,8 +30,11 @@ before_install:
   - conda update conda
   - conda config --add channels axiom-data-science --force
   - conda config --add channels conda-forge --force
-  - conda create -n TEST python=$TRAVIS_PYTHON_VERSION --file requirements.txt --file requirements-test.txt
+  - conda create -n TEST python=$TRAVIS_PYTHON_VERSION
   - source activate TEST
+
+install:
+  - conda install --file requirements.txt --file requirements-test.txt
 
 script:
   - set -e
