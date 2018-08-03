@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+from django.urls import reverse
 from django.conf import settings
 from django.core.cache import caches
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from wms.models import UGridDataset, UnidentifiedDataset, Dataset, SGridDataset, UGridTideDataset

@@ -22,3 +22,4 @@ wms/tests/topology/
 wms/tests/images/
 .pytest_cache
 docs/_site
+.envrc

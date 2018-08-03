@@ -11,6 +11,8 @@ from django.db.utils import IntegrityError
 from wms.models import Dataset, UnidentifiedDataset
 from huey.contrib.djhuey import db_periodic_task, db_task
 
+from sciwms import logger  # noqa
+
 
 @db_task()
 def update_layers(pkey):

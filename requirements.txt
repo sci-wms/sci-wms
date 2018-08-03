@@ -1,10 +1,10 @@
-cmocean
+cmocean>=1.2.0
 cython
 dj-static==0.0.6
-django-autoslug
+django-autoslug>=1.9.4
 django-grappelli
 django-typed-models
-Django>=1.11,<2.0
+django>=2.1,<2.2
 djangorestframework
 huey
 isodate

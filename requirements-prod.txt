@@ -1,6 +1,6 @@
-gunicorn
-setproctitle
-eventlet
-psycopg2
 django-redis-cache
+eventlet
+gunicorn
 hiredis
+psycopg2
+setproctitle

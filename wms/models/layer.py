@@ -16,7 +16,7 @@ class LayerBase(models.Model):
     units       = models.CharField(max_length=200, blank=True, help_text="The 'units' from the dataset variable")
     logscale    = models.NullBooleanField(default=None, null=True, help_text="If this dataset variable should default to a log scale")
     description = models.CharField(max_length=200, blank=True, help_text="Descriptive name of this layer, optional")
-    dataset     = models.ForeignKey('Dataset')
+    dataset     = models.ForeignKey('Dataset', on_delete=models.CASCADE)
     active      = models.BooleanField(default=False)
     styles      = models.ManyToManyField('Style')
     default_min = models.FloatField(null=True, default=None, blank=True, help_text="If no colorscalerange is specified, this is used for the min.  If None, autoscale is used.")

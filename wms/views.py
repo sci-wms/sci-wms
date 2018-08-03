@@ -277,10 +277,10 @@ class WmsView(View):
     def get(self, request, dataset):
         dataset = Dataset.objects.filter(slug=dataset).first()
         request = normalize_get_params(request)
-        reqtype = request.GET['request']
 
         # This calls the passed in 'request' method on a Dataset and returns the response
         try:
+            reqtype = request.GET['request']
             if reqtype.lower() == 'getcapabilities':
                 return TemplateResponse(request, 'wms/getcapabilities.xml', dict(gfi_formats=gfi_handler.FORMATS, dataset=dataset, server=Server.objects.first()), content_type='application/xml')
             else:

@@ -7,7 +7,6 @@ import numpy as np
 import netCDF4 as nc4
 
 from django.conf import settings
-#from django.core.cache import caches
 
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset
 
@@ -235,7 +234,7 @@ class NetCDFDataset(object):
                         l.units = nc_var.units
 
                     # Set some standard styles
-                    l.styles = Style.defaults()
+                    l.styles.add(*Style.defaults())
                     l.save()
 
         self.analyze_virtual_layers()

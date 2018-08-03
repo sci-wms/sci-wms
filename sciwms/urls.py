@@ -17,13 +17,12 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls import include, url
 from django.conf import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
-from django.contrib.auth.views import logout
+from django.contrib.auth import logout
 
 import wms.views
 
@@ -31,7 +30,7 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r'^grappelli/', include('grappelli.urls')),
-    url(r'^admin/', include(admin.site.urls), name='admin'),
+    url(r'^admin/', admin.site.urls),
 
     url(r'^$', wms.views.index, name='index'),
 
@@ -46,4 +45,7 @@ urlpatterns = [
 
 # So we don't have to run "collectstatic" in development mode
 if settings.DEBUG:
-    urlpatterns += staticfiles_urlpatterns()
+    import debug_toolbar
+    urlpatterns += [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ]
