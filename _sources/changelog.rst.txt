@@ -2,7 +2,8 @@
 Changelog
 =========
 
-* :release:`2.0.0 <2018-04-06>`
+* :release:`2.0.0 <2018-08-03>`
+* :feature:`-` Bump Django to 2.1
 * :bug:`132 major` Support datasets with no time dimension
 * :feature:`-` Implement background jobs using Huey
 * :feature:`-` Moved documentation under the docs/ folder
