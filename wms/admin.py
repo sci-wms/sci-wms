@@ -32,7 +32,7 @@ class LayerInline(admin.StackedInline):
     extra = 0
     filter_horizontal = ('styles',)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj):
         return False
 
 
