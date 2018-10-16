@@ -103,6 +103,7 @@ class NetCDFDataset(object):
     def setup_getfeatureinfo(self, layer, request, location=None):
 
         location = location or 'face'
+        tree = None
 
         try:
             latitude = request.GET['latitude']
@@ -124,7 +125,8 @@ class NetCDFDataset(object):
         except BaseException:
             raise
         finally:
-            tree.close()
+            if tree is not None:
+                tree.close()
 
         all_times = self.times(layer)
         logger.info(all_times)
