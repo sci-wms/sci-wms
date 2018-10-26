@@ -129,7 +129,7 @@ class NetCDFDataset(object):
                 tree.close()
 
         all_times = self.times(layer)
-        logger.info(all_times)
+
         start_nc_index = np.searchsorted(all_times, request.GET['starting'], side='left')
         start_nc_index = min(start_nc_index, len(all_times) - 1)
 

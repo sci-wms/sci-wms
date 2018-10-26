@@ -5,7 +5,7 @@ from dateutil.parser import parse
 from dateutil.tz import tzutc
 import pyproj
 
-from wms.utils import DotDict, split
+from wms.utils import DotDict, split, tz_aware_to_native
 
 from wms import logger
 
@@ -191,6 +191,8 @@ def get_times(request):
     if not time:
         time = date.today().isoformat() + "T00:00:00"
     times = sorted([ parse(t) for t in time.split("/") ])
+    # Convert tz-aware datetimes to native datetimes
+    times = [ tz_aware_to_native(t) for t in times ]
     return DotDict(min=times[0], max=times[-1])
 
 

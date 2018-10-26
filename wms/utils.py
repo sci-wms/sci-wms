@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 import time
 
-from datetime import timedelta
 import numpy as np
+from dateutil.tz import tzutc
+from datetime import timedelta
 
 from wms import logger
+
+
+def tz_aware_to_native(dt):
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(tzutc())  # convert UTC if tzinfo is available
+        dt = dt.replace(tzinfo=None)
+    return dt
 
 
 def split(string, char, maxsplit=None):

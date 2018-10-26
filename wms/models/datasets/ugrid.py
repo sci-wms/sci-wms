@@ -434,11 +434,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             logger.error("No layer ({}) in time cache, returning nothing".format(layer.access_name))
             return []
 
-        ltv = time_cache['layers'].get(layer.access_name)
-        if ltv is None:
-            # Legit this might not be a layer with time so just return empty list (no error message)
-            return []
-
+        ltv = time_cache['layers'][layer.access_name]
         if ltv in time_cache['times']:
             return time_cache['times'][ltv]
         else:
