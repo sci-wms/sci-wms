@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><WMT_MS_Capabilities version="1.1.1">
+<?xml version="1.0" encoding="utf-8"?>
+<WMT_MS_Capabilities version="1.1.1">
     <Service>
         <Name>OGC:WMS</Name>
         <Title>{{ server.title }}</Title>
@@ -76,6 +77,74 @@
         <Exception>
             <Format>text/html</Format>
         </Exception>
+        <ExtendedCapabilities>
+            <CapabilitiesType>sci-wms</CapabilitiesType>
+            <ExtendedRequest>
+                <Request>GetMap</Request>
+                <UrlParameter>
+                    <ParameterName>COLORSCALERANGE</ParameterName>
+                    <ParameterDescription>Of the form min,max this is the scale range used for plotting the data.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>NUMCONTOURS</ParameterName>
+                    <ParameterDescription>The number of discrete contours used to plot the data.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>VECTORSCALE</ParameterName>
+                    <ParameterDescription>Control the scale of each plotted vector</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>VECTORSTEP</ParameterName>
+                    <ParameterDescription>Control the spacing between each plotted vector</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>LOGSCALE</ParameterName>
+                    <ParameterDescription> "true" or "false" - whether to plot data with a logarithmic scale</ParameterDescription>
+                </UrlParameter>
+            </ExtendedRequest>
+            <ExtendedRequest>
+                <Request>GetMetadata</Request>
+                <RequestDescription>Fetches small pieces of metadata.  Many of these are also present in this capabilities document, but GetMetadata provides a more convenient method of accessing such data. GetMetadata always returns data in the JSON format</RequestDescription>
+                <UrlParameter>
+                    <ParameterName>ITEM</ParameterName>
+                    <ParameterDescription>This specifies the metadata to return.  This can take the values:
+                        minmax: Calculates the range of values in the given area. Takes the same parameters as a GetMap request.
+                    </ParameterDescription>
+                </UrlParameter>
+            </ExtendedRequest>
+            <ExtendedRequest>
+                <Request>GetLegendGraphic</Request>
+                <RequestDescription>The GetLegendGraphic request generates an image which can be used as a legend.</RequestDescription>
+                <UrlParameter>
+                    <ParameterName>COLORSCALERANGE</ParameterName>
+                    <ParameterDescription>Of the form min,max this is the scale range used for plotting the data.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>NUMCONTOURS</ParameterName>
+                    <ParameterDescription>The number of discrete contours used to plot the data.</ParameterDescription>
+                </UrlParameter>                
+                <UrlParameter>
+                    <ParameterName>LOGSCALE</ParameterName>
+                    <ParameterDescription> "true" or "false" - whether to plot data with a logarithmic scale.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>SHOWLABEL</ParameterName>
+                    <ParameterDescription>"true" or "false".  Whether to show a legend label.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>SHOWVALUES</ParameterName>
+                    <ParameterDescription>"true" or "false".  Whether to show values in the legend.</ParameterDescription>
+                </UrlParameter>
+                <UrlParameter>
+                    <ParameterName>UNITS</ParameterName>
+                    <ParameterDescription>Override the unit label used in the legend.</ParameterDescription>
+                </UrlParameter>                
+                <UrlParameter>
+                    <ParameterName>HORIZONTAL</ParameterName>
+                    <ParameterDescription>"true" or "false".  Whether to show the legend as horizontal.</ParameterDescription>
+                </UrlParameter>
+            </ExtendedRequest>
+        </ExtendedCapabilities>
         <Layer>
             <Title>{{ dataset.title }}</Title>
             <Abstract>{{ dataset.abstract }}</Abstract>
