@@ -103,16 +103,16 @@ def regulate():
     for d in Dataset.objects.all():
         if d.keep_up_to_date is True:
             if not d.cache_last_updated:
-                # Hasnt' been udpated - run the update!
-                update_layers(d.pkey)
-                update_time_cache(d.pkey)
+                # Hasn't been udpated - run the update!
+                update_layers(d.pk)
+                update_time_cache(d.pk)
                 updates_scheduled += 1
             else:
                 run_another_update_after = d.cache_last_updated + timedelta(seconds=d.update_every)
                 if rightnow > run_another_update_after:
                     # It is time for an update - run it!
-                    update_layers(d.pkey)
-                    update_time_cache(d.pkey)
+                    update_layers(d.pk)
+                    update_time_cache(d.pk)
                     updates_scheduled += 1
 
     results = namedtuple('Results', ['updates_scheduled'])

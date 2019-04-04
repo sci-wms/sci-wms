@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`-` Fixed the periodic update of datasets (thanks Todd)
+* :bug:`141 major` Added GetCapabilities ExtendedCapabilities
+* :bug:`134 major` Fix GFI time requets from some WMS clients
 * :release:`2.0.0 <2018-08-03>`
 * :feature:`-` Bump Django to 2.1
 * :bug:`132 major` Support datasets with no time dimension
@@ -16,8 +19,8 @@ Changelog
 * :bug:`127 major` Fix time searching/indexing
 * :bug:`128 major` Fix issue when colorscalerange min was 0
 * :release:`1.5.0 <2015-12-18>`
-* :feature:`106` Add the UTIDES dataset type
-* :bug:`105 major` Changed default size of Legend to match ncWMS
+* :feature:`-` Add the UTIDES dataset type
+* :bug:`-` Changed default size of Legend to match ncWMS
 * :release:`1.4.0 <2015-11-19>`
 * :feature:`106` Support the ``COLORBARONLY`` parameter in GetLegendGraphic
 * :feature:`101` Ability to view sci-wms logs from the web client (login only)
