@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Welcome to sci-wms &#8212; sci-wms 2.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -13,7 +11,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -65,21 +63,21 @@
 <div class="section" id="background">
 <h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>No tools for comparing multiple unstructured models out of the box</li>
-<li>Existing WMS technologies (ncWMS and GeoServer) don’t support unstructured meshes in a format the preserves topology</li>
-<li>Vast amount of large collections of met-ocean data available over OpenDAP</li>
+<li><p>No tools for comparing multiple unstructured models out of the box</p></li>
+<li><p>Existing WMS technologies (ncWMS and GeoServer) don’t support unstructured meshes in a format the preserves topology</p></li>
+<li><p>Vast amount of large collections of met-ocean data available over OpenDAP</p></li>
 </ul>
 </div>
 <div class="section" id="features">
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Visualize grids adhering to <a class="reference external" href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a class="reference external" href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</li>
-<li>Abstracts each dataset into two objects: a topology and corresponding model data</li>
-<li>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</li>
-<li>External data (over DAP) is subset, downloaded, and rendered for each request</li>
-<li>Supports arbitrary cartographic projections</li>
-<li>Web-based management console for managing datasets and variables</li>
-<li>Lightweight client for testing</li>
+<li><p>Visualize grids adhering to <a class="reference external" href="https://github.com/ugrid-conventions/ugrid-conventions">CF-UGRID</a> or <a class="reference external" href="https://github.com/sgrid/sgrid">CF-SGRID</a> conventions</p></li>
+<li><p>Abstracts each dataset into two objects: a topology and corresponding model data</p></li>
+<li><p>Topologies are stored locally for quick and efficient spatial queries (RTree indexes for each grid)</p></li>
+<li><p>External data (over DAP) is subset, downloaded, and rendered for each request</p></li>
+<li><p>Supports arbitrary cartographic projections</p></li>
+<li><p>Web-based management console for managing datasets and variables</p></li>
+<li><p>Lightweight client for testing</p></li>
 </ul>
 </div>
 <div class="section" id="authors">
@@ -125,8 +123,6 @@
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
