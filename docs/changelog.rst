@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :feature:`-` Bump Python to 3.7
 * :bug:`-` Fixed the periodic update of datasets (thanks Todd)
 * :bug:`141 major` Added GetCapabilities ExtendedCapabilities
 * :bug:`134 major` Fix GFI time requets from some WMS clients

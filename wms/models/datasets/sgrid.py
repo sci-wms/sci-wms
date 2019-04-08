@@ -55,9 +55,9 @@ class SGridDataset(Dataset, NetCDFDataset):
                             return True
                         else:
                             return False
-            except (IndexError, AttributeError, RuntimeError, ValueError):
+            except (OSError, IndexError, AttributeError, RuntimeError, ValueError):
                 return False
-        except (FileNotFoundError, AttributeError):
+        except (OSError, FileNotFoundError, AttributeError):
             return False
 
     def has_grid_cache(self):

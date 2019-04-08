@@ -30,7 +30,7 @@ class UGridTideDataset(UGridDataset):
         try:
             with netCDF4.Dataset(uri) as ds:
                 return 'utides' in ds.Conventions.lower()
-        except (RuntimeError, AttributeError, FileNotFoundError):
+        except (OSError, RuntimeError, AttributeError, FileNotFoundError):
             return False
 
     def has_grid_cache(self):
