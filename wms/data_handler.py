@@ -18,8 +18,11 @@ def lat_lon_subset_idx(lon, lat, lonmin, latmin, lonmax, latmax, padding=0.18):
     if lonmin > lonmax:
         lonmin = lonmin * -1.0  # TODO: this should solve USW integration sites at wide zoom, but is it best way?
     return np.asarray(np.where(
-        (lat <= (latmax + padding)) & (lat >= (latmin - padding)) &
-        (lon <= (lonmax + padding)) & (lon >= (lonmin - padding)),)).squeeze()
+        (lat <= (latmax + padding)) &  # noqa
+        (lat >= (latmin - padding)) &  # noqa
+        (lon <= (lonmax + padding)) &  # noqa
+        (lon >= (lonmin - padding)),   # noqa
+    )).squeeze()
 
 
 def faces_subset_idx(face_indicies, spatial_idx):

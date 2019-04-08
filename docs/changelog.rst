@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :feature:`-` Bump Python to 3.7
+* :feature:`-` Bump Python to 3.7, use proj<6.0 and pyproj<2.0
 * :bug:`-` Fixed the periodic update of datasets (thanks Todd)
 * :bug:`141 major` Added GetCapabilities ExtendedCapabilities
 * :bug:`134 major` Fix GFI time requets from some WMS clients

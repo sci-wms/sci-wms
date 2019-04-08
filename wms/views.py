@@ -298,7 +298,8 @@ class WmsView(View):
 
                 return getattr(dataset, reqtype.lower())(layer, request)
 
-        except NotImplementedError as e:
+        except NotImplementedError:
+            logger.exception('Returning a 500:')
             return HttpResponse('"{}" is not implemented for a {}'.format(reqtype, dataset.__class__.__name__), status=500, reason="Could not process inputs", content_type="application/json")
         except BaseException as e:
             logger.exception('Returning a 500:')
