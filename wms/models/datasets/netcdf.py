@@ -34,11 +34,11 @@ class NetCDFDataset(object):
             try:
                 self._dataset = EnhancedDataset(self.path())
                 yield self._dataset
-            except (RuntimeError, FileNotFoundError):
+            except (OSError, RuntimeError, FileNotFoundError):
                 try:
                     self._dataset = EnhancedMFDataset(self.path(), aggdim='time')
                     yield self._dataset
-                except (IndexError, RuntimeError, FileNotFoundError):
+                except (OSError, IndexError, RuntimeError, FileNotFoundError):
                     yield None
 
     @contextmanager

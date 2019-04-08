@@ -13,8 +13,10 @@ matplotlib>2.0,<3.0
 netCDF4>=1.4.0
 numpy
 pandas
+peewee
 pyaxiom
-pyproj
+pyproj<2.0
+proj4<6.0
 pysgrid
 python-dateutil
 pytz

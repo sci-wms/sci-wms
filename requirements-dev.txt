@@ -1,6 +1,5 @@
 django-debug-toolbar
 django-extensions
-peewee    # For sqlite Huey
 pyinotify
 watchdog  # For better Werkzeug reloads
 Werkzeug

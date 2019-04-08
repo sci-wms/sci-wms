@@ -127,10 +127,7 @@ def get_projection(request):
     Can be specified by \"SRS\" or \"CRS\" key (string).
     If \"SRS\" or \"CRS\" is not available, default to mercator.
     """
-    projstr = request.GET.get("srs")
-    if not projstr:
-        projstr = request.GET.get("crs")
-
+    projstr = request.GET.get("srs", request.GET.get("crs"))
     if not projstr:
         projstr = "EPSG:3857"
         logger.debug("SRS or CRS no available in requst, defaulting to EPSG:3857 (mercator)")

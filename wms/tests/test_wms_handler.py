@@ -5,10 +5,12 @@ Created on Aug 28, 2015
 '''
 import datetime
 
+import pyproj
+
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from ..wms_handler import get_time
+from ..wms_handler import get_time, get_projection
 
 
 class TestGetTime(TestCase):
@@ -39,3 +41,34 @@ class TestGetTime(TestCase):
         expected_dt = datetime.datetime(2015, 1, 1, 17, 0, 0)
         self.assertEqual(result_time, expected_dt)
         self.assertIsNone(result_time_tz)
+
+
+class TestGetProjection(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_get_projection_default(self):
+        # CRS
+        request = self.factory.get('/dataset?crs=EPSG:3857')
+        result_proj = get_projection(request)
+        self.assertEqual(
+            result_proj.definition_string(),
+            pyproj.Proj(init='EPSG:3857').definition_string()
+        )
+
+        # SRS
+        request = self.factory.get('/dataset?srs=epsg:3857')
+        result_proj = get_projection(request)
+        self.assertEqual(
+            result_proj.definition_string(),
+            pyproj.Proj(init='EPSG:3857').definition_string()
+        )
+
+        # Fallback to the default
+        request = self.factory.get('/dataset?nothing=epsg:3857')
+        result_proj = get_projection(request)
+        self.assertEqual(
+            result_proj.definition_string(),
+            pyproj.Proj(init='EPSG:3857').definition_string()
+        )
