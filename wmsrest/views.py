@@ -31,9 +31,9 @@ class UnidentifiedDatasetList(APIView):
 
 
 class UnidentifiedDatasetDetail(APIView):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = UnidentifiedDataset.objects.all()
     serializer_class = UnidentifiedDatasetSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_object(self, pk):
         try:

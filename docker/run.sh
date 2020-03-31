@@ -2,6 +2,7 @@
 
 echo "Sourcing profile..."
 . /etc/profile
+conda activate base
 
 export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-sciwms.settings.quick}
 
@@ -29,4 +30,4 @@ echo "sci-wms password:     \"$PASS\""
 echo "========================================================================"
 
 echo "Starting sci-wms..."
-gunicorn -c docker/gunicorn.conf sciwms.wsgi:application
+gunicorn -c docker/gunicorn.py sciwms.wsgi:application

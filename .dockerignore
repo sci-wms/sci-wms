@@ -16,7 +16,6 @@ docs/
 logs/
 sciwms/db/
 
-wms/resources/
 wms/tests/
 wms/topology/
 wmsrest/tests/

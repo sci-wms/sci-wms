@@ -41,7 +41,7 @@ script:
   - set -e
 
   - if [[ $TEST_TARGET == "default" ]]; then
-      py.test -rxs --verbose ;
+      pytest -rxs --verbose ;
     fi
 
   - if [[ $TEST_TARGET == "coding_standards" ]]; then

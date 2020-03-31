@@ -18,5 +18,9 @@ def class_name(ds):
 def triple_period_format_z(ds):
     ws = []
     for w in ds:
-        ws.append('/'.join([w[0].isoformat(), w[1].isoformat(), strftime(w[2], D_DEFAULT)]))
+        ws.append('/'.join([
+            w[0].strftime('%Y-%m-%dT%H:%M:%S'),
+            w[1].strftime('%Y-%m-%dT%H:%M:%S'),
+            strftime(w[2], D_DEFAULT)
+        ]))
     return ','.join(ws)

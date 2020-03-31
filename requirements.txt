@@ -4,7 +4,7 @@ dj-static==0.0.6
 django-autoslug>=1.9.4
 django-grappelli
 django-typed-models
-django>=2.1,<2.2
+django>=2.2,<2.3
 djangorestframework
 huey
 isodate
@@ -13,7 +13,6 @@ matplotlib>2.0,<3.0
 netCDF4>=1.4.0
 numpy
 pandas
-peewee
 pyaxiom
 pyproj<2.0
 proj4<6.0

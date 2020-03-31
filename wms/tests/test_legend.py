@@ -55,7 +55,7 @@ class TestUgridLegendGraphic(TestCase):
 
     def test_ugrid_legend_no_dimensions(self):
         params = copy(self.url_params)
-        params.update(width=None, height=None)
+        params.update(width='', height='')
         self.do_test(params)
 
     def test_ugrid_legend_colorbaronly(self):
@@ -159,7 +159,7 @@ class TestSgridLegendGraphic(TestCase):
 
     def test_sgrid_legend_no_dimensions(self):
         params = copy(self.url_params)
-        params.update(width=None, height=None)
+        params.update(width='', height='')
         self.do_test(params)
 
     def test_sgrid_legend_colorbaronly(self):

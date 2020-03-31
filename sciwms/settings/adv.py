@@ -39,7 +39,7 @@ HUEY = {
     'result_store': True,  # Store return values of tasks.
     'events': True,  # Consumer emits events allowing real-time monitoring.
     'store_none': True,  # If a task returns None, do not save to results.
-    'always_eager': False,  # If DEBUG=True, run synchronously.
+    'immediate': False,  # If DEBUG=True, run synchronously.
     'store_errors': True,  # Store error info if task throws exception.
     'blocking': False,  # Poll the queue rather than do blocking pop.
     'backend_class': 'huey.RedisHuey',  # Use path to redis huey by default,

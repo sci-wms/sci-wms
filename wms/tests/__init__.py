@@ -3,7 +3,6 @@ import os
 from django.conf import settings
 from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
-from django.db import IntegrityError
 
 from wms.models import Group, Server, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset
 
@@ -14,13 +13,11 @@ resource_path = os.path.abspath(os.path.join(settings.PROJECT_ROOT, '..', 'wms',
 
 def add_server():
     s = Server.objects.create()
-    s.save()
     return s
 
 
 def add_group():
     g, _ = Group.objects.get_or_create(name='MyTestGroup',)
-    g.save()
     return g
 
 
@@ -47,16 +44,18 @@ def add_dataset(name, klass, filename):
 
 
 def add_user():
-    try:
-        return User.objects.create(username="testuser",
-                                   first_name="test",
-                                   last_name="user",
-                                   email="test@yser.comn",
-                                   password=hashpass.make_password("test"),
-                                   is_active=True,
-                                   is_superuser=True)
-    except IntegrityError:
-        return User.objects.filter(username='testuser').first()
+    u, _ = User.objects.get_or_create(
+        username="testuser",
+        defaults=dict(
+            first_name="test",
+            last_name="user",
+            email="test@yser.comn",
+            password=hashpass.make_password("test"),
+            is_active=True,
+            is_superuser=True
+        )
+    )
+    return u
 
 
 def image_path(*args):

@@ -23,12 +23,13 @@ class SciwmsAPITestCase(APITestCase):
 class TestDatasetCreate(SciwmsAPITestCase):
 
     def setUp(self):
+        User.objects.all().delete()
         self.username = 'tester_tdl'
         self.user_email = 'tester_tdl@email.com'
         self.pwd = 'password'
-        self.user = User.objects.create_user(username=self.username, email=self.user_email, password=self.pwd)
+        self.user = User.objects.create(username=self.username, email=self.user_email, password=self.pwd)
         self.ac = APIClient()
-        self.ac.login(username=self.username, password=self.pwd)
+        self.ac.force_authenticate(user=self.user)
         self.url = reverse('dataset-list')
 
     def test_view_post_response(self):
@@ -71,21 +72,25 @@ class TestDatasetDetail(SciwmsAPITestCase):
         self.username = 'tester_tdd'
         self.user_email = 'tester_tdd@email.com'
         self.pwd = 'password'
-        self.user = User.objects.create_user(username=self.username, email=self.user_email, password=self.pwd)
-        self.dataset_1 = UGridDataset.objects.create(uri='fake_file_1.nc',
-                                                     name='fake data 1',
-                                                     title='some title 1',
-                                                     abstract='some abstract 1',
-                                                     keep_up_to_date=False)
+        self.user, _ = User.objects.get_or_create(username=self.username, defaults=dict(email=self.user_email, password=self.pwd))
+        self.dataset_1, _ = UGridDataset.objects.get_or_create(
+            name='fake data 1',
+            defaults=dict(
+                uri='fake_file_1.nc',
+                title='some title 1',
+                abstract='some abstract 1',
+                keep_up_to_date=False
+            )
+        )
         self.ac = APIClient()
-        self.ac.login(username=self.username, password=self.pwd)
+        self.ac.force_authenticate(user=self.user)
         self.url = reverse('dataset-detail', kwargs={'pk': self.dataset_1.pk})
 
     def test_get_dataset(self):
         response = self.ac.get(self.url)
         status_code = response.status_code
-        resp_uri = response.data['uri']
         self.assertEqual(status_code, status.HTTP_200_OK)
+        resp_uri = response.data['uri']
         self.assertEqual(resp_uri, 'fake_file_1.nc')
 
     def test_patch_dataset(self):
@@ -98,12 +103,12 @@ class TestDatasetDetail(SciwmsAPITestCase):
         }
         response = self.ac.patch(self.url, test_data, format='json')
         status_code = response.status_code
+        self.assertEqual(status_code, status.HTTP_200_OK)
         resp_uri = response.data['uri']
         self.assertEqual(resp_uri, new_filename)
         self.assertEqual(response.data['update_every'], 7200)
         self.assertEqual(response.data['keep_up_to_date'], True)
         self.assertEqual(response.data['display_all_timesteps'], True)
-        self.assertEqual(status_code, status.HTTP_200_OK)
 
     def test_delete_dataset(self):
         response = self.ac.delete(self.url)
@@ -113,27 +118,27 @@ class TestDatasetDetail(SciwmsAPITestCase):
 
 class TestUnidentifiedDataset(SciwmsAPITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
         UnidentifiedDataset.objects.all().delete()
         Dataset.objects.all().delete()
-
-    def setUp(self):
         self.username = 'tester_tdd'
         self.user_email = 'tester_tdd@email.com'
         self.pwd = 'password'
-        self.user = User.objects.create_user(username=self.username, email=self.user_email, password=self.pwd)
-        self.dataset_1 = UnidentifiedDataset.objects.create(
-            uri='fake_file_1.nc',
-            name='fake data 1'
+        self.user, _ = User.objects.get_or_create(username=self.username, defaults=dict(email=self.user_email, password=self.pwd))
+        self.dataset_1, _ = UnidentifiedDataset.objects.get_or_create(
+            name='fake data 1',
+            defaults=dict(
+                uri='fake_file_1.nc',
+            )
         )
-        self.dataset_2 = UnidentifiedDataset.objects.create(
-            uri='fake_file_2.nc',
-            name='fake data 2'
+        self.dataset_2, _ = UnidentifiedDataset.objects.get_or_create(
+            name='fake data 2',
+            defaults=dict(
+                uri='fake_file_2.nc',
+            )
         )
         self.ac = APIClient()
-        self.ac.login(username=self.username, password=self.pwd)
+        self.ac.force_authenticate(user=self.user)
 
     def test_list_unid(self):
         url = reverse('unid-list')
@@ -185,14 +190,11 @@ class TestAddUnidentifiedDataset(SciwmsAPITestCase):
         self.username = 'tester_tdd'
         self.user_email = 'tester_tdd@email.com'
         self.pwd = 'password'
-        self.user = User.objects.create_user(username=self.username, email=self.user_email, password=self.pwd)
+        self.user, _ = User.objects.get_or_create(username=self.username, defaults=dict(email=self.user_email, password=self.pwd))
         self.ac = APIClient()
-        self.ac.login(username=self.username, password=self.pwd)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        Dataset.objects.all().delete()  # Revore UGridTest and SGridTest defaults
+        self.ac.force_authenticate(user=self.user)
+        UnidentifiedDataset.objects.all().delete()
+        Dataset.objects.all().delete()
 
     def tearDown(cls):
         UnidentifiedDataset.objects.all().delete()

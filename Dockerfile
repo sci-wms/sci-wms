@@ -27,27 +27,33 @@ RUN apt-get update && apt-get install -y \
 
 # Setup CONDA (https://hub.docker.com/r/continuumio/miniconda3/~/dockerfile/)
 ENV MINICONDA_VERSION latest
-RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    curl -k -o /miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh && \
+RUN curl -k -o /miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh && \
     /bin/bash /miniconda.sh -b -p /opt/conda && \
     rm /miniconda.sh && \
-    /opt/conda/bin/conda config \
+    /opt/conda/bin/conda clean -afy && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> /etc/profile && \
+    echo "conda activate base" >> /etc/profile && \
+    find /opt/conda/ -follow -type f -name '*.a' -delete && \
+    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+    /opt/conda/bin/conda update -n base conda && \
+    /opt/conda/bin/conda clean -afy
+
+COPY environment-prod.yml /tmp/environment.yml
+RUN /opt/conda/bin/conda config \
         --set always_yes yes \
         --set changeps1 no \
         --set show_channel_urls True \
         && \
     /opt/conda/bin/conda config \
-        --add channels axiom-data-science \
         --add channels conda-forge \
         && \
-    /opt/conda/bin/conda clean -a -y
+    # Install requirements
+    /opt/conda/bin/conda env update -n base --file /tmp/environment.yml && \
+    # cleanup
+    /opt/conda/bin/conda clean -afy
 
 ENV PATH /opt/conda/bin:$PATH
-
-# Copy over environment definition
-COPY environment-prod.yml /tmp/environment.yml
-RUN conda env update -n root --file /tmp/environment.yml && \
-    conda clean -a -y
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

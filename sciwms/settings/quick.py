@@ -32,7 +32,7 @@ CACHES = {
     }
 }
 
-HUEY['always_eager'] = False
+HUEY['immediate'] = False
 
 LOCAL_APPS = []
 try:

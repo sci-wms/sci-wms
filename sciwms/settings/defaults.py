@@ -75,7 +75,11 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_ACCESS': ('rest_framework.permissions.IsAdminUser',),
-    'PAGINATE_BY': 10
+    'PAGINATE_BY': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ]
 }
 
 
@@ -180,8 +184,8 @@ HUEY = {
     'result_store': True,  # Store return values of tasks.
     'events': True,  # Consumer emits events allowing real-time monitoring.
     'store_none': True,  # If a task returns None, do not save to results.
-    'always_eager': True,  # If DEBUG=True, run synchronously.
+    'immediate': True,  # If DEBUG=True, run synchronously.
     'store_errors': True,  # Store error info if task throws exception.
     'blocking': False,  # Poll the queue rather than do blocking pop.
-    'backend_class': 'huey.contrib.sqlitedb.SqliteHuey',  # Use path to redis huey by default,
+    'backend_class': 'huey.SqliteHuey',  # Use path to redis huey by default,
 }
