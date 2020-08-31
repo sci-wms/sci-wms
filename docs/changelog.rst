@@ -1,7 +1,9 @@
 =========
 Changelog
 =========
-
+* :release:`2.0.1 <2020-08-31>`
+* :feature:`-` Bump library dependencies
+* :bug:`147 major` Fix Huey configuration, fix quick deployment
 * :feature:`-` Bump Python to 3.7, use proj<6.0 and pyproj<2.0
 * :bug:`-` Fixed the periodic update of datasets (thanks Todd)
 * :bug:`141 major` Added GetCapabilities ExtendedCapabilities

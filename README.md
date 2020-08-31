@@ -1,4 +1,4 @@
-# sci-wms  [![Build Status](https://travis-ci.org/sci-wms/sci-wms.svg)](https://travis-ci.org/sci-wms/sci-wms) [![Version](https://img.shields.io/badge/version-2.0.0_dev-blue.svg)](https://github.com/sci-wms/sci-wms/releases)
+# sci-wms  [![Build Status](https://travis-ci.org/sci-wms/sci-wms.svg)](https://travis-ci.org/sci-wms/sci-wms) [![Version](https://img.shields.io/badge/version-2.0.1_dev-blue.svg)](https://github.com/sci-wms/sci-wms/releases)
 
 `sci-wms` is an open-source Python implementation of a WMS (Web Mapping Service) server designed for oceanographic, atmospheric, climate and weather data. It achieves real-time, on-demand visualization of internal (file access) and externally hosted (DAP) CF-compliant data.
 
