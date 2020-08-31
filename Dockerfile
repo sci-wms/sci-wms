@@ -26,8 +26,11 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Setup CONDA (https://hub.docker.com/r/continuumio/miniconda3/~/dockerfile/)
-ENV MINICONDA_VERSION latest
-RUN curl -k -o /miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh && \
+ENV MINICONDA_VERSION "py38_4.8.2"
+ENV MINICONDA_HASH "5bbb193fd201ebe25f4aeb3c58ba83feced6a25982ef4afa86d5506c3656c142"
+RUN curl -k -o /miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh && \
+    echo "${MINICONDA_HASH} /miniconda.sh" > /miniconda.sh.sha256 && \
+    sha256sum --check /miniconda.sh.sha256 && \
     /bin/bash /miniconda.sh -b -p /opt/conda && \
     rm /miniconda.sh && \
     /opt/conda/bin/conda clean -afy && \
@@ -56,7 +59,7 @@ RUN /opt/conda/bin/conda config \
 ENV PATH /opt/conda/bin:$PATH
 
 # Add Tini
-ENV TINI_VERSION v0.18.0
+ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
