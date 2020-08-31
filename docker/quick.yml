@@ -1,0 +1,28 @@
+version: '3.2'
+
+services:
+
+  web:
+    #image: axiom/sci-wms
+    image: sciwms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.quick
+    ports:
+      - "7002:7002"
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology:ro
+      - dbdata:/srv/sci-wms/sciwms/db/
+
+  worker:
+    #image: axiom/sci-wms
+    image: sciwms
+    environment:
+      DJANGO_SETTINGS_MODULE: sciwms.settings.quick
+    volumes:
+      - topologydata:/srv/sci-wms/wms/topology
+      - dbdata:/srv/sci-wms/sciwms/db/
+    command: python manage.py run_huey
+
+volumes:
+  topologydata:
+  dbdata:

@@ -36,13 +36,11 @@ pool = ConnectionPool(host=redis_host, port=redis_port, db=redis_db)
 # Huey
 HUEY = {
     'name': 'sciwms',
-    'result_store': True,  # Store return values of tasks.
-    'events': True,  # Consumer emits events allowing real-time monitoring.
+    'results': True,  # Store return values of tasks.
     'store_none': True,  # If a task returns None, do not save to results.
     'immediate': False,  # If DEBUG=True, run synchronously.
-    'store_errors': True,  # Store error info if task throws exception.
+    'huey_class': 'huey.RedisHuey',  # Use path to redis huey by default,
     'blocking': False,  # Poll the queue rather than do blocking pop.
-    'backend_class': 'huey.RedisHuey',  # Use path to redis huey by default,
     'connection': {
         'connection_pool': pool
     },

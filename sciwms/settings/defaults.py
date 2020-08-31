@@ -181,11 +181,8 @@ matplotlib.use("Agg")
 HUEY = {
     'name': 'sciwms',
     'filename': huey_file,
-    'result_store': True,  # Store return values of tasks.
-    'events': True,  # Consumer emits events allowing real-time monitoring.
+    'results': True,  # Store return values of tasks.
     'store_none': True,  # If a task returns None, do not save to results.
     'immediate': True,  # If DEBUG=True, run synchronously.
-    'store_errors': True,  # Store error info if task throws exception.
-    'blocking': False,  # Poll the queue rather than do blocking pop.
-    'backend_class': 'huey.SqliteHuey',  # Use path to redis huey by default,
+    'huey_class': 'huey.SqliteHuey',  # Use path to redis huey by default.
 }
